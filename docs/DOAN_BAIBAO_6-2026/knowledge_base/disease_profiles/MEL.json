@@ -1,0 +1,98 @@
+{
+  "metadata": {
+    "disease_id": "MEL",
+    "disease_name": "Melanoma",
+    "category": "Malignant and Precancerous Lesions",
+    "severity": "Critical"
+  },
+
+  "overview": {
+    "definition": "A malignant tumor arising from melanocytes.",
+    "summary": "Melanoma is the most dangerous skin cancer due to its metastatic potential."
+  },
+
+  "etiology": {
+    "causes": [
+      "Ultraviolet exposure",
+      "Genetic predisposition"
+    ],
+
+    "risk_factors": [
+      "Fair skin",
+      "Family history",
+      "Multiple nevi",
+      "History of sunburn"
+    ]
+  },
+
+  "clinical_features": {
+    "abcde_rule": {
+      "A": "Asymmetry",
+      "B": "Border irregularity",
+      "C": "Color variation",
+      "D": "Diameter greater than 6 mm",
+      "E": "Evolution"
+    },
+
+    "visual_characteristics": {
+      "colors": [
+        "Black",
+        "Brown",
+        "Red",
+        "Blue",
+        "White"
+      ],
+
+      "shapes": [
+        "Asymmetrical"
+      ],
+
+      "borders": [
+        "Irregular"
+      ]
+    },
+
+    "symptoms": [
+      "Growth",
+      "Color change",
+      "Bleeding",
+      "Itching"
+    ]
+  },
+
+  "diagnosis": {
+    "clinical_examination": [
+      "ABCDE assessment"
+    ],
+
+    "dermoscopy_features": [
+      "Asymmetry",
+      "Multiple colors",
+      "Irregular network"
+    ],
+
+    "histopathology": [
+      "Atypical melanocyte proliferation"
+    ],
+
+    "laboratory_tests": [
+      "Biopsy"
+    ]
+  },
+
+  "treatment": {
+    "first_line": [
+      "Surgical excision"
+    ],
+
+    "advanced_treatment": [
+      "Immunotherapy",
+      "Targeted therapy",
+      "Radiotherapy"
+    ]
+  },
+
+  "prognosis": {
+    "overall_outlook": "Strongly dependent on stage at diagnosis."
+  }
+}

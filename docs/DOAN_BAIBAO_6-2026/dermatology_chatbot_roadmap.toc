@@ -1,0 +1,33 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {section}{\numberline {1}Mục tiêu hệ thống}{2}{section.1}%
+\contentsline {section}{\numberline {2}Tại sao không chỉ dùng CNN?}{2}{section.2}%
+\contentsline {section}{\numberline {3}Kiến thức nền tảng}{2}{section.3}%
+\contentsline {subsection}{\numberline {3.1}CNN}{2}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Embedding}{3}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Sentence Transformer}{3}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Vector Database và FAISS}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Vấn đề}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}FAISS}{4}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Knowledge Graph}{4}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Knowledge Graph là gì?}{4}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Các loại node}{4}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Các loại quan hệ}{5}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Semantic Feature Retrieval}{5}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Semantic Retrieval là gì?}{5}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Tại sao cần?}{5}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Pipeline}{6}{subsection.6.3}%
+\contentsline {section}{\numberline {7}Disease Knowledge Retrieval}{6}{section.7}%
+\contentsline {section}{\numberline {8}Graph Reasoning}{6}{section.8}%
+\contentsline {section}{\numberline {9}Fusion Layer}{7}{section.9}%
+\contentsline {subsection}{\numberline {9.1}CNN}{7}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Graph}{7}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}RAG Retrieval}{7}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}Điểm cuối}{7}{subsection.9.4}%
+\contentsline {section}{\numberline {10}Explanation Engine}{7}{section.10}%
+\contentsline {section}{\numberline {11}Lộ trình mở rộng}{7}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Giai đoạn 1}{7}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Giai đoạn 2}{8}{subsection.11.2}%
+\contentsline {subsection}{\numberline {11.3}Giai đoạn 3}{8}{subsection.11.3}%
+\contentsline {section}{\numberline {12}Node Embeddings}{8}{section.12}%
+\contentsline {section}{\numberline {13}Pipeline hoàn chỉnh}{9}{section.13}%
+\contentsline {section}{\numberline {14}Kiến trúc đích}{9}{section.14}%

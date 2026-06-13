@@ -1,0 +1,72 @@
+{
+  "metadata": {
+    "disease_id": "NV",
+    "disease_name": "Melanocytic Nevus",
+    "alternative_names": [
+      "Mole"
+    ],
+    "category": "Benign Lesions",
+    "severity": "Low"
+  },
+
+  "overview": {
+    "definition": "A benign proliferation of melanocytes.",
+    "summary": "Nevi are common benign pigmented skin lesions."
+  },
+
+  "clinical_features": {
+    "visual_characteristics": {
+      "colors": [
+        "Brown",
+        "Dark Brown",
+        "Skin-colored"
+      ],
+
+      "shapes": [
+        "Round",
+        "Oval",
+        "Symmetrical"
+      ],
+
+      "borders": [
+        "Regular",
+        "Well Defined"
+      ]
+    },
+
+    "symptoms": [
+      "Usually asymptomatic"
+    ],
+
+    "common_locations": [
+      "Any body site"
+    ]
+  },
+
+  "diagnosis": {
+    "clinical_examination": [
+      "Skin examination"
+    ],
+
+    "dermoscopy_features": [
+      "Symmetry",
+      "Uniform pigmentation"
+    ]
+  },
+
+  "management": {
+    "monitoring": [
+      "Routine skin checks",
+      "ABCDE monitoring"
+    ],
+
+    "removal_indications": [
+      "Suspicious change",
+      "Cosmetic reasons"
+    ]
+  },
+
+  "differential_diagnosis": [
+    "Melanoma"
+  ]
+}

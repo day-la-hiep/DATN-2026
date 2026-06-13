@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "disease_id": "",
+    "disease_code": "",
+    "disease_name": "",
+    "alternative_names": [],
+    "category": "",
+    "subcategory": "",
+    "severity": "",
+    "last_updated": "",
+    "sources": []
+  },
+
+  "overview": {
+    "definition": "",
+    "summary": "",
+    "epidemiology": {
+      "prevalence": "",
+      "incidence": "",
+      "common_age_groups": [],
+      "sex_distribution": ""
+    }
+  },
+
+  "etiology": {
+    "causes": [],
+    "risk_factors": [],
+    "genetic_factors": [],
+    "environmental_factors": []
+  },
+
+  "clinical_features": {
+    "visual_characteristics": {
+      "colors": [],
+      "shapes": [],
+      "borders": [],
+      "surface_features": [],
+      "elevation": [],
+      "size_characteristics": []
+    },
+
+    "symptoms": [],
+
+    "warning_signs": [],
+
+    "common_locations": []
+  },
+
+  "diagnosis": {
+    "clinical_examination": [],
+    "dermoscopy_features": [],
+    "laboratory_tests": [],
+    "histopathology": [],
+    "imaging": [],
+    "diagnostic_criteria": []
+  },
+
+  "differential_diagnosis": [
+    {
+      "disease": "",
+      "distinguishing_features": []
+    }
+  ],
+
+  "treatment": {
+    "first_line": [],
+    "second_line": [],
+    "advanced_treatment": [],
+    "follow_up": [],
+    "patient_education": []
+  },
+
+  "prognosis": {
+    "overall_outlook": "",
+    "survival_rate": "",
+    "recurrence_risk": "",
+    "complications": []
+  },
+
+  "prevention": {
+    "primary_prevention": [],
+    "secondary_prevention": [],
+    "screening": []
+  },
+
+  "image_features": {
+    "typical_patterns": [],
+    "cnn_relevant_features": [],
+    "gradcam_explanation_points": []
+  },
+
+  "knowledge_graph": {
+    "has_symptom": [],
+    "has_risk_factor": [],
+    "has_treatment": [],
+    "has_complication": [],
+    "confused_with": []
+  },
+
+  "faq": [
+    {
+      "question": "",
+      "answer": ""
+    }
+  ],
+
+  "references": [
+    {
+      "title": "",
+      "organization": "",
+      "url": "",
+      "accessed_date": ""
+    }
+  ]
+}

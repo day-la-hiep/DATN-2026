@@ -1,0 +1,17 @@
+[
+  {"id":"SYM001","name":"Asymmetry","type":"Symptom"},
+  {"id":"SYM002","name":"Irregular Border","type":"Symptom"},
+  {"id":"SYM003","name":"Color Variation","type":"Symptom"},
+  {"id":"SYM004","name":"Bleeding","type":"Symptom"},
+  {"id":"SYM005","name":"Itching","type":"Symptom"},
+  {"id":"SYM006","name":"Rapid Growth","type":"Symptom"},
+  {"id":"SYM007","name":"Scaly Surface","type":"Symptom"},
+  {"id":"SYM008","name":"Rough Texture","type":"Symptom"},
+  {"id":"SYM009","name":"Pearly Nodule","type":"Symptom"},
+  {"id":"SYM010","name":"Ulceration","type":"Symptom"},
+  {"id":"SYM011","name":"Uniform Pigmentation","type":"Symptom"},
+  {"id":"SYM012","name":"Regular Border","type":"Symptom"},
+  {"id":"SYM013","name":"Dimple Sign","type":"Symptom"},
+  {"id":"SYM014","name":"Firm Nodule","type":"Symptom"},
+  {"id":"SYM015","name":"Red Vascular Appearance","type":"Symptom"}
+]

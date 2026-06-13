@@ -1,0 +1,495 @@
+
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{tikz}
+\usepackage{longtable}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+
+\title{Lộ Trình Xây Dựng Chatbot Da Liễu \\ Từ HAM10000 (7 Bệnh) Đến Hàng Trăm Bệnh}
+\author{System Design Document}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Mục tiêu hệ thống}
+
+Mục tiêu là xây dựng một chatbot da liễu có khả năng:
+
+\begin{itemize}
+\item Phân tích ảnh tổn thương da.
+\item Trả lời câu hỏi bằng ngôn ngữ tự nhiên.
+\item Giải thích lý do đưa ra dự đoán.
+\item Truy xuất tri thức y khoa.
+\item Mở rộng từ 7 bệnh HAM10000 lên hàng trăm bệnh da liễu.
+\end{itemize}
+
+\section{Tại sao không chỉ dùng CNN?}
+
+CNN có thể dự đoán bệnh từ ảnh:
+
+\begin{verbatim}
+Image
+  |
+  v
+CNN
+  |
+  v
+MEL = 0.85
+BCC = 0.10
+NV  = 0.05
+\end{verbatim}
+
+Tuy nhiên CNN không giải thích được:
+
+\begin{itemize}
+\item Vì sao mô hình chọn MEL?
+\item Triệu chứng nào được sử dụng?
+\item Tài liệu y khoa nào hỗ trợ kết quả?
+\end{itemize}
+
+Do đó cần kết hợp nhiều thành phần khác ngoài CNN.
+
+\section{Kiến thức nền tảng}
+
+\subsection{CNN}
+
+CNN (Convolutional Neural Network) là mô hình xử lý ảnh.
+
+Pipeline:
+
+\begin{verbatim}
+Image
+  |
+  v
+Feature Maps
+  |
+  v
+Classifier
+  |
+  v
+Disease Probabilities
+\end{verbatim}
+
+Kiến thức cần biết:
+
+\begin{itemize}
+\item Convolution
+\item Pooling
+\item Transfer Learning
+\item Fine-tuning
+\item ResNet
+\item EfficientNet
+\end{itemize}
+
+\subsection{Embedding}
+
+Embedding biến văn bản thành vector số.
+
+Ví dụ:
+
+\begin{verbatim}
+"many colors"
+        |
+        v
+ [0.21, -0.34, ...]
+\end{verbatim}
+
+Mục đích:
+
+\begin{itemize}
+\item So sánh ngữ nghĩa.
+\item Truy xuất tri thức.
+\item Semantic Search.
+\end{itemize}
+
+\subsection{Sentence Transformer}
+
+Ví dụ:
+
+\begin{verbatim}
+all-MiniLM-L6-v2
+\end{verbatim}
+
+Vai trò:
+
+\begin{verbatim}
+Text
+ |
+ v
+Embedding Vector
+\end{verbatim}
+
+\section{Vector Database và FAISS}
+
+\subsection{Vấn đề}
+
+Giả sử có:
+
+\begin{itemize}
+\item 100000 đoạn tài liệu y khoa.
+\item Hàng trăm bệnh.
+\end{itemize}
+
+Không thể so sánh thủ công với mọi đoạn văn.
+
+\subsection{FAISS}
+
+FAISS là thư viện tìm kiếm vector gần nhất.
+
+Pipeline:
+
+\begin{verbatim}
+Query
+  |
+  v
+Embedding
+  |
+  v
+FAISS Search
+  |
+  v
+Top-K Chunks
+\end{verbatim}
+
+\section{Knowledge Graph}
+
+\subsection{Knowledge Graph là gì?}
+
+Knowledge Graph lưu tri thức dưới dạng đồ thị.
+
+Ví dụ:
+
+\begin{verbatim}
+MEL
+ |
+ +-- asymmetry
+ |
+ +-- border_irregularity
+ |
+ +-- color_variation
+\end{verbatim}
+
+\subsection{Các loại node}
+
+\begin{itemize}
+\item Disease
+\item Feature
+\item Symptom
+\item Risk Factor
+\item Diagnosis
+\item Treatment
+\end{itemize}
+
+\subsection{Các loại quan hệ}
+
+\begin{itemize}
+\item HAS\_FEATURE
+\item HAS\_SYMPTOM
+\item HAS\_RISK
+\item DIAGNOSED\_BY
+\item TREATED\_BY
+\end{itemize}
+
+\section{Semantic Feature Retrieval}
+
+\subsection{Semantic Retrieval là gì?}
+
+Mục tiêu:
+
+\begin{verbatim}
+uneven edges
+      |
+      v
+border_irregularity
+\end{verbatim}
+
+Hoặc:
+
+\begin{verbatim}
+many colors
+      |
+      v
+color_variation
+\end{verbatim}
+
+\subsection{Tại sao cần?}
+
+Nếu dùng rule-based:
+
+\begin{verbatim}
+FEATURE_MAP = {...}
+\end{verbatim}
+
+thì khi mở rộng lên hàng trăm bệnh sẽ rất khó bảo trì.
+
+Semantic Retrieval cho phép tìm feature bằng ý nghĩa thay vì từ khóa cố định.
+
+\subsection{Pipeline}
+
+\begin{verbatim}
+Query
+  |
+  v
+Embedding
+  |
+  v
+Feature Index
+  |
+  v
+Relevant Features
+\end{verbatim}
+
+\section{Disease Knowledge Retrieval}
+
+Mục tiêu là truy xuất tài liệu y khoa liên quan.
+
+Pipeline:
+
+\begin{verbatim}
+User Query
+    |
+    v
+Embedding
+    |
+    v
+FAISS
+    |
+    v
+Top-K Documents
+\end{verbatim}
+
+Ví dụ chunk:
+
+\begin{quote}
+Melanoma thường biểu hiện bất đối xứng, nhiều màu sắc và bờ không đều.
+\end{quote}
+
+\section{Graph Reasoning}
+
+Mục tiêu:
+
+\begin{verbatim}
+Features
+   |
+   v
+Disease Ranking
+\end{verbatim}
+
+Ví dụ:
+
+\begin{verbatim}
+border_irregularity
+color_variation
+asymmetry
+\end{verbatim}
+
+sẽ làm tăng điểm của MEL.
+
+Công thức:
+
+\[
+Score(d)
+=
+\sum_i
+Weight_i \times Confidence_i
+\]
+
+\section{Fusion Layer}
+
+Fusion Layer kết hợp nhiều nguồn thông tin.
+
+\subsection{CNN}
+
+\[
+P_{cnn}(d)
+\]
+
+\subsection{Graph}
+
+\[
+P_{graph}(d)
+\]
+
+\subsection{RAG Retrieval}
+
+\[
+P_{rag}(d)
+\]
+
+\subsection{Điểm cuối}
+
+\[
+FinalScore(d)
+=
+w_1P_{cnn}(d)
++
+w_2P_{graph}(d)
++
+w_3P_{rag}(d)
+\]
+
+Trong đó:
+
+\[
+w_1+w_2+w_3=1
+\]
+
+\section{Explanation Engine}
+
+Mục tiêu là giải thích dự đoán.
+
+Ví dụ:
+
+\begin{verbatim}
+Prediction: MEL
+
+Reason:
+- Border irregularity detected
+- Color variation detected
+- CNN confidence high
+- Medical evidence supports MEL
+\end{verbatim}
+
+\section{Lộ trình mở rộng}
+
+\subsection{Giai đoạn 1}
+
+HAM10000:
+
+\begin{itemize}
+\item MEL
+\item NV
+\item BCC
+\item AKIEC
+\item BKL
+\item DF
+\item VASC
+\end{itemize}
+
+\subsection{Giai đoạn 2}
+
+Mở rộng lên 20-30 bệnh:
+
+\begin{itemize}
+\item Eczema
+\item Psoriasis
+\item Rosacea
+\item Vitiligo
+\item Seborrheic Dermatitis
+\end{itemize}
+
+\subsection{Giai đoạn 3}
+
+Mở rộng lên 100+ bệnh:
+
+\begin{itemize}
+\item Disease Nodes
+\item Feature Nodes
+\item Symptom Nodes
+\item Treatment Nodes
+\item Diagnosis Nodes
+\end{itemize}
+
+\section{Node Embeddings}
+
+Mỗi node trong graph đều có embedding riêng.
+
+Ví dụ:
+
+\begin{verbatim}
+border_irregularity
+itching
+ulceration
+MEL
+BCC
+\end{verbatim}
+
+đều có vector biểu diễn.
+
+Điều này giúp thực hiện:
+
+\begin{verbatim}
+Query
+  |
+  v
+Node Retrieval
+  |
+  v
+Graph Expansion
+\end{verbatim}
+
+\section{Pipeline hoàn chỉnh}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.1cm]
+
+\node (a) {Image Input};
+\node (b) [below of=a] {CNN};
+\node (c) [below of=b] {Feature Layer};
+\node (d) [below of=c] {Knowledge Graph};
+\node (e) [below of=d] {Vector Retrieval};
+\node (f) [below of=e] {Fusion Layer};
+\node (g) [below of=f] {Disease Ranking};
+\node (h) [below of=g] {Explanation Engine};
+\node (i) [below of=h] {Chatbot};
+
+\draw[->] (a)--(b);
+\draw[->] (b)--(c);
+\draw[->] (c)--(d);
+\draw[->] (d)--(e);
+\draw[->] (e)--(f);
+\draw[->] (f)--(g);
+\draw[->] (g)--(h);
+\draw[->] (h)--(i);
+
+\end{tikzpicture}
+\end{center}
+
+\section{Kiến trúc đích}
+
+Khi hệ thống đạt quy mô hàng trăm bệnh:
+
+\begin{verbatim}
+Image
+ +
+Text Query
+        |
+        v
+Embedding Layer
+        |
+        v
+Knowledge Graph
+        +
+Node Embeddings
+        +
+Vector Database
+        |
+        v
+Graph Reasoning
+        |
+        v
+Fusion Layer
+        |
+        v
+Explanation Engine
+        |
+        v
+Chatbot
+\end{verbatim}
+
+Đây là kiến trúc phù hợp để mở rộng lâu dài thay vì phụ thuộc hoàn toàn vào rule-based feature extraction.
+
+\end{document}

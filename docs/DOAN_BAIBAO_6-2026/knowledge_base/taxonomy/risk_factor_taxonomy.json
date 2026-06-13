@@ -1,0 +1,40 @@
+{
+  "Environmental Factors": [
+    "Ultraviolet Exposure",
+    "Indoor Tanning",
+    "Radiation Exposure",
+    "Chemical Exposure"
+  ],
+
+  "Genetic Factors": [
+    "Family History of Melanoma",
+    "Family History of Skin Cancer",
+    "Genetic Mutation"
+  ],
+
+  "Demographic Factors": [
+    "Advanced Age",
+    "Male Sex",
+    "Female Sex"
+  ],
+
+  "Skin Characteristics": [
+    "Fair Skin",
+    "Light Hair",
+    "Light Eyes",
+    "Freckling",
+    "Multiple Nevi"
+  ],
+
+  "Medical Conditions": [
+    "Immunosuppression",
+    "Previous Skin Cancer",
+    "Chronic Skin Damage"
+  ],
+
+  "Lifestyle Factors": [
+    "Outdoor Occupation",
+    "Excessive Sun Exposure",
+    "Inadequate Sunscreen Use"
+  ]
+}

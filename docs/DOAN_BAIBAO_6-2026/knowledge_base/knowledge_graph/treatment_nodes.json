@@ -1,0 +1,13 @@
+[
+  {"id":"TR001","name":"Cryotherapy","type":"Treatment"},
+  {"id":"TR002","name":"Photodynamic Therapy","type":"Treatment"},
+  {"id":"TR003","name":"5-Fluorouracil","type":"Treatment"},
+  {"id":"TR004","name":"Imiquimod","type":"Treatment"},
+  {"id":"TR005","name":"Surgical Excision","type":"Treatment"},
+  {"id":"TR006","name":"Mohs Surgery","type":"Treatment"},
+  {"id":"TR007","name":"Radiotherapy","type":"Treatment"},
+  {"id":"TR008","name":"Immunotherapy","type":"Treatment"},
+  {"id":"TR009","name":"Targeted Therapy","type":"Treatment"},
+  {"id":"TR010","name":"Observation","type":"Treatment"},
+  {"id":"TR011","name":"Laser Therapy","type":"Treatment"}
+]

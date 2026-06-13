@@ -1,0 +1,66 @@
+[
+  {
+    "feature": "asymmetry",
+    "description": "asymmetrical lesion asymmetric lesion uneven shape irregular shape one half unlike the other not mirror image asymmetric structure"
+  },
+  {
+    "feature": "border_irregularity",
+    "description": "irregular border uneven border jagged border rough border notched border irregular edges uneven edges poorly defined margin abnormal edge contour"
+  },
+  {
+    "feature": "color_variation",
+    "description": "multiple colors many colors different colors mixed colors several shades color variation heterogeneous pigmentation uneven coloration black brown red white blue gray"
+  },
+  {
+    "feature": "growth",
+    "description": "growing lesion increasing size enlarging lesion rapid growth changing lesion getting bigger"
+  },
+  {
+    "feature": "bleeding",
+    "description": "bleeding lesion spontaneous bleeding blood coming from lesion recurrent bleeding"
+  },
+  {
+    "feature": "itching",
+    "description": "itchy lesion itching skin irritation scratching sensation pruritus"
+  },
+  {
+    "feature": "pearly_nodule",
+    "description": "pearly nodule shiny bump translucent nodule glossy papule pearly lesion"
+  },
+  {
+    "feature": "ulceration",
+    "description": "ulcer ulceration open sore skin breakdown non healing wound crusted ulcer"
+  },
+  {
+    "feature": "scaly_patch",
+    "description": "scaly patch dry scaly lesion flaky patch keratotic lesion rough scaly area"
+  },
+  {
+    "feature": "rough_texture",
+    "description": "rough texture rough patch coarse surface gritty lesion sandpaper texture"
+  },
+  {
+    "feature": "uniform_color",
+    "description": "uniform color single color homogeneous pigmentation consistent coloration"
+  },
+  {
+    "feature": "symmetrical_shape",
+    "description": "symmetrical lesion regular shape symmetric shape balanced appearance mirror image"
+  },
+  {
+    "feature": "waxy_surface",
+    "description": "waxy surface waxy lesion greasy appearance wax like texture"
+  },
+  {
+    "feature": "stuck_on_appearance",
+    "description": "stuck on appearance attached appearance pasted on lesion raised plaque"
+  },
+  {
+    "feature": "dimple_sign",
+    "description": "dimple sign central dimpling skin indentation pinching causes depression"
+  },
+  {
+    "feature": "red_papule",
+    "description": "red papule red bump vascular papule reddish lesion bright red bump"
+  }
+]

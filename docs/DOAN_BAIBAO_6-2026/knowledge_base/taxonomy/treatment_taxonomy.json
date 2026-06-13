@@ -1,0 +1,38 @@
+{
+  "Surgical Treatments": [
+    "Excision",
+    "Mohs Surgery",
+    "Curettage",
+    "Electrosurgery"
+  ],
+
+  "Destructive Treatments": [
+    "Cryotherapy",
+    "Laser Therapy",
+    "Photodynamic Therapy"
+  ],
+
+  "Topical Treatments": [
+    "5-Fluorouracil",
+    "Imiquimod",
+    "Diclofenac",
+    "Retinoids"
+  ],
+
+  "Systemic Treatments": [
+    "Immunotherapy",
+    "Targeted Therapy",
+    "Chemotherapy"
+  ],
+
+  "Observation": [
+    "Routine Monitoring",
+    "Dermoscopic Follow-up"
+  ],
+
+  "Supportive Care": [
+    "Sun Protection",
+    "Skin Care",
+    "Patient Education"
+  ]
+}

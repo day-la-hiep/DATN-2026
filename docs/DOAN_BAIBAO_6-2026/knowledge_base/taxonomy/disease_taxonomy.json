@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "domain": "Dermatology",
+
+  "Skin Disease": {
+    "Malignant and Precancerous Lesions": {
+      "AKIEC": {
+        "name": "Actinic Keratosis",
+        "severity": "High"
+      },
+
+      "BCC": {
+        "name": "Basal Cell Carcinoma",
+        "severity": "High"
+      },
+
+      "MEL": {
+        "name": "Melanoma",
+        "severity": "Critical"
+      }
+    },
+
+    "Benign Lesions": {
+      "NV": {
+        "name": "Melanocytic Nevus",
+        "severity": "Low"
+      },
+
+      "BKL": {
+        "name": "Benign Keratosis-like Lesion",
+        "severity": "Low"
+      },
+
+      "DF": {
+        "name": "Dermatofibroma",
+        "severity": "Low"
+      }
+    },
+
+    "Vascular Lesions": {
+      "VASC": {
+        "name": "Vascular Lesion",
+        "severity": "Medium"
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "AKIEC",
+    "name": "Actinic Keratosis",
+    "type": "Disease"
+  },
+  {
+    "id": "BCC",
+    "name": "Basal Cell Carcinoma",
+    "type": "Disease"
+  },
+  {
+    "id": "BKL",
+    "name": "Benign Keratosis-like Lesion",
+    "type": "Disease"
+  },
+  {
+    "id": "DF",
+    "name": "Dermatofibroma",
+    "type": "Disease"
+  },
+  {
+    "id": "MEL",
+    "name": "Melanoma",
+    "type": "Disease"
+  },
+  {
+    "id": "NV",
+    "name": "Melanocytic Nevus",
+    "type": "Disease"
+  },
+  {
+    "id": "VASC",
+    "name": "Vascular Lesion",
+    "type": "Disease"
+  }
+]

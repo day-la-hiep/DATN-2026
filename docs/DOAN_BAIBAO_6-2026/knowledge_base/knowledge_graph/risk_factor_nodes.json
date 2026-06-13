@@ -1,0 +1,12 @@
+[
+  {"id":"RF001","name":"Ultraviolet Exposure","type":"RiskFactor"},
+  {"id":"RF002","name":"Fair Skin","type":"RiskFactor"},
+  {"id":"RF003","name":"Advanced Age","type":"RiskFactor"},
+  {"id":"RF004","name":"Family History","type":"RiskFactor"},
+  {"id":"RF005","name":"Multiple Nevi","type":"RiskFactor"},
+  {"id":"RF006","name":"Outdoor Occupation","type":"RiskFactor"},
+  {"id":"RF007","name":"Immunosuppression","type":"RiskFactor"},
+  {"id":"RF008","name":"Previous Sunburn","type":"RiskFactor"},
+  {"id":"RF009","name":"Skin Trauma","type":"RiskFactor"},
+  {"id":"RF010","name":"Genetic Predisposition","type":"RiskFactor"}
+]

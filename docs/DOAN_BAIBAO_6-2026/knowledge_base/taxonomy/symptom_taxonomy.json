@@ -1,0 +1,126 @@
+{
+  "Visual Features": {
+    "Color": [
+      "Black",
+      "Brown",
+      "Dark Brown",
+      "Light Brown",
+      "Red",
+      "Pink",
+      "Purple",
+      "Blue",
+      "White",
+      "Skin Colored"
+    ],
+
+    "Shape": [
+      "Round",
+      "Oval",
+      "Irregular",
+      "Asymmetrical",
+      "Symmetrical"
+    ],
+
+    "Border": [
+      "Regular",
+      "Irregular",
+      "Well Defined",
+      "Poorly Defined"
+    ],
+
+    "Surface": [
+      "Smooth",
+      "Rough",
+      "Scaly",
+      "Crusted",
+      "Ulcerated",
+      "Warty"
+    ],
+
+    "Elevation": [
+      "Flat",
+      "Raised",
+      "Nodular",
+      "Papular"
+    ]
+  },
+
+  "Physical Symptoms": {
+    "Pain": [
+      "Absent",
+      "Mild",
+      "Moderate",
+      "Severe"
+    ],
+
+    "Itching": [
+      "Absent",
+      "Present"
+    ],
+
+    "Bleeding": [
+      "Absent",
+      "Present"
+    ],
+
+    "Burning": [
+      "Absent",
+      "Present"
+    ],
+
+    "Tenderness": [
+      "Absent",
+      "Present"
+    ]
+  },
+
+  "Temporal Features": {
+    "Growth": [
+      "Stable",
+      "Slow Growing",
+      "Rapid Growing"
+    ],
+
+    "Color Change": [
+      "No Change",
+      "Gradual Change",
+      "Rapid Change"
+    ],
+
+    "Recurrence": [
+      "Absent",
+      "Present"
+    ]
+  },
+
+  "Location": {
+    "Head and Neck": [
+      "Scalp",
+      "Face",
+      "Forehead",
+      "Nose",
+      "Cheek",
+      "Ear",
+      "Neck"
+    ],
+
+    "Upper Limb": [
+      "Shoulder",
+      "Arm",
+      "Forearm",
+      "Hand"
+    ],
+
+    "Trunk": [
+      "Chest",
+      "Back",
+      "Abdomen"
+    ],
+
+    "Lower Limb": [
+      "Thigh",
+      "Leg",
+      "Foot"
+    ]
+  }
+}

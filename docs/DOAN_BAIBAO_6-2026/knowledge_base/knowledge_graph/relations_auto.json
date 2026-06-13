@@ -1,0 +1,1274 @@
+[
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "itching",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "burning",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "bleeding",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "crusting",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "pink",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "red",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "fair_skin",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "advanced_age",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "outdoor_occupation",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "history_of_sunburn",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "immunosuppression",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "chronic_uv_exposure",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "sun_damage",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "visual_inspection",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "scaly_surface",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "erythematous_background",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "atypical_keratinocytes",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "cryotherapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "photodynamic_therapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "5-fluorouracil",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "AKIEC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "imiquimod",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "non-healing_sore",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "bleeding",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "ulceration",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "pink",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "skin-colored",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "fair_skin",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "advanced_age",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "excessive_sun_exposure",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "indoor_tanning",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "family_history",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "ultraviolet_radiation",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "skin_examination",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "telangiectasia",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "pearly_borders",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "basaloid_cell_nests",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "surgical_excision",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "mohs_surgery",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "radiotherapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "topical_therapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BCC",
+    "s_type": "Disease",
+    "r": "HAS_PROGNOSIS",
+    "t": "excellent_when_detected_early.",
+    "t_type": "Prognosis",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "usually_asymptomatic",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "occasional_itching",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "light_brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "dark_brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "black",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "round",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "oval",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "well_defined",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "advanced_age",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "chronic_uv_exposure",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "family_history",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "age-related_skin_changes",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "sun_exposure",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "genetic_predisposition",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "visual_inspection",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "milia-like_cysts",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "comedo-like_openings",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "sharp_borders",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "benign_keratinocyte_proliferation",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "observation",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "cryotherapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "curettage",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "laser_removal",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "BKL",
+    "s_type": "Disease",
+    "r": "HAS_PROGNOSIS",
+    "t": "excellent",
+    "t_type": "Prognosis",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "usually_asymptomatic",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "occasional_tenderness",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "occasional_itching",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "red_brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "pink",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "round",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "well_defined",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "female_sex",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "young_adulthood",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "previous_skin_injury",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "unknown",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "minor_skin_trauma",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "insect_bites",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "dimple_sign",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "skin_examination",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "central_white_scar-like_area",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "peripheral_pigment_network",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "fibroblast_proliferation",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "collagen_trapping",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "observation",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "surgical_excision",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "DF",
+    "s_type": "Disease",
+    "r": "HAS_PROGNOSIS",
+    "t": "excellent",
+    "t_type": "Prognosis",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "growth",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "color_change",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "bleeding",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "itching",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "asymmetry",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "border_irregularity",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "color_variation",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "diameter_greater_than_6_mm",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "evolution",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "black",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "red",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "blue",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "white",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "asymmetrical",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "irregular",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "fair_skin",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "family_history",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "multiple_nevi",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "history_of_sunburn",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "ultraviolet_exposure",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "genetic_predisposition",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "abcde_assessment",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "asymmetry",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "multiple_colors",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "irregular_network",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "atypical_melanocyte_proliferation",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "biopsy",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "surgical_excision",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "immunotherapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "targeted_therapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "radiotherapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "MEL",
+    "s_type": "Disease",
+    "r": "HAS_PROGNOSIS",
+    "t": "strongly_dependent_on_stage_at_diagnosis.",
+    "t_type": "Prognosis",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "usually_asymptomatic",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "dark_brown",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "skin-colored",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "round",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "oval",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "symmetrical",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "regular",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "well_defined",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "skin_examination",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "symmetry",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "NV",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "uniform_pigmentation",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "usually_asymptomatic",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_SYMPTOM",
+    "t": "occasional_bleeding_if_traumatized",
+    "t_type": "Symptom",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "red",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "dark_red",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "purple",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "blue",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "round",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "oval",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_VISUAL_FEATURE",
+    "t": "well_defined",
+    "t_type": "VisualFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "increasing_age",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_RISK",
+    "t": "genetic_predisposition",
+    "t_type": "RiskFactor",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "vascular_proliferation",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "congenital_factors",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "CAUSED_BY",
+    "t": "age-related_vascular_changes",
+    "t_type": "Cause",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "visual_inspection",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "red_lacunae",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "blue_lacunae",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "vascular_structures",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "DIAGNOSED_BY",
+    "t": "dilated_vascular_channels",
+    "t_type": "DiagnosticFeature",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "observation",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "laser_therapy",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "electrocautery",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "TREATED_BY",
+    "t": "surgical_removal",
+    "t_type": "Treatment",
+    "confidence": 1.0
+  },
+  {
+    "s": "VASC",
+    "s_type": "Disease",
+    "r": "HAS_PROGNOSIS",
+    "t": "excellent",
+    "t_type": "Prognosis",
+    "confidence": 1.0
+  }
+]
