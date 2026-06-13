@@ -1,8 +1,6 @@
 \documentclass[12pt,a4paper]{article}
 
-\usepackage[utf8]{inputenc}
-\usepackage[T5]{fontenc}
-\usepackage{lmodern}
+\usepackage{fontspec}
 \usepackage[vietnamese]{babel}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -21,11 +19,11 @@
 
 \section{Xác định đề tài}
 
-\textbf{Tên đề tài:} Xây dựng hệ thống chatbot hỗ trợ chẩn đoán bệnh da liễu dựa trên kết hợp thị giác máy tính, đồ thị tri thức và truy xuất tăng cường (RAG)
+\textbf{Tên đề tài:} Xây dựng hệ thống quản lý phòng khám da liễu tích hợp chatbot hỗ trợ chẩn đoán bệnh da liễu dựa trên thị giác máy tính, đồ thị tri thức và truy xuất tăng cường (RAG)
 
-\textbf{Lĩnh vực nghiên cứu:} Trí tuệ nhân tạo ứng dụng trong y tế, cụ thể là hỗ trợ chẩn đoán bệnh da liễu thông qua ảnh tổn thương da và mô tả triệu chứng bằng văn bản.
+\textbf{Lĩnh vực nghiên cứu:} Ứng dụng công nghệ thông tin và trí tuệ nhân tạo trong quản lý và hỗ trợ chẩn đoán y tế, cụ thể là xây dựng hệ thống quản lý phòng khám da liễu với tính năng hỗ trợ chẩn đoán thông qua ảnh tổn thương da và mô tả triệu chứng.
 
-\textbf{Cơ sở dữ liệu:} Bộ dữ liệu HAM10000 gồm 10,015 ảnh nội soi da thuộc 7 lớp bệnh:
+\textbf{Cơ sở dữ liệu:} Dữ liệu bệnh nhân, lịch hẹn, hồ sơ bệnh án của phòng khám kết hợp với bộ dữ liệu ảnh HAM10000 gồm 10,015 ảnh nội soi da thuộc 7 lớp bệnh:
 \begin{itemize}
     \item AKIEC (Actinic Keratosis) -- Tiền ung thư / ác tính
     \item BCC (Basal Cell Carcinoma) -- Ác tính
@@ -39,16 +37,16 @@
 \section{Mục đích}
 
 \begin{itemize}
-    \item Xây dựng một hệ thống thông minh có khả năng tiếp nhận ảnh tổn thương da và/hoặc mô tả triệu chứng từ người dùng, từ đó đưa ra chẩn đoán bệnh da liễu kèm giải thích chi tiết.
-    \item Tích hợp ba phương pháp bổ trợ lẫn nhau:
+    \item Xây dựng hệ thống quản lý phòng khám da liễu toàn diện, bao gồm các chức năng: quản lý bệnh nhân, quản lý lịch hẹn, hồ sơ bệnh án điện tử, quản lý thuốc và điều trị, thanh toán và báo cáo thống kê.
+    \item Tích hợp chatbot thông minh hỗ trợ chẩn đoán bệnh da liễu với khả năng tiếp nhận ảnh tổn thương da và mô tả triệu chứng từ người dùng, từ đó đưa ra kết quả chẩn đoán kèm giải thích chi tiết.
+    \item Ứng dụng ba phương pháp AI bổ trợ lẫn nhau trong chatbot:
     \begin{enumerate}
         \item Mô hình CNN + Transformer để phân loại ảnh tổn thương da.
         \item Đồ thị tri thức (Knowledge Graph) để suy luận dựa trên quan hệ giữa bệnh --- triệu chứng --- yếu tố nguy cơ --- phương pháp điều trị.
         \item Truy xuất vector (FAISS + RAG) để tra cứu thông tin y khoa từ cơ sở tri thức đã xây dựng.
     \end{enumerate}
-    \item Xây dựng hệ thống có khả năng \textbf{giải thích} kết quả chẩn đoán (Explainable AI), giúp người dùng hiểu rõ căn cứ mà hệ thống dựa vào để đưa ra nhận định.
-    \item Tạo nền tảng có thể mở rộng từ 7 bệnh (HAM10000) lên hàng trăm bệnh da liễu trong tương lai.
-    \item Làm cơ sở cho các nghiên cứu tiếp theo về tích hợp đa phương thức (Multi-modal Fusion) trong lĩnh vực chẩn đoán y tế tự động.
+    \item Hỗ trợ bác sĩ trong quá trình chẩn đoán thông qua hệ thống có khả năng \textbf{giải thích} kết quả (Explainable AI), giúp đưa ra quyết định lâm sàng chính xác hơn.
+    \item Số hóa quy trình nghiệp vụ phòng khám, giảm thiểu thủ công giấy tờ, nâng cao hiệu quả quản lý và chất lượng dịch vụ khám chữa bệnh.
 \end{itemize}
 
 \section{Nội dung thực hiện}
