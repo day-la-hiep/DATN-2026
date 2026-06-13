@@ -97,24 +97,26 @@ Nội dung được chia làm ba module chính: Core, Deep Learning và Chatbot.
 
 \subsubsection{Phân loại ảnh tổn thương da}
 \begin{itemize}
-    \item Tiền xử lý dữ liệu ảnh HAM10000 (10,015 ảnh, 7 lớp bệnh).
-    \item Huấn luyện và đánh giá các kiến trúc: CNN, CNN+LSTM, CNN+Transformer, CNN+Transformer+Attention.
-    \item Lựa chọn mô hình tốt nhất (CNN+Transformer: Accuracy 75.8\%, Precision 60.6\%, Recall 77.8\%, F1 64.4\%).
-    \item Tối ưu hóa và đánh giá mô hình trên tập test.
+    \item Xây dựng pipeline tiền xử lý ảnh da liễu tổng quát (cân bằng sáng, chuẩn hóa kích thước, augmentation, loại bỏ nhiễu như lông/tóc/bọt khí).
+    \item Huấn luyện và đánh giá các kiến trúc học sâu đa dạng: CNN (ResNet, EfficientNet), kết hợp chuỗi (CNN+LSTM), kết hợp cơ chế chú ý (CNN+Transformer, CNN+Transformer+Attention).
+    \item Lựa chọn mô hình có độ chính xác cao nhất làm backbone cho hệ thống.
+    \item Thiết kế kiến trúc mở rộng được: cho phép thêm lớp bệnh mới mà không cần huấn luyện lại toàn bộ (transfer learning, fine-tuning, incremental learning).
+    \item Tối ưu hóa mô hình và đánh giá trên nhiều tập dữ liệu khác nhau.
 \end{itemize}
 
 \subsubsection{Xây dựng hệ thống truy xuất tăng cường (RAG)}
 \begin{itemize}
-    \item Nhúng văn bản hồ sơ bệnh bằng Sentence Transformer (\texttt{all-MiniLM-L6-v2}, 384 chiều).
-    \item Xây dựng chỉ mục vector FAISS (IndexFlatL2 / IndexFlatIP) với 39 chunk.
-    \item Tích hợp truy xuất thông tin y khoa liên quan đến truy vấn người dùng.
+    \item Xây dựng hệ thống nhúng văn bản tổng quát từ hồ sơ bệnh da liễu bằng các mô hình Sentence Transformer (vd: \texttt{all-MiniLM-L6-v2}) hỗ trợ đa ngôn ngữ.
+    \item Thiết kế chỉ mục vector lai (FAISS) kết hợp tìm kiếm chính xác (IndexFlatL2/IP) và tìm kiếm gần đúng (IVF, HNSW) để tối ưu tốc độ khi mở rộng lên hàng nghìn bệnh.
+    \item Tích hợp cơ chế truy xuất thông tin y khoa từ nhiều nguồn (hồ sơ bệnh, guideline, tài liệu tham khảo) phục vụ suy luận lâm sàng.
 \end{itemize}
 
 \subsubsection{Semantic Feature Retrieval}
 \begin{itemize}
-    \item Xây dựng chỉ mục vector cho feature catalog (18+ đặc điểm).
-    \item Sử dụng Sentence Transformer + FAISS (IndexFlatIP, threshold 0.45) để tìm đặc điểm theo ngữ nghĩa.
-    \item Thay thế và bổ sung cho phương pháp rule-based hiện tại.
+    \item Xây dựng feature catalog mở rộng với các đặc điểm da liễu (hình thái tổn thương, màu sắc, kích thước, vị trí, tiến triển) được ánh xạ đa ngữ nghĩa.
+    \item Sử dụng Sentence Transformer + FAISS với threshold động để tìm đặc điểm theo ngữ nghĩa, hỗ trợ đa dạng cách diễn đạt của người dùng.
+    \item Kết hợp semantic retrieval với rule-based để tăng độ chính xác và bao phủ.
+    \item Có khả năng mở rộng feature catalog mà không cần can thiệp thủ công vào logic ánh xạ.
 \end{itemize}
 
 \subsection{Module Chatbot (Hỗ trợ chẩn đoán và Tương tác)}
@@ -126,21 +128,196 @@ Nội dung được chia làm ba module chính: Core, Deep Learning và Chatbot.
     \item Xây dựng feature catalog gồm 18+ đặc điểm triệu chứng, mỗi đặc điểm được ánh xạ đến nhiều cách diễn đạt khác nhau.
 \end{itemize}
 
-\subsubsection{Xây dựng đồ thị tri thức (Knowledge Graph)}
+\subsubsection{Thiết kế Clinical Reasoning Knowledge Graph (CRKG)}
+
+Không dùng knowledge graph đơn thuần (A liên quan B) mà thiết kế graph hỗ trợ suy luận lâm sàng với 6 lớp:
+
 \begin{itemize}
-    \item Định nghĩa 7 loại thực thể: Disease, Symptom, VisualFeature, RiskFactor, Cause, DiagnosticFeature, Treatment, Prognosis.
-    \item Định nghĩa 8 loại quan hệ có trọng số (HAS\_SYMPTOM, HAS\_VISUAL\_FEATURE, HAS\_RISK, CAUSED\_BY, DIAGNOSED\_BY, TREATED\_BY, HAS\_PROGNOSIS).
-    \item Tự động sinh 159 quan hệ từ hồ sơ bệnh.
-    \item Xây dựng Graph Reasoning Engine tính điểm bệnh dựa trên đặc điểm khớp được và trọng số quan hệ.
+    \item \textbf{Ontology layer:} Bệnh, triệu chứng, vị trí, thuốc, yếu tố nguy cơ.
+    \item \textbf{Diagnostic reasoning layer:} Dấu hiệu ủng hộ bệnh nào, bệnh cần phân biệt.
+    \item \textbf{Safety layer:} Red flag, khi nào phải đi khám, chống chỉ định.
+    \item \textbf{Conversation layer:} Câu hỏi cần hỏi thêm trước khi tư vấn.
+    \item \textbf{Evidence layer:} Nguồn y khoa, guideline, mức độ tin cậy.
+    \item \textbf{Personalization layer:} Tuổi, giới, thai kỳ, dị ứng, bệnh nền, thuốc đang dùng.
 \end{itemize}
+
+\textbf{Các thực thể mở rộng:}
+\begin{itemize}
+    \item Disease, Symptom, VisualFeature, BodyArea, Severity, SeverityRule
+    \item RiskFactor, Trigger, Duration, MedicalHistory, Medication
+    \item Treatment, Contraindication, RedFlag, ReferralRule
+    \item Question (câu hỏi cần hỏi thêm), Evidence (nguồn y khoa)
+    \item PatientContext (ngữ cảnh bệnh nhân)
+\end{itemize}
+
+\textbf{Các quan hệ mở rộng:}
+\begin{itemize}
+    \item Disease ── typicalSymptom ──► Symptom (có trọng số)
+    \item Disease ── commonLocation ──► BodyArea
+    \item Disease ── severityRule ──► SeverityRule (mild / moderate / severe)
+    \item Disease ── firstLineTreatment ──► Treatment
+    \item Disease ── contraindicatedTreatment ──► Contraindication
+    \item Disease ── differentialDiagnosis ──► Disease (chẩn đoán phân biệt)
+    \item Disease ── redFlag ──► RedFlag
+    \item Disease ── requiresReferral ──► ReferralRule (ngưỡng chuyển bác sĩ)
+    \item Disease ── askMore ──► Question (câu hỏi cần hỏi thêm)
+    \item PatientContext ── hasSymptom ──► Symptom
+    \item PatientContext ── hasLocation ──► BodyArea
+    \item PatientContext ── hasDuration ──► Duration
+    \item PatientContext ── hasTrigger ──► Trigger
+    \item PatientContext ── hasHistory ──► MedicalHistory
+    \item PatientContext ── usesMedication ──► Medication
+\end{itemize}
+
+\textbf{Metadata trên mỗi cạnh:}
+\begin{itemize}
+    \item relation, confidence (0--1), evidence\_level (guideline / expert / study)
+    \item condition (điều kiện kích hoạt), source (nguồn y khoa), last\_reviewed
+\end{itemize}
+
+\textbf{Ví dụ:}
+\begin{verbatim}
+Acne
+  ├─ typicalSymptom: comedone, papule, pustule
+  ├─ commonLocation: face, chest, back
+  ├─ severityRule: mild (comedone + few inflammatory)
+  │                severe (painful nodules OR scarring)
+  ├─ firstLineTreatment: benzoyl peroxide, topical retinoid
+  ├─ contraindicatedTreatment: retinoid (if pregnant)
+  └─ askMore: duration? painful? scarring? pregnancy? medication?
+\end{verbatim}
+
+\subsubsection{LLM-assisted Knowledge Graph Construction}
+
+Xây dựng CRKG thủ công cho hàng trăm bệnh là không khả thi. Giải pháp: dùng LLM hỗ trợ chuyên gia (human-in-the-loop) để tự động hóa một phần quy trình làm giàu knowledge graph.
+
+\textbf{Quy trình đề xuất:}
+
+\begin{enumerate}
+    \item \textbf{Seed schema:} Chuyên gia định nghĩa khung ontology (entity types, relation types, ràng buộc).
+    \item \textbf{LLM suggestion:} Với mỗi bệnh mới, LLM được prompt với schema + tài liệu y khoa (guideline, research paper) để đề xuất:
+    \begin{itemize}
+        \item Các triệu chứng đặc trưng, vị trí thường gặp.
+        \item Mức độ nghiêm trọng (severity rule).
+        \item Chẩn đoán phân biệt (differential diagnosis).
+        \item Phương pháp điều trị, chống chỉ định.
+        \item Red flag, ngưỡng chuyển bác sĩ.
+        \item Câu hỏi cần hỏi thêm.
+        \item Nguồn y khoa kèm mức độ tin cậy.
+    \end{itemize}
+    \item \textbf{Expert review:} Chuyên gia da liễu xem xét, chỉnh sửa, phê duyệt hoặc từ chối từng đề xuất.
+    \item \textbf{Integration:} Đề xuất được duyệt sẽ tự động sinh thành node + relation + metadata trong CRKG.
+\end{enumerate}
+
+\textbf{Lợi ích:}
+\begin{itemize}
+    \item Giảm thời gian xây dựng KG từ ngày xuống giờ.
+    \item Tận dụng khả năng tổng hợp tri thức của LLM từ nhiều nguồn.
+    \item Chuyên gia chỉ đóng vai trò kiểm định, không cần nhập liệu thủ công.
+    \item Dễ dàng mở rộng từ 7 bệnh lên hàng trăm bệnh.
+    \item Mỗi cạnh đều có source + evidence\_level truy xuất được.
+\end{itemize}
+
+\textbf{Ví dụ prompt:}
+\begin{verbatim}
+System: Bạn là chuyên gia da liễu. Dựa vào tài liệu y khoa,
+hãy đề xuất cấu trúc CRKG cho bệnh [Tên bệnh] theo schema:
+- typicalSymptom (kèm trọng số)
+- commonLocation
+- severityRule (mild / moderate / severe)
+- firstLineTreatment
+- contraindicatedTreatment (kèm điều kiện)
+- differentialDiagnosis
+- redFlag
+- askMore
+Kèm source và evidence_level cho mỗi thông tin.
+\end{verbatim}
+
+\subsubsection{Tích hợp xét nghiệm và tiền sử bệnh án vào suy luận}
+
+Chatbot không chỉ dựa vào triệu chứng người dùng nhập mà cần khai thác dữ liệu từ hồ sơ bệnh án điện tử (Core module) để suy luận chính xác hơn.
+
+\textbf{Các thực thể bổ sung trong CRKG:}
+\begin{itemize}
+    \item \textbf{LabTest:} Xét nghiệm da liễu (soi tươi, sinh thiết, test dị ứng, KOH, Wood's lamp).
+    \item \textbf{TestResult:} Kết quả xét nghiệm cụ thể (dương tính/âm tính/chỉ số).
+    \item \textbf{MedicalHistory:} Tiền sử bệnh nhân (bệnh nền, dị ứng, tiền sử gia đình).
+    \item \textbf{PastTreatment:} Phác đồ đã điều trị trước đây và đáp ứng.
+\end{itemize}
+
+\textbf{Các quan hệ bổ sung:}
+\begin{itemize}
+    \item Disease ── confirmedBy ──► LabTest (bệnh được xác nhận bằng xét nghiệm nào)
+    \item Disease ── ruledOutBy ──► LabTest (xét nghiệm nào giúp loại trừ bệnh)
+    \item LabTest ── hasResult ──► TestResult
+    \item PatientContext ── hasPastTreatment ──► PastTreatment
+    \item PastTreatment ── response ──► TreatmentResponse (improved / noChange / worsened)
+    \item Disease ── associatedWith ──► MedicalHistory (bệnh nền liên quan, VD: psoriasis ↔ tiểu đường)
+\end{itemize}
+
+\textbf{Luồng suy luận mở rộng:}
+\begin{enumerate}
+    \item User nhập triệu chứng, chatbot hỏi thêm như CRKG flow cơ bản.
+    \item Hệ thống tự động truy xuất hồ sơ bệnh án của bệnh nhân từ Core module:
+    \begin{itemize}
+        \item Tiền sử bệnh (đã từng khám da liễu? chẩn đoán gì?).
+        \item Kết quả xét nghiệm trước (nếu có).
+        \item Thuốc đang dùng, phác đồ trước và đáp ứng.
+        \item Dị ứng, bệnh nền, tiền sử gia đình.
+    \end{itemize}
+    \item Kết hợp thông tin từ hồ sơ vào CRKG reasoning:
+    \begin{itemize}
+        \item Nếu xét nghiệm KOH(+) → loại trừ eczema, ưu tiên fungal.
+        \item Nếu biopsy cho thấy atypical cells → ưu tiên malignancy.
+        \item Nếu trị retinoid trước không đáp ứng → đề xuất phương án khác.
+        \item Nếu bệnh nhân có tiểu đường → tránh corticosteroid kéo dài.
+    \end{itemize}
+    \item Cập nhật điểm số disease candidates dựa trên cả dữ liệu quá khứ.
+\end{enumerate}
+
+\textbf{Ví dụ:}
+\begin{verbatim}
+User: "da em bị đỏ, ngứa ở tay"
+Hồ sơ bệnh nhân:
+  - 2 tháng trước: chẩn đoán eczema, điều trị steroid không đáp ứng
+  - Xét nghiệm KOH: dương tính
+  - Tiền sử: không dị ứng, không bệnh nền
+⟶ Ưu tiên: nhiễm nấm (fungal infection)
+⟶ Giảm điểm: eczema (không đáp ứng steroid)
+⟶ Đề xuất: khám lại + soi tươi để xác định chủng nấm
+\end{verbatim}
+
+Cơ chế suy luận lâm sàng theo luồng:
+
+\begin{enumerate}
+    \item \textbf{Extract entities:} Trích xuất triệu chứng, vị trí, thời gian từ văn bản người dùng.
+    \item \textbf{Map vào CRKG:} Ánh xạ thực thể vào graph, tìm disease candidates.
+    \item \textbf{Score candidates:} Tính điểm dựa trên số triệu chứng khớp, trọng số quan hệ, mức độ đặc hiệu.
+    \item \textbf{Ask more:} Nếu thiếu dữ kiện, sinh câu hỏi phân biệt (differential diagnosis) để loại trừ ứng viên.
+    \item \textbf{Check red flags:} Kiểm tra dấu hiệu nguy hiểm (sốt, sưng đau nhanh, chảy mủ, lan toàn thân).
+    \item \textbf{Check contraindications:} Đối chiếu với tiền sử, thuốc đang dùng, thai kỳ.
+    \item \textbf{Rank lại:} Sau khi có thêm dữ kiện, xếp hạng lại disease candidates.
+    \item \textbf{Đưa tư vấn:} Kèm giải thích, dẫn nguồn y khoa, khuyến nghị đi khám nếu vượt ngưỡng.
+\end{enumerate}
+
+\textbf{Ví dụ:} User nhập ``da em bị mẩn đỏ ngứa ở tay''
+\begin{verbatim}
+Triệu chứng: đỏ + ngứa
+Vị trí: tay
+⟶ Candidates: eczema, contact dermatitis, psoriasis, fungal
+⟶ Thiếu: duration? scaling? chemical exposure? spreading?
+⟶ Red flag check: sốt? sưng? mủ? lan nhanh?
+⟶ Sau khi hỏi đủ → xếp hạng → tư vấn an toàn
+\end{verbatim}
 
 \subsubsection{Xây dựng Fusion Layer}
 \begin{itemize}
-    \item Thiết kế công thức kết hợp có trọng số ba nguồn thông tin:
+    \item Thiết kế công thức kết hợp có trọng số bốn nguồn thông tin:
     \[
-    \text{Score}(d) = w_1 \cdot P_{\text{cnn}}(d) + w_2 \cdot P_{\text{graph}}(d) + w_3 \cdot P_{\text{rag}}(d)
+    \text{Score}(d) = w_1 \cdot P_{\text{cnn}}(d) + w_2 \cdot P_{\text{graph}}(d) + w_3 \cdot P_{\text{rag}}(d) + w_4 \cdot P_{\text{history}}(d)
     \]
-    với điều kiện \(w_1 + w_2 + w_3 = 1\).
+    với điều kiện \(w_1 + w_2 + w_3 + w_4 = 1\).
+    \item \(P_{\text{history}}(d)\) là điểm suy luận từ tiền sử bệnh án, kết quả xét nghiệm và hồ sơ điều trị trước đó của bệnh nhân.
     \item Xây dựng cơ chế fusion đa phương thức (Multi-modal Fusion).
 \end{itemize}
 
