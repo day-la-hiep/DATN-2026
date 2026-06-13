@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dermatology Chatbot - Trợ Lý Chẩn Đoán Da Liễu</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Diagnosis & Details -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-lucide="shield-alert" class="icon-logo"></i>
+                    <h2>Skin Diagnostics</h2>
+                </div>
+                <span class="badge-version">v1.2</span>
+            </div>
+
+            <!-- Panel: Diagnosis Result -->
+            <div class="panel-section diagnosis-panel" id="diagnosisPanel">
+                <div class="panel-title">
+                    <i data-lucide="activity"></i>
+                    <h3>Chẩn Đoán Dự Kiến</h3>
+                </div>
+                <div class="no-data-msg" id="noDiagnosisData">
+                    <i data-lucide="clipboard-list"></i>
+                    <p>Nhập triệu chứng hoặc tải ảnh lên để bắt đầu phân tích</p>
+                </div>
+                <div class="diagnosis-result hidden" id="diagnosisResult">
+                    <div class="disease-main">
+                        <span class="severity-badge" id="diseaseSeverity">High</span>
+                        <h1 id="diseaseName">Melanoma</h1>
+                        <p class="disease-id-sub">Mã bệnh lý: <span id="diseaseId">MEL</span></p>
+                    </div>
+
+                    <!-- Confidence Meter -->
+                    <div class="confidence-section">
+                        <div class="meter-label">
+                            <span>Độ tin cậy tổng hợp (Fusion Score)</span>
+                            <strong id="fusionScore">85%</strong>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="fusionScoreFill" style="width: 85%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Details Accordions/Cards -->
+                    <div class="details-cards">
+                        <div class="detail-card">
+                            <div class="card-title">
+                                <i data-lucide="check-circle-2" class="color-success"></i>
+                                <h4>Đặc điểm lâm sàng khớp</h4>
+                            </div>
+                            <ul class="tag-list" id="matchedFeaturesList">
+                                <li>asymmetry</li>
+                                <li>color_variation</li>
+                            </ul>
+                        </div>
+
+                        <div class="detail-card">
+                            <div class="card-title">
+                                <i data-lucide="map-pin" class="color-info"></i>
+                                <h4>Vị trí thường gặp</h4>
+                            </div>
+                            <ul class="tag-list bg-transparent" id="locationsList">
+                                <li>Face</li>
+                                <li>Scalp</li>
+                            </ul>
+                        </div>
+
+                        <div class="detail-card">
+                            <div class="card-title">
+                                <i data-lucide="shield-check" class="color-warning"></i>
+                                <h4>Hướng điều trị đầu tay</h4>
+                            </div>
+                            <ul class="bullet-list" id="treatmentList">
+                                <li>Cryotherapy</li>
+                            </ul>
+                        </div>
+
+                        <div class="detail-card alert-card">
+                            <div class="card-title">
+                                <i data-lucide="alert-triangle" class="color-danger"></i>
+                                <h4>Biến chứng có thể gặp</h4>
+                            </div>
+                            <ul class="bullet-list text-danger" id="complicationsList">
+                                <li>Progression to Squamous Cell Carcinoma</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel: Score breakdown for all 7 diseases -->
+            <div class="panel-section breakdown-panel">
+                <div class="panel-title">
+                    <i data-lucide="bar-chart-3"></i>
+                    <h3>Phân Tích Xác Suất</h3>
+                </div>
+                <div class="breakdown-list" id="breakdownList">
+                    <!-- Progress bars for the 7 HAM10000 classes -->
+                    <div class="breakdown-item">
+                        <div class="item-info"><span>MEL</span><strong>0%</strong></div>
+                        <div class="mini-progress"><div class="mini-fill" style="width: 0%"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info"><span>NV</span><strong>0%</strong></div>
+                        <div class="mini-progress"><div class="mini-fill" style="width: 0%"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info"><span>BCC</span><strong>0%</strong></div>
+                        <div class="mini-progress"><div class="mini-fill" style="width: 0%"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info"><span>AKIEC</span><strong>0%</strong></div>
+                        <div class="mini-progress"><div class="mini-fill" style="width: 0%"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info"><span>BKL</span><strong>0%</strong></div>
+                        <div class="mini-progress"><div class="mini-fill" style="width: 0%"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info"><span>DF</span><strong>0%</strong></div>
+                        <div class="mini-progress"><div class="mini-fill" style="width: 0%"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info"><span>VASC</span><strong>0%</strong></div>
+                        <div class="mini-progress"><div class="mini-fill" style="width: 0%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Header bar -->
+            <header class="chat-header">
+                <div class="header-info">
+                    <h1>Trợ Lý Da Liễu AI</h1>
+                    <div class="status-indicator">
+                        <span class="dot pulse green" id="statusDot"></span>
+                        <span id="statusText">Kết nối máy chủ...</span>
+                    </div>
+                </div>
+
+                <div class="settings-box">
+                    <button class="btn-icon" id="settingsToggle" title="Cài đặt API Key">
+                        <i data-lucide="key"></i>
+                    </button>
+                    <div class="settings-dropdown hidden" id="settingsDropdown">
+                        <h4>Cấu hình Gemini API</h4>
+                        <p class="settings-desc">API Key được lưu trữ cục bộ trong trình duyệt của bạn (localStorage) và gửi trực tiếp qua header bảo mật.</p>
+                        <div class="input-group">
+                            <input type="password" id="geminiApiKey" placeholder="Nhập Gemini API Key của bạn...">
+                            <button class="btn btn-save" id="saveApiKey">Lưu lại</button>
+                        </div>
+                        <div class="api-key-status" id="apiKeyStatus"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Chat messages feed -->
+            <div class="chat-feed" id="chatFeed">
+                <!-- Welcome Message -->
+                <div class="message system-msg">
+                    <div class="avatar"><i data-lucide="bot"></i></div>
+                    <div class="msg-bubble">
+                        <p>Xin chào! Tôi là Trợ Lý Da Liễu Kỹ Thuật Số kết hợp <strong>Knowledge Graph</strong>, <strong>RAG y khoa</strong> và <strong>LLM Gemini</strong>.</p>
+                        <p>Bạn có thể:</p>
+                        <ul>
+                            <li>Miêu tả chi tiết các triệu chứng trên da của bạn (ví dụ: vết ban đỏ ngứa, nốt ruồi bất đối xứng thay đổi màu sắc,...).</li>
+                            <li>Tải ảnh vết tổn thương da lên để phân tích bằng mô hình mạng nơ-ron tích chập (CNN).</li>
+                        </ul>
+                        <span class="warning-alert-small">
+                            ⚠️ <strong>Lưu ý quan trọng:</strong> Mọi chẩn đoán từ chatbot này đều mang tính chất tham khảo giáo dục. Vui lòng đến cơ sở y tế chuyên khoa da liễu để chẩn đoán chính xác.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image preview bar -->
+            <div class="image-preview-container hidden" id="imagePreviewContainer">
+                <div class="preview-wrapper">
+                    <img id="imagePreview" src="" alt="Lesion Preview">
+                    <button class="btn-close-preview" id="clearImagePreview">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="preview-info">
+                    <span id="previewFilename">image.jpg</span>
+                    <span class="preview-hint">Ảnh sẽ được gửi kèm câu hỏi để phân tích CNN</span>
+                </div>
+            </div>
+
+            <!-- Input area -->
+            <footer class="chat-input-area">
+                <form class="input-form" id="inputForm" onsubmit="event.preventDefault();">
+                    <!-- Image Upload Trigger -->
+                    <label class="btn-file-upload" title="Tải ảnh lên (CNN)">
+                        <input type="file" id="imageInput" accept="image/*" class="hidden-input">
+                        <i data-lucide="image"></i>
+                    </label>
+
+                    <!-- Text input -->
+                    <input type="text" id="userInput" placeholder="Nhập triệu chứng của bạn ở đây..." autocomplete="off">
+
+                    <!-- Send button -->
+                    <button type="submit" class="btn-send" id="sendBtn" title="Gửi tin nhắn">
+                        <i data-lucide="send"></i>
+                    </button>
+                </form>
+            </footer>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

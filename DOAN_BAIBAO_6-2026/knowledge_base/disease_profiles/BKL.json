@@ -11,26 +11,22 @@
     "category": "Benign Lesions",
     "severity": "Low"
   },
-
   "overview": {
     "definition": "A group of benign epidermal lesions commonly seen in adults.",
     "summary": "Benign keratosis-like lesions are non-cancerous skin growths that may resemble melanoma or other pigmented lesions."
   },
-
   "etiology": {
     "causes": [
       "Age-related skin changes",
       "Sun exposure",
       "Genetic predisposition"
     ],
-
     "risk_factors": [
       "Advanced age",
       "Chronic UV exposure",
       "Family history"
     ]
   },
-
   "clinical_features": {
     "visual_characteristics": {
       "colors": [
@@ -39,34 +35,28 @@
         "Dark Brown",
         "Black"
       ],
-
       "shapes": [
         "Round",
         "Oval"
       ],
-
       "borders": [
         "Well Defined"
       ],
-
       "surface_features": [
         "Waxy",
         "Rough",
         "Scaly",
         "Stuck-on Appearance"
       ],
-
       "elevation": [
         "Flat",
         "Raised"
       ]
     },
-
     "symptoms": [
       "Usually asymptomatic",
       "Occasional itching"
     ],
-
     "common_locations": [
       "Face",
       "Chest",
@@ -74,48 +64,42 @@
       "Shoulders"
     ]
   },
-
   "diagnosis": {
     "clinical_examination": [
       "Visual inspection"
     ],
-
     "dermoscopy_features": [
       "Milia-like cysts",
       "Comedo-like openings",
       "Sharp borders"
     ],
-
     "histopathology": [
       "Benign keratinocyte proliferation"
+    ],
+    "differential_diagnosis": [
+      {
+        "disease": "Melanoma",
+        "distinguishing_features": [
+          "More uniform appearance",
+          "Stuck-on surface",
+          "Less asymmetry"
+        ]
+      }
     ]
   },
-
-  "differential_diagnosis": [
-    {
-      "disease": "Melanoma",
-      "distinguishing_features": [
-        "More uniform appearance",
-        "Stuck-on surface",
-        "Less asymmetry"
-      ]
-    }
-  ],
-
   "treatment": {
     "first_line": [
       "Observation"
     ],
-
     "second_line": [
       "Cryotherapy",
       "Curettage",
       "Laser removal"
     ]
   },
-
   "prognosis": {
     "overall_outlook": "Excellent",
     "recurrence_risk": "Low"
-  }
+  },
+  "complications": []
 }

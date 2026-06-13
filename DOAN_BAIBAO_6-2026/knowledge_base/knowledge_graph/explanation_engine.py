@@ -68,24 +68,21 @@ class ExplanationEngine:
                 item["feature"]
             )
 
+        metadata = disease.get("metadata", {})
+        etiology = disease.get("etiology", {})
+        clinical_features = disease.get("clinical_features", {})
+        treatment = disease.get("treatment", {})
+
         return {
 
             "disease_id":
                 disease_id,
 
             "disease_name":
-                disease[
-                    "metadata"
-                ][
-                    "disease_name"
-                ],
+                metadata.get("disease_name", disease_id),
 
             "severity":
-                disease[
-                    "metadata"
-                ][
-                    "severity"
-                ],
+                metadata.get("severity", "Unknown"),
 
             "score":
                 round(
@@ -97,37 +94,19 @@ class ExplanationEngine:
                 matched_features,
 
             "risk_factors":
-                disease[
-                    "etiology"
-                ][
-                    "risk_factors"
-                ],
+                etiology.get("risk_factors", []),
 
             "symptoms":
-                disease[
-                    "clinical_features"
-                ][
-                    "symptoms"
-                ],
+                clinical_features.get("symptoms", []),
 
             "common_locations":
-                disease[
-                    "clinical_features"
-                ][
-                    "common_locations"
-                ],
+                clinical_features.get("common_locations", []),
 
             "first_line_treatment":
-                disease[
-                    "treatment"
-                ][
-                    "first_line"
-                ],
+                treatment.get("first_line", []),
 
             "complications":
-                disease[
-                    "complications"
-                ]
+                disease.get("complications", [])
         }
 
     def display(

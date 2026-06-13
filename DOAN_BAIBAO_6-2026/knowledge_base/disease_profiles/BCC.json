@@ -5,17 +5,14 @@
     "category": "Malignant and Precancerous Lesions",
     "severity": "High"
   },
-
   "overview": {
     "definition": "The most common type of skin cancer arising from basal cells.",
     "summary": "BCC usually develops in sun-exposed skin and grows slowly."
   },
-
   "etiology": {
     "causes": [
       "Ultraviolet radiation"
     ],
-
     "risk_factors": [
       "Fair skin",
       "Advanced age",
@@ -24,67 +21,57 @@
       "Family history"
     ]
   },
-
   "clinical_features": {
     "visual_characteristics": {
       "colors": [
         "Pink",
         "Skin-colored"
       ],
-
       "surface_features": [
         "Shiny",
         "Pearly"
       ],
-
       "elevation": [
         "Nodular",
         "Raised"
       ]
     },
-
     "common_locations": [
       "Face",
       "Neck",
       "Scalp",
       "Ears"
     ],
-
     "symptoms": [
       "Non-healing sore",
       "Bleeding",
       "Ulceration"
     ]
   },
-
   "diagnosis": {
     "clinical_examination": [
       "Skin examination"
     ],
-
     "dermoscopy_features": [
       "Telangiectasia",
       "Pearly borders"
     ],
-
     "histopathology": [
       "Basaloid cell nests"
     ]
   },
-
   "treatment": {
     "first_line": [
       "Surgical excision",
       "Mohs surgery"
     ],
-
     "second_line": [
       "Radiotherapy",
       "Topical therapy"
     ]
   },
-
   "prognosis": {
     "overall_outlook": "Excellent when detected early."
-  }
+  },
+  "complications": []
 }

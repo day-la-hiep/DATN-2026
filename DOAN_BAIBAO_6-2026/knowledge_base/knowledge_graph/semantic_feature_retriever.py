@@ -179,6 +179,6 @@ class SemanticFeatureRetriever:
                 f"{float(score):.3f}"
             )
             
-retriever = SemanticFeatureRetriever()
-
-retriever.build_index()
+if __name__ == "__main__":
+    retriever = SemanticFeatureRetriever()
+    retriever.build_index()

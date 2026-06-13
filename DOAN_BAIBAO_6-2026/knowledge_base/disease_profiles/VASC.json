@@ -11,25 +11,21 @@
     "category": "Vascular Lesions",
     "severity": "Medium"
   },
-
   "overview": {
     "definition": "A group of lesions originating from blood vessels.",
     "summary": "Vascular lesions are generally benign abnormalities involving blood vessels and often appear red, purple, or blue."
   },
-
   "etiology": {
     "causes": [
       "Vascular proliferation",
       "Congenital factors",
       "Age-related vascular changes"
     ],
-
     "risk_factors": [
       "Increasing age",
       "Genetic predisposition"
     ]
   },
-
   "clinical_features": {
     "visual_characteristics": {
       "colors": [
@@ -38,31 +34,25 @@
         "Purple",
         "Blue"
       ],
-
       "shapes": [
         "Round",
         "Oval"
       ],
-
       "borders": [
         "Well Defined"
       ],
-
       "surface_features": [
         "Smooth"
       ],
-
       "elevation": [
         "Flat",
         "Raised"
       ]
     },
-
     "symptoms": [
       "Usually asymptomatic",
       "Occasional bleeding if traumatized"
     ],
-
     "common_locations": [
       "Trunk",
       "Arms",
@@ -70,47 +60,41 @@
       "Face"
     ]
   },
-
   "diagnosis": {
     "clinical_examination": [
       "Visual inspection"
     ],
-
     "dermoscopy_features": [
       "Red lacunae",
       "Blue lacunae",
       "Vascular structures"
     ],
-
     "histopathology": [
       "Dilated vascular channels"
+    ],
+    "differential_diagnosis": [
+      {
+        "disease": "Melanoma",
+        "distinguishing_features": [
+          "Predominantly vascular coloration",
+          "Characteristic vascular patterns"
+        ]
+      }
     ]
   },
-
-  "differential_diagnosis": [
-    {
-      "disease": "Melanoma",
-      "distinguishing_features": [
-        "Predominantly vascular coloration",
-        "Characteristic vascular patterns"
-      ]
-    }
-  ],
-
   "treatment": {
     "first_line": [
       "Observation"
     ],
-
     "second_line": [
       "Laser therapy",
       "Electrocautery",
       "Surgical removal"
     ]
   },
-
   "prognosis": {
     "overall_outlook": "Excellent",
     "recurrence_risk": "Low"
-  }
+  },
+  "complications": []
 }

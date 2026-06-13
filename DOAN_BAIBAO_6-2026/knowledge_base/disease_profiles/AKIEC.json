@@ -9,18 +9,15 @@
     "category": "Malignant and Precancerous Lesions",
     "severity": "High"
   },
-
   "overview": {
     "definition": "A precancerous lesion caused by chronic ultraviolet exposure.",
     "summary": "Actinic keratosis is a rough, scaly lesion occurring on sun-damaged skin and may progress to squamous cell carcinoma."
   },
-
   "etiology": {
     "causes": [
       "Chronic UV exposure",
       "Sun damage"
     ],
-
     "risk_factors": [
       "Fair skin",
       "Advanced age",
@@ -29,7 +26,6 @@
       "Immunosuppression"
     ]
   },
-
   "clinical_features": {
     "visual_characteristics": {
       "colors": [
@@ -37,19 +33,16 @@
         "Red",
         "Brown"
       ],
-
       "surface_features": [
         "Scaly",
         "Rough",
         "Hyperkeratotic"
       ],
-
       "elevation": [
         "Flat",
         "Slightly raised"
       ]
     },
-
     "common_locations": [
       "Face",
       "Scalp",
@@ -58,7 +51,6 @@
       "Forearms",
       "Hands"
     ],
-
     "symptoms": [
       "Itching",
       "Burning",
@@ -66,34 +58,29 @@
       "Crusting"
     ]
   },
-
   "diagnosis": {
     "clinical_examination": [
       "Visual inspection"
     ],
-
     "dermoscopy_features": [
       "Scaly surface",
       "Erythematous background"
     ],
-
     "histopathology": [
       "Atypical keratinocytes"
     ]
   },
-
   "treatment": {
     "first_line": [
       "Cryotherapy"
     ],
-
     "second_line": [
       "Photodynamic therapy",
       "5-Fluorouracil",
       "Imiquimod"
     ]
   },
-
+  "prognosis": {},
   "complications": [
     "Progression to squamous cell carcinoma"
   ]

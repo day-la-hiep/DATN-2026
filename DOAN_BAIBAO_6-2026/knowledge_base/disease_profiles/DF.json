@@ -9,26 +9,22 @@
     "category": "Benign Lesions",
     "severity": "Low"
   },
-
   "overview": {
     "definition": "A benign fibrous skin nodule commonly occurring on the extremities.",
     "summary": "Dermatofibroma is a harmless skin lesion often developing after minor trauma or insect bites."
   },
-
   "etiology": {
     "causes": [
       "Unknown",
       "Minor skin trauma",
       "Insect bites"
     ],
-
     "risk_factors": [
       "Female sex",
       "Young adulthood",
       "Previous skin injury"
     ]
   },
-
   "clinical_features": {
     "visual_characteristics": {
       "colors": [
@@ -36,85 +32,72 @@
         "Red Brown",
         "Pink"
       ],
-
       "shapes": [
         "Round"
       ],
-
       "borders": [
         "Well Defined"
       ],
-
       "surface_features": [
         "Smooth",
         "Firm"
       ],
-
       "elevation": [
         "Raised",
         "Nodular"
       ]
     },
-
     "symptoms": [
       "Usually asymptomatic",
       "Occasional tenderness",
       "Occasional itching"
     ],
-
     "common_locations": [
       "Lower Legs",
       "Thighs",
       "Arms"
     ],
-
     "warning_signs": [
       "Rapid growth",
       "Ulceration",
       "Significant color change"
     ]
   },
-
   "diagnosis": {
     "clinical_examination": [
       "Dimple sign",
       "Skin examination"
     ],
-
     "dermoscopy_features": [
       "Central white scar-like area",
       "Peripheral pigment network"
     ],
-
     "histopathology": [
       "Fibroblast proliferation",
       "Collagen trapping"
+    ],
+    "differential_diagnosis": [
+      {
+        "disease": "Melanoma",
+        "distinguishing_features": [
+          "Dimple sign",
+          "Stable lesion",
+          "Characteristic dermoscopic pattern"
+        ]
+      }
     ]
   },
-
-  "differential_diagnosis": [
-    {
-      "disease": "Melanoma",
-      "distinguishing_features": [
-        "Dimple sign",
-        "Stable lesion",
-        "Characteristic dermoscopic pattern"
-      ]
-    }
-  ],
-
   "treatment": {
     "first_line": [
       "Observation"
     ],
-
     "second_line": [
       "Surgical excision"
     ]
   },
-
   "prognosis": {
     "overall_outlook": "Excellent",
     "recurrence_risk": "Very low"
-  }
+  },
+  "complications": []
 }
