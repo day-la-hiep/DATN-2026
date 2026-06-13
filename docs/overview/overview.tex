@@ -1,0 +1,179 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage{lmodern}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+
+\title{Xác Định Đề Tài, Mục Đích và Nội Dung Thực Hiện}
+\author{Đồ Án Tốt Nghiệp}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Xác định đề tài}
+
+\textbf{Tên đề tài:} Xây dựng hệ thống chatbot hỗ trợ chẩn đoán bệnh da liễu dựa trên kết hợp thị giác máy tính, đồ thị tri thức và truy xuất tăng cường (RAG)
+
+\textbf{Lĩnh vực nghiên cứu:} Trí tuệ nhân tạo ứng dụng trong y tế, cụ thể là hỗ trợ chẩn đoán bệnh da liễu thông qua ảnh tổn thương da và mô tả triệu chứng bằng văn bản.
+
+\textbf{Cơ sở dữ liệu:} Bộ dữ liệu HAM10000 gồm 10,015 ảnh nội soi da thuộc 7 lớp bệnh:
+\begin{itemize}
+    \item AKIEC (Actinic Keratosis) -- Tiền ung thư / ác tính
+    \item BCC (Basal Cell Carcinoma) -- Ác tính
+    \item BKL (Benign Keratosis-like Lesion) -- Lành tính
+    \item DF (Dermatofibroma) -- Lành tính
+    \item MEL (Melanoma) -- Ác tính
+    \item NV (Melanocytic Nevus) -- Lành tính
+    \item VASC (Vascular Lesion) -- Mạch máu
+\end{itemize}
+
+\section{Mục đích}
+
+\begin{itemize}
+    \item Xây dựng một hệ thống thông minh có khả năng tiếp nhận ảnh tổn thương da và/hoặc mô tả triệu chứng từ người dùng, từ đó đưa ra chẩn đoán bệnh da liễu kèm giải thích chi tiết.
+    \item Tích hợp ba phương pháp bổ trợ lẫn nhau:
+    \begin{enumerate}
+        \item Mô hình CNN + Transformer để phân loại ảnh tổn thương da.
+        \item Đồ thị tri thức (Knowledge Graph) để suy luận dựa trên quan hệ giữa bệnh --- triệu chứng --- yếu tố nguy cơ --- phương pháp điều trị.
+        \item Truy xuất vector (FAISS + RAG) để tra cứu thông tin y khoa từ cơ sở tri thức đã xây dựng.
+    \end{enumerate}
+    \item Xây dựng hệ thống có khả năng \textbf{giải thích} kết quả chẩn đoán (Explainable AI), giúp người dùng hiểu rõ căn cứ mà hệ thống dựa vào để đưa ra nhận định.
+    \item Tạo nền tảng có thể mở rộng từ 7 bệnh (HAM10000) lên hàng trăm bệnh da liễu trong tương lai.
+    \item Làm cơ sở cho các nghiên cứu tiếp theo về tích hợp đa phương thức (Multi-modal Fusion) trong lĩnh vực chẩn đoán y tế tự động.
+\end{itemize}
+
+\section{Nội dung thực hiện}
+
+Nội dung được chia làm ba module chính: Core, Deep Learning và Chatbot.
+
+\subsection{Module Core (Chức năng nghiệp vụ phòng khám da liễu)}
+
+\subsubsection{Quản lý bệnh nhân}
+\begin{itemize}
+    \item Tiếp nhận và đăng ký thông tin bệnh nhân (họ tên, ngày sinh, địa chỉ, số điện thoại, tiền sử bệnh).
+    \item Tra cứu thông tin bệnh nhân theo mã số hoặc số điện thoại.
+    \item Cập nhật và chỉnh sửa hồ sơ bệnh nhân.
+\end{itemize}
+
+\subsubsection{Quản lý lịch hẹn}
+\begin{itemize}
+    \item Đặt lịch hẹn khám cho bệnh nhân (chọn bác sĩ, ngày giờ, loại dịch vụ).
+    \item Xem danh sách lịch hẹn trong ngày/tuần/tháng.
+    \item Hủy hoặc dời lịch hẹn khi cần thiết.
+    \item Gửi nhắc nhở lịch hẹn qua SMS/Email.
+\end{itemize}
+
+\subsubsection{Quản lý hồ sơ bệnh án điện tử}
+\begin{itemize}
+    \item Tạo và lưu trữ hồ sơ bệnh án cho mỗi lượt khám.
+    \item Ghi nhận kết quả chẩn đoán từ bác sĩ (bao gồm kết quả từ chatbot hỗ trợ).
+    \item Lưu trữ hình ảnh tổn thương da và kết quả xét nghiệm.
+    \item Theo dõi lịch sử khám chữa bệnh của từng bệnh nhân.
+\end{itemize}
+
+\subsubsection{Quản lý thuốc và điều trị}
+\begin{itemize}
+    \item Danh mục thuốc da liễu (tên thuốc, liều lượng, công dụng, tác dụng phụ).
+    \item Kê đơn thuốc điện tử cho bệnh nhân.
+    \item Theo dõi phác đồ điều trị và tái khám.
+\end{itemize}
+
+\subsubsection{Quản lý thanh toán và báo cáo}
+\begin{itemize}
+    \item Tính phí khám và điều trị.
+    \item Xuất hóa đơn thanh toán.
+    \item Thống kê doanh thu, số lượng bệnh nhân theo ngày/tháng/năm.
+    \item Báo cáo tình hình hoạt động của phòng khám.
+\end{itemize}
+
+\subsection{Module Deep Learning (Học sâu và Truy xuất)}
+
+\subsubsection{Phân loại ảnh tổn thương da}
+\begin{itemize}
+    \item Tiền xử lý dữ liệu ảnh HAM10000 (10,015 ảnh, 7 lớp bệnh).
+    \item Huấn luyện và đánh giá các kiến trúc: CNN, CNN+LSTM, CNN+Transformer, CNN+Transformer+Attention.
+    \item Lựa chọn mô hình tốt nhất (CNN+Transformer: Accuracy 75.8\%, Precision 60.6\%, Recall 77.8\%, F1 64.4\%).
+    \item Tối ưu hóa và đánh giá mô hình trên tập test.
+\end{itemize}
+
+\subsubsection{Xây dựng hệ thống truy xuất tăng cường (RAG)}
+\begin{itemize}
+    \item Nhúng văn bản hồ sơ bệnh bằng Sentence Transformer (\texttt{all-MiniLM-L6-v2}, 384 chiều).
+    \item Xây dựng chỉ mục vector FAISS (IndexFlatL2 / IndexFlatIP) với 39 chunk.
+    \item Tích hợp truy xuất thông tin y khoa liên quan đến truy vấn người dùng.
+\end{itemize}
+
+\subsubsection{Semantic Feature Retrieval}
+\begin{itemize}
+    \item Xây dựng chỉ mục vector cho feature catalog (18+ đặc điểm).
+    \item Sử dụng Sentence Transformer + FAISS (IndexFlatIP, threshold 0.45) để tìm đặc điểm theo ngữ nghĩa.
+    \item Thay thế và bổ sung cho phương pháp rule-based hiện tại.
+\end{itemize}
+
+\subsection{Module Chatbot (Hỗ trợ chẩn đoán và Tương tác)}
+
+\subsubsection{Xây dựng cơ sở tri thức y khoa}
+\begin{itemize}
+    \item Thu thập và chuẩn hóa hồ sơ bệnh học cho 7 bệnh da liễu từ các nguồn uy tín (Cleveland Clinic, Mayo Clinic, DermNet, NHS, NCBI, American Cancer Society).
+    \item Xây dựng hệ thống phân loại (Taxonomy) cho bệnh, triệu chứng (thị giác, vật lý, thời gian, vị trí), yếu tố nguy cơ và phương pháp điều trị.
+    \item Xây dựng feature catalog gồm 18+ đặc điểm triệu chứng, mỗi đặc điểm được ánh xạ đến nhiều cách diễn đạt khác nhau.
+\end{itemize}
+
+\subsubsection{Xây dựng đồ thị tri thức (Knowledge Graph)}
+\begin{itemize}
+    \item Định nghĩa 7 loại thực thể: Disease, Symptom, VisualFeature, RiskFactor, Cause, DiagnosticFeature, Treatment, Prognosis.
+    \item Định nghĩa 8 loại quan hệ có trọng số (HAS\_SYMPTOM, HAS\_VISUAL\_FEATURE, HAS\_RISK, CAUSED\_BY, DIAGNOSED\_BY, TREATED\_BY, HAS\_PROGNOSIS).
+    \item Tự động sinh 159 quan hệ từ hồ sơ bệnh.
+    \item Xây dựng Graph Reasoning Engine tính điểm bệnh dựa trên đặc điểm khớp được và trọng số quan hệ.
+\end{itemize}
+
+\subsubsection{Xây dựng Fusion Layer}
+\begin{itemize}
+    \item Thiết kế công thức kết hợp có trọng số ba nguồn thông tin:
+    \[
+    \text{Score}(d) = w_1 \cdot P_{\text{cnn}}(d) + w_2 \cdot P_{\text{graph}}(d) + w_3 \cdot P_{\text{rag}}(d)
+    \]
+    với điều kiện \(w_1 + w_2 + w_3 = 1\).
+    \item Xây dựng cơ chế fusion đa phương thức (Multi-modal Fusion).
+\end{itemize}
+
+\subsubsection{Hiểu truy vấn người dùng (Query Understanding)}
+\begin{itemize}
+    \item Xây dựng bộ trích xuất đặc điểm triệu chứng từ văn bản tự nhiên theo hai phương pháp:
+    \begin{enumerate}
+        \item Rule-based: ánh xạ từ khóa cố định sang đặc điểm triệu chứng.
+        \item Semantic: sử dụng Sentence Transformer + FAISS để tìm đặc điểm theo ngữ nghĩa.
+    \end{enumerate}
+    \item Kết hợp cả hai phương pháp để tăng độ chính xác.
+\end{itemize}
+
+\subsubsection{Engine giải thích (Explainable AI)}
+\begin{itemize}
+    \item Sinh giải thích bằng ngôn ngữ tự nhiên cho từng kết quả chẩn đoán.
+    \item Nội dung giải thích bao gồm: tên bệnh, mức độ nghiêm trọng, đặc điểm khớp được, yếu tố nguy cơ, triệu chứng, vị trí thường gặp, phương pháp điều trị đầu tay, biến chứng và tiên lượng.
+\end{itemize}
+
+\subsubsection{API Backend}
+\begin{itemize}
+    \item Xây dựng API tích hợp các module Core, Deep Learning và Chatbot.
+    \item Xử lý đầu vào (ảnh + văn bản), điều phối luồng xử lý qua Fusion Layer.
+    \item Trả về kết quả chẩn đoán kèm giải thích.
+\end{itemize}
+
+\subsubsection{Giao diện người dùng}
+\begin{itemize}
+    \item Phát triển giao diện web/mobile cho phép người dùng tải ảnh tổn thương da.
+    \item Cho phép nhập mô tả triệu chứng bằng văn bản tự nhiên.
+    \item Hiển thị kết quả chẩn đoán, giải thích chi tiết và đề xuất hướng điều trị.
+\end{itemize}
+
+\end{document}
