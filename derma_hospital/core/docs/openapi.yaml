@@ -1,0 +1,708 @@
+# Sinh tự động từ FastAPI app (main.app.openapi()) — KHÔNG sửa tay.
+# Regenerate: cd core && python scripts/gen_openapi.py
+# Nguồn: app/api/conversation_api.py, app/api/health.py, app/dto/*.
+# SSE (/conversations/{conversationId}/stream) KHÔNG có ở đây — xem docs/asyncapi.yaml.
+openapi: 3.1.0
+info:
+  title: Derma AI Backend
+  description: REST API cho chat + Agent reasoning (xem `core/docs/api-doc.md`). Luồng SSE (`GET /conversations/{conversationId}/stream`)
+    không nằm trong OpenAPI này — xem `core/docs/asyncapi.yaml` / `async-api-doc.md`.
+  version: 0.1.0
+servers:
+- url: http://localhost:3050
+  description: Local dev
+paths:
+  /api/v1/health:
+    get:
+      tags:
+      - health
+      summary: Liveness
+      description: 'Liveness: app còn sống (không kiểm tra dependency).'
+      operationId: liveness
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivenessResponse'
+  /api/v1/health/ready:
+    get:
+      tags:
+      - health
+      summary: Readiness
+      description: 'Readiness: kiểm tra kết nối tới Postgres, Redis, RabbitMQ.
+
+
+        Trả JSONResponse thủ công (không dùng response_model) vì cần tự set status
+
+        code 200/503 theo kết quả check — DTO vẫn được dùng để validate nội dung
+
+        trước khi serialize. `responses=` ở decorator chỉ để khai báo schema cho
+
+        OpenAPI (Swagger UI, `docs/openapi.yaml`), không ảnh hưởng hành vi thật.'
+      operationId: readiness
+      responses:
+        '200':
+          description: Mọi dependency đều ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Ít nhất 1 dependency lỗi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+  /api/v1/conversations:
+    get:
+      tags:
+      - conversations
+      summary: List Conversations
+      description: '`docs/api-doc.md` mục 1.1. Auth chưa có — `userId` truyền tay (mục 0).'
+      operationId: listConversations
+      parameters:
+      - name: userId
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Userid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_list_ConversationOutput__'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - conversations
+      summary: Create Conversation
+      description: '`docs/api-doc.md` mục 1.2 — tạo hội thoại + lưu `initMessage` + publish turn đầu.'
+      operationId: createConversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConversationInput'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ConversationOutput_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/conversations/{conversation_id}/messages:
+    get:
+      tags:
+      - conversations
+      summary: List Messages
+      description: '`docs/api-doc.md` mục 1.3 — sắp theo `createdAt` tăng dần.'
+      operationId: listMessages
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Conversation Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_list_MessageOutput__'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - conversations
+      summary: Send Message
+      description: '`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới HOẶC Steer (không dùng để
+
+        trả lời câu hỏi agent đang chờ, xem `answer_question` bên dưới).'
+      operationId: sendMessage
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Conversation Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageInput'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_MessageOutput_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/conversations/{conversation_id}/questions/{question_id}/answer:
+    post:
+      tags:
+      - conversations
+      summary: Answer Question
+      description: '`docs/api-doc.md` mục 2.2 — trả lời `tool_ask` đang chờ, KHÔNG tạo `messages` mới.'
+      operationId: answerQuestion
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Conversation Id
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Question Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageAnswerDto'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_MessageOutput_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /status:
+    get:
+      tags:
+      - health
+      summary: Root
+      operationId: status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Status
+components:
+  schemas:
+    AnsweredChoiceDto:
+      properties:
+        optionId:
+          type: string
+          title: Optionid
+        label:
+          type: string
+          title: Label
+        custom:
+          type: boolean
+          title: Custom
+          default: false
+      type: object
+      required:
+      - optionId
+      - label
+      title: AnsweredChoiceDto
+    ApiResponse_ConversationOutput_:
+      properties:
+        data:
+          $ref: '#/components/schemas/ConversationOutput'
+      type: object
+      required:
+      - data
+      title: ApiResponse[ConversationOutput]
+    ApiResponse_MessageOutput_:
+      properties:
+        data:
+          $ref: '#/components/schemas/MessageOutput'
+      type: object
+      required:
+      - data
+      title: ApiResponse[MessageOutput]
+    ApiResponse_list_ConversationOutput__:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ConversationOutput'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ApiResponse[list[ConversationOutput]]
+    ApiResponse_list_MessageOutput__:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/MessageOutput'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ApiResponse[list[MessageOutput]]
+    ChatSourceDto:
+      properties:
+        id:
+          type: string
+          title: Id
+        title:
+          type: string
+          title: Title
+        citationKey:
+          type: string
+          title: Citationkey
+        lawName:
+          type: string
+          title: Lawname
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+        content:
+          type: string
+          title: Content
+      type: object
+      required:
+      - id
+      - title
+      - citationKey
+      - lawName
+      - content
+      title: ChatSourceDto
+      description: Tài liệu y khoa agent trích dẫn khi trả lời.
+    ChoiceOptionDto:
+      properties:
+        id:
+          type: string
+          title: Id
+        label:
+          type: string
+          title: Label
+      type: object
+      required:
+      - id
+      - label
+      title: ChoiceOptionDto
+    ConversationOutput:
+      properties:
+        id:
+          type: string
+          title: Id
+        title:
+          type: string
+          title: Title
+        createdAt:
+          type: string
+          title: Createdat
+        updatedAt:
+          type: string
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - title
+      - createdAt
+      - updatedAt
+      title: ConversationOutput
+    CreateConversationInput:
+      properties:
+        userId:
+          type: string
+          title: Userid
+        initMessage:
+          type: string
+          title: Initmessage
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+      type: object
+      required:
+      - userId
+      - initMessage
+      title: CreateConversationInput
+      description: 'Body cho `POST /conversations` — tạo hội thoại kèm tin nhắn đầu tiên
+
+        (`docs/api-doc.md` mục 1.2).'
+    FileAttachmentDto:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        size:
+          type: integer
+          title: Size
+        type:
+          type: string
+          title: Type
+      type: object
+      required:
+      - id
+      - name
+      - size
+      - type
+      title: FileAttachmentDto
+      description: Metadata tệp user upload kèm tin nhắn (nội dung file không đi qua đây).
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    LivenessResponse:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: LivenessResponse
+    MessageAnswerDto:
+      properties:
+        questionId:
+          type: string
+          title: Questionid
+        optionId:
+          type: string
+          title: Optionid
+        label:
+          type: string
+          title: Label
+        custom:
+          type: boolean
+          title: Custom
+          default: false
+      type: object
+      required:
+      - questionId
+      - optionId
+      - label
+      title: MessageAnswerDto
+      description: Body cho `POST .../questions/{questionId}/answer` (`api-doc.md` mục 2.2).
+    MessageChoiceDto:
+      properties:
+        questionId:
+          type: string
+          title: Questionid
+        question:
+          type: string
+          title: Question
+        options:
+          items:
+            $ref: '#/components/schemas/ChoiceOptionDto'
+          type: array
+          title: Options
+        answered:
+          anyOf:
+          - $ref: '#/components/schemas/AnsweredChoiceDto'
+          - type: 'null'
+      type: object
+      required:
+      - questionId
+      - question
+      - options
+      title: MessageChoiceDto
+      description: Câu hỏi agent đưa ra (`tool_ask`, xem `kien-truc-agent.md` mục 3).
+    MessageMetadataDto:
+      properties:
+        reasoning:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ReasoningStepDto'
+            type: array
+          - type: 'null'
+          title: Reasoning
+        selectionRef:
+          anyOf:
+          - $ref: '#/components/schemas/MessageSelectionRefDto'
+          - items:
+              $ref: '#/components/schemas/MessageSelectionRefDto'
+            type: array
+          - type: 'null'
+          title: Selectionref
+        attachments:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FileAttachmentDto'
+            type: array
+          - type: 'null'
+          title: Attachments
+        choice:
+          anyOf:
+          - $ref: '#/components/schemas/MessageChoiceDto'
+          - type: 'null'
+        sources:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ChatSourceDto'
+            type: array
+          - type: 'null'
+          title: Sources
+        isOptionResponse:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isoptionresponse
+      type: object
+      title: MessageMetadataDto
+      description: 'Toàn bộ field optional-theo-loại của 1 message — map 1-1 vào cột
+
+        `messages.metadata` (JSONB). KHÔNG field nào bắt buộc; message text đơn giản
+
+        thì toàn bộ đều `None` (xem `docs/db-diagram.md` mục 2).'
+    MessageOutput:
+      properties:
+        id:
+          type: string
+          title: Id
+        conversationId:
+          type: string
+          title: Conversationid
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          title: Role
+        content:
+          type: string
+          title: Content
+        status:
+          type: string
+          enum:
+          - pending
+          - queued
+          - streaming
+          - done
+          - question
+          title: Status
+        metadata:
+          anyOf:
+          - $ref: '#/components/schemas/MessageMetadataDto'
+          - type: 'null'
+        createdAt:
+          type: string
+          title: Createdat
+      type: object
+      required:
+      - id
+      - conversationId
+      - role
+      - content
+      - status
+      - createdAt
+      title: MessageOutput
+    MessageSelectionRefDto:
+      properties:
+        source:
+          type: string
+          const: message
+          title: Source
+          default: message
+        refId:
+          type: string
+          title: Refid
+        text:
+          type: string
+          title: Text
+        start:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Start
+        end:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: End
+      type: object
+      required:
+      - refId
+      - text
+      title: MessageSelectionRefDto
+      description: Đoạn tin nhắn user bôi đen để hỏi (quote-then-ask).
+    ReadinessChecks:
+      properties:
+        database:
+          type: string
+          title: Database
+        redis:
+          type: string
+          title: Redis
+        rabbitmq:
+          type: string
+          title: Rabbitmq
+      type: object
+      required:
+      - database
+      - redis
+      - rabbitmq
+      title: ReadinessChecks
+    ReadinessResponse:
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          title: Status
+        checks:
+          $ref: '#/components/schemas/ReadinessChecks'
+      type: object
+      required:
+      - status
+      - checks
+      title: ReadinessResponse
+    ReasoningStepDto:
+      properties:
+        id:
+          type: string
+          title: Id
+        title:
+          type: string
+          title: Title
+        content:
+          type: string
+          title: Content
+        status:
+          type: string
+          enum:
+          - processing
+          - done
+          title: Status
+        type:
+          type: string
+          enum:
+          - default
+          - tool_call
+          - tool_ask
+          title: Type
+          default: default
+        choice:
+          anyOf:
+          - $ref: '#/components/schemas/MessageChoiceDto'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - title
+      - content
+      - status
+      title: ReasoningStepDto
+      description: '1 Reasoning đã hoàn tất — lưu trong `MessageMetadataDto.reasoning` khi
+
+        `message.done`/`status="question"` (xem `kien-truc-agent.md` mục 1).'
+    SendMessageInput:
+      properties:
+        clientMessageId:
+          type: string
+          title: Clientmessageid
+        content:
+          type: string
+          title: Content
+        modelId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Modelid
+        attachments:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FileAttachmentDto'
+            type: array
+          - type: 'null'
+          title: Attachments
+        selection:
+          anyOf:
+          - $ref: '#/components/schemas/MessageSelectionRefDto'
+          - items:
+              $ref: '#/components/schemas/MessageSelectionRefDto'
+            type: array
+          - type: 'null'
+          title: Selection
+      type: object
+      required:
+      - clientMessageId
+      - content
+      title: SendMessageInput
+      description: 'Body cho `POST /conversations/{id}/messages` (`api-doc.md` mục 2.1).
+
+
+        KHÔNG có field `answer` — trả lời câu hỏi agent đi qua endpoint riêng
+
+        (`docs/async-api-doc.md` mục 4), không phải tin nhắn mới.'
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
