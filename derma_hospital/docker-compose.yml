@@ -1,0 +1,92 @@
+name: derma-hospital
+
+# Infra cho backend (core/): PostgreSQL + Redis (Pub/Sub) + RabbitMQ (queue) +
+# Qdrant (vector DB — long-term memory Agent, xem core/app/agent/memory.py).
+# App (core, agent worker, fe) vẫn chạy thủ công như hiện tại:
+#   docker compose up -d
+#   cd core && python main.py
+#   cd core && python -u -m app.agent.worker
+#   cd fe   && pnpm dev
+#
+# Giá trị mặc định bên dưới khớp với default trong `core/app/core/config.py` nên
+# không cần chỉnh .env để chạy dev.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: derma-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-derma_hospital_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-derma_hospital_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - derma-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: derma-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - derma-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: derma-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"     # AMQP
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"  # Management UI (guest/guest)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - derma-net
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: derma-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"      # REST
+      - "${QDRANT_GRPC_PORT:-6334}:6334" # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - derma-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  qdrant_data:
+
+networks:
+  derma-net:
+    driver: bridge

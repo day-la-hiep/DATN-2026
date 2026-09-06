@@ -1,0 +1,280 @@
+asyncapi: 2.6.0
+info:
+  title: Derma AI — Chat Stream
+  version: 0.1.0
+  description: >
+    Server-Sent Events mà Core phát cho Frontend trong lúc Agent Worker xử lý 1 turn.
+
+    Nguồn phát thật sự là **Agent Worker** (publish qua Redis Pub/Sub kênh
+    `agent:events:{conversationId}`) — Core chỉ subscribe và forward **nguyên văn** qua HTTP
+    SSE, không transform (`docs/kien-truc-he-thong.md` mục 3, `docs/async-api-doc.md` mục 1).
+
+    Viết tay (không sinh tự động như `openapi.yaml`) — khi đổi event contract trong
+    `app/agent/worker.py` phải tự đồng bộ lại file này.
+  x-source: core/docs/async-api-doc.md
+servers:
+  local:
+    url: localhost:3050
+    protocol: http
+    description: Local dev — Core forward SSE qua HTTP GET (không phải WebSocket/AMQP).
+defaultContentType: application/json
+
+channels:
+  /api/v1/conversations/{conversationId}/stream:
+    parameters:
+      conversationId:
+        description: Id hội thoại — cũng là suffix của kênh Redis nội bộ `agent:events:{conversationId}`.
+        schema:
+          type: string
+    subscribe:
+      operationId: streamConversation
+      summary: Nhận toàn bộ event của 1 turn (chat + reasoning) qua Server-Sent Events.
+      description: >
+        Mở **trước hoặc ngay sau** khi `POST /conversations/{conversationId}/messages` —
+        Pub/Sub không cache/replay, mở trễ sẽ mất event đã phát (mục 1, `async-api-doc.md`).
+
+        Kết thúc bằng 1 dòng `data: [DONE]` (không phải JSON, client tự bỏ qua) — phát ra cả
+        khi turn kết thúc thật (`message.done`) lẫn khi turn tạm dừng chờ trả lời
+        (`reasoning.step_completed` với `stepType: tool_ask`) — 2 trường hợp phân biệt bằng
+        event cuối cùng nhận được, không phải bằng sentinel (`core/app/kien-truc-agent.md`
+        mục 6). Mở lại 1 SSE connection **mới** sau khi
+        `POST .../questions/{questionId}/answer` để nhận phần còn lại của turn.
+      bindings:
+        http:
+          type: response
+          method: GET
+      message:
+        oneOf:
+          - $ref: '#/components/messages/MessageQueued'
+          - $ref: '#/components/messages/MessageSteered'
+          - $ref: '#/components/messages/MessageStarted'
+          - $ref: '#/components/messages/ReasoningStepStarted'
+          - $ref: '#/components/messages/ReasoningStepDelta'
+          - $ref: '#/components/messages/ReasoningStepCompleted'
+          - $ref: '#/components/messages/MessageDelta'
+          - $ref: '#/components/messages/MessageDone'
+
+components:
+  messages:
+    MessageQueued:
+      name: message.queued
+      title: Turn đã đẩy vào queue
+      summary: Core publish ngay sau khi đẩy turn vào `agent_request_queue`, trước khi Agent Worker nhận.
+      payload:
+        $ref: '#/components/schemas/MessageQueuedPayload'
+
+    MessageSteered:
+      name: message.steered
+      title: Steer đã được pre_step nạp vào context
+      summary: >
+        Publish khi `pre_step` của turn đang chạy đọc thấy 1 tin nhắn Steer đang
+        `status="pending"` và append vào context (turn tiếp tục xử lý ở Step kế tiếp) —
+        xem `core/docs/async-api-doc.md` mục 5.
+      payload:
+        $ref: '#/components/schemas/MessageSteeredPayload'
+
+    MessageStarted:
+      name: message.started
+      title: Agent Worker bắt đầu xử lý turn
+      payload:
+        $ref: '#/components/schemas/MessageStartedPayload'
+
+    ReasoningStepStarted:
+      name: reasoning.step_started
+      title: Bắt đầu 1 Reasoning
+      summary: >
+        1 Reasoning = đúng 1 hành động — HOẶC gọi LLM (`stepType: default`), HOẶC thực thi 1
+        tool mà lần gọi LLM ngay trước vừa yêu cầu (`stepType: tool_call`/`tool_ask`) — không
+        bao giờ gộp 2 việc vào 1 Reasoning; đơn vị lặp bên trong 1 Step
+        (`core/app/kien-truc-agent.md` mục 1). `stepType: tool_ask` = agent đang hỏi lại
+        người dùng (turn sẽ tạm dừng ngay sau `reasoning.step_completed` tương ứng).
+      payload:
+        $ref: '#/components/schemas/ReasoningStepStartedPayload'
+
+    ReasoningStepDelta:
+      name: reasoning.step_delta
+      title: Token/đoạn nội dung của 1 Reasoning
+      summary: Lặp nhiều lần trong 1 Reasoning (worker hiện chunk `content` cố định, chưa stream token thật từ LLM).
+      payload:
+        $ref: '#/components/schemas/ReasoningStepDeltaPayload'
+
+    ReasoningStepCompleted:
+      name: reasoning.step_completed
+      title: Kết thúc 1 Reasoning
+      payload:
+        $ref: '#/components/schemas/ReasoningStepCompletedPayload'
+
+    MessageDelta:
+      name: message.delta
+      title: Token/đoạn nội dung câu trả lời cuối cùng
+      summary: Lặp nhiều lần, phát sau khi hết mọi Reasoning của turn (trước `message.done`).
+      payload:
+        $ref: '#/components/schemas/MessageDeltaPayload'
+
+    MessageDone:
+      name: message.done
+      title: Turn kết thúc bình thường
+      summary: Event cuối của 1 turn hoàn tất — kèm toàn bộ lịch sử reasoning + nguồn tham khảo (nếu có).
+      payload:
+        $ref: '#/components/schemas/MessageDonePayload'
+
+  schemas:
+    MessageQueuedPayload:
+      type: object
+      required: [type, conversationId, messageId]
+      properties:
+        type: { type: string, const: message.queued }
+        corrId: { type: string, nullable: true, description: "client_message_id do FE sinh, để ghép luồng" }
+        conversationId: { type: string }
+        messageId: { type: string, description: "id assistant message của cả turn (Core sinh)" }
+
+    MessageSteeredPayload:
+      type: object
+      required: [type, conversationId, messageId, content]
+      properties:
+        type: { type: string, const: message.steered }
+        corrId: { type: string, nullable: true }
+        conversationId: { type: string }
+        messageId: { type: string }
+        content: { type: string, description: "nội dung tin nhắn Steer vừa được nạp vào context" }
+
+    MessageStartedPayload:
+      type: object
+      required: [type, conversationId, messageId]
+      properties:
+        type: { type: string, const: message.started }
+        corrId: { type: string, nullable: true }
+        clientMessageId: { type: string, nullable: true }
+        conversationId: { type: string }
+        messageId: { type: string }
+
+    ReasoningStepStartedPayload:
+      type: object
+      required: [type, messageId, conversationId, stepId, title]
+      properties:
+        type: { type: string, const: reasoning.step_started }
+        messageId: { type: string }
+        conversationId: { type: string }
+        stepId: { type: string }
+        title: { type: string }
+        stepType:
+          $ref: '#/components/schemas/ReasoningStepType'
+        choice:
+          $ref: '#/components/schemas/MessageChoice'
+
+    ReasoningStepDeltaPayload:
+      type: object
+      required: [type, messageId, conversationId, stepId, delta]
+      properties:
+        type: { type: string, const: reasoning.step_delta }
+        messageId: { type: string }
+        conversationId: { type: string }
+        stepId: { type: string }
+        delta: { type: string }
+
+    ReasoningStepCompletedPayload:
+      type: object
+      required: [type, messageId, conversationId, stepId]
+      properties:
+        type: { type: string, const: reasoning.step_completed }
+        messageId: { type: string }
+        conversationId: { type: string }
+        stepId: { type: string }
+        stepType:
+          $ref: '#/components/schemas/ReasoningStepType'
+        choice:
+          $ref: '#/components/schemas/MessageChoice'
+
+    MessageDeltaPayload:
+      type: object
+      required: [type, messageId, conversationId, delta]
+      properties:
+        type: { type: string, const: message.delta }
+        messageId: { type: string }
+        conversationId: { type: string }
+        delta: { type: string }
+
+    MessageDonePayload:
+      type: object
+      required: [type, messageId, conversationId]
+      properties:
+        type: { type: string, const: message.done }
+        messageId: { type: string }
+        conversationId: { type: string }
+        reasoning:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ReasoningStep'
+        sources:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ChatSource'
+
+    ReasoningStepType:
+      type: string
+      enum: [default, tool_call, tool_ask]
+      default: default
+      description: >
+        default = suy luận thường; tool_call = gọi tool nghiệp vụ (chạy đồng bộ);
+        tool_ask = gọi tool `ask_user` (turn tạm dừng chờ trả lời, xem
+        `core/app/kien-truc-agent.md` mục 3).
+
+    ChoiceOption:
+      type: object
+      required: [id, label]
+      properties:
+        id: { type: string }
+        label: { type: string }
+
+    AnsweredChoice:
+      type: object
+      required: [optionId, label]
+      properties:
+        optionId: { type: string }
+        label: { type: string }
+        custom: { type: boolean, default: false }
+
+    MessageChoice:
+      type: object
+      nullable: true
+      description: "Chỉ có khi `stepType: tool_ask` — câu hỏi agent đưa ra cho người dùng."
+      required: [questionId, question, options]
+      properties:
+        questionId: { type: string }
+        question: { type: string }
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChoiceOption'
+        answered:
+          $ref: '#/components/schemas/AnsweredChoice'
+
+    ReasoningStep:
+      type: object
+      description: >
+        1 Reasoning đã hoàn tất, dạng lưu trữ (khác dạng event) — dùng trong
+        `message.done.reasoning[]` và `MessageMetadataDto.reasoning` (`docs/db-diagram.md`).
+      required: [id, title, content, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        content: { type: string }
+        status: { type: string, enum: [processing, done] }
+        type:
+          $ref: '#/components/schemas/ReasoningStepType'
+        choice:
+          $ref: '#/components/schemas/MessageChoice'
+
+    ChatSource:
+      type: object
+      description: Tài liệu y khoa agent trích dẫn khi trả lời (chưa có tool tra cứu thật — xem `docs/async-api-doc.md` mục 7).
+      required: [id, title, citationKey, lawName, content]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        citationKey: { type: string }
+        lawName: { type: string }
+        url: { type: string, nullable: true }
+        content: { type: string }
