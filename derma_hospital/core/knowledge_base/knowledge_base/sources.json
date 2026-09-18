@@ -1,0 +1,207 @@
+{
+  "byt_75_2015": {
+    "title": "Hướng dẫn chẩn đoán và điều trị các bệnh da liễu",
+    "publisher": "Bộ Y tế Việt Nam",
+    "decision": "75/QĐ-BYT",
+    "published_at": "2015-01-13",
+    "document_year": 2015,
+    "page_count": 330,
+    "review_status": "needs_clinical_review"
+  },
+  "who_leprosy_fact_sheet_2023": {
+    "title": "Leprosy",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/leprosy",
+    "document_type": "fact_sheet",
+    "topic": "leprosy",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_scabies_fact_sheet_2023": {
+    "title": "Scabies",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/scabies",
+    "document_type": "fact_sheet",
+    "topic": "scabies",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_mycetoma_fact_sheet": {
+    "title": "Mycetoma",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/mycetoma",
+    "document_type": "fact_sheet",
+    "topic": "mycetoma",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_yaws_fact_sheet": {
+    "title": "Yaws",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/yaws",
+    "document_type": "fact_sheet",
+    "topic": "yaws",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_chromoblastomycosis_fact_sheet": {
+    "title": "Chromoblastomycosis",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/chromoblastomycosis",
+    "document_type": "fact_sheet",
+    "topic": "chromoblastomycosis",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_global_report_psoriasis": {
+    "title": "Global report on psoriasis",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/publications/i/item/9789241565189",
+    "document_type": "global_report",
+    "topic": "psoriasis",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_cutaneous_leishmaniasis": {
+    "title": "Leishmaniasis",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/leishmaniasis",
+    "document_type": "fact_sheet",
+    "topic": "cutaneous_leishmaniasis",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_buruli_ulcer": {
+    "title": "Buruli ulcer",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/buruli-ulcer-(mycobacterium-ulcerans-infection)",
+    "document_type": "fact_sheet",
+    "topic": "buruli_ulcer",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_lymphatic_filariasis": {
+    "title": "Lymphatic filariasis",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/lymphatic-filariasis",
+    "document_type": "fact_sheet",
+    "topic": "lymphatic_filariasis",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_podoconiosis": {
+    "title": "Podoconiosis",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/podoconiosis",
+    "document_type": "fact_sheet",
+    "topic": "podoconiosis",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_noma": {
+    "title": "Noma",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/noma",
+    "document_type": "fact_sheet",
+    "topic": "noma",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "who_mpox": {
+    "title": "Mpox",
+    "publisher": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/mpox",
+    "document_type": "fact_sheet",
+    "topic": "mpox",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_skin_conditions": {
+    "title": "Skin Conditions",
+    "publisher": "MedlinePlus, U.S. National Library of Medicine",
+    "url": "https://medlineplus.gov/skinconditions.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_acne": {
+    "title": "Acne",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/acne.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_eczema": {
+    "title": "Eczema",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/eczema.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_psoriasis": {
+    "title": "Psoriasis",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/psoriasis.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_scabies": {
+    "title": "Scabies",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/scabies.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_shingles": {
+    "title": "Shingles",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/shingles.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_impetigo": {
+    "title": "Impetigo",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/impetigo.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_hives": {
+    "title": "Hives",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/hives.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_rosacea": {
+    "title": "Rosacea",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/rosacea.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_cold_sores": {
+    "title": "Cold Sores",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/coldsores.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  },
+  "medlineplus_warts": {
+    "title": "Warts",
+    "publisher": "MedlinePlus",
+    "url": "https://medlineplus.gov/warts.html",
+    "document_type": "health_topic",
+    "accessed_at": "2026-09-12",
+    "review_status": "needs_manual_verification"
+  }
+}

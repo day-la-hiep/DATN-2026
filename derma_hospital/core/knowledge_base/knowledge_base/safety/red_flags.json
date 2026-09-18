@@ -1,0 +1,101 @@
+{
+  "urgent_patterns": [
+    "khó thở",
+    "sưng môi",
+    "sưng lưỡi",
+    "ngất",
+    "sốt cao",
+    "đau dữ dội",
+    "mụn nước lan nhanh",
+    "đỏ da toàn thân",
+    "tổn thương ở mắt",
+    "đỏ mắt đau",
+    "mờ mắt",
+    "bong da diện rộng",
+    "loét niêm mạc nhiều",
+    "lơ mơ",
+    "co giật",
+    "da tím tái",
+    "hoại tử",
+    "chảy máu liên tục",
+    "chảy máu không cầm",
+    "ngón tay chết trắng",
+    "loét giác mạc",
+    "loét mắt",
+    "mờ mắt đột ngột",
+    "phù thanh quản",
+    "nuốt nghẹn khó thở",
+    "bỏng trợt da",
+    "bong tróc như bỏng",
+    "trợt da diện rộng",
+    "sốt cao rét run sau uống thuốc",
+    "sưng phù toàn mặt",
+    "lan nhanh",
+    "loét niêm mạc"
+  ],
+  "urgent_response": "Dấu hiệu bạn mô tả có thể là tình trạng cần đánh giá y tế khẩn cấp. Hãy đến cơ sở y tế ngay hoặc gọi cấp cứu, đặc biệt khi có khó thở, sưng môi/lưỡi, tổn thương mắt, sốt cao, bong da lan rộng hoặc diễn tiến nhanh.",
+  "rules": [
+    {
+      "id": "anaphylaxis",
+      "patterns": [
+        "kho_tho",
+        "sung_moi_luoi",
+        "ngat"
+      ],
+      "level": "urgent"
+    },
+    {
+      "id": "severe_skin_reaction",
+      "patterns": [
+        "lan_nhanh",
+        "ton_thuong_niem_mac",
+        "sot_cao",
+        "bong_da_dien_rong"
+      ],
+      "level": "urgent"
+    },
+    {
+      "id": "eye_involvement",
+      "patterns": [
+        "ton_thuong_mat",
+        "mo_mat"
+      ],
+      "level": "urgent"
+    },
+    {
+      "id": "severe_infection",
+      "patterns": [
+        "sot_cao",
+        "dau_du_doi",
+        "lan_nhanh"
+      ],
+      "level": "urgent"
+    },
+    {
+      "id": "severe_ischemia",
+      "patterns": [
+        "hoai_tu",
+        "da_tim_tai",
+        "dau_du_doi"
+      ],
+      "level": "urgent"
+    },
+    {
+      "id": "drug_reaction_emergency",
+      "patterns": [
+        "lan_nhanh",
+        "sot_cao",
+        "ton_thuong_noi_tang"
+      ],
+      "level": "urgent"
+    },
+    {
+      "id": "severe_skin_damage",
+      "patterns": [
+        "bong_da_dien_rong",
+        "hoai_tu"
+      ],
+      "level": "urgent"
+    }
+  ]
+}

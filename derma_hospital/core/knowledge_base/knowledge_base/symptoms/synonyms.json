@@ -1,0 +1,293 @@
+{
+  "ngua": [
+    "ngứa",
+    "ngứa nhiều",
+    "ngứa về đêm",
+    "ngứa da"
+  ],
+  "man_do": [
+    "mẩn đỏ",
+    "ban đỏ",
+    "đỏ da",
+    "hồng ban"
+  ],
+  "bong_troc": [
+    "bong vảy",
+    "tróc vảy",
+    "vảy da",
+    "bong tróc"
+  ],
+  "mun_nuoc": [
+    "mụn nước",
+    "bóng nước",
+    "phỏng nước"
+  ],
+  "mun_mu": [
+    "mụn mủ",
+    "bọng mủ",
+    "mủ"
+  ],
+  "vet_loet": [
+    "loét",
+    "vết loét",
+    "trợt loét"
+  ],
+  "phu": [
+    "phù",
+    "sưng",
+    "phù nề"
+  ],
+  "dau_ran": [
+    "đau rát",
+    "bỏng rát",
+    "châm chích"
+  ],
+  "kho_da": [
+    "khô da",
+    "da khô",
+    "nứt da"
+  ],
+  "da_doi_mau": [
+    "đổi màu da",
+    "tăng sắc tố",
+    "giảm sắc tố",
+    "mất sắc tố"
+  ],
+  "mong_bat_thuong": [
+    "móng dày",
+    "rỗ móng",
+    "đổi màu móng"
+  ],
+  "roi_loan_cam_giac": [
+    "mất cảm giác",
+    "giảm cảm giác",
+    "tê bì"
+  ],
+  "soat_cao": [
+    "sốt cao",
+    "sốt nhiều"
+  ],
+  "lan_nhanh": [
+    "lan nhanh",
+    "lan rộng nhanh",
+    "đỏ da toàn thân"
+  ],
+  "ton_thuong_mat": [
+    "đau mắt",
+    "đỏ mắt",
+    "mờ mắt",
+    "tổn thương mắt"
+  ],
+  "ton_thuong_niem_mac": [
+    "loét miệng",
+    "tổn thương niêm mạc",
+    "đau khi nuốt"
+  ],
+  "kho_tho": [
+    "khó thở",
+    "nghẹt thở"
+  ],
+  "sung_moi_luoi": [
+    "sưng môi",
+    "sưng lưỡi",
+    "phù môi",
+    "phù lưỡi"
+  ],
+  "dau_du_doi": [
+    "đau dữ dội",
+    "đau nhiều"
+  ],
+  "mang_bia_ban": [
+    "hình bia bắn",
+    "bia bắn"
+  ],
+  "vay_mat_ong": [
+    "vảy mật ong",
+    "vảy vàng mật ong"
+  ],
+  "mang_hinh_vong": [
+    "hình vòng",
+    "viền vòng",
+    "lành giữa"
+  ],
+  "ngua_dem": [
+    "ngứa ban đêm",
+    "ngứa về đêm"
+  ],
+  "duong_ham": [
+    "đường hầm",
+    "luống ghẻ"
+  ],
+  "dau_day_than_kinh": [
+    "đau theo dây thần kinh",
+    "đau một bên",
+    "đau bỏng rát một bên"
+  ],
+  "dau_khop": [
+    "đau khớp",
+    "sưng khớp"
+  ],
+  "yeu_co": [
+    "yếu cơ",
+    "khó vận động"
+  ],
+  "roi_loan_tieu_hoa": [
+    "tiêu chảy",
+    "đau bụng",
+    "rối loạn tiêu hóa"
+  ],
+  "tang_sac_to": [
+    "đốm nâu",
+    "mảng nâu",
+    "da sẫm màu"
+  ],
+  "mat_sac_to": [
+    "đốm trắng",
+    "mảng trắng",
+    "da mất màu"
+  ],
+  "roi_loan_van_dong": [
+    "khó vận động",
+    "rối loạn vận động",
+    "teo cơ",
+    "liệt",
+    "cầm nắm khó khăn",
+    "đi lại khó khăn"
+  ],
+  "vay_nhon": [
+    "vảy mỡ",
+    "vảy nhờn",
+    "gàu mỡ",
+    "gàu nhờn",
+    "vảy sáp ong",
+    "nhờn dính"
+  ],
+  "not_lom_giua": [
+    "nốt lõm giữa",
+    "sẩn lõm giữa",
+    "lõm giữa",
+    "rốn lõm",
+    "lõm ở giữa"
+  ],
+  "mun_quanh_nang": [
+    "mụn quanh nang lông",
+    "viêm nang lông",
+    "quanh lỗ chân lông",
+    "sẩn nang lông",
+    "chân lông đỏ"
+  ],
+  "mun_dau_den": [
+    "mụn đầu đen",
+    "nhân đầu đen",
+    "comedon"
+  ],
+  "mun_dau_trang": [
+    "mụn đầu trắng",
+    "nhân đầu trắng",
+    "mụn cám"
+  ],
+  "hat_sui": [
+    "hạt sùi",
+    "sùi mào gà",
+    "u nhú",
+    "mụn cóc",
+    "sùi súp lơ",
+    "sẩn sùi"
+  ],
+  "vay_bac": [
+    "vảy bạc",
+    "vảy trắng bạc",
+    "vảy xà cừ",
+    "vảy nến",
+    "dấu hiệu gắn xi",
+    "dấu hiệu auspitz"
+  ],
+  "chay_mau": [
+    "chảy máu",
+    "rớm máu",
+    "dễ chảy máu",
+    "xuất huyết",
+    "hạt sương máu"
+  ],
+  "tieu_buot": [
+    "tiểu buốt",
+    "đái buốt",
+    "đái rắt",
+    "tiểu rắt",
+    "tiểu ra mủ",
+    "giọt mủ ban mai",
+    "chảy mủ niệu đạo"
+  ],
+  "khi_hu_bat_thuong": [
+    "khí hư",
+    "huyết trắng",
+    "khí hư váng sữa",
+    "khí hư có bọt",
+    "khí hư vàng xanh"
+  ],
+  "u_cuc": [
+    "u cục",
+    "nốt cục",
+    "củ dưới da",
+    "hậu bối",
+    "ổ áp xe",
+    "gôm"
+  ],
+  "rung_toc": [
+    "rụng tóc",
+    "thưa tóc",
+    "rụng lông mày",
+    "hói mảng",
+    "rụng tóc sẹo"
+  ],
+  "te_bi_dau_chi": [
+    "ngón tay trắng tím",
+    "tê đầu ngón",
+    "ngón tay chết trắng",
+    "lạnh đầu chi",
+    "co mạch đầu chi"
+  ],
+  "not_san": [
+    "nốt sần",
+    "sẩn",
+    "cục nổi trên da"
+  ],
+  "da_day_cung": [
+    "da dày",
+    "dày da",
+    "mảng da dày"
+  ],
+  "ton_thuong_than_kinh": [
+    "dây thần kinh to",
+    "dày dây thần kinh",
+    "đau dây thần kinh"
+  ],
+  "sot_cao": [
+    "sốt cao",
+    "sốt nhiều"
+  ],
+  "phat_ban": [
+    "phát ban",
+    "ban trên da",
+    "ban dạng sẩn",
+    "nổi ban"
+  ],
+  "bong_da_dien_rong": [
+    "bong da diện rộng",
+    "bong tróc toàn thân"
+  ],
+  "hoai_tu": [
+    "hoại tử",
+    "mô chết"
+  ],
+  "phu_bach_huyet": [
+    "phù bạch huyết",
+    "sưng chân voi",
+    "chi sưng to"
+  ],
+  "phu_chi": [
+    "phù chân",
+    "sưng chân kéo dài",
+    "chân to"
+  ]
+}
