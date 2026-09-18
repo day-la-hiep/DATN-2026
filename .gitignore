@@ -48,3 +48,9 @@
 # latexmk generated directory
 /build/
 /out/
+
+# Python virtual environment
+venv/
+.venv/
+env/
+ENV/
