@@ -9,10 +9,19 @@ from app.api.deps import get_conversation_service, get_message_service
 from app.core.constants import AGENT_EVENTS_CHANNEL, STREAM_DONE_SENTINEL
 from app.dto.common import ApiResponse
 from app.dto.conversation import ConversationOutput, CreateConversationInput
-from app.dto.message import MessageAnswerDto, MessageOutput, SendMessageInput
-from app.infra.redis_client import subscribe
+from app.dto.message import (
+    MessageAnswerDto,
+    MessageOutput,
+    SendMessageInput,
+    SendMessageResult,
+)
+from app.infra.redis_client import redis_client
 from app.services.conversation_service import ConversationService
-from app.services.message_service import MessageNotFoundError, MessageService
+from app.services.message_service import (
+    MessageNotFoundError,
+    MessageService,
+    flush_pending_turn,
+)
 
 router = APIRouter(tags=["conversations"])
 
@@ -64,16 +73,21 @@ async def list_messages(
 @router.post(
     "/conversations/{conversation_id}/messages",
     status_code=202,
-    response_model=ApiResponse[MessageOutput],
+    response_model=ApiResponse[SendMessageResult],
     operation_id="sendMessage",
 )
 async def send_message(
     conversation_id: str, body: SendMessageInput, service: MessageServiceDep
-) -> ApiResponse[MessageOutput]:
+) -> ApiResponse[SendMessageResult]:
     """`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới HOẶC Steer (không dùng để
-    trả lời câu hỏi agent đang chờ, xem `answer_question` bên dưới)."""
-    message = await service.send_message(conversation_id, body)
-    return ApiResponse(data=message)
+    trả lời câu hỏi agent đang chờ, xem `answer_question` bên dưới).
+
+    Trả về `{ userMessage, assistantMessage }`: Core tạo sẵn row assistant
+    (`status="queued"`) và trả `id` để FE lắng nghe SSE theo đó. Turn CHƯA được đẩy cho
+    Worker — chỉ chạy khi client mở `GET .../stream` (`docs/async-api-doc.md` mục 1).
+    """
+    result = await service.send_message(conversation_id, body)
+    return ApiResponse(data=result)
 
 
 @router.post(
@@ -100,13 +114,27 @@ async def answer_question(
 
 async def _sse_event_stream(conversation_id: str) -> AsyncIterator[str]:
     """Forward nguyên văn từng message từ Redis Pub/Sub ra SSE — Core là pure forwarder,
-    không transform (`docs/async-api-doc.md` mục 1)."""
+    không transform (`docs/async-api-doc.md` mục 1).
+
+    Sau khi `subscribe` xong (client chắc chắn nhận được event kể từ đây),
+    `flush_pending_turn` đẩy `TurnRequest` đang chờ vào `agent_request_queue` — đây là lúc
+    Worker mới thực sự bắt đầu xử lý turn, nên không event nào rơi mất.
+    """
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=conversation_id)
-    async for message in subscribe(channel):
-        data = message["data"]
-        yield f"data: {data}\n\n"
-        if data == STREAM_DONE_SENTINEL:
-            break
+    pubsub = redis_client.pubsub()
+    await pubsub.subscribe(channel)
+    try:
+        await flush_pending_turn(conversation_id)
+        async for message in pubsub.listen():
+            if message["type"] != "message":
+                continue
+            data = message["data"]
+            yield f"data: {data}\n\n"
+            if data == STREAM_DONE_SENTINEL:
+                break
+    finally:
+        await pubsub.unsubscribe(channel)
+        await pubsub.aclose()
 
 
 @router.get("/conversations/{conversation_id}/stream", include_in_schema=False)

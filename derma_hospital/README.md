@@ -4,6 +4,10 @@
 trợ lý suy luận nhiều bước (có thể hỏi lại khi thiếu thông tin), stream câu trả lời theo thời
 gian thực, và nhớ được thông tin người dùng qua các lần tư vấn khác nhau (long-term memory).
 
+> **Deploy production bằng Docker Compose (kèm nạp dữ liệu): xem [`DEPLOY.md`](DEPLOY.md).**
+> Phần dưới mô tả chạy dev và có một số chỗ đã lỗi thời (LLM hiện dùng OpenRouter, embedding chạy
+> local, thêm Neo4j/MinIO) — ưu tiên `DEPLOY.md` và `core/.env.example`.
+
 ## 1. Kiến trúc tổng quan
 
 ```

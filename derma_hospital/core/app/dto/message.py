@@ -60,12 +60,17 @@ class MessageSelectionRefDto(CamelModel):
 
 
 class FileAttachmentDto(CamelModel):
-    """Metadata tệp user upload kèm tin nhắn (nội dung file không đi qua đây)."""
+    """Metadata tệp user upload kèm tin nhắn. `POST /uploads` (`app/api/upload_api.py`)
+    trả về DTO này với `id` = tên file đã lưu trên đĩa + `url` để FE preview — client
+    gửi lại ĐÚNG object này (đặc biệt `id`) trong `SendMessageInput.attachments`, Core
+    dùng `id` để tra `app/infra/file_storage.py::resolve_path` cho Agent Worker đọc file
+    (nội dung file KHÔNG đi qua DTO này, chỉ metadata + tham chiếu)."""
 
     id: str
     name: str
     size: int
     type: str
+    url: str | None = None
 
 
 class ChatSourceDto(CamelModel):
@@ -100,6 +105,21 @@ class MessageOutput(CamelModel):
     status: Literal["pending", "queued", "streaming", "done", "question"]
     metadata: MessageMetadataDto | None = None
     created_at: str
+
+
+class SendMessageResult(CamelModel):
+    """Response cho `POST /conversations/{id}/messages` (`api-doc.md` mục 2.1).
+
+    Trả về CẢ 2 row Core vừa persist:
+      - `user_message`: tin nhắn user (`status="done"` với turn mới, `"pending"` với Steer).
+      - `assistant_message`: row assistant Core tạo sẵn cho turn (`status="queued"`,
+        `content=""`) — FE gắn `id` này vào bubble assistant rồi lắng nghe SSE theo đó,
+        không cần chờ event `message.started` để biết id. Với Steer, đây là row assistant
+        của turn ĐANG chạy (không tạo mới).
+    """
+
+    user_message: MessageOutput
+    assistant_message: MessageOutput
 
 
 class SendMessageInput(CamelModel):

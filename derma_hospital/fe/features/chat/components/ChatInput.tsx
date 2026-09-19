@@ -23,6 +23,7 @@ import {
   type SkillOption,
 } from "../constants";
 import { DEFAULT_INPUT_STATE, useChatStore } from "../store";
+import { ImageThumbnail } from "./ImageThumbnail";
 import { useComposerStore } from "../composerStore";
 import { useSelectionStore } from "../selectionStore";
 import type { FileAttachment, MessageSelectionRef } from "../types";
@@ -144,9 +145,12 @@ export function ChatInput({
     return [inputState.pendingSelection];
   }, [inputState.pendingSelection]);
 
+  const hasPendingUploads = files.some((f) => f.uploaded === false);
+
   const canSend =
     (value.trim().length > 0 || selectedSkill !== null || pendingSelections.length > 0) &&
-    !disabled;
+    !disabled &&
+    !hasPendingUploads;
 
   const resize = useCallback(() => {
     const el = textareaRef.current;
@@ -188,16 +192,25 @@ export function ChatInput({
   const handleFiles = useCallback(
     (list: FileList | null) => {
       if (!list || list.length === 0) return;
-      const incoming: FileAttachment[] = Array.from(list).map((file) => ({
+      const incomingFiles = Array.from(list);
+      // Ảnh (input cho classify_skin_image, `core/app/agent/tools/skin_image_classifier.py`)
+      // cần upload thật lên backend trước khi gửi — file khác chỉ giữ metadata như cũ
+      // (chưa có consumer nào ở backend đọc nội dung).
+      const isImage = (f: File) => f.type.startsWith("image/");
+      const incoming: FileAttachment[] = incomingFiles.map((file) => ({
         id: `${file.name}-${file.size}-${file.lastModified}`,
         name: file.name,
         size: file.size,
         type: file.type,
+        uploaded: isImage(file) ? false : undefined,
       }));
+
+      const accepted: { attachment: FileAttachment; file: File }[] = [];
 
       setFiles((prev) => {
         const merged = [...prev];
-        for (const f of incoming) {
+        for (let i = 0; i < incoming.length; i++) {
+          const f = incoming[i];
           if (merged.some((m) => m.id === f.id)) continue; // bỏ trùng
           if (merged.length >= MAX_ATTACHMENTS) {
             toast.warning(`Tối đa ${MAX_ATTACHMENTS} tệp đính kèm.`);
@@ -213,9 +226,27 @@ export function ChatInput({
             break;
           }
           merged.push(f);
+          accepted.push({ attachment: f, file: incomingFiles[i] });
         }
         return merged;
       });
+
+      for (const { attachment, file } of accepted) {
+        if (!isImage(file)) continue;
+        const tempId = attachment.id;
+        chatService
+          .uploadAttachment(file)
+          .then((uploaded) => {
+            setFiles((prev) =>
+              prev.map((f) => (f.id === tempId ? uploaded : f))
+            );
+          })
+          .catch((error) => {
+            console.error("Upload ảnh thất bại", error);
+            toast.error(`Không upload được ảnh "${file.name}".`);
+            setFiles((prev) => prev.filter((f) => f.id !== tempId));
+          });
+      }
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -342,29 +373,39 @@ export function ChatInput({
         {/* Selected files list */}
         {files.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
-            {files.map((file) => (
-              <Badge
-                key={file.id}
-                variant="outline"
-                className="flex items-center gap-1.5 border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground"
-              >
-                <FileText className="size-3.5 shrink-0 text-brand" />
-                <span className="max-w-45 truncate">{file.name}</span>
-                <span className="shrink-0 text-muted-foreground/70">
-                  {formatBytes(file.size)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFiles((prev) => prev.filter((f) => f.id !== file.id))
-                  }
-                  aria-label={`Gỡ tệp ${file.name}`}
-                  className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-destructive cursor-pointer"
+            {files.map((file) => {
+              const isPreviewableImage =
+                file.type.startsWith("image/") && file.uploaded !== false && file.url;
+              return (
+                <Badge
+                  key={file.id}
+                  variant="outline"
+                  className="flex items-center gap-1.5 border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground"
                 >
-                  <X className="size-3.5" />
-                </button>
-              </Badge>
-            ))}
+                  {file.uploaded === false ? (
+                    <Loader2 className="size-3.5 shrink-0 animate-spin text-brand" />
+                  ) : isPreviewableImage ? (
+                    <ImageThumbnail url={file.url!} name={file.name} size={18} />
+                  ) : (
+                    <FileText className="size-3.5 shrink-0 text-brand" />
+                  )}
+                  <span className="max-w-45 truncate">{file.name}</span>
+                  <span className="shrink-0 text-muted-foreground/70">
+                    {formatBytes(file.size)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFiles((prev) => prev.filter((f) => f.id !== file.id))
+                    }
+                    aria-label={`Gỡ tệp ${file.name}`}
+                    className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-destructive cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </Badge>
+              );
+            })}
           </div>
         )}
 

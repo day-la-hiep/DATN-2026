@@ -14,4 +14,6 @@ export const endpoints = {
   document: (messageId: string) => `/conversations/messages/${messageId}/document`,
   /** cải thiện prompt hiện hành */
   improvePrompt: "/conversations/improve-prompt",
+  /** upload ảnh đính kèm — gọi TRƯỚC sendMessage, gắn response vào `attachments` */
+  uploadAttachment: "/uploads",
 } as const;

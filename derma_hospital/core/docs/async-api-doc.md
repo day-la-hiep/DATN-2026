@@ -13,8 +13,11 @@ và [`../app/kien-truc-agent.md`](../app/kien-truc-agent.md) cho cơ chế pause
 (khác `openapi.yaml`, không có auto-generate từ SSE) — tự đồng bộ lại khi đổi event contract
 trong `app/agent/worker.py`.
 
-> ✅ **Đã implement** — `app/agent/worker.py`, ĐÚNG theo đặc tả gốc (mục 6): assistant message
-> được relay qua `agent_response_queue` để **Core** persist (`app/agent/response_consumer.py`,
+> ✅ **Đã implement** — `app/agent/worker.py`. Lưu ý cập nhật: row assistant được Core
+> INSERT sẵn (`status="queued"`) ngay lúc `POST .../messages` (mục 6) và turn chỉ được đẩy
+> cho Worker khi client mở SSE (`flush_pending_turn` — mục 1); event `message.queued` đã bị
+> bỏ. Kết quả turn vẫn relay qua `agent_response_queue` để **Core** persist
+> (`app/agent/response_consumer.py`,
 > đăng ký lúc khởi động trong `core/main.py`'s lifespan) — Worker (và `pre_step` trong
 > `app/agent/graph.py`) chỉ publish `AgentResponseMessage` (`app/agent/schemas.py`), không đụng
 > Postgres. Steer (mục 5) cũng không kích hoạt `astream()` riêng — worker chỉ no-op khi nhận
@@ -39,16 +42,29 @@ trong `app/agent/worker.py`.
   — cả 2 trường hợp Agent Worker đều ngừng publish và gửi sentinel để Core đóng SSE; khác
   biệt là turn có **kết thúc thật sự** hay không (xem `kien-truc-agent.md` mục 6). Client bỏ
   qua dòng `data: [DONE]` cuối (không parse JSON).
-- Không cache/replay: mở stream **sau khi** turn đã publish 1 số event thì mất các event đó
-  (Pub/Sub không lưu lại) — client nên mở SSE **trước hoặc ngay sau** khi gọi
-  `POST .../messages` (xem `api-doc.md` mục 2.1), và mở lại SSE khi resume sau khi trả lời
-  câu hỏi (mục 4).
+- **Core hoãn đẩy turn cho Worker tới khi SSE đã subscribe.** `POST .../messages` (và
+  `POST .../questions/{questionId}/answer`) chỉ persist DB + lưu `TurnRequest` vào Redis
+  `agent:pending_turn:{conversationId}` — **không** publish `agent_request_queue` ngay.
+  Handler SSE, ngay sau khi `subscribe` kênh Redis, `GETDEL` key đó và publish cho Worker
+  (`flush_pending_turn`, `app/services/message_service.py`). Hệ quả: Worker chỉ bắt đầu
+  chạy khi client chắc chắn đang nhận event ⇒ **không mất event đầu luồng** dù client mở
+  SSE *sau* khi `POST` trả về. `GETDEL` atomic ⇒ client mở nhiều SSE connection cùng lúc
+  thì chỉ 1 lần đẩy Worker.
+- Nếu client `POST` rồi **không bao giờ** mở SSE: `agent:pending_turn:*` +
+  `agent:active_turn:*` có TTL (`settings.AGENT_TURN_KEY_TTL`) tự hết hạn; assistant row
+  `status="queued"` còn lại là việc của job reconcile (mục 7).
+- Pub/Sub không cache/replay: mở lại SSE **giữa chừng** 1 turn đang chạy (vd sau reload,
+  hoặc để resume sau khi trả lời câu hỏi — mục 4) vẫn mất các event đã phát trước đó;
+  client dựng lại trạng thái từ `GET .../messages` (REST).
 
 ## 2. Bảng event (`type`)
 
+> **Đã bỏ `message.queued`.** Trước đây event này mang `messageId` để FE swap id bubble
+> assistant optimistic. Nay FE nhận `assistantMessage.id` thật ngay trong response
+> `POST .../messages` (`api-doc.md` mục 2.1) nên không cần nữa.
+
 | `type` | Khi nào | Payload (ngoài `type`) |
 |---|---|---|
-| `message.queued` | ngay sau khi Core publish turn vào `agent_request_queue`, trước khi Agent Worker nhận | `corrId`, `conversationId`, `messageId` |
 | `message.steered` | user gửi thêm tin nhắn khi turn đang chạy (Steer, mục 5) | `corrId`, `conversationId`, `messageId`, `content` |
 | `message.started` | Agent Worker bắt đầu xử lý turn | `corrId`, `clientMessageId?`, `conversationId`, `messageId` |
 | `reasoning.step_started` | đầu 1 reasoning step | `messageId`, `conversationId`, `stepId`, `title`, `stepType?` (`default`\|`tool_call`\|`tool_ask`), `choice?` (mục 3) |
@@ -64,7 +80,7 @@ trong `app/agent/worker.py`.
 **Thứ tự chuẩn 1 turn** (không steer, không hỏi lại):
 
 ```
-message.queued → message.started
+message.started
   → (reasoning.step_started → reasoning.step_delta* → reasoning.step_completed)  × N step
   → message.delta*
   → message.done
@@ -165,20 +181,24 @@ tiếp với ranh giới Step ↔ Reasoning ở `kien-truc-agent.md` mục 0:
   - Tin nhắn Steer: `status="pending"` lúc lưu — **update** (không tạo row mới) thành
     `status="queued"` khi `pre_step` thực sự append vào context (mục 5), qua cùng cơ chế
     upsert `agent_response_queue` mô tả bên dưới cho assistant message.
-- **Assistant message — persist khi turn kết thúc** (`message.done`): trong lúc streaming
-  (`reasoning.*`, `message.delta`), nội dung assistant **chưa có row trong `messages`**, chỉ
-  tồn tại tạm trong bộ nhớ Agent Worker rồi stream qua Redis.
-- **Assistant message — persist sớm khi tạm dừng chờ `tool_ask`** (mục 3): đây là **ngoại lệ**
-  của quy tắc trên, cần thiết vì `MessageStatus` phía FE có giá trị `"question"` — nghĩa là
-  FE cần thấy được trạng thái "đang chờ trả lời" kể cả sau khi **reload trang** (checkpointer
-  của LangGraph chỉ phục vụ resume phía Agent, FE/Core không đọc được nó qua DB). Cơ chế:
+- **Assistant message — persist NGAY lúc `POST .../messages` mở turn mới** (`status="queued"`,
+  `content=""`). Core sinh `messageId` và tạo row assistant cùng lúc với user message, trả
+  cả `id` về FE trong response (`api-doc.md` mục 2.1) để FE gắn vào bubble + lắng nghe SSE
+  theo đó. Trong lúc streaming (`reasoning.*`, `message.delta`) nội dung vẫn chỉ nằm trong
+  bộ nhớ Worker + stream qua Redis; row DB được **update** khi turn kết thúc/tạm dừng.
+  - Khi `upsert_assistant` set `status` về `done`/`question`, Core **dời `created_at` = now()**
+    để row assistant luôn sắp SAU mọi tin Steer user (vốn tạo GIỮA turn, tức sau row
+    assistant) — giữ đúng thứ tự `Initial User → Steer → Assistant` ở `GET .../messages`.
+- **Cập nhật assistant khi tạm dừng chờ `tool_ask`** (mục 3): FE cần thấy trạng thái
+  `"question"` kể cả sau khi **reload trang** (checkpointer LangGraph chỉ phục vụ resume
+  phía Agent, FE/Core không đọc qua DB). Cơ chế:
   - Khi node `reasoning` gọi `interrupt()` (gặp tool `ask_user`), Agent Worker publish 1
     message vào `agent_response_queue` (cùng queue dùng cho kết quả cuối) với
     `status="question"`, `content` rỗng/tạm, `metadata.reasoning` = các reasoning step đã có
     (kể cả reasoning step `tool_ask`).
-  - Core consume `agent_response_queue`, **upsert** (insert nếu chưa có, update nếu đã có)
-    `messages` row theo `id=messageId` — cùng `messageId` Agent Worker sinh lúc
-    `message.started` (mục 3, `async-api-doc.md`).
+  - Core consume `agent_response_queue`, **upsert** `messages` row theo `id=messageId`
+    (`messageId` do Core sinh + đã INSERT sẵn lúc `POST .../messages` ⇒ đây là UPDATE;
+    `upsert_assistant` vẫn giữ nhánh insert cho các luồng test/spike không qua HTTP).
   - Khi turn thực sự kết thúc (resume xong, `message.done`), Agent Worker publish lại vào
     `agent_response_queue` với `status="done"` + nội dung đầy đủ — Core **update cùng row**
     (không tạo row mới).
@@ -198,6 +218,7 @@ tiếp với ranh giới Step ↔ Reasoning ở `kien-truc-agent.md` mục 0:
 | `sources` (`ChatSource[]`) | Chưa có — cần tool tra cứu tài liệu tham chiếu thật (chưa có tool nghiệp vụ nào ngoài `ask_user`) |
 | Tool nghiệp vụ (ngoài `ask_user`) | Node `reasoning` đã có nhánh xử lý tool "chưa hỗ trợ" (trả lỗi cho LLM tự retry) — chưa cài tool thật nào |
 | Race Steer vào đúng lúc turn kết thúc | Đã ghi nhận ở cảnh báo đầu file — chưa xử lý |
+| Reconcile assistant row kẹt `queued`/`streaming` | Nếu client `POST` rồi không mở SSE (hoặc Worker chết giữa turn), row assistant kẹt. Redis key có TTL nhưng row DB thì chưa — cần job quét row `queued`/`streaming` quá hạn → `done` kèm nội dung lỗi |
 | Checkpointer production | Đang dùng `InMemorySaver` (dev) — cần Postgres/Redis-backed khi chạy nhiều Agent Worker instance (`kien-truc-agent.md` mục 3) |
 | Celery hoá worker | Xem `core/README.md` mục "Agent worker — Celery (định hướng)" — chưa làm |
 | Global exception handler (`{"error": {...}}`) | Chưa có — `api-doc.md` mục 2.2 dùng `HTTPException` mặc định tạm thời |

@@ -188,22 +188,6 @@ export const useChatStore = create<ChatState>((set, get) => {
   function handleEvent(rawEvent: ChatStreamEvent) {
     const event = normalizeStreamEvent(rawEvent);
     switch (event.type) {
-      case "message.queued": {
-        set((state) => {
-          const messagesByConversation = { ...state.messagesByConversation };
-          for (const convId of Object.keys(messagesByConversation)) {
-            const list = messagesByConversation[convId];
-            const index = list.findIndex((m) => m.id === event.corrId);
-            if (index === -1) continue;
-            const next = [...list];
-            next[index] = { ...next[index], id: event.messageId, status: "queued" };
-            messagesByConversation[convId] = next;
-            return { messagesByConversation };
-          }
-          return state;
-        });
-        break;
-      }
       case "message.started": {
         set((state) => {
           const messagesByConversation = { ...state.messagesByConversation };
@@ -331,13 +315,56 @@ export const useChatStore = create<ChatState>((set, get) => {
         });
         break;
       }
+      case "message.question": {
+        patchMessage(event.messageId, (m) => ({
+          ...m,
+          status: "question",
+          choice: event.choice,
+        }));
+        set((state) => ({
+          activeStreams: {
+            ...state.activeStreams,
+            [event.conversationId]: Math.max(
+              0,
+              (state.activeStreams[event.conversationId] ?? 0) - 1
+            ),
+          },
+        }));
+        break;
+      }
+      case "message.tool_result": {
+        patchMessage(event.messageId, (m) => {
+          const stepId = `${event.messageId}-tool-${event.tool}`;
+          const list = m.reasoning ?? [];
+          const step: ReasoningStep = {
+            id: stepId,
+            title: `Gọi tool: ${event.tool}`,
+            content: event.content,
+            status: "done",
+            type: "tool_call",
+          };
+          const exists = list.some((s) => s.id === stepId);
+          return {
+            ...m,
+            reasoning: exists
+              ? list.map((s) => (s.id === stepId ? step : s))
+              : [...list, step],
+          };
+        });
+        break;
+      }
       case "message.done": {
         patchMessage(event.messageId, (m) => {
           const existingList = m.reasoning ?? [];
           const incomingList = event.reasoning ?? [];
 
+          // Backend thật gửi `content` cuối cùng ở đây (không gửi `reasoning`) — mock
+          // gửi `reasoning` (không gửi `content`, dựa vào content đã tích luỹ qua
+          // `message.delta`). `?? m.content` giữ nguyên content cũ khi field vắng mặt.
+          const content = event.content ?? m.content;
+
           if (incomingList.length === 0) {
-            return { ...m, status: "done" };
+            return { ...m, status: "done", content };
           }
 
           const existingMap = new Map(existingList.map((s) => [s.id, s]));
@@ -374,6 +401,7 @@ export const useChatStore = create<ChatState>((set, get) => {
           return {
             ...m,
             status: "done",
+            content,
             reasoning: mergedList,
           };
         });
@@ -625,6 +653,8 @@ export const useChatStore = create<ChatState>((set, get) => {
         };
       });
 
+      const isSteer = (activeStreams[activeId] ?? 0) > 0;
+
       Promise.resolve(
         chatService.sendMessage({
           conversationId: activeId,
@@ -635,7 +665,31 @@ export const useChatStore = create<ChatState>((set, get) => {
           attachments,
           selection,
         })
-      ).catch(() => {
+      ).then((result) => {
+        // Backend thật trả về id thật của cả user message lẫn assistant row
+        // (status="queued") — thay id optimistic để các event SSE sau đó (keyed theo
+        // messageId thật) và thao tác trích dẫn về sau khớp đúng. Mock trả `void` ->
+        // bỏ qua, correlation qua `corrId` ở `message.started` lo phần đó.
+        if (!result) return;
+        set((state) => {
+          const list = state.messagesByConversation[activeId] ?? [];
+          const next = list.map((m) => {
+            if (m.id === userMessage.id) {
+              return { ...m, id: result.userMessage.id, status: result.userMessage.status };
+            }
+            if (!isSteer && m.id === assistantMessage.id) {
+              return { ...m, id: result.assistantMessage.id, status: result.assistantMessage.status };
+            }
+            return m;
+          });
+          return {
+            messagesByConversation: {
+              ...state.messagesByConversation,
+              [activeId]: next,
+            },
+          };
+        });
+      }).catch(() => {
         console.error("Gửi tin nhắn thất bại");
         patchMessage(clientMessageId, (m) => ({
           ...m,

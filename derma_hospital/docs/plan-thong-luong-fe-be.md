@@ -357,7 +357,7 @@ async for mode, chunk in agent_graph.astream(input_or_command, config, stream_mo
 4. Test riêng B (không cần FE): `POST /conversations` lấy `conversationId` → mở
    `curl -N localhost:3050/api/v1/conversations/{id}/stream` ở 1 terminal → `POST
    /conversations/{id}/messages` với `{"clientMessageId":"c1","content":"..."}` → theo dõi
-   thứ tự event `message.queued → message.started → reasoning.step_started → nhiều
+   thứ tự event `message.started → reasoning.step_started → nhiều
    reasoning.step_delta (rải rác theo thời gian thực, KHÔNG dồn cục 1 lúc — xác nhận A hoạt
    động) → reasoning.step_completed → message.delta* → message.done → [DONE]`. `psql -c
    "select id,status,content from messages where conversation_id='...'"` xác nhận row tồn tại

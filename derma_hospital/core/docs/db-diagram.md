@@ -58,8 +58,10 @@ Chọn **1 cột `metadata JSONB` duy nhất** thay vì cột riêng/bảng con 
 - **Luôn đọc/ghi nguyên khối theo message** — FE render 1 message là render toàn bộ field
   optional của nó cùng lúc; không có truy vấn nào cần lọc *bên trong* metadata (vd "tìm mọi
   message có `sources` chứa tài liệu X") ở giai đoạn hiện tại → không cần JOIN qua bảng con.
-  Xem mục 5 "Persist" trong `async-api-doc.md`: assistant message ghi 1 lần duy nhất lúc
-  `message.done`, không update dần từng field.
+  Xem mục 6 "Persist" trong `async-api-doc.md`: row assistant được INSERT sẵn
+  (`status="queued"`, `content=""`) lúc `POST .../messages`, rồi **update nguyên khối** 1
+  lần khi turn tạm dừng (`question`) / kết thúc (`done`) — không update dần từng field
+  trong lúc streaming (nội dung stream qua Redis, chưa chạm DB).
   - Nếu sau này thật sự cần lọc/JOIN theo 1 loại field cụ thể (vd báo cáo theo `sources`),
     tách field đó ra bảng con riêng lúc đó — không tách trước khi có nhu cầu thật.
 - **Schema phía FE còn đang tiến hoá** — `fe/docs/backend-contract.md` mục 7 cho thấy field

@@ -1,55 +1,43 @@
-"""Payload RabbitMQ giữa Core <-> Agent Worker (`agent_request_queue`/`agent_response_queue`).
+"""Message contract Core (FastAPI) ⇄ Agent Worker qua RabbitMQ (2 queue,
+`app/core/constants.py`).
 
-Dùng chung cho cả 2 tiến trình (Core publish, Agent Worker consume — hoặc ngược lại) nên
-đặt tại `app/agent/` thay vì `app/dto/` — đây không phải hợp đồng API công khai, chỉ là
-giao ước nội bộ giữa 2 process (xem `docs/async-api-doc.md`).
+`TurnRequest`: Core -> Worker (`agent_request_queue`) — mở turn mới/Steer (`type="turn"`)
+hoặc resume câu hỏi `ask_user` đang chờ (`type="resume"`, xem `app/agent/tools.py`).
+
+`AgentResponseMessage`: Worker -> Core (`agent_response_queue`) — Core là writer duy
+nhất của bảng `messages`, tự upsert khi nhận được (`app/agent/response_consumer.py`).
 """
 from typing import Any, Literal
 
 from pydantic import BaseModel
 
 
-class TurnRequest(BaseModel):
-    """`type="turn"`: mở turn mới hoặc Steer (`is_steer`). `type="resume"`: trả lời
-    câu hỏi (`tool_ask`) đang chờ — xem `kien-truc-agent.md` mục 3, `api-doc.md` mục 2.2.
-    """
+class TurnAttachment(BaseModel):
+    """1 ảnh đính kèm turn — `object_key` là key MinIO (`app/infra/file_storage.py`,
+    trùng `FileAttachmentDto.id`), Worker tự fetch bytes qua `get_object_bytes()` khi
+    tool `classify_skin_image` (`app/agent/tools/skin_image_classifier.py`) cần."""
 
+    name: str
+    type: str
+    object_key: str
+
+
+class TurnRequest(BaseModel):
     type: Literal["turn", "resume"]
     conversation_id: str
-    # id assistant message của TURN (không phải của tin nhắn Steer) — Core sinh sẵn
-    # lúc publish turn mới, tái dùng cho mọi Steer/resume thuộc cùng turn đó.
-    message_id: str
+    message_id: str  # id assistant message của turn (ổn định qua mọi resume)
     corr_id: str | None = None
-
-    # type="turn"
-    content: str | None = None
+    content: str | None = None  # bắt buộc khi type="turn" (turn mới hoặc Steer)
     is_steer: bool = False
-    steer_message_id: str | None = None  # id row Steer trong `messages`, để update status
-
-    # type="resume"
-    question_id: str | None = None
-    answer: dict[str, Any] | None = None
+    answer: str | None = None  # bắt buộc khi type="resume" — câu trả lời cho `ask_user`
+    attachments: list[TurnAttachment] | None = None
 
 
 class AgentResponseMessage(BaseModel):
-    """Payload `agent_response_queue` (Agent Worker/graph -> Core) — Core là consumer
-    duy nhất, làm upsert DB (`docs/async-api-doc.md` mục 6). Agent Worker/`pre_step`
-    KHÔNG còn ghi Postgres trực tiếp, chỉ publish message này.
-
-    - `type="assistant_upsert"`: ghi/đè dòng assistant message của cả turn
-      (`status="question"` lúc tạm dừng, `"done"` lúc kết thúc — cùng 1 row, khớp
-      `MessageRepository.upsert_assistant`).
-    - `type="steer_status"`: cập nhật status 1 dòng Steer user message đã tồn tại
-      (`"pending"` -> `"queued"`, `kien-truc-agent.md` mục 5).
-    """
-
-    type: Literal["assistant_upsert", "steer_status"]
     conversation_id: str
-    message_id: str  # id dòng cần upsert/update
-
-    # type="assistant_upsert"
-    content: str | None = None
-    reasoning: list[dict[str, Any]] | None = None  # [ReasoningResult.model_dump(mode="json"), ...]
-
-    # cả 2 type đều set status ("question"|"done" cho assistant_upsert, "queued" cho steer_status)
-    status: Literal["question", "done", "queued"] | None = None
+    message_id: str
+    content: str
+    status: Literal["done", "question"]
+    # `MessageChoiceDto.model_dump(mode="json", by_alias=True)` — chỉ set khi
+    # status="question" (`app/dto/message.py`).
+    choice: dict[str, Any] | None = None

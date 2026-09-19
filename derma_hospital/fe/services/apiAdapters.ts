@@ -21,6 +21,7 @@ import type {
   ReasoningStepType,
   SelectionSource,
   SendMessageInput,
+  SendMessageResult,
 } from "@/features/chat/types";
 
 /* ----------------------------- Wire DTOs ----------------------------- */
@@ -47,6 +48,7 @@ export interface ApiFileAttachment {
   name: string;
   size: number;
   type: string;
+  url?: string | null;
 }
 
 export interface ApiReasoningStep {
@@ -76,6 +78,13 @@ export interface ApiChatMessage {
   status: MessageStatus;
   metadata?: ApiMessageMetadata | null;
   createdAt: string;
+}
+
+/** Khớp `SendMessageResult` (`core/app/dto/message.py`) — response của
+ * `POST /conversations/{id}/messages`. */
+export interface ApiSendMessageResult {
+  userMessage: ApiChatMessage;
+  assistantMessage: ApiChatMessage;
 }
 
 /** Khớp `SendMessageInput` (`core/app/dto/message.py`) verbatim — không có
@@ -136,7 +145,24 @@ export function toChatMessage(a: ApiChatMessage): ChatMessage {
             end: r.end ?? undefined,
           }))
         : undefined,
-    attachments: role === "user" ? meta?.attachments ?? undefined : undefined,
+    attachments:
+      role === "user" && meta?.attachments
+        ? meta.attachments.map((f) => ({
+            id: f.id,
+            name: f.name,
+            size: f.size,
+            type: f.type,
+            url: f.url ?? undefined,
+            uploaded: true,
+          }))
+        : undefined,
+  };
+}
+
+export function toSendMessageResult(a: ApiSendMessageResult): SendMessageResult {
+  return {
+    userMessage: toChatMessage(a.userMessage),
+    assistantMessage: toChatMessage(a.assistantMessage),
   };
 }
 

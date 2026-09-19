@@ -1,33 +1,36 @@
 """Agent worker — tiến trình riêng, tách khỏi FastAPI process.
 
-Luồng (xem `docs/async-api-doc.md`, `kien-truc-agent.md`):
-  1. consume  RabbitMQ  `agent_request_queue`  (Core đẩy turn mới / resume)
-  2. Nạp long-term memory liên quan (semantic search Qdrant theo `user_id`) làm
-     context đầu turn mới, xem `app/agent/memory.py`/`kien-truc-memory.md`.
-  3. chạy     LangGraph (`app/agent/graph.py`), publish từng Reasoning lên Redis
-     `agent:events:{conversation_id}` theo thời gian thực (`kien-truc-he-thong.md` mục 3)
-  4. Khi turn tạm dừng (`status="question"`) hoặc kết thúc (`status="done"`), publish
-     `AgentResponseMessage` vào RabbitMQ `agent_response_queue` — Worker KHÔNG đụng
-     Postgres (trừ ĐỌC, xem `_load_memory_context`), Core là consumer duy nhất làm
-     upsert (`docs/async-api-doc.md` mục 6, `app/agent/response_consumer.py`).
-  5. Khi turn kết thúc thành công, tóm tắt (distill) turn đó thành 1 memory mới,
-     lưu vào Qdrant (`app/agent/memory.py::distill_and_store`).
+Luồng:
+  1. consume RabbitMQ `agent_request_queue` (Core đẩy turn mới/Steer/resume, xem
+     `app/agent/schemas.py::TurnRequest`).
+  2. chạy `app/agent/graph.py::agent_graph` (`create_agent`), forward token thật (LangGraph
+     `stream_mode="messages"`, KHÔNG tự chunk giả lập) lên Redis `agent:events:{id}`
+     (`kien-truc-he-thong.md` mục 3) theo thời gian thực.
+  3. Khi turn tạm dừng (tool `ask_user` gọi `interrupt()`, `status="question"`) hoặc kết
+     thúc (`status="done"`), publish `AgentResponseMessage` vào RabbitMQ
+     `agent_response_queue` — Worker KHÔNG đụng Postgres, Core là consumer duy nhất làm
+     upsert (`app/agent/response_consumer.py`).
 
-Chạy:  cd core && python -m app.agent.worker
+`thread_id` (checkpointer) = `conversation_id` — 1 hội thoại = 1 thread duy nhất, mọi
+turn nối tiếp qua `messages` (khác bản Turn/Step/Reasoning cũ dùng `thread_id =
+message_id` riêng từng turn + tầng memory Qdrant riêng để ghép lại, xem
+`app/agent/graph.py`).
+
+Chạy: cd core && python -m app.agent.worker
 """
 import asyncio
 import json
-from typing import Any
+import re
+from collections import defaultdict
+from typing import Any, cast
 
 from aio_pika.abc import AbstractIncomingMessage
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.runnables import RunnableConfig
-from langgraph.types import Command
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
+from langgraph.types import Command, Interrupt
 
-from app.agent import memory
-from app.agent.graph import agent_graph
+from app.agent.context import AgentContext
+from app.agent.graph import TOOL_DISPLAY_NAMES, agent_graph, config_for
 from app.agent.schemas import AgentResponseMessage, TurnRequest
-from app.agent.state import ReasoningResult, TurnState
 from app.core.constants import (
     AGENT_EVENTS_CHANNEL,
     AGENT_REQUEST_QUEUE,
@@ -35,272 +38,234 @@ from app.core.constants import (
     STREAM_DONE_SENTINEL,
 )
 from app.db.session import AsyncSessionLocal
-from app.infra import qdrant_client
+from app.dto.message import ChoiceOptionDto, MessageChoiceDto
 from app.infra.rabbitmq_client import rabbitmq_client
 from app.infra.redis_client import publish as redis_publish
 from app.repositories.conversation_repository import ConversationRepository
 
-# Số ký tự mỗi lần `*.delta` khi KHÔNG có token thật để stream — dùng cho reasoning
-# `tool_call`/`tool_ask` (`_publish_reasoning`, nội dung có sẵn ngay, không qua LLM) và
-# đoạn `message.delta` lặp lại `final_answer` cuối turn (đã stream thật ở
-# `reasoning.step_delta` rồi, đây chỉ echo lại). Reasoning "gọi LLM" stream token thật
-# qua `get_stream_writer()` (`app/agent/graph.py::_run_llm`), không dùng hằng số này.
-DELTA_CHUNK_SIZE = 24
+# 1 Lock/conversation_id — `create_agent` KHÔNG hỗ trợ 2 lần `ainvoke()` đồng thời trên
+# CÙNG `thread_id` (đụng checkpoint). Turn/Steer mới tới khi turn TRƯỚC của CÙNG hội
+# thoại chưa xong sẽ CHỜ tới lượt thay vì chen ngang giữa chừng (đánh đổi có chủ đích —
+# đơn giản hơn nhiều so với node `pre_step` tự dựng của bản trước, chấp nhận Steer chỉ
+# thực sự được xử lý ngay SAU khi turn hiện tại xong thay vì ngay lập tức).
+_conversation_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
 
 async def _emit(channel: str, payload: dict[str, Any]) -> None:
     await redis_publish(channel, json.dumps(payload))
 
 
-def _all_reasoning(state: TurnState) -> list[ReasoningResult]:
-    results: list[ReasoningResult] = []
-    for step in state["steps"]:
-        results.extend(step.reasoning)
-    results.extend(state["current_step"])
-    return results
+# Gemini (`include_thoughts=True`, `llm.py`) mở đầu mỗi đoạn "thinking" bằng 1 dòng tiêu
+# đề in đậm dạng markdown (vd "**My Approach to Summarizing Psoriasis**") tóm tắt cả đoạn
+# suy nghĩ phía sau — lấy ĐÚNG dòng này làm summary hiển thị thay vì dump nguyên đoạn suy
+# nghĩ dài (không tự nhiên/không phù hợp hiển thị cho người dùng cuối).
+_THINKING_TITLE_RE = re.compile(r"^\*\*(.+?)\*\*")
+_THINKING_SUMMARY_MAX_LEN = 160
 
 
-async def _publish_reasoning(
-    channel: str, message_id: str, conversation_id: str, r: ReasoningResult
-) -> None:
-    base: dict[str, Any] = {
-        "messageId": message_id,
-        "conversationId": conversation_id,
-        "stepId": r.step_id,
-    }
-    # by_alias=True: `MessageChoiceDto` là CamelModel (`app/dto/message.py`) — publish thủ
-    # công qua Redis KHÔNG đi qua FastAPI response serialization (vốn tự áp alias mặc
-    # định), nên phải tự truyền `by_alias=True`, nếu không field sẽ ra snake_case
-    # (`question_id`) thay vì `questionId` như FE (`MessageChoice`) và
-    # `MessageRepository.find_pending_by_question_id` (tra raw dict) đang mong đợi.
-    choice = {"choice": r.choice.model_dump(mode="json", by_alias=True)} if r.choice else {}
-
-    await _emit(
-        channel,
-        {"type": "reasoning.step_started", "title": r.title, "stepType": r.step_type, **base, **choice},
-    )
-    for i in range(0, len(r.content), DELTA_CHUNK_SIZE):
-        await _emit(
-            channel,
-            {"type": "reasoning.step_delta", "delta": r.content[i : i + DELTA_CHUNK_SIZE], **base},
-        )
-    await _emit(
-        channel, {"type": "reasoning.step_completed", "stepType": r.step_type, **base, **choice}
-    )
+def _summarize_thinking(text: str) -> str:
+    first_block = text.strip().split("\n\n", 1)[0].strip()
+    title_match = _THINKING_TITLE_RE.match(first_block)
+    summary = title_match.group(1).strip() if title_match else first_block
+    # Không có tiêu đề in đậm (fallback) -> cắt ở câu đầu tiên thay vì cả đoạn.
+    if not title_match:
+        summary = re.split(r"(?<=[.!?])\s", summary, maxsplit=1)[0]
+    if len(summary) > _THINKING_SUMMARY_MAX_LEN:
+        summary = summary[: _THINKING_SUMMARY_MAX_LEN - 1].rstrip() + "…"
+    return summary
 
 
-async def _persist_assistant(
-    *, message_id: str, conversation_id: str, content: str, status: str, reasoning: list[ReasoningResult]
-) -> None:
-    """Publish `agent_response_queue` thay vì ghi DB trực tiếp — Core consume queue này
-    và tự làm upsert (`app/agent/response_consumer.py`, `docs/async-api-doc.md` mục 6)."""
-    msg = AgentResponseMessage(
-        type="assistant_upsert",
-        conversation_id=conversation_id,
-        message_id=message_id,
-        content=content,
-        status=status,  # type: ignore[arg-type]
-        # `to_dto()` map đúng shape `ReasoningStepDto` (id/status/type) — `extra.reasoning`
-        # được `MessageMetadataDto` validate lại khi `GET /messages`, dump thẳng
-        # `ReasoningResult` (step_id/step_type/step_continues) sẽ lỗi thiếu field.
-        reasoning=[r.to_dto().model_dump(mode="json", by_alias=True) for r in reasoning],
-    )
-    await rabbitmq_client.publish(AGENT_RESPONSE_QUEUE, msg.model_dump_json().encode("utf-8"))
-
-
-async def _drive_graph(req: TurnRequest, input_or_command: object, published: set[str]) -> None:
-    """Chạy graph tới khi kết thúc turn HOẶC tạm dừng (`interrupt`); publish Redis +
-    persist DB theo diễn biến. Dùng chung cho turn mới lẫn resume."""
-    channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
-    config: RunnableConfig = {"configurable": {"thread_id": req.message_id}}
-
-    last_state: TurnState | None = None
-    interrupted = False
-
-    # 2 stream mode cùng lúc: "values" (state đầy đủ sau mỗi node, như cũ) + "custom"
-    # (token thật do `_run_llm()`/`get_stream_writer()` phát ra NGAY trong lúc node đang
-    # chạy — xem `app/agent/graph.py`). Mỗi item yield ra là tuple `(mode, payload)`.
-    async for mode, chunk in agent_graph.astream(
-        input_or_command, config, stream_mode=["values", "custom"]
-    ):
-        if isinstance(chunk, dict) and "__interrupt__" in chunk:
-            interrupted = True
-            break
-
-        if mode == "custom":
-            # `chunk` đã đúng shape wire event sẵn từ graph.py — forward gần như nguyên
-            # văn, không cần map tên riêng.
-            await _emit(channel, chunk)
-            if chunk.get("type") == "reasoning.step_completed":
-                # Đánh dấu đã publish để vòng lặp "values" bên dưới (dùng cho reasoning
-                # tool_call/tool_ask — không stream qua "custom") không publish lại.
-                published.add(chunk["stepId"])
-            continue
-
-        state: TurnState = chunk  # type: ignore[assignment]
-        last_state = state
-
-        for steer_content in state.get("last_steer_batch") or []:
-            await _emit(
-                channel,
-                {
-                    "type": "message.steered",
-                    "corrId": req.corr_id,
-                    "conversationId": req.conversation_id,
-                    "messageId": req.message_id,
-                    "content": steer_content,
-                },
-            )
-
-        for r in _all_reasoning(state):
-            if r.step_id not in published:
-                await _publish_reasoning(channel, req.message_id, req.conversation_id, r)
-                published.add(r.step_id)
-
-    if last_state is None:
-        print(f"[Agent Worker] error: graph không sinh state nào cho {req.message_id}")
-        return
-
-    if interrupted:
-        await _persist_assistant(
-            message_id=req.message_id,
-            conversation_id=req.conversation_id,
-            content="",
-            status="question",
-            reasoning=_all_reasoning(last_state),
-        )
-        await redis_publish(channel, STREAM_DONE_SENTINEL)
-        return
-
-    answer = last_state["final_answer"] or ""
-    for i in range(0, len(answer), DELTA_CHUNK_SIZE):
-        await _emit(
-            channel,
-            {
-                "type": "message.delta",
-                "messageId": req.message_id,
-                "conversationId": req.conversation_id,
-                "delta": answer[i : i + DELTA_CHUNK_SIZE],
-            },
-        )
-
-    reasoning = _all_reasoning(last_state)
-    await _emit(
-        channel,
-        {
-            "type": "message.done",
-            "messageId": req.message_id,
-            "conversationId": req.conversation_id,
-            # `to_dto()` — xem giải thích ở `_persist_assistant` (shape ReasoningStepDto,
-            # khớp FE `ReasoningStep{id,status,type}` thay vì state nội bộ step_id/step_type).
-            "reasoning": [r.to_dto().model_dump(mode="json", by_alias=True) for r in reasoning],
-        },
-    )
-    await redis_publish(channel, STREAM_DONE_SENTINEL)
-
-    await _persist_assistant(
-        message_id=req.message_id,
-        conversation_id=req.conversation_id,
-        content=answer,
-        status="done",
-        reasoning=reasoning,
-    )
-    # Xoá Redis active-turn key: chuyển sang `response_consumer.py` (Core) — Core là bên
-    # đã SET key này lúc publish turn nên để Core tự dọn khi đã persist xong DB là đối
-    # xứng, và tránh 1 khoảng race nhỏ (key bị xoá trước khi DB thật sự ghi xong).
-
-    # Long-term memory: tóm tắt turn vừa xong + lưu Qdrant (không chặn turn nếu lỗi —
-    # `memory.distill_and_store` tự nuốt exception). CHỈ distill khi turn thật sự
-    # xong (nhánh này), KHÔNG distill turn đang tạm dừng chờ `ask_user` (nhánh
-    # `interrupted` ở trên) vì turn đó chưa hoàn tất.
-    async with AsyncSessionLocal() as db:
-        conversation = await ConversationRepository(db).get(req.conversation_id)
-    if conversation is not None:
-        # Lấy nội dung câu hỏi GỐC từ `HumanMessage` đầu tiên trong state, KHÔNG dùng
-        # `req.content` trực tiếp — khi turn được resume (`_handle_resume`), `req` là
-        # request loại "resume" có `content=None` (nội dung gốc nằm ở request ĐẦU).
-        user_content = next(
-            (m.content for m in last_state["messages"] if isinstance(m, HumanMessage)), ""
-        )
-        await memory.distill_and_store(
-            user_id=conversation.user_id,
-            conversation_id=req.conversation_id,
-            message_id=req.message_id,
-            user_content=str(user_content),
-            reasoning=reasoning,
-            answer=answer,
-        )
-
-
-async def _load_memory_context(conversation_id: str, query_text: str) -> str | None:
-    """Semantic search long-term memory liên quan `query_text` theo `user_id` của
-    conversation — đọc Postgres trực tiếp (READ, không phải WRITE, vẫn đúng nguyên
-    tắc "Core là writer duy nhất" — xem tiền lệ `pre_step`'s `list_pending_steers`)."""
+async def _user_id_for(conversation_id: str) -> str:
     async with AsyncSessionLocal() as db:
         conversation = await ConversationRepository(db).get(conversation_id)
-    if conversation is None:
-        return None
-    return await memory.retrieve_context(user_id=conversation.user_id, query_text=query_text)
+    return conversation.user_id if conversation is not None else ""
 
 
-async def _initial_state(req: TurnRequest) -> TurnState:
-    memory_context = await _load_memory_context(req.conversation_id, req.content or "")
-    messages: list[HumanMessage | SystemMessage] = []
-    if memory_context:
-        messages.append(SystemMessage(content=memory_context))
-    messages.append(HumanMessage(content=req.content or ""))
-    return {
-        "conversation_id": req.conversation_id,
-        "message_id": req.message_id,
-        "messages": messages,
-        "steps": [],
-        "current_step": [],
-        "step_count": 0,
-        "just_closed_step": False,
-        "outcome": None,
-        "final_answer": None,
-        "pending_tool": None,
-        "last_steer_batch": [],
-    }
+async def _drive(req: TurnRequest, input_: object) -> None:
+    channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
+    config = config_for(req.conversation_id)
+    context = AgentContext(
+        user_id=await _user_id_for(req.conversation_id),
+        conversation_id=req.conversation_id,
+    )
+    base: dict[str, Any] = {"conversationId": req.conversation_id, "messageId": req.message_id}
+
+    await _emit(channel, {"type": "message.started", "corrId": req.corr_id, **base})
+
+    interrupt: Interrupt | None = None
+    final_message: AIMessage | None = None
+
+    try:
+        async for mode, chunk in agent_graph.astream(
+            input_, config=config, context=context, stream_mode=["messages", "updates"]
+        ):
+            if mode == "messages":
+                msg, meta = chunk
+                assert isinstance(msg, BaseMessage)
+                # `langgraph_node == "model"` lọc đúng token của LLM chính — bỏ qua các
+                # lần gọi model nội bộ khác (vd `SummarizationMiddleware` tự gọi LLM tóm
+                # tắt khi vượt ngưỡng, `app/agent/graph.py`), không lẫn vào stream trả
+                # lời user.
+                if meta.get("langgraph_node") == "model" and msg.text:
+                    await _emit(channel, {"type": "message.delta", "delta": msg.text, **base})
+                continue
+
+            # mode == "updates": state diff sau mỗi node — dùng để phát hiện interrupt
+            # (tool `ask_user`, `app/agent/tools.py`) và tóm được `AIMessage` cuối cùng
+            # (không cần tự cộng dồn từng chunk, LangGraph đã gộp sẵn khi node "model"
+            # hoàn tất).
+            chunk = cast(dict[str, Any], chunk)
+            if "__interrupt__" in chunk:
+                interrupt = cast(tuple[Interrupt, ...], chunk["__interrupt__"])[0]
+                break
+            model_update = chunk.get("model")
+            if model_update:
+                final_message = cast(AIMessage, model_update["messages"][-1])
+                # Mỗi lần node "model" hoàn tất 1 lượt gọi LLM (quyết định gọi tool, hay
+                # sinh câu trả lời cuối) — nếu provider trả kèm "thinking" (Gemini tự
+                # tóm tắt suy nghĩ thành đoạn ngắn khi `include_thoughts=True`,
+                # `llm.py`), phát nó thành 1 dòng tóm tắt "đang làm gì" cho người dùng
+                # xem, KHÔNG lẫn vào nội dung câu trả lời thật (`message.delta`, lọc
+                # theo block `type: "text"`).
+                reasoning = "".join(
+                    block.get("reasoning", "")
+                    for block in final_message.content_blocks
+                    if block.get("type") == "reasoning"
+                ).strip()
+                if reasoning:
+                    await _emit(
+                        channel,
+                        {
+                            "type": "message.thinking",
+                            "content": _summarize_thinking(reasoning),
+                            **base,
+                        },
+                    )
+            tools_update = chunk.get("tools")
+            if tools_update:
+                for tool_message in cast(list[ToolMessage], tools_update["messages"]):
+                    tool_name = tool_message.name or ""
+                    await _emit(
+                        channel,
+                        {
+                            "type": "message.tool_result",
+                            # Nhãn hiển thị tiếng Việt cho FE (`TOOL_DISPLAY_NAMES`,
+                            # `graph.py`) — người dùng không cần biết tên hàm nội bộ
+                            # (`ask_user`, `ground_medical_entities`...).
+                            "tool": TOOL_DISPLAY_NAMES.get(tool_name, tool_name),
+                            "content": tool_message.content,
+                            **base,
+                        },
+                    )
+    except Exception as exc:  # noqa: BLE001
+        # LLM/tool lỗi giữa chừng (vd 429 rate-limit OpenRouter, network...) — KHÔNG
+        # được để lộ ra ngoài rồi bị `_on_message` nuốt im lặng (hành vi trước đây):
+        # turn sẽ treo vĩnh viễn — FE chờ SSE không bao giờ tới, `assistant` message
+        # kẹt `status="queued"` trong Postgres mãi mãi. Coi như turn "done" với nội
+        # dung báo lỗi thay vì thêm 1 trạng thái mới (`status="error"` phải sửa cả
+        # DTO/FE/DB enum) — người dùng vẫn thấy phản hồi, có thể hỏi lại ngay.
+        print(f"[Agent Worker] lỗi khi chạy turn {req.message_id}: {exc}")
+        error_text = (
+            "Xin lỗi, hệ thống gặp sự cố khi xử lý câu hỏi này (có thể do quá tải "
+            "tạm thời). Vui lòng thử lại sau ít phút."
+        )
+        await _emit(channel, {"type": "message.done", "content": error_text, **base})
+        await redis_publish(channel, STREAM_DONE_SENTINEL)
+        await rabbitmq_client.publish(
+            AGENT_RESPONSE_QUEUE,
+            AgentResponseMessage(
+                conversation_id=req.conversation_id,
+                message_id=req.message_id,
+                content=error_text,
+                status="done",
+            ).model_dump_json().encode("utf-8"),
+        )
+        return
+
+    if interrupt is not None:
+        await _handle_interrupt(channel, base, req, interrupt)
+        return
+
+    answer = final_message.text if final_message is not None else ""
+    await _emit(channel, {"type": "message.done", "content": answer, **base})
+    await redis_publish(channel, STREAM_DONE_SENTINEL)
+    await rabbitmq_client.publish(
+        AGENT_RESPONSE_QUEUE,
+        AgentResponseMessage(
+            conversation_id=req.conversation_id,
+            message_id=req.message_id,
+            content=answer,
+            status="done",
+        ).model_dump_json().encode("utf-8"),
+    )
 
 
-async def _published_from_snapshot(config: RunnableConfig) -> set[str]:
-    """Seed tập step_id đã publish từ checkpoint hiện có — tránh phát lại các Reasoning
-    đã stream ở lần chạy trước khi resume (mỗi resume là 1 lần gọi `_on_message` riêng,
-    không chia sẻ biến `published` trong bộ nhớ với lần chạy trước)."""
-    snapshot = agent_graph.get_state(config)
-    if not snapshot.values:
-        return set()
-    state: TurnState = snapshot.values  # type: ignore[assignment]
-    return {r.step_id for r in _all_reasoning(state)}
+async def _handle_interrupt(
+    channel: str, base: dict[str, Any], req: TurnRequest, interrupt: Interrupt
+) -> None:
+    """Turn tạm dừng ở tool `ask_user` (`app/agent/tools.py`) — payload `interrupt.value`
+    là `{"question": ..., "options": [...]}` do tool tự truyền, `interrupt.id` (LangGraph
+    tự sinh, ổn định cho ĐÚNG lần dừng này) dùng làm `questionId` cho FE (`POST
+    .../questions/{questionId}/answer`, `docs/api-doc.md` mục 2.2)."""
+    payload = interrupt.value if isinstance(interrupt.value, dict) else {}
+    choice = MessageChoiceDto(
+        question_id=interrupt.id,
+        question=str(payload.get("question", "")),
+        options=[
+            ChoiceOptionDto(id=f"opt-{i}", label=str(label))
+            for i, label in enumerate(payload.get("options") or [])
+        ],
+    )
+    choice_json = choice.model_dump(mode="json", by_alias=True)
+
+    await _emit(channel, {"type": "message.question", "choice": choice_json, **base})
+    await redis_publish(channel, STREAM_DONE_SENTINEL)
+    await rabbitmq_client.publish(
+        AGENT_RESPONSE_QUEUE,
+        AgentResponseMessage(
+            conversation_id=req.conversation_id,
+            message_id=req.message_id,
+            content="",
+            status="question",
+            choice=choice_json,
+        ).model_dump_json().encode("utf-8"),
+    )
+
+
+def _human_message_content(req: TurnRequest) -> str:
+    """Nối thêm object key MinIO của ảnh đính kèm (nếu có) vào cuối nội dung tin nhắn —
+    agent đọc thấy `object_key` này trong `messages` rồi tự copy làm tham số khi gọi
+    `classify_skin_image` (`app/agent/tools/skin_image_classifier.py`, hướng dẫn ở
+    `SYSTEM_PROMPT`, `graph.py`). Không có cơ chế multimodal content riêng ở tầng
+    `create_agent` hiện tại nên forward bằng text là cách đơn giản nhất, nhất quán với
+    cách LLM orchestrate mọi tool khác (đọc context -> tự chọn tham số gọi tool)."""
+    content = req.content or ""
+    images = [a for a in (req.attachments or []) if a.type.startswith("image/")]
+    if not images:
+        return content
+
+    lines = [f'- name="{a.name}" object_key="{a.object_key}"' for a in images]
+    return content + "\n\n[Ảnh đính kèm]\n" + "\n".join(lines)
 
 
 async def _handle_turn(req: TurnRequest) -> None:
-    if req.is_steer:
-        # Steer được `pre_step` của turn ĐANG CHẠY tự đọc từ DB (list_pending_steers) —
-        # không cần (và không nên) khởi động 1 lần astream() riêng cho cùng thread_id.
-        # Giới hạn đã biết: nếu turn gốc vừa kết thúc đúng lúc Steer này tới, Steer sẽ
-        # bị bỏ lỡ — chưa xử lý race này ở bản base.
-        print(f"[Agent Worker] steer nhận, chờ pre_step của turn {req.message_id} đọc DB")
-        return
-
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
-    await _emit(
-        channel,
-        {
-            "type": "message.started",
-            "corrId": req.corr_id,
-            "conversationId": req.conversation_id,
-            "messageId": req.message_id,
-        },
-    )
-    await _drive_graph(req, await _initial_state(req), published=set())
+    if req.is_steer:
+        await _emit(
+            channel,
+            {
+                "type": "message.steered",
+                "corrId": req.corr_id,
+                "conversationId": req.conversation_id,
+                "messageId": req.message_id,
+                "content": req.content,
+            },
+        )
+    await _drive(req, {"messages": [HumanMessage(content=_human_message_content(req))]})
 
 
 async def _handle_resume(req: TurnRequest) -> None:
-    config: RunnableConfig = {"configurable": {"thread_id": req.message_id}}
-    published = await _published_from_snapshot(config)
-    await _drive_graph(req, Command(resume=req.answer), published)
+    await _drive(req, Command(resume=req.answer))
 
 
 async def _on_message(message: AbstractIncomingMessage) -> None:
@@ -308,16 +273,21 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
         try:
             payload = json.loads(message.body.decode("utf-8"))
             req = TurnRequest.model_validate(payload)
-            if req.type == "resume":
-                await _handle_resume(req)
-            else:
-                await _handle_turn(req)
         except Exception as exc:  # noqa: BLE001
-            print(f"[Agent Worker] error: {exc}")
+            print(f"[Agent Worker] invalid message: {exc}")
+            return
+
+        async with _conversation_locks[req.conversation_id]:
+            try:
+                if req.type == "resume":
+                    await _handle_resume(req)
+                else:
+                    await _handle_turn(req)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[Agent Worker] error: {exc}")
 
 
 async def main() -> None:
-    await qdrant_client.ensure_collection()
     await rabbitmq_client.connect()
     print(f"[Agent Worker] listening on '{AGENT_REQUEST_QUEUE}'...")
     await rabbitmq_client.consume(AGENT_REQUEST_QUEUE, _on_message)

@@ -1,35 +1,38 @@
-"""Khởi tạo chat model dùng cho agent (qua LangChain `init_chat_model`).
+"""Model LLM cho agent — 1 điểm khởi tạo duy nhất qua `init_chat_model` (LangChain có
+sẵn, hỗ trợ cú pháp "provider:model" + mọi kwargs riêng của provider truyền thẳng
+xuống), không tự viết wrapper theo từng provider.
 
-`AGENT_MODEL` theo cú pháp "provider:model" (vd "openai:gpt-4o-mini",
-"google_genai:gemini-2.0-flash"...). Cần cài thêm package tích hợp tương ứng,
-vd: `uv add langchain-openai` hoặc `uv add langchain-google-genai`, và set API
-key của provider đó (vd `OPENAI_API_KEY`) trong `.env`.
-"""
-from collections.abc import Sequence
-from functools import lru_cache
-
+`thinking_level`/`include_thoughts` là tham số riêng của Gemini ("thinking" — provider
+`google_genai`), provider khác (vd `openai`, dùng cho OpenRouter/Gemma — xem
+`app/core/config.py::AGENT_MODEL`) không hiểu 2 kwargs này -> phải rẽ nhánh theo
+provider thay vì truyền cứng cho mọi model."""
+from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
-from langchain_core.runnables import Runnable
-from langchain_core.tools import BaseTool
 
 from app.core.config import settings
 
 
-@lru_cache
-def get_llm() -> BaseChatModel:
-    """Chat model "trần" (chưa bind tool), cấu hình từ `.env` (`AGENT_MODEL`,
-    `AGENT_TEMPERATURE`). Cache theo process vì `init_chat_model` không rẻ và
-    model dùng chung cho mọi node reasoning."""
-    from langchain.chat_models import init_chat_model
+def get_model() -> BaseChatModel:
+    provider = settings.AGENT_MODEL.split(":", 1)[0]
+
+    if provider == "openai":
+        # OpenRouter: API tương thích OpenAI (`langchain-openai`), chỉ khác base_url +
+        # api_key riêng — KHÔNG dùng OPENAI_API_KEY (project không có tài khoản OpenAI).
+        return init_chat_model(
+            settings.AGENT_MODEL,
+            temperature=settings.AGENT_TEMPERATURE,
+            base_url=settings.OPENROUTER_BASE_URL,
+            api_key=settings.OPENROUTER_API_KEY,
+        )
 
     return init_chat_model(
         settings.AGENT_MODEL,
         temperature=settings.AGENT_TEMPERATURE,
+        thinking_level=settings.AGENT_THINKING_LEVEL,
+        # Bắt buộc để provider TRẢ VỀ nội dung "thinking" (Gemini tự tóm tắt suy nghĩ
+        # thành các đoạn ngắn) — `thinking_level` chỉ bật suy luận nội bộ, không tự trả
+        # về nếu thiếu `include_thoughts`. Dùng làm dòng tóm tắt "đang làm gì" hiển thị
+        # cho người dùng (`worker.py::_drive`, event `message.thinking`), KHÔNG cần thêm
+        # 1 lệnh gọi LLM riêng để tự tóm tắt.
+        include_thoughts=True,
     )
-
-
-def get_llm_with_tools(tools: Sequence[BaseTool]) -> Runnable:
-    """Bind tool vào chat model — dùng khi thêm node "act" xử lý tool-calling
-    (xem README, phần Agent). Không cache vì bộ tool có thể khác nhau theo
-    ngữ cảnh gọi (mỗi node/luồng có thể cần 1 tập tool riêng)."""
-    return get_llm().bind_tools(list(tools))

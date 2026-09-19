@@ -1,11 +1,14 @@
-import { api } from "./client";
+import { api, clearAccessToken, getAccessToken } from "./client";
 import { endpoints } from "./endpoints";
 import {
   toChatMessage,
   toConversation,
   toSendMessageBody,
+  toSendMessageResult,
   type ApiChatMessage,
   type ApiConversation,
+  type ApiFileAttachment,
+  type ApiSendMessageResult,
 } from "./apiAdapters";
 import type {
   AnswerQuestionInput,
@@ -13,6 +16,7 @@ import type {
   ChatStreamEvent,
   CreateConversationInput,
   SendMessageInput,
+  SendMessageResult,
 } from "@/features/chat/types";
 
 /**
@@ -92,20 +96,32 @@ const impl = {
   },
 
   /**
-   * Mở luồng stream SSE TRƯỚC — để Core Backend subscribe Redis Pub/Sub trước khi Agent
-   * Worker kịp publish event (tránh mất event đầu luồng) — rồi mới gọi `post`. Dùng chung
-   * cho cả `sendMessage` (turn mới/Steer) lẫn `answerQuestion` (resume 1 turn đang tạm
-   * dừng chờ `tool_ask` — kết nối SSE cũ đã đóng lúc pause nên bắt buộc phải mở lại).
+   * Mở SSE connection và forward event tới listeners cho tới khi nhận `[DONE]`.
+   *
+   * Không còn cần "mở stream trước khi POST": Core **hoãn** đẩy turn cho Agent Worker
+   * (`agent:pending_turn` trong Redis) tới khi handler SSE này `subscribe` xong
+   * (`flush_pending_turn`) — nên dù mở SSE ngay SAU khi POST trả về, không event nào bị
+   * rơi. Dùng chung cho `sendMessage` (turn mới) lẫn `answerQuestion` (resume sau
+   * `tool_ask` — connection cũ đã đóng lúc pause).
    */
-  async _streamThenPost(conversationId: string, post: () => Promise<unknown>) {
+  async _openStream(conversationId: string) {
+    const token = getAccessToken();
     const res = await fetch(
       `${API_BASE}${endpoints.streamMessage(conversationId)}`,
       {
         method: "GET",
-        headers: { Accept: "text/event-stream" },
+        headers: {
+          Accept: "text/event-stream",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       }
     );
 
+    if (res.status === 401) {
+      clearAccessToken();
+      window.location.reload();
+      throw new Error("Access token không hợp lệ.");
+    }
     if (!res.ok || !res.body) {
       throw new Error(`SSE stream thất bại: ${res.status}`);
     }
@@ -113,16 +129,6 @@ const impl = {
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-
-    // Không await trước vòng đọc: lỗi sẽ được bắt sau khi stream kết thúc.
-    const postPromise = post().catch((err) => {
-      try {
-        void reader.cancel();
-      } catch {
-        /* noop */
-      }
-      throw err;
-    });
 
     // đọc luồng, tách theo event SSE (cách nhau bởi dòng trống, data: ...)
     for (;;) {
@@ -148,27 +154,40 @@ const impl = {
         }
       }
     }
-
-    // Đảm bảo lỗi từ POST (nếu có) được ném ra ngoài.
-    await postPromise;
   },
 
-  async sendMessage(input: SendMessageInput) {
+  async sendMessage(input: SendMessageInput): Promise<SendMessageResult> {
     const payload = toSendMessageBody(input);
-    await impl._streamThenPost(input.conversationId, () =>
-      api.post(endpoints.sendMessage(input.conversationId), payload)
+    // 1. POST -> Core persist user message + tạo sẵn assistant row (status="queued"),
+    //    trả về id thật cả 2. Turn CHƯA chạy (chờ SSE subscribe).
+    const { data } = await api.post<{ data: ApiSendMessageResult }>(
+      endpoints.sendMessage(input.conversationId),
+      payload
     );
+    const result = toSendMessageResult(data.data);
+
+    // 2. Mở SSE -> Core flush turn cho Worker. Chạy nền (không await): store đã có id
+    //    để gắn bubble, event stream cập nhật dần.
+    void impl._openStream(input.conversationId).catch((err) => {
+      console.error("SSE stream lỗi", err);
+    });
+
+    return result;
   },
 
   async answerQuestion(input: AnswerQuestionInput) {
-    await impl._streamThenPost(input.conversationId, () =>
-      api.post(endpoints.answerQuestion(input.conversationId, input.questionId), {
+    await api.post(
+      endpoints.answerQuestion(input.conversationId, input.questionId),
+      {
         questionId: input.questionId,
         optionId: input.optionId,
         label: input.label,
         custom: input.custom,
-      })
+      }
     );
+    void impl._openStream(input.conversationId).catch((err) => {
+      console.error("SSE stream lỗi", err);
+    });
   },
 
   async improvePrompt(prompt: string) {
@@ -177,6 +196,26 @@ const impl = {
       { prompt }
     );
     return data.data;
+  },
+
+  async uploadAttachment(file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    // `Content-Type: undefined` để axios tự set `multipart/form-data; boundary=...` —
+    // client mặc định (`services/client.ts`) fix cứng `application/json`.
+    const { data } = await api.post<ApiFileAttachment>(
+      endpoints.uploadAttachment,
+      form,
+      { headers: { "Content-Type": undefined } }
+    );
+    return {
+      id: data.id,
+      name: data.name,
+      size: data.size,
+      type: data.type,
+      url: data.url ?? undefined,
+      uploaded: true,
+    };
   },
 };
 

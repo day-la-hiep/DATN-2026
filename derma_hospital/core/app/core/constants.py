@@ -13,3 +13,10 @@ STREAM_DONE_SENTINEL = "[DONE]"  # đánh dấu kết thúc 1 stream SSE
 # với "Steer" (turn hiện tại còn đang chạy). Set khi publish turn, xoá khi turn message.done.
 # Xem docs/async-api-doc.md mục 5, docs/api-doc.md mục 2.1.
 AGENT_ACTIVE_TURN_KEY = "agent:active_turn:{conversation_id}"
+
+# Giá trị = `TurnRequest` JSON của turn/resume đã persist nhưng CHƯA đẩy vào
+# `agent_request_queue` — Core hoãn publish tới khi client thực sự mở SSE (`GET
+# .../stream`) để không mất event đầu luồng (Redis Pub/Sub không replay). Handler SSE
+# `GETDEL` key này ngay sau khi `subscribe` xong rồi mới publish cho Worker.
+# Xem docs/async-api-doc.md mục 1 + 6.
+AGENT_PENDING_TURN_KEY = "agent:pending_turn:{conversation_id}"
