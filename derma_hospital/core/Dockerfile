@@ -25,6 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
 # thường thấy (đổi lại: sửa code cũng phải chạy lại `uv sync`, chấp nhận được vì
 # `uv sync --frozen` chỉ resolve lại nếu `uv.lock` đổi, rất nhanh khi cache hit).
 COPY core/ .
+# Mặc định uv timeout 30s/request và ít retry -> mirror PyPI chậm (Aliyun/TUNA) hay làm
+# `uv sync` fail giữa chừng ("Failed to download ... network timeout", exit 1). Tăng lên.
+ENV UV_HTTP_TIMEOUT=300 \
+    UV_HTTP_RETRIES=8
 RUN uv sync --frozen --no-dev
 
 # Checkpoint CNN (model/model_output/, sibling repo root) — không copy vào core/ để
