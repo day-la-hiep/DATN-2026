@@ -4,3 +4,5 @@
 /data
 # secrets compose prod (mẫu: .env.prod.example)
 /.env
+.vscode
+reference
