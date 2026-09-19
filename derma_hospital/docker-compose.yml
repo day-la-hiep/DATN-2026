@@ -1,7 +1,16 @@
 name: derma-hospital
 
 # Infra cho backend (core/): PostgreSQL + Redis (Pub/Sub) + RabbitMQ (queue) +
-# Qdrant (vector DB — long-term memory Agent, xem core/app/agent/memory.py).
+# Qdrant (vector DB — long-term memory Agent, xem core/app/agent/memory.py) + Neo4j
+# (knowledge graph da liễu từ PrimeKG, xem data/PrimeKG/processed/ +
+# core/app/agent/knowledge_graph.py) + MinIO (object storage — ảnh đính kèm tin nhắn
+# cho core/app/agent/tools/skin_image_classifier.py, xem
+# core/app/infra/file_storage.py).
+#
+# Nếu máy bạn ĐÃ có sẵn 1 MinIO khác chạy ngoài compose này (đụng cổng 9000/9001):
+# đổi `MINIO_PORT`/`MINIO_CONSOLE_PORT` (biến môi trường) hoặc trỏ thẳng
+# `MINIO_ENDPOINT`/`MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY` (core/app/core/config.py) vào
+# instance đó, không cần khởi động service `minio` bên dưới.
 # App (core, agent worker, fe) vẫn chạy thủ công như hiện tại:
 #   docker compose up -d
 #   cd core && python main.py
@@ -81,11 +90,61 @@ services:
     networks:
       - derma-net
 
+  neo4j:
+    image: neo4j:5-community
+    container_name: derma-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-derma12345}
+      # APOC: không bắt buộc cho script nạp dữ liệu (`data/PrimeKG/load_to_neo4j.py`,
+      # dùng driver Python thuần) — bật sẵn để agent có thể tận dụng khi sinh Cypher
+      # (vd `apoc.meta.schema`) qua GraphCypherQAChain.
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"  # Browser UI
+      - "${NEO4J_BOLT_PORT:-7687}:7687"  # Bolt (driver, langchain-neo4j)
+    volumes:
+      - neo4j_data:/data
+      - neo4j_import:/import
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - derma-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: derma-minio
+    restart: unless-stopped
+    environment:
+      # Khớp default `MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY` trong
+      # `core/app/core/config.py` — không cần chỉnh `.env` để chạy dev.
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT:-9000}:9000"          # S3 API
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"  # Console UI
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - derma-net
+
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
   qdrant_data:
+  neo4j_data:
+  neo4j_import:
+  minio_data:
 
 networks:
   derma-net:

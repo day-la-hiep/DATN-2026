@@ -30,8 +30,10 @@ channels:
       operationId: streamConversation
       summary: Nhận toàn bộ event của 1 turn (chat + reasoning) qua Server-Sent Events.
       description: >
-        Mở **trước hoặc ngay sau** khi `POST /conversations/{conversationId}/messages` —
-        Pub/Sub không cache/replay, mở trễ sẽ mất event đã phát (mục 1, `async-api-doc.md`).
+        Mở **sau khi** `POST /conversations/{conversationId}/messages` trả về (đã có
+        `assistantMessage.id`). Core **hoãn** đẩy turn cho Agent Worker tới khi handler
+        SSE này `subscribe` xong kênh Redis (`flush_pending_turn`) — nên không mất event
+        đầu luồng dù mở SSE sau POST (mục 1, `async-api-doc.md`).
 
         Kết thúc bằng 1 dòng `data: [DONE]` (không phải JSON, client tự bỏ qua) — phát ra cả
         khi turn kết thúc thật (`message.done`) lẫn khi turn tạm dừng chờ trả lời
@@ -45,7 +47,6 @@ channels:
           method: GET
       message:
         oneOf:
-          - $ref: '#/components/messages/MessageQueued'
           - $ref: '#/components/messages/MessageSteered'
           - $ref: '#/components/messages/MessageStarted'
           - $ref: '#/components/messages/ReasoningStepStarted'
@@ -56,13 +57,6 @@ channels:
 
 components:
   messages:
-    MessageQueued:
-      name: message.queued
-      title: Turn đã đẩy vào queue
-      summary: Core publish ngay sau khi đẩy turn vào `agent_request_queue`, trước khi Agent Worker nhận.
-      payload:
-        $ref: '#/components/schemas/MessageQueuedPayload'
-
     MessageSteered:
       name: message.steered
       title: Steer đã được pre_step nạp vào context
@@ -119,15 +113,6 @@ components:
         $ref: '#/components/schemas/MessageDonePayload'
 
   schemas:
-    MessageQueuedPayload:
-      type: object
-      required: [type, conversationId, messageId]
-      properties:
-        type: { type: string, const: message.queued }
-        corrId: { type: string, nullable: true, description: "client_message_id do FE sinh, để ghép luồng" }
-        conversationId: { type: string }
-        messageId: { type: string, description: "id assistant message của cả turn (Core sinh)" }
-
     MessageSteeredPayload:
       type: object
       required: [type, conversationId, messageId, content]

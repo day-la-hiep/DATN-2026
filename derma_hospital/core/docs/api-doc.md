@@ -96,7 +96,7 @@ cho khái niệm Steer, định nghĩa gốc ở `fe/docs/backend-contract.md` m
 |---|---|
 | Path | `conversationId: str` |
 | Body | `SendMessageInput` |
-| Response | `202 Accepted` `ApiResponse[MessageOutput]` — **user message vừa lưu**, chưa có assistant message (lấy qua SSE) |
+| Response | `202 Accepted` `ApiResponse[SendMessageResult]` — `{ userMessage, assistantMessage }`: user message vừa lưu **và** row assistant Core tạo sẵn cho turn (`status="queued"`, `content=""`). FE gắn `assistantMessage.id` vào bubble rồi lắng nghe SSE theo id đó. |
 
 ```python
 class SendMessageInput(BaseModel):
@@ -110,15 +110,19 @@ class SendMessageInput(BaseModel):
 ```
 
 **Xử lý trong route** (tóm tắt, chi tiết xem `async-api-doc.md` mục 5):
-1. Kiểm tra turn hiện tại của `conversationId` có đang chạy không (chưa `message.done`, và
-   không đang tạm dừng chờ `tool_ask` — trường hợp đó route này phải từ chối, xem mục 2.2):
-   - **Không đang chạy** → lưu `messages` row (`role="user"`, `status="done"`), publish
-     `AgentTurnRequest` bình thường, tạo turn mới.
-   - **Đang chạy** (Steer) → lưu `messages` row (`role="user"`, `status="pending"`), publish
-     request kèm cờ `is_steer=true` vào `agent_request_queue`. `status` sẽ được Agent Worker
-     cập nhật thành `"queued"` khi `pre_step` thực sự đưa vào context (không phải ở route này
-     — xem `async-api-doc.md` mục 5–6).
-2. Trả `202` với `MessageOutput` của user message vừa lưu — **không đợi** agent xử lý xong.
+1. Kiểm tra turn hiện tại của `conversationId` có đang chạy không (Redis `agent:active_turn:*`):
+   - **Không đang chạy** (turn mới) → INSERT `messages` user (`status="done"`) **+** INSERT
+     `messages` assistant (`status="queued"`, `content=""`), SET `agent:active_turn` +
+     `agent:pending_turn` (chứa `TurnRequest`, có TTL). **Chưa** publish
+     `agent_request_queue` — chờ handler SSE flush khi client subscribe (`async-api-doc.md`
+     mục 1).
+   - **Đang chạy** (Steer) → INSERT `messages` user (`status="pending"`), publish **thẳng**
+     `agent_request_queue` kèm `is_steer=true` (turn đang chạy ⇒ SSE client đang mở, không
+     cần hoãn). `status` được cập nhật `"queued"` khi `pre_step` đưa vào context
+     (`async-api-doc.md` mục 5–6). `assistantMessage` trả về là row assistant của turn
+     đang chạy (không tạo mới).
+2. Trả `202` với `SendMessageResult { userMessage, assistantMessage }` — **không đợi** agent
+   xử lý xong.
 
 ### 2.2 `POST /conversations/{conversationId}/questions/{questionId}/answer`
 
@@ -134,14 +138,21 @@ Trả lời 1 câu hỏi agent đang chờ (`tool_ask`, xem `async-api-doc.md` m
 **Xử lý trong route** (chi tiết xem `async-api-doc.md` mục 4):
 1. Tìm assistant `messages` row đang `status="question"` chứa reasoning step có
    `choice.questionId == questionId`; `404` nếu không có (đã trả lời rồi, hoặc sai id).
-2. Publish "resume request" vào `agent_request_queue` (không phải `AgentTurnRequest` mới) kèm
-   `conversation_id` + `questionId`.
-3. Trả `202` ngay — Agent Worker resume (LangGraph `Command(resume=...)`) và publish tiếp qua
-   Redis; client tự mở lại SSE (`GET .../stream`) để nhận phần còn lại của turn.
+2. Lưu "resume request" (`TurnRequest(type="resume")`) vào Redis `agent:pending_turn:*`
+   (giống turn mới — **chưa** publish `agent_request_queue`).
+3. Trả `202` ngay. Client mở lại SSE (`GET .../stream`) → handler flush resume request cho
+   Worker sau khi subscribe → Worker resume (LangGraph `Command(resume=...)`) và publish
+   tiếp qua Redis.
 
-## 3. `ConversationOutput` / `MessageOutput`
+## 3. `ConversationOutput` / `MessageOutput` / `SendMessageResult`
 
 ```python
+class SendMessageResult(BaseModel):        # response POST /conversations/{id}/messages
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    user_message: MessageOutput
+    assistant_message: MessageOutput       # role="assistant", status="queued" với turn mới
+
+
 class ConversationOutput(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
     id: str
@@ -165,7 +176,7 @@ class MessageOutput(BaseModel):
 `attachments`, `choice`, `sources`, `isOptionResponse`) — quy ước đầy đủ + lý do gộp vào 1 DTO
 thay vì field rời từng cái nằm ở `db-diagram.md` mục 2.
 
-> ⚠️ `"pending"` **chưa có** trong `MessageStatus` phía FE (`fe/features/chat/types.ts` hiện
-> chỉ có `"streaming" | "done" | "queued" | "question"`) — đây là status mới, sinh ra từ luồng
-> Steer (`async-api-doc.md` mục 5). Cần đồng bộ với FE (thêm `"pending"` vào `MessageStatus`)
-> trước khi Core thực sự trả giá trị này ra API.
+> `MessageStatus` phía FE (`fe/features/chat/types.ts`) đã có đủ
+> `"pending" | "streaming" | "done" | "queued" | "question"`. Turn mới: `assistantMessage`
+> trả về với `status="queued"` (FE gắn vào bubble, chờ event `message.started` chuyển
+> `"streaming"`).

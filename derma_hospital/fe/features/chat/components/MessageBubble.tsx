@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { Check, FileText, Sparkles } from "lucide-react";
 import type { ChatMessage } from "../types";
+import { ImageThumbnail } from "./ImageThumbnail";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { SelectionAsk } from "./SelectionAsk";
 import { Badge } from "@/components/ui/badge";
@@ -126,16 +127,26 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
             })()}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mb-1.5 flex flex-wrap gap-1.5">
-                {message.attachments.map((file) => (
-                  <Badge
-                    key={file.id}
-                    variant="secondary"
-                    className="flex items-center gap-1 bg-brand-foreground/15 text-xs text-brand-foreground hover:bg-brand-foreground/20"
-                  >
-                    <FileText className="size-3" />
-                    <span>{file.name}</span>
-                  </Badge>
-                ))}
+                {message.attachments.map((file) => {
+                  const isPreviewableImage = file.type?.startsWith("image/") && file.url;
+                  return isPreviewableImage ? (
+                    <ImageThumbnail
+                      key={file.id}
+                      url={file.url!}
+                      name={file.name}
+                      size={36}
+                    />
+                  ) : (
+                    <Badge
+                      key={file.id}
+                      variant="secondary"
+                      className="flex items-center gap-1 bg-brand-foreground/15 text-xs text-brand-foreground hover:bg-brand-foreground/20"
+                    >
+                      <FileText className="size-3" />
+                      <span>{file.name}</span>
+                    </Badge>
+                  );
+                })}
               </div>
             )}
             <p className="whitespace-pre-wrap">{message.content}</p>

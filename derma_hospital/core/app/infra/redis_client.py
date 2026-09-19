@@ -62,6 +62,12 @@ async def delete(key: str) -> None:
     await redis_client.delete(key)
 
 
+async def get_del(key: str) -> str | None:
+    """GET + DELETE atomic (Redis `GETDEL`) — dùng để "claim" 1 lần duy nhất 1 giá trị
+    (vd `agent:pending_turn:*`: chỉ SSE connection đầu tiên flush turn vào RabbitMQ)."""
+    return await redis_client.getdel(key)  # type: ignore[no-any-return]
+
+
 async def ping() -> bool:
     return bool(await redis_client.ping())
 

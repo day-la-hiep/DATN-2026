@@ -36,12 +36,20 @@ export interface ReasoningStep {
   choice?: MessageChoice;
 }
 
-/** Tệp đính kèm — chỉ gửi metadata; nội dung file sẽ gửi qua backend sau này */
+/**
+ * Tệp đính kèm. `id` khi mới chọn file (chưa upload) là id tạm sinh phía client
+ * (`name-size-lastModified`); sau khi `POST /uploads` xong, `id` được THAY bằng object
+ * key MinIO thật (backend dùng `id` này để đọc lại file cho Agent, xem
+ * `core/app/infra/file_storage.py`) và `url` được gắn thêm để preview.
+ */
 export interface FileAttachment {
   id: string;
   name: string;
   size: number;
   type: string;
+  url?: string;
+  /** true khi đã upload xong lên backend — gửi tin nhắn trước khi upload xong sẽ chặn UI */
+  uploaded?: boolean;
 }
 
 /** Văn bản soạn sẵn (document) kèm theo tin nhắn assistant, có thể chỉnh sửa */
@@ -136,12 +144,6 @@ export interface ConversationStreamEvent {
 
 export type FlatStreamEvent =
   | {
-      type: "message.queued";
-      corrId: string;
-      conversationId: string;
-      messageId: string;
-    }
-  | {
       type: "message.steered";
       corrId: string;
       conversationId: string;
@@ -189,7 +191,29 @@ export type FlatStreamEvent =
       type: "message.done";
       messageId: string;
       conversationId: string;
+      /** Backend thật (`core/app/agent/worker.py`) gửi content cuối cùng ở đây — mock
+       * (`services/mock/mockChatService.ts`) không gửi field này, dựa vào content đã
+       * tích luỹ qua `message.delta` + `reasoning` bên dưới thay vào đó. */
+      content?: string;
       reasoning?: ReasoningStep[];
+    }
+  /** Turn tạm dừng ở tool `ask_user` (`core/app/agent/tools.py`) — backend thật CHỈ gửi
+   * event này (không qua `reasoning.step_*`), khác mock vẫn dùng
+   * `reasoning.step_completed` kèm `choice` cho luồng hỏi-đáp mô phỏng. */
+  | {
+      type: "message.question";
+      messageId: string;
+      conversationId: string;
+      choice: MessageChoice;
+    }
+  /** Kết quả 1 tool nghiệp vụ (không phải `ask_user`) vừa chạy xong — chỉ backend thật
+   * gửi (`core/app/agent/worker.py`), hiển thị như 1 bước trong `ReasoningSection`. */
+  | {
+      type: "message.tool_result";
+      messageId: string;
+      conversationId: string;
+      tool: string;
+      content: string;
     }
   | {
       type: "document.started";
@@ -247,13 +271,21 @@ export interface SendMessageInput {
  * `POST /conversations/{id}/questions/{questionId}/answer`, KHÔNG qua sendMessage. */
 export type AnswerQuestionInput = MessageAnswer & { conversationId: string };
 
+/** Kết quả `POST /conversations/{id}/messages` — Core trả về CẢ user message vừa lưu
+ * lẫn row assistant tạo sẵn (`status="queued"`). FE gắn `assistantMessage.id` vào bubble
+ * assistant rồi lắng nghe SSE theo id đó (không cần chờ `message.started`). */
+export interface SendMessageResult {
+  userMessage: ChatMessage;
+  assistantMessage: ChatMessage;
+}
+
 export interface ChatService {
   connect(): Promise<void>;
   disconnect(): void;
   getConversations(): Promise<Conversation[]>;
   getMessages(conversationId: string): Promise<ChatMessage[]>;
   createConversation(input?: Partial<CreateConversationInput> | string): Promise<Conversation>;
-  sendMessage(input: SendMessageInput): Promise<void> | void;
+  sendMessage(input: SendMessageInput): Promise<SendMessageResult | void> | void;
   answerQuestion(input: AnswerQuestionInput): Promise<void> | void;
   updateDocument(input: {
     messageId: string;
@@ -262,4 +294,7 @@ export interface ChatService {
   }): Promise<void> | void;
   onEvent(listener: (event: ChatStreamEvent) => void): () => void;
   improvePrompt(prompt: string): Promise<string>;
+  /** Upload 1 file lên backend TRƯỚC khi gửi tin nhắn — trả về `FileAttachment` với
+   * `id` = object key thật (backend dùng để đọc lại file cho Agent) và `url` preview. */
+  uploadAttachment(file: File): Promise<FileAttachment>;
 }

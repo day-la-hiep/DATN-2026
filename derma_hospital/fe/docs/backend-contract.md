@@ -113,6 +113,8 @@ Trả về mảng `ChatMessage` (xem mục 4), sắp xếp theo `createdAt` tăn
 
 > **UUID thật của message do SERVER sinh.** Server tạo `messageId`, gửi event đầu tiên `message.started` để client biết; các event sau đều mang `messageId` này.
 
+> **Cập nhật (impl hiện tại — xem `core/docs/api-doc.md` mục 2.1):** response của `POST .../messages` là `ApiResponse<{ userMessage, assistantMessage }>` (`202`). Core INSERT sẵn row assistant (`status="queued"`, `content=""`) và trả `assistantMessage.id` **thật** ngay — client gắn vào bubble và lắng nghe SSE theo id đó, **không** cần chờ `message.started`, và event `message.queued` đã bị bỏ. Turn chỉ được đẩy cho Agent Worker khi client mở `GET .../stream` (Core hoãn qua Redis `agent:pending_turn:*`), nên mở SSE *sau* khi POST trả về vẫn không mất event.
+
 ### 3.1a Hỏi về đoạn tin nhắn được bôi đen
 
 Người dùng bôi đen một hoặc nhiều đoạn trong tin nhắn (user hoặc assistant) rồi đặt câu hỏi. Client gửi `selection` (có thể là 1 đối tượng hoặc mảng các đối tượng):
@@ -362,3 +364,4 @@ interface MessageAnswer {
 | `1.3` | 2026-08-21 | Bổ sung **văn bản soạn sẵn (canvas)**: events `document.started/delta/done`, `ComposedDocument`, `ChatMessage.document`, endpoint `PUT .../document` để lưu chỉnh sửa |
 | `1.4` | 2026-08-22 | Canvas chuyển sang **OnlyOffice + Document Service**: artifact là **DOCX** (HTML chỉ là bản xem trước), versioning (`base_version`, `409 VERSION_CONFLICT`), route bridge `/api/editor/*` |
 | `1.5` | 2026-08-24 | Bổ sung **nguồn tham khảo (sources)** kiểu NotebookLM: thêm kiểu `ChatSource`, trường `sources` trong `ChatMessage` và event `message.done` |
+| `1.6` | 2026-09-08 | `POST .../messages` trả `{ userMessage, assistantMessage }` (Core tạo sẵn row assistant `status="queued"`, trả id thật); **bỏ event `message.queued`**; Core hoãn đẩy turn cho Worker tới khi client mở SSE (không mất event dù mở SSE sau POST) |

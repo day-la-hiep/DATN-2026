@@ -140,7 +140,14 @@ paths:
       summary: Send Message
       description: '`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới HOẶC Steer (không dùng để
 
-        trả lời câu hỏi agent đang chờ, xem `answer_question` bên dưới).'
+        trả lời câu hỏi agent đang chờ, xem `answer_question` bên dưới).
+
+
+        Trả về `{ userMessage, assistantMessage }`: Core tạo sẵn row assistant
+
+        (`status="queued"`) và trả `id` để FE lắng nghe SSE theo đó. Turn CHƯA được đẩy cho
+
+        Worker — chỉ chạy khi client mở `GET .../stream` (`docs/async-api-doc.md` mục 1).'
       operationId: sendMessage
       parameters:
       - name: conversation_id
@@ -161,7 +168,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse_MessageOutput_'
+                $ref: '#/components/schemas/ApiResponse_SendMessageResult_'
         '422':
           description: Validation Error
           content:
@@ -258,6 +265,14 @@ components:
       required:
       - data
       title: ApiResponse[MessageOutput]
+    ApiResponse_SendMessageResult_:
+      properties:
+        data:
+          $ref: '#/components/schemas/SendMessageResult'
+      type: object
+      required:
+      - data
+      title: ApiResponse[SendMessageResult]
     ApiResponse_list_ConversationOutput__:
       properties:
         data:
@@ -680,6 +695,23 @@ components:
         KHÔNG có field `answer` — trả lời câu hỏi agent đi qua endpoint riêng
 
         (`docs/async-api-doc.md` mục 4), không phải tin nhắn mới.'
+    SendMessageResult:
+      properties:
+        userMessage:
+          $ref: '#/components/schemas/MessageOutput'
+        assistantMessage:
+          $ref: '#/components/schemas/MessageOutput'
+      type: object
+      required:
+      - userMessage
+      - assistantMessage
+      title: SendMessageResult
+      description: "Response cho `POST /conversations/{id}/messages` (`api-doc.md` mục 2.1).\n\nTrả về\
+        \ CẢ 2 row Core vừa persist:\n  - `user_message`: tin nhắn user (`status=\"done\"` với turn mới,\
+        \ `\"pending\"` với Steer).\n  - `assistant_message`: row assistant Core tạo sẵn cho turn (`status=\"\
+        queued\"`,\n    `content=\"\"`) — FE gắn `id` này vào bubble assistant rồi lắng nghe SSE theo\
+        \ đó,\n    không cần chờ event `message.started` để biết id. Với Steer, đây là row assistant\n\
+        \    của turn ĐANG chạy (không tạo mới)."
     ValidationError:
       properties:
         loc:

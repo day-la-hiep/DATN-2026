@@ -1,0 +1,9 @@
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+notebook/
+.pytest_cache
+.env
+.env.*
+!.env.example

@@ -699,5 +699,17 @@ Vui lòng chuẩn bị các nội dung chính sau:
 2. Hướng xử trí cụ thể theo từng bước: thuốc bôi, thuốc uống, chăm sóc da.
 3. Những việc cần tránh và cách chăm sóc da tại nhà để hỗ trợ điều trị.
 4. Dấu hiệu cảnh báo cần đi khám bác sĩ da liễu sớm.`;
-  }
+  },
+
+  async uploadAttachment(file: File) {
+    await delay(500);
+    return {
+      id: `mock-${file.name}-${file.size}`,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      url: URL.createObjectURL(file),
+      uploaded: true,
+    };
+  },
 };
