@@ -1,0 +1,257 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ===== Light theme (Minimalist Modern) ===== */
+:root {
+  --background: #fafafa;
+  --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #0052ff;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #0052ff;
+  --accent-secondary: #4d7cff;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0052ff;
+
+  --surface: #ffffff;
+  --sidebar: #f8fafc;
+  --sidebar-border: #e2e8f0;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0052ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-ring: #0052ff;
+
+  --success: #10b981;
+  --success-foreground: #ffffff;
+
+  --brand: #0052ff;
+  --brand-secondary: #4d7cff;
+  --brand-foreground: #ffffff;
+}
+
+/* ===== Dark theme (Minimalist Modern Dark - Deep Midnight Slate) ===== */
+.dark {
+  --background: #090d16;
+  --foreground: #f8fafc;
+
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+
+  --primary: #0052ff;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  --accent: #0052ff;
+  --accent-secondary: #4d7cff;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #1e293b;
+  --input: #334155;
+  --ring: #0052ff;
+
+  --surface: #090d16;
+  --sidebar: #0b1120;
+  --sidebar-border: #1e293b;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #0052ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-ring: #0052ff;
+
+  --success: #10b981;
+  --success-foreground: #ffffff;
+
+  --brand: #0052ff;
+  --brand-secondary: #4d7cff;
+  --brand-foreground: #ffffff;
+}
+
+/* ===== Brand themes variants ===== */
+[data-theme="emerald"] {
+  --ring: oklch(0.696 0.17 162.48);
+  --brand: oklch(0.696 0.17 162.48);
+  --brand-secondary: oklch(0.765 0.177 163.223);
+  --brand-foreground: #ffffff;
+}
+.dark[data-theme="emerald"] {
+  --ring: oklch(0.765 0.177 163.223);
+  --brand: oklch(0.765 0.177 163.223);
+  --brand-secondary: oklch(0.85 0.15 163.223);
+  --brand-foreground: #ffffff;
+}
+
+[data-theme="violet"] {
+  --ring: oklch(0.541 0.281 293.009);
+  --brand: oklch(0.541 0.281 293.009);
+  --brand-secondary: oklch(0.606 0.25 292.717);
+  --brand-foreground: #ffffff;
+}
+.dark[data-theme="violet"] {
+  --ring: oklch(0.606 0.25 292.717);
+  --brand: oklch(0.606 0.25 292.717);
+  --brand-secondary: oklch(0.7 0.22 292.717);
+  --brand-foreground: #ffffff;
+}
+
+[data-theme="red"] {
+  --ring: #ff3000;
+  --brand: #ff3000;
+  --brand-secondary: #ff6b4a;
+  --brand-foreground: #ffffff;
+}
+.dark[data-theme="red"] {
+  --ring: #ff3000;
+  --brand: #ff3000;
+  --brand-secondary: #ff6b4a;
+  --brand-foreground: #ffffff;
+}
+
+/* ===== Map tokens to Tailwind CSS ===== */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-sidebar: var(--sidebar);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-brand: var(--brand);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-foreground: var(--brand-foreground);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-calistoga), Georgia, serif;
+  --font-display: var(--font-calistoga), Georgia, serif;
+  --font-mono: var(--font-mono), monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background-color: var(--brand);
+  color: #ffffff;
+}
+
+/* ===== Minimalist Modern Utilities ===== */
+.gradient-text {
+  background: linear-gradient(135deg, var(--brand), var(--brand-secondary, #4d7cff));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-underline {
+  position: absolute;
+  bottom: -0.25rem;
+  left: 0;
+  height: 0.5rem;
+  width: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(to right, rgba(0, 82, 255, 0.25), rgba(77, 124, 255, 0.15));
+}
+
+.bg-accent-gradient {
+  background: linear-gradient(135deg, var(--brand), var(--brand-secondary, #4d7cff));
+}
+
+.shadow-accent {
+  box-shadow: 0 4px 14px rgba(0, 82, 255, 0.22);
+}
+
+.shadow-accent-lg {
+  box-shadow: 0 8px 24px rgba(0, 82, 255, 0.32);
+}
+
+.modern-dot-pattern {
+  background-size: 32px 32px;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.05) 1.5px, transparent 1.5px);
+}
+.dark .modern-dot-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1.5px, transparent 1.5px);
+}
+
+.ambient-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(140px);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(0, 82, 255, 0.08), transparent 70%);
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.15);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

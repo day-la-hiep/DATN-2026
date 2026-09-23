@@ -1,0 +1,21 @@
+# Dockerfile.dockerignore của core/Dockerfile. Build context là REPO ROOT (compose:
+# `context: .`, `dockerfile: core/Dockerfile`), nên `core/.dockerignore` KHÔNG có hiệu lực —
+# pattern ở đây tính từ repo root.
+core/.venv
+core/notebook/
+**/__pycache__
+**/*.pyc
+**/.env
+!**/.env.example
+.git
+fe/node_modules
+fe/.next
+
+# data-ingest: image chỉ cần 01_normalize/output + scripts/load_*.py (nạp Neo4j/Qdrant). Bỏ input thô
+# (~850MB) và output của từng nguồn.
+core/data-ingest/*/input
+core/data-ingest/dermnet
+core/data-ingest/primekg/output
+core/data-ingest/*/scripts
+# ...trừ 01_normalize/scripts: chứa load_*.py chạy trong container (reset-and-gen-data.sh)
+!core/data-ingest/01_normalize/scripts

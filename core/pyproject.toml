@@ -1,0 +1,57 @@
+[project]
+name = "core"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aio-pika>=9.4",
+    "asyncpg>=0.29",
+    "celery>=5.4",
+    "datasets>=5.0.1",
+    "fastapi[standard]>=0.141.1",
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "langchain-deepseek>=1.1.0",
+    "langchain-google-vertexai>=3.2.4",
+    "langchain-neo4j>=0.10.0",
+    "langchain-openai>=1.6.2",
+    "langchain[google-genai]>=0.3",
+    "langgraph>=0.2",
+    "minio>=7.2.20",
+    "pillow>=10.0",
+    "pydantic-settings>=2.0",
+    "qdrant-client>=1.19.0",
+    "redis>=5.0",
+    "sentence-transformers>=6.0.1",
+    "sqlalchemy>=2.0.52",
+    "torch>=2.4",
+    "torchvision>=0.19",
+]
+
+[tool.fastapi]
+entrypoint = "main:app"
+
+# CNN skin classifier (app/agent/tools/skin_image_classifier.py) chỉ cần inference,
+# KHÔNG cần CUDA — dùng index CPU-only của PyTorch (~250MB) thay vì wheel PyPI mặc định
+# (kèm CUDA runtime, ~2-3GB) để cài đặt nhẹ hơn nhiều trên máy/host không có GPU.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pyright]
+typeCheckingMode = "strict"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.411",
+    "pyyaml>=6.0.3",
+]

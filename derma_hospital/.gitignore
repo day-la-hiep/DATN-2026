@@ -1,8 +1,0 @@
-.idea
-.claude
-# chỉ ignore thư mục data dev ở root (2GB+ raw PrimeKG/dermnet/epfl), KHÔNG ignore core/data/ (data deploy)
-/data
-# secrets compose prod (mẫu: .env.prod.example)
-/.env
-.vscode
-reference
