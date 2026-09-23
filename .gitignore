@@ -1,56 +1,10 @@
-# LaTeX build files
-*.aux
-*.bbl
-*.bcf
-*.blg
-*.fdb_latexmk
-*.fls
-*.log
-*.out
-*.run.xml
-*.synctex.gz
-*.toc
-*.lof
-*.lot
-*.nav
-*.snm
-*.vrb
-*.xdv
-
-# Bibliography / indexing
-*.idx
-*.ilg
-*.ind
-*.ist
-*.acn
-*.acr
-*.alg
-*.glg
-*.glo
-*.gls
-*.glsdefs
-
-# Temporary files
-*.tmp
-*.bak
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Editor folders
-.vscode/
-.idea/
-
-# Output PDF - bật nếu không muốn commit PDF
-# *.pdf
-
-# latexmk generated directory
-/build/
-/out/
-
-# Python virtual environment
-venv/
-.venv/
-env/
-ENV/
+.idea
+.claude
+# chỉ ignore thư mục data dev ở root (2GB+ raw PrimeKG/dermnet/epfl), KHÔNG ignore core/data/ (data deploy)
+/data
+# secrets compose prod (mẫu: .env.prod.example)
+/.env
+.vscode
+reference
+.env
+draft.md

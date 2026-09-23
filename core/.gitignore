@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+notebook/draft
+
+# data-ingest: input thô (PrimeKG ~850MB, DermNet HTML, .obo) và output trung gian lớn của
+# dermnet (tái tạo được bằng `python data-ingest/run.py dermnet`) — KHÔNG commit.
+# Cái được commit/deploy: mọi `*/output/` còn lại + `01_normalize/output/`.
+data-ingest/*/input/
+data-ingest/dermnet/output/scraped_topics/
+data-ingest/dermnet/output/post/
+# derma_kg.json (~6MB, bản JSON của cùng subgraph) không ai đọc; nodes/edges CSV mới là đầu vào
+data-ingest/primekg/output/derma_kg.json

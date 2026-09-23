@@ -1,0 +1,254 @@
+{
+  "pemphigus": {
+    "byt_name_vi": "Pemphigus",
+    "byt_name_en": "Pemphigus",
+    "primekg_node_id": "6594",
+    "primekg_node_name": "pemphigus"
+  },
+  "nam_da": {
+    "byt_name_vi": "Bệnh da do nấm sợi",
+    "byt_name_en": "Dermatophytosis",
+    "primekg_node_id": "4678_18335",
+    "primekg_node_name": "dermatophytosis"
+  },
+  "hong_ban_da_dang": {
+    "byt_name_vi": "Hồng ban đa dạng",
+    "byt_name_en": "Erythema multiforme",
+    "primekg_node_id": "6545_44719",
+    "primekg_node_name": "erythema multiforme"
+  },
+  "hoi_chung_stevens_johnson": {
+    "byt_name_vi": "Hội chứng Stevens-Johnson",
+    "byt_name_en": "Stevens-Johnson syndrome",
+    "primekg_node_id": "18229",
+    "primekg_node_name": "Stevens-Johnson syndrome"
+  },
+  "benh_duhring": {
+    "byt_name_vi": "Viêm da dạng herpes Duhring-Brocq",
+    "byt_name_en": "Dermatitis herpetiformis",
+    "primekg_node_id": "15614_6565",
+    "primekg_node_name": "dermatitis herpetiformis"
+  },
+  "vay_nen": {
+    "byt_name_vi": "Bệnh vảy nến",
+    "byt_name_en": "Psoriasis",
+    "primekg_node_id": "5083",
+    "primekg_node_name": "psoriasis"
+  },
+  "sarcoidosis": {
+    "byt_name_vi": "Sarcoidosis",
+    "byt_name_en": "Sarcoidosis",
+    "primekg_node_id": "19338",
+    "primekg_node_name": "sarcoidosis"
+  },
+  "pellagra": {
+    "byt_name_vi": "Bệnh Pellagra",
+    "byt_name_en": "Pellagra",
+    "primekg_node_id": "19975",
+    "primekg_node_name": "pellagra"
+  },
+  "viem_da_dau": {
+    "byt_name_vi": "Viêm da dầu",
+    "byt_name_en": "Seborrheic dermatitis",
+    "primekg_node_id": "6608_6609",
+    "primekg_node_name": "seborrheic dermatitis"
+  },
+  "viem_nang_long_pdf": {
+    "byt_name_vi": "Viêm nang lông",
+    "byt_name_en": "Folliculitis",
+    "primekg_node_id": "6552",
+    "primekg_node_name": "folliculitis"
+  },
+  "ung_thu_te_bao_day": {
+    "byt_name_vi": "Ung thư tế bào đáy",
+    "byt_name_en": "Basal cell carcinoma",
+    "primekg_node_id": "20804",
+    "primekg_node_name": "basal cell carcinoma"
+  },
+  "lang_ben_pdf": {
+    "byt_name_vi": "Lang ben",
+    "byt_name_en": "Pityriasis versicolor",
+    "primekg_node_id": "5915",
+    "primekg_node_name": "pityriasis versicolor"
+  },
+  "benh_lau": {
+    "byt_name_vi": "Bệnh lậu",
+    "byt_name_en": "Gonorrhea",
+    "primekg_node_id": "4277",
+    "primekg_node_name": "gonorrhea"
+  },
+  "candida_sinh_duc": {
+    "byt_name_vi": "Viêm âm hộ-âm đạo do Candida",
+    "byt_name_en": "Vulvovaginal candidiasis",
+    "primekg_node_id": "6014",
+    "primekg_node_name": "vulvovaginal candidiasis"
+  },
+  "zona_than_kinh": {
+    "byt_name_vi": "Bệnh zona",
+    "byt_name_en": "Herpes zoster",
+    "primekg_node_id": "5609",
+    "primekg_node_name": "herpes zoster"
+  },
+  "lupus_ban_do": {
+    "byt_name_vi": "Lupus ban đỏ",
+    "byt_name_en": "Lupus erythematosus",
+    "primekg_node_id": "4670_5282_19561",
+    "primekg_node_name": "lupus erythematosus"
+  },
+  "pemphigoid": {
+    "byt_name_vi": "Bọng nước dạng pemphigus",
+    "byt_name_en": "Bullous pemphigoid",
+    "primekg_node_id": "19082",
+    "primekg_node_name": "bullous pemphigoid"
+  },
+  "benh_phong": {
+    "byt_name_vi": "Bệnh phong",
+    "byt_name_en": "Leprosy",
+    "primekg_node_id": "5124",
+    "primekg_node_name": "leprosy"
+  },
+  "giang_mai": {
+    "byt_name_vi": "Bệnh giang mai",
+    "byt_name_en": "Syphilis",
+    "primekg_node_id": "4497_6718_5976_2897_2896",
+    "primekg_node_name": "syphilis"
+  },
+  "viem_da_dau_chi_ruot": {
+    "byt_name_vi": "Viêm da đầu chi-ruột",
+    "byt_name_en": "Acrodermatitis enteropathica",
+    "primekg_node_id": "8713",
+    "primekg_node_name": "acrodermatitis enteropathica"
+  },
+  "lichen_phang": {
+    "byt_name_vi": "Bệnh lichen phẳng",
+    "byt_name_en": "Lichen planus",
+    "primekg_node_id": "18056_6572_16767_43923_16769_16770",
+    "primekg_node_name": "lichen planus"
+  },
+  "viem_bi_co": {
+    "byt_name_vi": "Viêm bì cơ",
+    "byt_name_en": "Dermatomyositis",
+    "primekg_node_id": "8054_16367_1907",
+    "primekg_node_name": "dermatomyositis"
+  },
+  "benh_choc": {
+    "byt_name_vi": "Bệnh chốc",
+    "byt_name_en": "Impetigo",
+    "primekg_node_id": "4592",
+    "primekg_node_name": "impetigo"
+  },
+  "u_xo_than_kinh": {
+    "byt_name_vi": "U xơ thần kinh",
+    "byt_name_en": "Neurofibromatosis",
+    "primekg_node_id": "7039_7245_18975_21061_8075",
+    "primekg_node_name": "neurofibromatosis"
+  },
+  "herpes_sinh_duc": {
+    "byt_name_vi": "Herpes sinh dục",
+    "byt_name_en": "Genital herpes",
+    "primekg_node_id": "5770",
+    "primekg_node_name": "genital herpes"
+  },
+  "benh_ghe": {
+    "byt_name_vi": "Bệnh ghẻ",
+    "byt_name_en": "Scabies",
+    "primekg_node_id": "4525",
+    "primekg_node_name": "scabies"
+  },
+  "di_sung_nang_long": {
+    "byt_name_vi": "Dị sừng nang lông",
+    "byt_name_en": "Darier disease",
+    "primekg_node_id": "7417",
+    "primekg_node_name": "Darier disease"
+  },
+  "lao_da": {
+    "byt_name_vi": "Bệnh lao da",
+    "byt_name_en": "Cutaneous tuberculosis",
+    "primekg_node_id": "21948",
+    "primekg_node_name": "cutaneous tuberculosis"
+  },
+  "trichomoniasis": {
+    "byt_name_vi": "Viêm âm đạo do trùng roi",
+    "byt_name_en": "Trichomoniasis",
+    "primekg_node_id": "2154",
+    "primekg_node_name": "trichomoniasis"
+  },
+  "bach_bien": {
+    "byt_name_vi": "Bệnh bạch biến",
+    "byt_name_en": "Vitiligo",
+    "primekg_node_id": "8661",
+    "primekg_node_name": "vitiligo"
+  },
+  "ung_thu_te_bao_vay": {
+    "byt_name_vi": "Ung thư tế bào vảy",
+    "byt_name_en": "Squamous cell carcinoma",
+    "primekg_node_id": "10150_4958_5096_6082_500_514",
+    "primekg_node_name": "squamous cell carcinoma"
+  },
+  "hoi_chung_lyell": {
+    "byt_name_vi": "Hội chứng Lyell",
+    "byt_name_en": "Toxic epidermal necrolysis",
+    "primekg_node_id": "19810",
+    "primekg_node_name": "toxic epidermal necrolysis"
+  },
+  "porphyrin_da": {
+    "byt_name_vi": "Bệnh porphyrin da",
+    "byt_name_en": "Cutaneous porphyria",
+    "primekg_node_id": "9902",
+    "primekg_node_name": "cutaneous porphyria"
+  },
+  "vay_phan_do_nang_long": {
+    "byt_name_vi": "Bệnh vảy phấn đỏ nang lông",
+    "byt_name_en": "Pityriasis rubra pilaris",
+    "primekg_node_id": "8251",
+    "primekg_node_name": "pityriasis rubra pilaris"
+  },
+  "may_day": {
+    "byt_name_vi": "Bệnh mày đay",
+    "byt_name_en": "Urticaria",
+    "primekg_node_id": "19945_6599",
+    "primekg_node_name": "urticaria"
+  },
+  "viem_da_tiep_xuc_di_ung": {
+    "byt_name_vi": "Viêm da tiếp xúc dị ứng",
+    "byt_name_en": "Allergic contact dermatitis",
+    "primekg_node_id": "6525",
+    "primekg_node_name": "allergic contact dermatitis"
+  },
+  "u_ong_tuyen_mo_hoi": {
+    "byt_name_vi": "U ống tuyến mồ hôi",
+    "byt_name_en": "Syringoma",
+    "primekg_node_id": "2191",
+    "primekg_node_name": "syringoma"
+  },
+  "viem_da_co_dia_pdf": {
+    "byt_name_vi": "Viêm da cơ địa",
+    "byt_name_en": "Atopic dermatitis",
+    "primekg_node_id": "11596_11597_11598_11608_11609_13107_13294_13295",
+    "primekg_node_name": "atopic dermatitis"
+  },
+  "u_mem_lay": {
+    "byt_name_vi": "U mềm lây",
+    "byt_name_en": "Molluscum contagiosum",
+    "primekg_node_id": "5855",
+    "primekg_node_name": "molluscum contagiosum"
+  },
+  "vay_phan_hong": {
+    "byt_name_vi": "Vảy phấn hồng Gibert",
+    "byt_name_en": "Pityriasis rosea",
+    "primekg_node_id": "6601",
+    "primekg_node_name": "pityriasis rosea"
+  },
+  "hoi_chung_bong_vay_da_do_tu_cau": {
+    "byt_name_vi": "Hội chứng bong vảy da do tụ cầu",
+    "byt_name_en": "Staphylococcal Scalded Skin Syndrome",
+    "primekg_node_id": "18181",
+    "primekg_node_name": "staphylococcal scalded skin syndrome"
+  },
+  "san_ngua": {
+    "byt_name_vi": "Sẩn ngứa",
+    "byt_name_en": "Prurigo",
+    "primekg_node_id": "21739",
+    "primekg_node_name": "prurigo"
+  }
+}

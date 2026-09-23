@@ -1,0 +1,657 @@
+[
+  {
+    "id": "benh_phong_who",
+    "name": "Bệnh phong",
+    "english_name": "Leprosy",
+    "type": "Bệnh nhiễm khuẩn mạn tính có tổn thương da và thần kinh",
+    "summary": "Bệnh nhiễm khuẩn mạn tính do Mycobacterium leprae, thường gây tổn thương da kèm giảm hoặc mất cảm giác và có thể ảnh hưởng đến thần kinh ngoại biên.",
+    "common_features": [
+      "man_do",
+      "roi_loan_cam_giac",
+      "ton_thuong_than_kinh",
+      "da_day_cung"
+    ],
+    "suggestive_phrases": [
+      "mảng da mất cảm giác",
+      "đốm da không cảm giác",
+      "dây thần kinh to"
+    ],
+    "typical_locations": [
+      "da",
+      "mặt",
+      "tay",
+      "chân",
+      "dây thần kinh ngoại biên"
+    ],
+    "course": "Mạn tính và tiến triển chậm; nếu không được phát hiện và điều trị có thể gây tổn thương thần kinh và tàn tật.",
+    "risk_factors": [
+      "tiếp xúc kéo dài với người bệnh chưa điều trị",
+      "sống trong vùng lưu hành bệnh"
+    ],
+    "differential_diagnoses": [
+      "benh_ghe_who",
+      "benh_vay_nen_who"
+    ],
+    "red_flags": [
+      "roi_loan_cam_giac",
+      "yeu_co",
+      "ton_thuong_than_kinh"
+    ],
+    "references": [
+      {
+        "source_id": "who_leprosy_fact_sheet_2023",
+        "title": "Leprosy",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/leprosy"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên đến cơ sở y tế để được khám da và đánh giá thần kinh ngoại biên.",
+      "Không tự ý dùng thuốc hoặc trì hoãn điều trị nếu có vùng da mất cảm giác, yếu cơ hoặc biến dạng chi."
+    ],
+    "differential_diagnosis_details": "Cần phân biệt với các bệnh gây mảng da hoặc sẩn mạn tính khác; giảm cảm giác và dấu hiệu tổn thương thần kinh là thông tin cần được nhân viên y tế đánh giá.",
+    "dermo_id": "DERMO:0000248"
+  },
+  {
+    "id": "benh_ghe_who",
+    "name": "Bệnh ghẻ",
+    "english_name": "Scabies",
+    "type": "Bệnh ký sinh trùng ngoài da",
+    "summary": "Bệnh do cái ghẻ Sarcoptes scabiei gây ra, thường biểu hiện ngứa dữ dội, đặc biệt về đêm, kèm sẩn và đường hầm trên da.",
+    "common_features": [
+      "ngua",
+      "duong_ham",
+      "not_san",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "ngứa về đêm",
+      "luống ghẻ",
+      "cả nhà cùng ngứa"
+    ],
+    "typical_locations": [
+      "kẽ ngón tay",
+      "cổ tay",
+      "nách",
+      "eo",
+      "mông",
+      "bộ phận sinh dục"
+    ],
+    "course": "Lây truyền qua tiếp xúc gần và có thể lan trong hộ gia đình hoặc môi trường đông người.",
+    "risk_factors": [
+      "tiếp xúc da kề da kéo dài",
+      "sống trong môi trường đông người",
+      "điều kiện sinh hoạt chật chội"
+    ],
+    "differential_diagnoses": [
+      "benh_phong_who",
+      "benh_vay_nen_who"
+    ],
+    "red_flags": [
+      "lan_nhanh",
+      "vet_loet"
+    ],
+    "references": [
+      {
+        "source_id": "who_scabies_fact_sheet_2023",
+        "title": "Scabies",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/scabies"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên đi khám để xác định nguyên nhân ngứa và được hướng dẫn xử trí cho người bệnh cùng người tiếp xúc khi cần.",
+      "Tránh gãi mạnh, không dùng chung quần áo hoặc đồ vải cá nhân và làm sạch đồ dùng theo hướng dẫn của cơ sở y tế."
+    ],
+    "differential_diagnosis_details": "Ngứa về đêm, đường hầm và nhiều người tiếp xúc cùng ngứa là các thông tin gợi ý nhưng không thay thế thăm khám.",
+    "dermo_id": "DERMO:0000119"
+  },
+  {
+    "id": "mycetoma_who",
+    "name": "Mycetoma",
+    "english_name": "Mycetoma",
+    "type": "Bệnh nhiễm trùng dưới da mạn tính",
+    "summary": "Bệnh nhiễm trùng mạn tính do nấm hoặc vi khuẩn, thường gây sưng khu trú, nhiều đường rò và tiết các hạt trong dịch.",
+    "common_features": [
+      "phu",
+      "vet_loet",
+      "not_san",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "sưng bàn chân kéo dài",
+      "đường rò",
+      "hạt trong dịch"
+    ],
+    "typical_locations": [
+      "bàn chân",
+      "cẳng chân",
+      "tay"
+    ],
+    "course": "Tiến triển chậm trong nhiều năm và có thể xâm lấn mô sâu, xương hoặc khớp.",
+    "risk_factors": [
+      "sống hoặc làm việc ở vùng nhiệt đới",
+      "đi chân trần",
+      "chấn thương do gai hoặc vật nhọn"
+    ],
+    "differential_diagnoses": [
+      "chromoblastomycosis_who",
+      "yaws_who"
+    ],
+    "red_flags": [
+      "lan_nhanh",
+      "vet_loet",
+      "dau_du_doi"
+    ],
+    "references": [
+      {
+        "source_id": "who_mycetoma_fact_sheet",
+        "title": "Mycetoma",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/mycetoma"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên khám chuyên khoa khi có sưng, nốt hoặc đường rò kéo dài, đặc biệt ở bàn chân hoặc tay.",
+      "Giữ vùng tổn thương sạch và che chắn khi làm việc ngoài trời; không tự chọc hoặc nặn đường rò."
+    ],
+    "differential_diagnosis_details": "Bệnh có thể giống các nhiễm trùng hoặc u dưới da khác; việc xác định căn nguyên nấm hay vi khuẩn cần đánh giá y tế.",
+    "dermo_id": "DERMO:0002281"
+  },
+  {
+    "id": "yaws_who",
+    "name": "Yaws",
+    "english_name": "Yaws",
+    "type": "Bệnh nhiễm khuẩn nhiệt đới có tổn thương da",
+    "summary": "Bệnh nhiễm khuẩn mạn tính do Treponema pallidum pertenue, lây chủ yếu qua tiếp xúc da và có thể gây tổn thương da, xương nếu không được điều trị.",
+    "common_features": [
+      "not_san",
+      "vet_loet",
+      "man_do",
+      "phu"
+    ],
+    "suggestive_phrases": [
+      "nốt sần loét",
+      "tổn thương da ở trẻ em vùng nhiệt đới"
+    ],
+    "typical_locations": [
+      "da",
+      "chân",
+      "tay",
+      "bàn chân"
+    ],
+    "course": "Có thể kéo dài và tái phát; giai đoạn muộn có thể ảnh hưởng đến xương và mô mềm.",
+    "risk_factors": [
+      "trẻ em ở vùng nhiệt đới ẩm",
+      "tiếp xúc da gần",
+      "điều kiện vệ sinh hạn chế"
+    ],
+    "differential_diagnoses": [
+      "mycetoma_who",
+      "chromoblastomycosis_who"
+    ],
+    "red_flags": [
+      "vet_loet",
+      "dau_du_doi",
+      "lan_nhanh"
+    ],
+    "references": [
+      {
+        "source_id": "who_yaws_fact_sheet",
+        "title": "Yaws",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/yaws"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên đến cơ sở y tế để được xét nghiệm và điều trị theo hướng dẫn chuyên môn.",
+      "Hạn chế tiếp xúc trực tiếp với vùng tổn thương và giữ vệ sinh da trong khi chờ được đánh giá."
+    ],
+    "differential_diagnosis_details": "Các tổn thương sẩn hoặc loét ở vùng lưu hành cần được phân biệt với nhiễm nấm, nhiễm khuẩn và các bệnh da khác.",
+    "dermo_id": "DERMO:0002167"
+  },
+  {
+    "id": "chromoblastomycosis_who",
+    "name": "Chromoblastomycosis",
+    "english_name": "Chromoblastomycosis",
+    "type": "Bệnh nhiễm nấm dưới da mạn tính",
+    "summary": "Bệnh nhiễm nấm mạn tính ở da và mô dưới da, thường hình thành tổn thương dạng mảng hoặc nốt sùi, tiến triển chậm sau khi nấm xâm nhập qua chấn thương.",
+    "common_features": [
+      "not_san",
+      "da_day_cung",
+      "vet_loet",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "nốt sùi kéo dài",
+      "mảng da sần sùi",
+      "nhiễm nấm dưới da"
+    ],
+    "typical_locations": [
+      "chi dưới",
+      "bàn chân",
+      "cẳng chân",
+      "tay"
+    ],
+    "course": "Mạn tính, tiến triển chậm và có thể gây biến dạng hoặc hạn chế vận động vùng tổn thương.",
+    "risk_factors": [
+      "lao động ngoài trời",
+      "tiếp xúc đất hoặc thực vật",
+      "chấn thương xuyên da"
+    ],
+    "differential_diagnoses": [
+      "mycetoma_who",
+      "yaws_who",
+      "benh_vay_nen_who"
+    ],
+    "red_flags": [
+      "lan_nhanh",
+      "vet_loet",
+      "dau_du_doi"
+    ],
+    "references": [
+      {
+        "source_id": "who_chromoblastomycosis_fact_sheet",
+        "title": "Chromoblastomycosis",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/chromoblastomycosis"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên khám chuyên khoa nếu tổn thương sùi, dày hoặc loét kéo dài không lành.",
+      "Bảo vệ da khi làm việc với đất, cây cối hoặc vật liệu có thể gây trầy xước; không tự đắp thuốc không rõ thành phần."
+    ],
+    "differential_diagnosis_details": "Tổn thương mạn tính dạng sùi cần được phân biệt với mycetoma, yaws, vảy nến và các bệnh u hoặc nhiễm trùng khác.",
+    "dermo_id": "DERMO:0002280"
+  },
+  {
+    "id": "benh_vay_nen_who",
+    "name": "Bệnh vảy nến",
+    "english_name": "Psoriasis",
+    "type": "Bệnh viêm da mạn tính không lây",
+    "summary": "Bệnh viêm da mạn tính thường gây các mảng đỏ nổi cao phủ vảy bạc, có thể ngứa và ảnh hưởng đáng kể đến chất lượng cuộc sống.",
+    "common_features": [
+      "man_do",
+      "vay_bac",
+      "da_day_cung",
+      "ngua",
+      "mong_bat_thuong"
+    ],
+    "suggestive_phrases": [
+      "mảng đỏ phủ vảy bạc",
+      "vảy nến",
+      "rỗ móng"
+    ],
+    "typical_locations": [
+      "da đầu",
+      "khuỷu tay",
+      "đầu gối",
+      "thân mình",
+      "móng"
+    ],
+    "course": "Mạn tính, thường có các đợt bùng phát và thuyên giảm.",
+    "risk_factors": [
+      "tiền sử gia đình",
+      "stress",
+      "thừa cân hoặc béo phì",
+      "hút thuốc",
+      "rượu"
+    ],
+    "differential_diagnoses": [
+      "benh_phong_who",
+      "chromoblastomycosis_who"
+    ],
+    "red_flags": [
+      "lan_nhanh",
+      "vet_loet",
+      "dau_du_doi"
+    ],
+    "references": [
+      {
+        "source_id": "who_global_report_psoriasis",
+        "title": "Global report on psoriasis",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/publications/i/item/9789241565189"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên khám da liễu để xác định bệnh và đánh giá các bệnh phối hợp, đặc biệt khi có đau hoặc sưng khớp.",
+      "Tránh tự dùng corticoid hoặc thuốc toàn thân kéo dài; theo dõi các yếu tố làm bệnh nặng hơn cùng bác sĩ."
+    ],
+    "differential_diagnosis_details": "Mảng đỏ có vảy có thể gặp trong nhiều bệnh da khác nhau; vị trí, hình thái, diễn tiến và bệnh phối hợp cần được đánh giá tổng thể.",
+    "dermo_id": "DERMO:0000124"
+  },
+  {
+    "id": "leishmaniasis_da_who",
+    "name": "Leishmaniasis da",
+    "english_name": "Cutaneous leishmaniasis",
+    "type": "Bệnh ký sinh trùng gây tổn thương da",
+    "summary": "Thể leishmaniasis ảnh hưởng chủ yếu đến da, thường bắt đầu tại vị trí bị côn trùng truyền bệnh đốt và có thể tiến triển thành tổn thương hoặc loét da.",
+    "common_features": [
+      "not_san",
+      "vet_loet",
+      "man_do",
+      "phu"
+    ],
+    "suggestive_phrases": [
+      "vết loét da sau khi bị côn trùng đốt",
+      "loét da vùng lưu hành"
+    ],
+    "typical_locations": [
+      "vùng da hở",
+      "mặt",
+      "tay",
+      "chân"
+    ],
+    "course": "Tiến triển từ từ; biểu hiện và mức độ có thể khác nhau theo loài ký sinh trùng và vùng địa lý.",
+    "risk_factors": [
+      "sống hoặc đi đến vùng lưu hành",
+      "tiếp xúc với côn trùng truyền bệnh",
+      "hoạt động ngoài trời ban đêm"
+    ],
+    "differential_diagnoses": [
+      "mycetoma_who",
+      "chromoblastomycosis_who",
+      "yaws_who"
+    ],
+    "red_flags": [
+      "vet_loet",
+      "lan_nhanh",
+      "ton_thuong_mat"
+    ],
+    "references": [
+      {
+        "source_id": "who_cutaneous_leishmaniasis",
+        "title": "Leishmaniasis",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/leishmaniasis"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên khám khi có tổn thương hoặc loét da kéo dài, đặc biệt sau khi đi đến vùng lưu hành.",
+      "Không tự đốt, chọc hoặc bôi thuốc không rõ thành phần lên tổn thương."
+    ],
+    "differential_diagnosis_details": "Loét da kéo dài cần được phân biệt với nhiễm khuẩn, nhiễm nấm, chấn thương và các bệnh da khác bằng đánh giá y tế.",
+    "dermo_id": "DERMO:0002460"
+  },
+  {
+    "id": "loet_buruli_who",
+    "name": "Loét Buruli",
+    "english_name": "Buruli ulcer",
+    "type": "Bệnh nhiễm khuẩn gây loét da",
+    "summary": "Nhiễm Mycobacterium ulcerans có thể gây nốt, mảng phù không đau và loét da do độc tố phá hủy mô.",
+    "common_features": [
+      "phu",
+      "vet_loet",
+      "man_do",
+      "hoai_tu"
+    ],
+    "suggestive_phrases": [
+      "loét da không đau",
+      "mảng phù rồi loét",
+      "loét Buruli"
+    ],
+    "typical_locations": [
+      "tay",
+      "chân",
+      "mặt",
+      "thân mình"
+    ],
+    "course": "Thường tiến triển chậm nhưng có thể gây phá hủy mô, sẹo và hạn chế vận động nếu chậm điều trị.",
+    "risk_factors": [
+      "sống ở vùng lưu hành",
+      "tiếp xúc môi trường nước hoặc đất vùng lưu hành",
+      "chấn thương da"
+    ],
+    "differential_diagnoses": [
+      "leishmaniasis_da_who",
+      "mycetoma_who",
+      "yaws_who"
+    ],
+    "red_flags": [
+      "vet_loet",
+      "hoai_tu",
+      "lan_nhanh"
+    ],
+    "references": [
+      {
+        "source_id": "who_buruli_ulcer",
+        "title": "Buruli ulcer",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/buruli-ulcer-(mycobacterium-ulcerans-infection)"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Cần đi khám sớm khi có nốt, mảng phù hoặc vết loét kéo dài không rõ nguyên nhân.",
+      "Che phủ nhẹ tổn thương và không tự nặn, cắt hoặc đắp thuốc dân gian."
+    ],
+    "differential_diagnosis_details": "Tổn thương loét cần được phân biệt với leishmaniasis, mycetoma, yaws và các nguyên nhân nhiễm trùng hoặc không nhiễm trùng khác.",
+    "dermo_id": "DERMO:0002200"
+  },
+  {
+    "id": "giun_chi_bach_huyet_who",
+    "name": "Giun chỉ bạch huyết",
+    "english_name": "Lymphatic filariasis",
+    "type": "Bệnh ký sinh trùng ảnh hưởng hệ bạch huyết và da",
+    "summary": "Bệnh do giun chỉ ký sinh truyền qua muỗi, có thể gây tổn thương hệ bạch huyết, phù chi và biến đổi da mạn tính.",
+    "common_features": [
+      "phu_bach_huyet",
+      "phu_chi",
+      "da_day_cung",
+      "dau_ran"
+    ],
+    "suggestive_phrases": [
+      "chân voi",
+      "phù bạch huyết",
+      "chân sưng to kéo dài"
+    ],
+    "typical_locations": [
+      "chân",
+      "tay",
+      "bìu",
+      "vú"
+    ],
+    "course": "Mạn tính; phù và biến đổi mô có thể tiến triển, tái phát hoặc gây hạn chế vận động.",
+    "risk_factors": [
+      "sống lâu dài ở vùng lưu hành",
+      "bị muỗi truyền bệnh đốt nhiều lần"
+    ],
+    "differential_diagnoses": [
+      "podoconiosis_who",
+      "benh_phong_who"
+    ],
+    "red_flags": [
+      "phu_bach_huyet",
+      "lan_nhanh",
+      "dau_du_doi"
+    ],
+    "references": [
+      {
+        "source_id": "who_lymphatic_filariasis",
+        "title": "Lymphatic filariasis",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/lymphatic-filariasis"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên khám để xác định nguyên nhân phù chi và được hướng dẫn chăm sóc hệ bạch huyết.",
+      "Giữ da sạch, xử lý vết trầy xước sớm và không tự dùng thuốc lợi tiểu hoặc thuốc chống ký sinh trùng."
+    ],
+    "differential_diagnosis_details": "Phù chi mạn tính có nhiều nguyên nhân; cần phân biệt với podoconiosis, bệnh tĩnh mạch, bệnh bạch huyết khác và nhiễm trùng.",
+    "dermo_id": "DERMO:0002790"
+  },
+  {
+    "id": "podoconiosis_who",
+    "name": "Podoconiosis",
+    "english_name": "Podoconiosis",
+    "type": "Bệnh phù bạch huyết không do ký sinh trùng",
+    "summary": "Bệnh phù bạch huyết mạn tính liên quan đến tiếp xúc lâu dài với đất núi lửa đỏ ở người có yếu tố di truyền nhạy cảm.",
+    "common_features": [
+      "phu_chi",
+      "phu_bach_huyet",
+      "da_day_cung",
+      "dau_ran"
+    ],
+    "suggestive_phrases": [
+      "phù chân do đất",
+      "chân voi không do giun chỉ",
+      "phù hai chân"
+    ],
+    "typical_locations": [
+      "bàn chân",
+      "cẳng chân"
+    ],
+    "course": "Mạn tính, có thể gây các đợt viêm đau và biến đổi da nếu không được chăm sóc.",
+    "risk_factors": [
+      "đi chân đất trên đất núi lửa đỏ",
+      "sống ở vùng cao lưu hành",
+      "không có biện pháp bảo vệ chân"
+    ],
+    "differential_diagnoses": [
+      "giun_chi_bach_huyet_who",
+      "benh_phong_who"
+    ],
+    "red_flags": [
+      "phu_chi",
+      "dau_du_doi",
+      "lan_nhanh"
+    ],
+    "references": [
+      {
+        "source_id": "who_podoconiosis",
+        "title": "Podoconiosis",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/podoconiosis"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên khám để phân biệt podoconiosis với giun chỉ bạch huyết và các nguyên nhân phù khác.",
+      "Mang giày dép, rửa sạch và dưỡng ẩm da chân theo hướng dẫn chuyên môn."
+    ],
+    "differential_diagnosis_details": "Phù chân mạn tính cần được đánh giá nguyên nhân; podoconiosis không phải là bệnh lây truyền qua muỗi.",
+    "dermo_id": null
+  },
+  {
+    "id": "noma_who",
+    "name": "Noma",
+    "english_name": "Noma",
+    "type": "Bệnh hoại tử vùng miệng và mặt",
+    "summary": "Bệnh tiến triển nhanh gây hoại tử mô vùng miệng và mặt, thường liên quan đến suy dinh dưỡng, nhiễm trùng và điều kiện vệ sinh kém.",
+    "common_features": [
+      "hoai_tu",
+      "vet_loet",
+      "phu",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "loét hoại tử vùng miệng",
+      "sưng mặt nhanh",
+      "tổn thương phá hủy mặt"
+    ],
+    "typical_locations": [
+      "miệng",
+      "mặt",
+      "má",
+      "lợi"
+    ],
+    "course": "Cấp tính và có thể tiến triển rất nhanh, cần đánh giá y tế khẩn cấp.",
+    "risk_factors": [
+      "suy dinh dưỡng",
+      "nhiễm trùng gần đây",
+      "vệ sinh răng miệng kém",
+      "điều kiện sống khó khăn"
+    ],
+    "differential_diagnoses": [
+      "loet_buruli_who",
+      "yaws_who"
+    ],
+    "red_flags": [
+      "hoai_tu",
+      "lan_nhanh",
+      "sot_cao"
+    ],
+    "references": [
+      {
+        "source_id": "who_noma",
+        "title": "Noma",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/noma"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Đây là tình trạng cần được đưa đến cơ sở y tế ngay khi có sưng, loét hoặc hoại tử vùng miệng và mặt.",
+      "Không tự cắt lọc, đắp thuốc hoặc trì hoãn chăm sóc y tế."
+    ],
+    "differential_diagnosis_details": "Tổn thương hoại tử vùng mặt cần được đánh giá khẩn cấp để phân biệt noma với nhiễm trùng sâu, chấn thương và các bệnh khác.",
+    "dermo_id": null
+  },
+  {
+    "id": "mpox_who",
+    "name": "Mpox",
+    "english_name": "Mpox",
+    "type": "Bệnh nhiễm virus có phát ban và tổn thương da",
+    "summary": "Bệnh do virus mpox gây ra, có thể biểu hiện bằng phát ban hoặc tổn thương da, sốt, đau và sưng hạch.",
+    "common_features": [
+      "phat_ban",
+      "mun_nuoc",
+      "vet_loet",
+      "sot_cao",
+      "phu"
+    ],
+    "suggestive_phrases": [
+      "mụn nước thành nốt",
+      "phát ban đau",
+      "tổn thương mpox"
+    ],
+    "typical_locations": [
+      "mặt",
+      "miệng",
+      "bộ phận sinh dục",
+      "hậu môn",
+      "tay",
+      "chân"
+    ],
+    "course": "Thường diễn tiến qua các giai đoạn tổn thương da; mức độ và vị trí tổn thương có thể khác nhau.",
+    "risk_factors": [
+      "tiếp xúc gần với người hoặc động vật nhiễm bệnh",
+      "tiếp xúc trực tiếp với tổn thương hoặc vật dụng nhiễm bẩn"
+    ],
+    "differential_diagnoses": [
+      "benh_ghe_who",
+      "yaws_who",
+      "benh_phong_who"
+    ],
+    "red_flags": [
+      "sot_cao",
+      "ton_thuong_mat",
+      "lan_nhanh",
+      "bong_da_dien_rong"
+    ],
+    "references": [
+      {
+        "source_id": "who_mpox",
+        "title": "Mpox",
+        "publisher": "World Health Organization",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/mpox"
+      }
+    ],
+    "medical_review_status": "needs_manual_verification",
+    "safe_advice": [
+      "Nên liên hệ cơ sở y tế khi có phát ban hoặc tổn thương da mới kèm sốt, đau hoặc tiếp xúc nguy cơ.",
+      "Tránh tiếp xúc da trực tiếp, không dùng chung đồ cá nhân và che phủ tổn thương trong khi chờ được đánh giá."
+    ],
+    "differential_diagnosis_details": "Phát ban dạng mụn nước hoặc mụn mủ có nhiều nguyên nhân; cần đánh giá lâm sàng và xét nghiệm khi phù hợp.",
+    "dermo_id": null
+  }
+]
