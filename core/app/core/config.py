@@ -47,6 +47,9 @@ class Settings(BaseSettings):
 
     # ----- Qdrant (vector DB) -----
     QDRANT_URL: str = "http://localhost:6333"
+    # Khớp `QDRANT__SERVICE__API_KEY` của service qdrant trong docker-compose.yml. Rỗng = không
+    # gửi api-key (Qdrant không bật auth).
+    QDRANT_API_KEY: str = ""
     # Long-term memory: hạ tầng cũ (app/kien-truc-memory.md), hiện KHÔNG được dùng nữa —
     # app/agent/memory.py đã chuyển sang langgraph.store.InMemoryStore. Giữ setting này
     # để không phá vỡ .env hiện có, chưa xoá client (app/infra/qdrant_client.py).

@@ -82,7 +82,7 @@ export function ChatInput({
     [currentConvId, setInputStateInStore]
   );
 
-  const [improving, setImproving] = useState(false);
+
   const [skillMenuOpen, setSkillMenuOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -235,8 +235,7 @@ export function ChatInput({
   );
 
   const handleImprove = useCallback(async () => {
-    if (!value.trim() || improving || disabled) return;
-    setImproving(true);
+    if (!value.trim() || disabled) return;
     try {
       const result = await chatService.improvePrompt(value);
       setValue(result);
@@ -248,9 +247,9 @@ export function ChatInput({
       console.error("Lỗi khi cải thiện prompt:", error);
       toast.error("Không thể cải thiện prompt. Vui lòng thử lại sau.");
     } finally {
-      setImproving(false);
+      
     }
-  }, [value, improving, disabled, resize, setValue]);
+  }, [value, disabled, resize, setValue]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -454,7 +453,7 @@ export function ChatInput({
             ref={textareaRef}
             value={value}
             rows={1}
-            disabled={disabled || improving}
+            disabled={disabled}
             onChange={(e) => {
               const val = e.target.value;
               setValue(val);
@@ -506,16 +505,12 @@ export function ChatInput({
 
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (!improving) {
-                  handleSend();
-                }
+
               }
             }}
             placeholder={
               disabled
                 ? "Bắt đầu một cuộc trò chuyện mới..."
-                : improving
-                ? "Đang tối ưu câu hỏi với AI..."
                 : "Hỏi về vấn đề da liễu của bạn... (Gõ / để chọn kỹ năng)"
             }
             className="max-h-40 w-full resize-none bg-transparent px-2 py-1 text-sm sm:text-base text-foreground outline-hidden placeholder:text-muted-foreground/60 disabled:opacity-40 font-normal leading-relaxed"
@@ -593,28 +588,14 @@ export function ChatInput({
             </div>
 
             <div className="flex items-center gap-2">
-              {value.trim().length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleImprove}
-                  disabled={improving || disabled}
-                  className="flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/5 px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand hover:text-white transition-all cursor-pointer disabled:opacity-40"
-                >
-                  {improving ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Sparkles className="size-3.5" />
-                  )}
-                  <span>Tối ưu câu hỏi</span>
-                </button>
-              )}
+              
 
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={!canSend || improving}
+                disabled={!canSend}
                 aria-label="Gửi tin nhắn"
-                className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-white shadow-xs hover:shadow-accent hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:pointer-events-none disabled:opacity-30 cursor-pointer"
+                className="flex size-9 items-center justify-center rounded-xl bg-linear-to-r from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-white shadow-xs hover:shadow-accent hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:pointer-events-none disabled:opacity-30 cursor-pointer"
               >
                 <ArrowUp className="size-4.5" />
               </button>

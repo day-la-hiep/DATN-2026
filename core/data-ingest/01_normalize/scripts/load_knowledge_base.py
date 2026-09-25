@@ -316,7 +316,7 @@ def _to_point(chunk: dict[str, Any], vector: list[float]):
 
 async def ingest_to_qdrant(chunks: list[dict], reset: bool) -> None:
     # Import muộn để --dry-run chạy được khi chưa cài/không có Qdrant.
-    from app.agent.tools.knowledge_base_search import KB_EMBEDDING_DIM, get_kb_embeddings
+    from agent.tools.knowledge_base_search import KB_EMBEDDING_DIM, get_kb_embeddings
     from app.infra.qdrant_client import (
         delete_kb_collection,
         ensure_kb_collection,

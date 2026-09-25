@@ -53,10 +53,10 @@ ORDER BY match_rank
 """
 
 
-def _get_driver() -> AsyncDriver:
+def get_driver() -> AsyncDriver:
     global _driver
     if _driver is None:
-        _driver = AsyncGraphDatabase.driver(
+        _driver = AsyncGraphDatabase.driver(  # pyright: ignore[reportUnknownMemberType]
             settings.NEO4J_URL, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
         )
     return _driver
@@ -72,7 +72,8 @@ def _format_record(row: dict[str, Any]) -> str:
         lines.append(f"  Thuộc nhóm (is_a): {', '.join(row['parents'])}")
 
     grouped: dict[str, list[str]] = {}
-    for rel in row.get("related") or []:
+    related: list[dict[str, Any]] = row.get("related") or []
+    for rel in related:
         if rel.get("name"):
             grouped.setdefault(rel["type"], []).append(rel["name"])
     for rel_type, names in grouped.items():
@@ -87,8 +88,8 @@ async def search_dermo_terms(term: str, limit: int = 5) -> list[dict[str, Any]]:
     """Chạy thẳng `_LOOKUP_QUERY`, trả về record thô (không format text) — dùng lại bởi
     `lookup_dermo_term` (tool) và `entity_grounding.py` (pipeline extract -> normalize ->
     search PrimeKG, cần dữ liệu có cấu trúc chứ không phải text tự do)."""
-    driver = _get_driver()
-    async with driver.session() as session:
+    driver = get_driver()
+    async with driver.session() as session:  # pyright: ignore[reportUnknownMemberType]
         result = await session.run(_LOOKUP_QUERY, term=term, limit=limit)
         return [r.data() async for r in result]
 

@@ -39,7 +39,7 @@ from typing import Any
 from langchain_core.tools import tool
 from qdrant_client.models import Record, ScoredPoint
 
-from app.agent.embeddings import EMBEDDING_DIM, LocalEmbeddings
+from agent.embeddings import EMBEDDING_DIM, LocalEmbeddings
 from app.infra.qdrant_client import (
     get_kb_chunks_by_disease_id,
     get_kb_disease_id_by_dermo_id,

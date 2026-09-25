@@ -16,19 +16,20 @@ theo đúng nguyên tắc evidence của `SYSTEM_PROMPT` (`graph.py` mục 2/5) 
 GIẢ THUYẾT cần đối chiếu tiếp qua `search_disease_guidelines`/`lookup_dermo_term`/
 `ground_medical_entities`, KHÔNG được khẳng định thẳng thành chẩn đoán.
 """
+
 import asyncio
 import difflib
 from io import BytesIO
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from langchain.tools import ToolRuntime, tool
 from PIL import Image
-from torchvision import models, transforms
+from torchvision import models, transforms  # pyright: ignore[reportMissingTypeStubs]
 
-from app.agent.context import AgentContext
+from agent.state.context import AgentContext
 from app.core.config import settings
 from app.infra.file_storage import get_object_bytes
 
@@ -44,11 +45,20 @@ IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
 class AdaptiveMultiKernelConv(nn.Module):
-    def __init__(self, channels: int = 3, lambda_scale: float = 0.2, init_gate: float = 1.0):
+    def __init__(
+        self,
+        channels: int = 3,
+        lambda_scale: float = 0.2,
+        init_gate: float = 1.0,
+    ):
         super().__init__()
         self.lambda_scale = lambda_scale
-        self.conv3 = nn.Conv2d(channels, channels, kernel_size=3, padding=1, bias=False)
-        self.conv5 = nn.Conv2d(channels, channels, kernel_size=5, padding=2, bias=False)
+        self.conv3 = nn.Conv2d(
+            channels, channels, kernel_size=3, padding=1, bias=False
+        )
+        self.conv5 = nn.Conv2d(
+            channels, channels, kernel_size=5, padding=2, bias=False
+        )
         nn.init.zeros_(self.conv3.weight)
         nn.init.zeros_(self.conv5.weight)
         self.a = nn.Parameter(torch.tensor(float(init_gate)))
@@ -82,7 +92,9 @@ class AdaptiveCNN(nn.Module):
         pretrained: bool = True,
     ):
         super().__init__()
-        self.amkc = AdaptiveMultiKernelConv(channels=3, lambda_scale=lambda_scale, init_gate=1.0)
+        self.amkc = AdaptiveMultiKernelConv(
+            channels=3, lambda_scale=lambda_scale, init_gate=1.0
+        )
 
         weights = models.ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
         backbone = models.resnet18(weights=weights)
@@ -120,10 +132,14 @@ class SkinCNNPredictor:
     def __init__(self, checkpoint_path: str):
         self.device = torch.device("cpu")
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
+        checkpoint = torch.load(
+            checkpoint_path, map_location=self.device, weights_only=False
+        )
 
         self.class_names: list[str] = checkpoint["class_names"]
-        self.num_classes: int = checkpoint.get("num_classes", len(self.class_names))
+        self.num_classes: int = checkpoint.get(
+            "num_classes", len(self.class_names)
+        )
         config = checkpoint.get("config", {})
 
         self.model = AdaptiveCNN(
@@ -144,9 +160,11 @@ class SkinCNNPredictor:
         )
 
     @torch.no_grad()
-    def predict(self, image_bytes: bytes, top_k: int = 5) -> list[dict[str, Any]]:
+    def predict(
+        self, image_bytes: bytes, top_k: int = 5
+    ) -> list[dict[str, Any]]:
         image = Image.open(BytesIO(image_bytes)).convert("RGB")
-        x = self.transform(image).unsqueeze(0).to(self.device)
+        x = cast(torch.Tensor, self.transform(image)).unsqueeze(0).to(self.device)
 
         logits = self.model(x)
         probabilities = torch.softmax(logits, dim=1)[0]
@@ -174,7 +192,10 @@ def get_predictor() -> SkinCNNPredictor:
 
 
 def _format_predictions(results: list[dict[str, Any]]) -> str:
-    lines = [f"{r['rank']}. {r['disease']} — {r['confidence'] * 100:.1f}%" for r in results]
+    lines = [
+        f"{r['rank']}. {r['disease']} — {r['confidence'] * 100:.1f}%"
+        for r in results
+    ]
     return "\n".join(lines)
 
 
@@ -191,7 +212,7 @@ def _resolve_object_key(object_key: str, turn_keys: list[str]) -> str:
 
 
 @tool
-async def classify_skin_image(object_key: str, runtime: ToolRuntime) -> str:
+async def classify_skin_image(object_key: str, runtime: ToolRuntime[AgentContext, Any]) -> str:
     """Phân loại ảnh tổn thương da bằng CNN đã huấn luyện (22 lớp bệnh da liễu phổ
     biến: Acne, Eczema, Psoriasis, Tinea, SkinCancer...), trả về top-5 kèm % tin cậy.
 

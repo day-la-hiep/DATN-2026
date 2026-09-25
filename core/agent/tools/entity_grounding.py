@@ -36,9 +36,9 @@ from langchain_core.tools import tool
 from neo4j import AsyncDriver, AsyncGraphDatabase
 from pydantic import BaseModel, Field
 
-from app.agent.llm import get_model
-from app.agent.tools.dermo_terms import search_dermo_terms
-from app.agent.tools.knowledge_base_search import find_disease_id_by_dermo_id
+from agent.llm import get_model
+from agent.tools.dermo_terms import search_dermo_terms
+from agent.tools.knowledge_base_search import find_disease_id_by_dermo_id
 from app.core.config import settings
 
 _EXTRACT_SYSTEM = (
@@ -107,13 +107,13 @@ class ExtractedEntity(BaseModel):
 
 
 class ExtractedEntities(BaseModel):
-    entities: list[ExtractedEntity] = Field(default_factory=list)
+    entities: list[ExtractedEntity] = Field(default_factory=lambda: list[ExtractedEntity]())
 
 
 def _get_primekg_driver() -> AsyncDriver:
     global _primekg_driver
     if _primekg_driver is None:
-        _primekg_driver = AsyncGraphDatabase.driver(
+        _primekg_driver = AsyncGraphDatabase.driver(  # pyright: ignore[reportUnknownMemberType]
             settings.NEO4J_URL, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
         )
     return _primekg_driver
@@ -131,7 +131,7 @@ async def _extract_entities(query: str) -> list[ExtractedEntity]:
         [SystemMessage(content=_EXTRACT_SYSTEM), HumanMessage(content=query)]
     )
     assert isinstance(result, ExtractedEntities)
-    return result.entities
+    return list(result.entities)
 
 
 async def _search_primekg(
@@ -143,7 +143,7 @@ async def _search_primekg(
     if not names:
         return []
     driver = _get_primekg_driver()
-    async with driver.session() as session:
+    async with driver.session() as session:  # pyright: ignore[reportUnknownMemberType]
         result = await session.run(
             _PRIMEKG_SEARCH_QUERY,
             names=names,

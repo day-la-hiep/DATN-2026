@@ -807,6 +807,7 @@ dependencies = [
 dev = [
     { name = "pyright" },
     { name = "pyyaml" },
+    { name = "watchfiles" },
 ]
 
 [package.metadata]
@@ -839,6 +840,7 @@ requires-dist = [
 dev = [
     { name = "pyright", specifier = ">=1.1.411" },
     { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "watchfiles", specifier = ">=1.2.0" },
 ]
 
 [[package]]

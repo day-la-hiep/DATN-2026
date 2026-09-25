@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import aggregator để đăng ký toàn bộ ORM model trước create_all.
 import app.models  # noqa: F401  # pyright: ignore[reportUnusedImport]
-from app.agent.response_consumer import start_consuming
+from agent.handler.response_consumer import start_consuming
 from app.api.conversation_api import router as conversation_router
 from app.api.health import router as health_router
 from app.api.upload_api import router as upload_router
@@ -33,7 +33,13 @@ async def lifespan(app: FastAPI):
     # (`fk_conversations_user_id_users`). Tạo sẵn user mặc định, idempotent.
     async with AsyncSessionLocal() as session:
         if await session.get(User, "user-1") is None:
-            session.add(User(id="user-1", name="Nguyễn Văn An", email="an.nguyen@example.com"))
+            session.add(
+                User(
+                    id="user-1",
+                    name="Nguyễn Văn An",
+                    email="an.nguyen@example.com",
+                )
+            )
             await session.commit()
 
     # RabbitMQ: mở 1 connection/channel dùng chung cho toàn app.
@@ -90,4 +96,6 @@ async def root() -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=3050, reload=True, env_file=".env")
+    uvicorn.run(
+        "main:app", host="0.0.0.0", port=3050, reload=True, env_file=".env"
+    )

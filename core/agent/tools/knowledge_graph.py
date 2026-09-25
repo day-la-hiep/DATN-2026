@@ -16,13 +16,14 @@ REMOVE/DROP...) ở tầng ứng dụng trước khi thực thi, phòng LLM sinh
 liệu tham khảo tĩnh này.
 """
 import re
+from typing import Any
 
 from langchain_core.prompts.prompt import PromptTemplate
 from langchain_core.tools import tool
 from langchain_neo4j import GraphCypherQAChain, Neo4jGraph
 from langchain_neo4j.chains.graph_qa.prompts import CYPHER_GENERATION_PROMPT
 
-from app.agent.llm import get_model
+from agent.llm import get_model
 from app.core.config import settings
 
 # Dữ liệu gốc PrimeKG đặt tên node theo THỂ BỆNH CỤ THỂ (vd "guttate psoriasis",
@@ -80,12 +81,12 @@ _EXCLUDE_TYPES = [
 class ReadOnlyNeo4jGraph(Neo4jGraph):
     """`Neo4jGraph` chặn Cypher có từ khoá ghi — xem docstring module."""
 
-    def query(self, query: str, params: dict | None = None, session_params: dict | None = None):  # type: ignore[override]
+    def query(self, query: str, params: dict[str, Any] | None = None, session_params: dict[str, Any] | None = None) -> list[dict[str, Any]]:  # type: ignore[override]
         if _WRITE_CLAUSE_RE.search(query):
             raise ValueError(
                 f"Cypher bị từ chối (có từ khoá ghi, chỉ cho phép đọc): {query!r}"
             )
-        return super().query(query, params or {}, session_params or {})
+        return super().query(query, params or {}, session_params or {})  # pyright: ignore[reportUnknownMemberType]
 
 
 _kg_chain: GraphCypherQAChain | None = None
@@ -99,7 +100,7 @@ def _get_chain() -> GraphCypherQAChain:
             username=settings.NEO4J_USER,
             password=settings.NEO4J_PASSWORD,
         )
-        _kg_chain = GraphCypherQAChain.from_llm(
+        _kg_chain = GraphCypherQAChain.from_llm(  # pyright: ignore[reportUnknownMemberType]
             get_model(),
             graph=graph,
             exclude_types=_EXCLUDE_TYPES,

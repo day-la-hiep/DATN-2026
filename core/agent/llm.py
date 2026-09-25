@@ -18,7 +18,7 @@ gọi thay vì để lọt qua rồi lỗi runtime khó hiểu lúc gọi model.
   - còn lại    : Gemini (`google_genai`) — dùng `thinking_level`/`include_thoughts`.
 
 Model chọn theo từng conversation (`Conversation.model`, `AGENT_MODEL_CHOICES` ở
-`app/core/config.py`) — `get_model()` được middleware `graph.py::_select_model` gọi lại
+`app/core/config.py`) — `get_model()` được middleware `graph.py::select_model` gọi lại
 NHIỀU LẦN/turn (mỗi lần LLM suy nghĩ trong vòng lặp ReAct), nên cache instance theo chuỗi
 "provider:model" bằng `lru_cache` thay vì tạo `BaseChatModel` mới mỗi lần (tốn khởi tạo
 HTTP client, mất connection pooling reuse)."""
@@ -60,7 +60,7 @@ def _get_model_cached(model: str) -> BaseChatModel:
         # `reasoning`/`extra_body` tắt "thinking mode": model reasoning-hybrid của
         # DeepSeek (R1/V3.x trở lên) mặc định BẬT thinking, xung đột với tool_choice ép
         # cứng mà `with_structured_output(method="function_calling")` dùng (xem
-        # `entity_grounding.py`/`_critic_review`, `graph.py`) — lỗi thật đã gặp: "Thinking
+        # `entity_grounding.py`/`critic_review`, `graph.py`) — lỗi thật đã gặp: "Thinking
         # mode does not support this tool_choice" (400). Agent này LUÔN cần tool-calling
         # đáng tin cậy nên phải tắt thinking, đổi lấy mất phần suy luận sâu của DeepSeek.
         return init_chat_model(
@@ -77,6 +77,6 @@ def _get_model_cached(model: str) -> BaseChatModel:
         # Bắt buộc để provider TRẢ VỀ nội dung "thinking" (Gemini tự tóm tắt suy nghĩ
         # thành các đoạn ngắn) — `thinking_level` chỉ bật suy luận nội bộ, không tự trả
         # về nếu thiếu `include_thoughts`. Dùng làm dòng tóm tắt "đang làm gì" hiển thị
-        # cho người dùng (event `message.thinking`, `graph.py::_emit_reasoning_step`).
+        # cho người dùng (event `message.thinking`, `graph.py::emit_reasoning_step`).
         include_thoughts=True,
     )

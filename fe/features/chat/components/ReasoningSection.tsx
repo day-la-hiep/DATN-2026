@@ -20,6 +20,29 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 /**
+ * Format dữ liệu đầu vào hoặc kết quả thành dạng chuỗi đẹp mắt (JSON format nếu là object).
+ */
+export function formatContent(data: unknown): string {
+  if (data === undefined || data === null) return "";
+  if (typeof data === "string") {
+    try {
+      const parsed = JSON.parse(data);
+      if (typeof parsed === "object" && parsed !== null) {
+        return JSON.stringify(parsed, null, 2);
+      }
+    } catch {
+      // Giữ nguyên chuỗi nếu không phải JSON
+    }
+    return data;
+  }
+  try {
+    return JSON.stringify(data, null, 2);
+  } catch {
+    return String(data);
+  }
+}
+
+/**
  * Format toàn bộ các bước suy luận thành văn bản markdown chi tiết để đưa vào clipboard.
  */
 export function formatReasoningSteps(steps: ReasoningStep[]): string {
@@ -32,8 +55,16 @@ export function formatReasoningSteps(steps: ReasoningStep[]): string {
           ? " [Tool Call]"
           : "";
       let text = `### Bước ${num}: ${step.title}${typeBadge}`;
+      const hasInput =
+        step.input !== undefined &&
+        step.input !== null &&
+        step.input !== "";
+      if (hasInput) {
+        text += `\n\n**Input**:\n\`\`\`json\n${formatContent(step.input)}\n\`\`\``;
+      }
       if (step.content?.trim()) {
-        text += `\n\n${step.content.trim()}`;
+        const outputPrefix = hasInput ? "**Output**:\n" : "";
+        text += `\n\n${outputPrefix}${step.content.trim()}`;
       }
       if (step.choice) {
         text += `\n\n**Câu hỏi**: ${step.choice.question}`;
@@ -61,8 +92,16 @@ export function formatSingleStep(step: ReasoningStep, index?: number): string {
       ? " [Tool Call]"
       : "";
   let text = `${prefix}${step.title}${typeBadge}`;
+  const hasInput =
+    step.input !== undefined &&
+    step.input !== null &&
+    step.input !== "";
+  if (hasInput) {
+    text += `\n\n[Input]:\n${formatContent(step.input)}`;
+  }
   if (step.content?.trim()) {
-    text += `\n\n${step.content.trim()}`;
+    const outputPrefix = hasInput ? "[Output]:\n" : "";
+    text += `\n\n${outputPrefix}${step.content.trim()}`;
   }
   if (step.choice) {
     text += `\n\n[Câu hỏi]: ${step.choice.question}`;
@@ -93,7 +132,35 @@ function StepItem({
   const isAnswered = !!step.choice?.answered;
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [inputCopied, setInputCopied] = useState(false);
+  const [outputCopied, setOutputCopied] = useState(false);
   const processing = step.status === "processing";
+
+  const hasInput =
+    step.input !== undefined &&
+    step.input !== null &&
+    step.input !== "";
+  const formattedInput = hasInput ? formatContent(step.input) : "";
+  const formattedOutput = step.content ? formatContent(step.content) : "";
+
+  const handleCopyInput = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!formattedInput) return;
+    navigator.clipboard.writeText(formattedInput);
+    setInputCopied(true);
+    toast.success("Đã sao chép input của tool");
+    setTimeout(() => setInputCopied(false), 2000);
+  };
+
+  const handleCopyOutput = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const textToCopy = step.content || formattedOutput;
+    if (!textToCopy) return;
+    navigator.clipboard.writeText(textToCopy);
+    setOutputCopied(true);
+    toast.success("Đã sao chép output của tool");
+    setTimeout(() => setOutputCopied(false), 2000);
+  };
 
   const handleSelectOption = (option: ChoiceOption) => {
     if (!messageId || !step.choice) return;
@@ -207,11 +274,101 @@ function StepItem({
 
       {/* Chi tiết nội dung bước */}
       <CollapsibleContent className="pl-6 animate-in fade-in-0 duration-150">
-        <div className="text-xs leading-relaxed text-muted-foreground space-y-2 py-2">
-          {step.content && (
-            <div className="rounded-xl border border-border bg-muted/40 p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words">
-              {step.content}
+        <div className="text-xs leading-relaxed text-muted-foreground space-y-2.5 py-2">
+          {/* Trường hợp là Tool Call hoặc có input: hiển thị Input ở trên, Output ở dưới, copy độc lập */}
+          {isToolCall || hasInput ? (
+            <div className="space-y-2.5">
+              {/* Tool Input ở bên trên, có thể copy độc lập */}
+              {hasInput && (
+                <div className="rounded-xl border border-border/70 bg-muted/40 overflow-hidden shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-border/50 bg-muted/60 px-3 py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[11px] font-semibold text-brand uppercase tracking-wider">
+                        Input
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        (Tham số)
+                      </span>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleCopyInput}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer text-[10px]"
+                          aria-label="Sao chép input"
+                        >
+                          {inputCopied ? (
+                            <>
+                              <Check className="size-3 text-brand" />
+                              <span className="text-brand font-medium">Đã chép</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-3" />
+                              <span>Sao chép</span>
+                            </>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Sao chép input của tool</TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words max-h-72 overflow-y-auto">
+                    {formattedInput}
+                  </div>
+                </div>
+              )}
+
+              {/* Tool Output ở bên dưới, có thể copy độc lập */}
+              {step.content && (
+                <div className="rounded-xl border border-border/70 bg-muted/40 overflow-hidden shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-border/50 bg-muted/60 px-3 py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                        Output
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        (Kết quả)
+                      </span>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleCopyOutput}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer text-[10px]"
+                          aria-label="Sao chép output"
+                        >
+                          {outputCopied ? (
+                            <>
+                              <Check className="size-3 text-emerald-500" />
+                              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Đã chép</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-3" />
+                              <span>Sao chép</span>
+                            </>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Sao chép output của tool</TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words max-h-80 overflow-y-auto">
+                    {formattedOutput}
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            /* Bước suy luận thông thường (thinking / default) */
+            step.content && (
+              <div className="rounded-xl border border-border bg-muted/40 p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words">
+                {step.content}
+              </div>
+            )
           )}
           {processing && (
             <div className="flex items-center gap-2 font-mono text-xs text-brand">

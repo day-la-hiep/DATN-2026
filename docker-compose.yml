@@ -14,7 +14,7 @@ name: derma-hospital
 # App (core, agent worker, fe) vẫn chạy thủ công như hiện tại:
 #   docker compose up -d
 #   cd core && python main.py
-#   cd core && python -u -m app.agent.worker
+#   cd core && python -u -m agent.worker
 #   cd fe   && pnpm dev
 #
 # Mọi giá trị ở đây ghi thẳng (không đọc biến môi trường/.env) và khớp default trong

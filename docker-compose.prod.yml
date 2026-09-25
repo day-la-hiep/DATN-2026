@@ -149,7 +149,7 @@ services:
       context: .
       dockerfile: core/Dockerfile
     restart: unless-stopped
-    command: ["python", "-m", "app.agent.worker"]
+    command: ["python", "-m", "agent.worker"]
     env_file: core/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-derma_hospital_db}

@@ -30,9 +30,9 @@ class AgentContext:
     # Chuỗi "provider:model" (KHÔNG phải id ngắn) của conversation hiện tại — worker đã
     # resolve từ `Conversation.model` qua `AGENT_MODEL_CHOICES` (`app/core/config.py`)
     # trước khi build context này, xem `app/agent/worker.py::_conversation_for`. Rỗng ->
-    # middleware `_select_model` (`app/agent/graph.py`) fallback `settings.AGENT_MODEL`.
+    # middleware `select_model` (`app/agent/graph.py`) fallback `settings.AGENT_MODEL`.
     model: str = ""
-    # Tích luỹ TRỰC TIẾP bởi `_emit_reasoning_step`/`_emit_tool_result` (`app/agent/graph.py`)
+    # Tích luỹ TRỰC TIẾP bởi `emit_reasoning_step`/`emit_tool_result` (`app/agent/graph.py`)
     # — mỗi dict khớp field (snake_case) của `ReasoningStepDto` (`app/dto/message.py`).
     # `worker.py::_drive` giữ CÙNG reference `AgentContext` truyền vào
     # `agent_graph.astream(..., context=context, ...)` nên middleware append vào đây thì

@@ -4,7 +4,7 @@ qua stream (khác text thường).
 Vấn đề: model hiện dùng (`AGENT_MODEL`, `app/core/config.py`) là Gemma qua OpenRouter,
 đã verify thực nghiệm trả `content=''` TUYỆT ĐỐI mỗi khi quyết định gọi tool (giới hạn
 của provider/model, không sửa được bằng system prompt — xem thảo luận trong lịch sử hội
-thoại). Middleware `_emit_reasoning_step`/`_emit_tool_result` (`app/agent/graph.py`) chỉ
+thoại). Middleware `emit_reasoning_step`/`emit_tool_result` (`app/agent/graph.py`) chỉ
 phát được những gì có trong response: `tool_calls` luôn có, `content` thì không — nên
 cách DUY NHẤT để "kế hoạch" hiển thị ra ngoài là biến nó thành 1 lệnh gọi tool thật, với
 tham số CHÍNH LÀ nội dung kế hoạch. Tool này không tra cứu gì, chỉ echo lại kế hoạch làm

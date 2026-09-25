@@ -28,7 +28,9 @@ from app.core.config import settings
 EMBEDDING_DIM = 768  # models/gemini-embedding-001 (Google), truncated qua
 # output_dimensionality — PHẢI khớp app/agent/memory.py::_EMBEDDING_DIM
 
-client = AsyncQdrantClient(url=settings.QDRANT_URL)
+client = AsyncQdrantClient(
+    url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY or None
+)
 
 
 async def ensure_collection() -> None:

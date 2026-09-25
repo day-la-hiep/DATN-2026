@@ -3,7 +3,7 @@
 Nguồn chuẩn field: `fe/features/chat/types.ts`. Xem `docs/api-doc.md` mục 2–3 và
 `docs/db-diagram.md` mục 2 (quy ước JSONB `metadata`).
 """
-from typing import Literal
+from typing import Any, Literal
 
 from app.dto.common import CamelModel
 
@@ -44,6 +44,7 @@ class ReasoningStepDto(CamelModel):
     id: str
     title: str
     content: str
+    input: Any | None = None
     status: Literal["processing", "done"]
     # "thinking" khớp `ReasoningStepType` phía FE (`fe/features/chat/types.ts`) — bước
     # LLM tự suy nghĩ/tổng hợp trước khi quyết định gọi tool hay trả lời, phát trực tiếp

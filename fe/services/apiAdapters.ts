@@ -55,6 +55,7 @@ export interface ApiReasoningStep {
   id?: string | null;
   title?: string;
   content?: string;
+  input?: unknown;
   status?: string;
   type?: string;
   choice?: MessageChoice | null;
@@ -117,6 +118,7 @@ export function toChatMessage(a: ApiChatMessage): ChatMessage {
         id: s.id ?? `${a.id}-step-${i + 1}`,
         title: s.title ?? "Suy luận",
         content: s.content ?? "",
+        input: s.input,
         status: (s.status as ReasoningStepStatus) ?? "done",
         type: (s.type as ReasoningStepType) ?? "default",
         choice: s.choice ?? undefined,

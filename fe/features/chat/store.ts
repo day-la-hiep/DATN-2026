@@ -355,6 +355,7 @@ export const useChatStore = create<ChatState>((set, get) => {
           const step: ReasoningStep = {
             id: stepId,
             title: `Gọi tool: ${event.tool}`,
+            input: event.input,
             content: event.content,
             status: "done",
             type: "tool_call",
