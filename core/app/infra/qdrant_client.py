@@ -28,7 +28,9 @@ from app.core.config import settings
 EMBEDDING_DIM = 768  # models/gemini-embedding-001 (Google), truncated qua
 # output_dimensionality — PHẢI khớp app/agent/memory.py::_EMBEDDING_DIM
 
-client = AsyncQdrantClient(url=settings.QDRANT_URL)
+client = AsyncQdrantClient(
+    url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY or None
+)
 
 
 async def ensure_collection() -> None:
@@ -151,3 +153,27 @@ async def get_kb_chunks_by_disease_id(disease_id: str) -> list[Record]:
         limit=5,
     )
     return records
+
+
+async def ensure_phenotype_collection(dim: int) -> None:
+    if not await client.collection_exists(settings.QDRANT_PHENOTYPE_COLLECTION):
+        await client.create_collection(
+            settings.QDRANT_PHENOTYPE_COLLECTION,
+            vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+        )
+
+
+async def delete_phenotype_collection() -> None:
+    if await client.collection_exists(settings.QDRANT_PHENOTYPE_COLLECTION):
+        await client.delete_collection(settings.QDRANT_PHENOTYPE_COLLECTION)
+
+
+async def upsert_phenotypes(points: list[PointStruct]) -> None:
+    await client.upsert(settings.QDRANT_PHENOTYPE_COLLECTION, points=points)
+
+
+async def search_phenotypes(*, vector: list[float], limit: int = 5) -> list[ScoredPoint]:
+    result = await client.query_points(
+        settings.QDRANT_PHENOTYPE_COLLECTION, query=vector, limit=limit
+    )
+    return result.points

@@ -2,7 +2,8 @@
 (`tool_ask`), liệt kê tin nhắn. Xem `docs/api-doc.md` mục 2, `docs/async-api-doc.md`
 mục 4–6.
 """
-from app.agent.schemas import TurnAttachment, TurnRequest
+
+from agent.dto.schemas import TurnAttachment, TurnRequest
 from app.core.config import settings
 from app.core.constants import (
     AGENT_ACTIVE_TURN_KEY,
@@ -39,7 +40,9 @@ class MessageService:
         self._messages = message_repository
         self._conversations = conversation_repository
 
-    async def _apply_model_choice(self, conversation_id: str, model_id: str | None) -> None:
+    async def _apply_model_choice(
+        self, conversation_id: str, model_id: str | None
+    ) -> None:
         """`SendMessageInput.model_id` (dropdown chọn model ở ô nhập chat, FE
         `features/chat/constants.ts::MODEL_OPTIONS`) — cập nhật LUÔN `Conversation.model`
         thay vì chỉ áp dụng 1 turn: model chọn theo TỪNG conversation (không phải riêng
@@ -257,7 +260,9 @@ async def flush_pending_turn(conversation_id: str) -> None:
     if not payload:
         return
     try:
-        await rabbitmq_client.publish(AGENT_REQUEST_QUEUE, payload.encode("utf-8"))
+        await rabbitmq_client.publish(
+            AGENT_REQUEST_QUEUE, payload.encode("utf-8")
+        )
     except Exception:
         # Publish hỏng SAU khi đã GETDEL — trả `payload` lại Redis để lần mở SSE kế tiếp
         # (client tự reconnect) thử lại, tránh mất turn / assistant row kẹt "queued".
@@ -268,10 +273,14 @@ async def flush_pending_turn(conversation_id: str) -> None:
 def _metadata_from_input(body: SendMessageInput) -> MessageMetadataDto | None:
     if body.attachments is None and body.selection is None:
         return None
-    return MessageMetadataDto(attachments=body.attachments, selection_ref=body.selection)
+    return MessageMetadataDto(
+        attachments=body.attachments, selection_ref=body.selection
+    )
 
 
-def _turn_attachments(metadata: MessageMetadataDto | None) -> list[TurnAttachment] | None:
+def _turn_attachments(
+    metadata: MessageMetadataDto | None,
+) -> list[TurnAttachment] | None:
     """Chỉ forward attachment ẢNH cho Worker — `classify_skin_image`
     (`app/agent/tools/skin_image_classifier.py`) là consumer DUY NHẤT hiện tại của
     `TurnRequest.attachments`, các loại file khác (nếu FE cho phép sau này) không có ý
@@ -281,12 +290,17 @@ def _turn_attachments(metadata: MessageMetadataDto | None) -> list[TurnAttachmen
     images = [a for a in metadata.attachments if a.type.startswith("image/")]
     if not images:
         return None
-    return [TurnAttachment(name=a.name, type=a.type, object_key=a.id) for a in images]
+    return [
+        TurnAttachment(name=a.name, type=a.type, object_key=a.id)
+        for a in images
+    ]
 
 
 def _to_output(message: Message) -> MessageOutput:
     metadata = (
-        MessageMetadataDto.model_validate(message.extra) if message.extra else None
+        MessageMetadataDto.model_validate(message.extra)
+        if message.extra
+        else None
     )
     return MessageOutput(
         id=message.id,

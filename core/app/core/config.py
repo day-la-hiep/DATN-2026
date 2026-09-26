@@ -47,6 +47,9 @@ class Settings(BaseSettings):
 
     # ----- Qdrant (vector DB) -----
     QDRANT_URL: str = "http://localhost:6333"
+    # Khớp `QDRANT__SERVICE__API_KEY` của service qdrant trong docker-compose.yml. Rỗng = không
+    # gửi api-key (Qdrant không bật auth).
+    QDRANT_API_KEY: str = ""
     # Long-term memory: hạ tầng cũ (app/kien-truc-memory.md), hiện KHÔNG được dùng nữa —
     # app/agent/memory.py đã chuyển sang langgraph.store.InMemoryStore. Giữ setting này
     # để không phá vỡ .env hiện có, chưa xoá client (app/infra/qdrant_client.py).
@@ -55,12 +58,32 @@ class Settings(BaseSettings):
     # data-ingest/01_normalize/output/diseases/ qua data-ingest/01_normalize/scripts/load_knowledge_base.py,
     # dùng bởi app/agent/tools/knowledge_base_search.py.
     QDRANT_KB_COLLECTION: str = "derma_kb_chunks"
+    # Phenotype PrimeKG (tên embed) — `describe_morphology` chuẩn hoá mô tả tự do sang nút
+    # phenotype, ingest qua data-ingest/01_normalize/scripts/load_phenotypes.py.
+    QDRANT_PHENOTYPE_COLLECTION: str = "derma_phenotypes"
 
     # ----- Neo4j (knowledge graph da liễu — PrimeKG, xem
     # app/agent/knowledge_graph.py + data/PrimeKG/load_to_neo4j.py) -----
     NEO4J_URL: str = "bolt://localhost:7687"
     NEO4J_USER: str = "neo4j"
     NEO4J_PASSWORD: str = "derma12345"
+
+    # ----- Web search nguồn uy tín (agent/tools/web_search.py) -----
+    # Rỗng = tool trả thông báo "chưa cấu hình", không crash. Tavily lọc domain ngay ở provider
+    # (`include_domains`); code vẫn lọc lại phía server.
+    TAVILY_API_KEY: str = ""
+    TRUSTED_WEB_DOMAINS: list[str] = [
+        "aad.org",
+        "dermnetnz.org",
+        "medlineplus.gov",
+        "who.int",
+        "nih.gov",
+        "cdc.gov",
+        "nhs.uk",
+        "mayoclinic.org",
+        "moh.gov.vn",
+        "kcb.vn",
+    ]
 
     # ----- CORS -----
     CORS_ORIGINS: list[str] = ["*"]

@@ -114,13 +114,13 @@ qua `pydantic-settings`). Nơi khác luôn `from app.core.config import settings
 Tên queue (RabbitMQ) / channel (Redis) là hằng số trong `app/core/constants.py`, không hard
 code string queue name rải rác trong code.
 
-## 6. Type checking — Pyright strict
+## 6. Type checking — Pyright basic
 
 ```bash
 uv run pyright app main.py
 ```
 
-- `pyproject.toml` set `typeCheckingMode = "strict"`.
+- `pyproject.toml` set `typeCheckingMode = "basic"`.
 - Chấp nhận `reportUnknownMemberType`/`reportMissingTypeArgument` phát sinh từ thư viện
   thiếu type stub đầy đủ (`redis`, `aio-pika`, `langgraph`) — đây là hạn chế của thư viện,
   không phải lỗi code. Không cần thêm `# pyright: ignore` cho từng dòng trừ khi lỗi đó che

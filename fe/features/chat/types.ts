@@ -28,8 +28,10 @@ export interface ReasoningStep {
   id: string;
   /** tiêu đề ngắn gọn của bước, hiển thị khi thu gọn */
   title: string;
-  /** nội dung chi tiết, được stream từng token khi mở rộng */
+  /** nội dung chi tiết, được stream từng token khi mở rộng (output của tool nếu là tool_call) */
   content: string;
+  /** Tham số đầu vào khi gọi tool (nếu là tool_call) */
+  input?: unknown;
   status: ReasoningStepStatus;
   /** Loại bước suy luận: default (thông thường) hoặc tool_call */
   type?: ReasoningStepType;
@@ -214,6 +216,7 @@ export type FlatStreamEvent =
       messageId: string;
       conversationId: string;
       tool: string;
+      input?: unknown;
       content: string;
     }
   /** 1 bước suy luận của LLM — phát SAU MỖI lần LLM được gọi trong vòng lặp ReAct (kể cả

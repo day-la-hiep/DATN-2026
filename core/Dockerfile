@@ -44,7 +44,7 @@ ENV PATH="/app/.venv/bin:${PATH}" \
 # image lúc build — tránh tải ~470MB từ HuggingFace Hub lúc container khởi động lần
 # đầu (chậm/lỗi nếu mạng prod hạn chế). Cần GOOGLE_API_KEY/OPENROUTER_API_KEY KHÔNG bắt
 # buộc ở bước này (chỉ load embedding model, không gọi LLM).
-RUN /app/.venv/bin/python -c "from app.agent.embeddings import _get_model; _get_model()"
+RUN /app/.venv/bin/python -c "from agent.embeddings import _get_model; _get_model()"
 
 EXPOSE 3050
 

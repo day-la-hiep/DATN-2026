@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import type { ChatMessage } from "../types";
 import { useChatStore } from "../store";
 import { MessageBubble } from "./MessageBubble";
@@ -134,14 +134,17 @@ export function MessageList({
         );
       })}
 
-      {streaming && (
-        <div className="flex justify-start">
-          <div className="flex items-center gap-2.5 rounded-full border border-brand/25 bg-brand/5 px-4 py-2 font-mono text-xs text-brand shadow-xs">
-            <span className="size-2 rounded-full bg-brand animate-pulse" />
-            <span>AI đang truy vấn và suy luận chẩn đoán...</span>
+      {streaming &&
+        !messages.some(
+          (m) => m.status === "streaming" && (m.reasoning?.length ?? 0) > 0
+        ) && (
+          <div className="flex justify-start animate-in fade-in-0 duration-200">
+            <div className="flex items-center gap-2.5 rounded-full border border-brand/25 bg-brand/5 px-4 py-2 font-mono text-xs text-brand shadow-xs">
+              <Loader2 className="size-3.5 animate-spin text-brand" />
+              <span>AI đang truy vấn và suy luận chẩn đoán...</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       <div ref={bottomRef} />
     </div>
   );

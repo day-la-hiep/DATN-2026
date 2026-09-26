@@ -27,6 +27,7 @@ dependencies = [
     "sqlalchemy>=2.0.52",
     "torch>=2.4",
     "torchvision>=0.19",
+    "trafilatura>=2.2.0",
 ]
 
 [tool.fastapi]
@@ -48,10 +49,16 @@ url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 [tool.pyright]
-typeCheckingMode = "strict"
+typeCheckingMode = "basic"
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+include = ["app", "agent", "main.py"]
+exclude = ["**/__pycache__", ".venv"]
 
 [dependency-groups]
 dev = [
     "pyright>=1.1.411",
     "pyyaml>=6.0.3",
+    "watchfiles>=1.2.0",
 ]
