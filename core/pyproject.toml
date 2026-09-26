@@ -27,6 +27,7 @@ dependencies = [
     "sqlalchemy>=2.0.52",
     "torch>=2.4",
     "torchvision>=0.19",
+    "trafilatura>=2.2.0",
 ]
 
 [tool.fastapi]
@@ -49,6 +50,11 @@ explicit = true
 
 [tool.pyright]
 typeCheckingMode = "basic"
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+include = ["app", "agent", "main.py"]
+exclude = ["**/__pycache__", ".venv"]
 
 [dependency-groups]
 dev = [

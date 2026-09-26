@@ -6,11 +6,12 @@ __pycache__/
 .ruff_cache/
 notebook/draft
 
-# data-ingest: input thô (PrimeKG ~850MB, DermNet HTML, .obo) và output trung gian lớn của
-# dermnet (tái tạo được bằng `python data-ingest/run.py dermnet`) — KHÔNG commit.
-# Cái được commit/deploy: mọi `*/output/` còn lại + `01_normalize/output/`.
-data-ingest/*/input/
-data-ingest/dermnet/output/scraped_topics/
-data-ingest/dermnet/output/post/
-# derma_kg.json (~6MB, bản JSON của cùng subgraph) không ai đọc; nodes/edges CSV mới là đầu vào
-data-ingest/primekg/output/derma_kg.json
+# data_ingest: chỉ commit script + README. Mọi input/ và output/ đều được ignore
+# (tái tạo bằng `python data_ingest/run.py ...`).
+data_ingest/*/input/
+data_ingest/*/output/
+data_ingest/input_data/
+# Ngoại lệ: byt/who/medlineplus biên soạn tay, không có script sinh lại -> giữ output (rất nhỏ)
+!data_ingest/byt/output/
+!data_ingest/who/output/
+!data_ingest/medlineplus/output/
