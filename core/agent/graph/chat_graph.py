@@ -48,6 +48,8 @@ from langgraph.store.base import BaseStore
 
 from agent.state.context import AgentContext
 from agent.middleware.model import (
+    enforce_initial_reasoning,
+    force_reasoning,
     emit_reasoning_step,
     inject_long_term_memory,
     select_model,
@@ -57,14 +59,19 @@ from agent.prompt.orchestrator import SYSTEM_PROMPT
 from agent.tools.ask_user import ask_user
 from agent.tools.dermo_terms import lookup_dermo_term
 from agent.tools.entity_grounding import ground_medical_entities
+from agent.tools.differential import (
+    describe_morphology,
+    generate_differential,
+)
 from agent.tools.expand_context import expand_entity_context
 from agent.tools.knowledge_base_search import (
     get_disease_guideline_profile,
     search_disease_guidelines,
 )
 from agent.tools.knowledge_graph import query_dermatology_kg
-from agent.tools.plan import make_plan
+from agent.tools.reasoning import record_reasoning
 from agent.tools.skin_image_classifier import classify_skin_image
+from agent.tools.web_search import fetch_trusted_page, search_trusted_web
 from agent.llm import get_model
 from agent.tools.memory import (
     build_memory_store,
@@ -73,7 +80,7 @@ from agent.tools.memory import (
 
 
 ALL_TOOLS = [
-    make_plan,
+    record_reasoning,
     ask_user,
     save_memory,
     query_dermatology_kg,
@@ -83,6 +90,10 @@ ALL_TOOLS = [
     search_disease_guidelines,
     get_disease_guideline_profile,
     classify_skin_image,
+    describe_morphology,
+    generate_differential,
+    search_trusted_web,
+    fetch_trusted_page,
 ]
 
 
@@ -100,6 +111,8 @@ def default_middleware() -> list[
         [
             select_model,
             inject_long_term_memory,
+            force_reasoning,
+            enforce_initial_reasoning,
             # emit_reasoning_step,
             emit_tool_result,
             # critic_review,

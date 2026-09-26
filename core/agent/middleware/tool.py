@@ -7,6 +7,7 @@ from langgraph.types import Command
 
 from agent.graph.common import TOOL_DISPLAY_NAMES, emit
 from agent.state.context import AgentContext
+from agent.tools.reasoning import STAGE_LABELS, TOOL_NAME as REASONING_TOOL
 
 
 @wrap_tool_call
@@ -66,6 +67,11 @@ async def emit_tool_result(
             if isinstance(request.tool_call, dict)
             else None
         )
+        # `record_reasoning`: mỗi giai đoạn là 1 step riêng (tên hiển thị theo `stage`) — nếu
+        # dùng chung 1 tên, dedupe theo tên (ở đây và ở `fe/features/chat/store.ts`) sẽ ghi
+        # đè lập luận ban đầu bằng lập luận sau.
+        if tool_name == REASONING_TOOL and isinstance(tool_args, dict):
+            display_name = STAGE_LABELS.get(str(tool_args.get("stage")), display_name)
         step_id = f"{ctx.message_id}-tool-{display_name}"
         step = {
             "id": step_id,

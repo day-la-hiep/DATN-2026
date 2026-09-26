@@ -6,7 +6,6 @@ import {
   ChevronDown,
   Cpu,
   FileText,
-  Loader2,
   PanelLeft,
   Paperclip,
   Sparkles,
@@ -234,22 +233,6 @@ export function ChatInput({
     [setFiles]
   );
 
-  const handleImprove = useCallback(async () => {
-    if (!value.trim() || disabled) return;
-    try {
-      const result = await chatService.improvePrompt(value);
-      setValue(result);
-      setTimeout(() => {
-        resize();
-        textareaRef.current?.focus();
-      }, 50);
-    } catch (error) {
-      console.error("Lỗi khi cải thiện prompt:", error);
-      toast.error("Không thể cải thiện prompt. Vui lòng thử lại sau.");
-    } finally {
-      
-    }
-  }, [value, disabled, resize, setValue]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -277,7 +260,7 @@ export function ChatInput({
   }, [currentConvId, value, resize]);
 
   return (
-    <div className="bg-background/80 backdrop-blur-md p-3 sm:p-4 border-t border-border/80">
+    <div className="bg-background/80 backdrop-blur-md p-3 sm:p-4">
       <div ref={containerRef} className="relative mx-auto max-w-4xl">
         {/* Skill menu dropdown trong Card */}
         {skillMenuOpen && isSlashCommand && (
@@ -504,8 +487,9 @@ export function ChatInput({
               }
 
               if (e.key === "Enter" && !e.shiftKey) {
+                if (e.nativeEvent.isComposing) return;
                 e.preventDefault();
-
+                handleSend();
               }
             }}
             placeholder={

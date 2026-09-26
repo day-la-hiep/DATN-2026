@@ -1,7 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Brain, Check, CheckCircle2, ChevronDown, Copy, Wrench } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Brain,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Copy,
+  Loader2,
+  Sparkles,
+  Wrench,
+} from "lucide-react";
 import type { ReasoningStep, ChoiceOption } from "../types";
 import { useChatStore } from "../store";
 import { Button } from "@/components/ui/button";
@@ -195,12 +204,27 @@ function StepItem({
       open={open}
       onOpenChange={setOpen}
       onCopy={handleStepSelectCopy}
-      className="relative flex flex-col gap-1 text-left text-xs"
+      className={cn(
+        "relative flex flex-col gap-1 text-left text-xs transition-all duration-200 animate-in fade-in-50 slide-in-from-top-1",
+        processing && "rounded-lg bg-brand/5 px-2 py-0.5 -mx-2 ring-1 ring-brand/20 shadow-2xs"
+      )}
     >
       <div className="group/item flex w-full items-center gap-2 border-b border-border/40 py-1.5">
         {/* Step index badge */}
-        <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-brand/10 text-brand shrink-0">
-          {stepNumber}
+        <span
+          className={cn(
+            "font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-md shrink-0 flex items-center gap-1 transition-all",
+            processing
+              ? "bg-brand/20 text-brand ring-1 ring-brand/30 animate-pulse"
+              : "bg-brand/10 text-brand"
+          )}
+        >
+          {processing ? (
+            <Loader2 className="size-2.5 animate-spin text-brand" />
+          ) : (
+            <Check className="size-2.5 text-emerald-600 dark:text-emerald-400" />
+          )}
+          <span>{stepNumber}</span>
         </span>
 
         {/* Tiêu đề & Badges & Nút thao tác */}
@@ -213,13 +237,25 @@ function StepItem({
               <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                 <span
                   className={cn(
-                    "truncate text-xs transition-colors hover:text-foreground",
-                    open ? "font-semibold text-foreground" : "text-muted-foreground font-normal"
+                    "truncate text-xs transition-colors",
+                    processing
+                      ? "font-medium text-brand"
+                      : open
+                      ? "font-semibold text-foreground"
+                      : "text-muted-foreground font-normal hover:text-foreground"
                   )}
                   title={step.title}
                 >
                   {step.title}
                 </span>
+
+                {processing && (
+                  <span className="shrink-0 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/10 px-2 py-0.2 font-mono text-[10px] text-brand animate-pulse">
+                    <span className="size-1.5 rounded-full bg-brand animate-ping" />
+                    Đang xử lý
+                  </span>
+                )}
+
                 {isToolCall && (
                   <Badge
                     variant="outline"
@@ -241,7 +277,7 @@ function StepItem({
               </div>
               <ChevronDown
                 className={cn(
-                  "size-3.5 shrink-0 text-muted-foreground transition-transform group-hover/item:text-foreground ml-1",
+                  "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover/item:text-foreground ml-1",
                   open && "rotate-180"
                 )}
               />
@@ -371,9 +407,9 @@ function StepItem({
             )
           )}
           {processing && (
-            <div className="flex items-center gap-2 font-mono text-xs text-brand">
-              <span className="size-2 rounded-full bg-brand animate-ping" />
-              <span>Đang xử lý bước này...</span>
+            <div className="flex items-center gap-2 font-mono text-xs text-brand py-1 animate-pulse">
+              <Loader2 className="size-3 animate-spin text-brand" />
+              <span>Đang thực hiện bước này...</span>
             </div>
           )}
 
@@ -454,11 +490,29 @@ export function ReasoningSection({
   messageId?: string;
   streaming: boolean;
 }) {
-  const [open, setOpen] = useState(true);
+  // Bắt đầu mở khi đang streaming (đang load), đóng khi đã hoàn thành
+  const [open, setOpen] = useState(streaming);
+  const prevStreamingRef = useRef(streaming);
+
   const processingCount = steps.filter(
     (step) => step.status === "processing"
   ).length;
   const [copied, setCopied] = useState(false);
+
+  // Khi đang load (streaming = true): hiển thị các bước (mở tiến trình)
+  // Khi thực hiện xong (streaming: true -> false): tự động thu gọn tiến trình suy luận
+  useEffect(() => {
+    if (prevStreamingRef.current && !streaming) {
+      // Đợi ngắn (450ms) để người dùng kịp nhìn thấy bước cuối hoàn tất rồi thu gọn mượt mà
+      const timer = setTimeout(() => {
+        setOpen(false);
+      }, 450);
+      return () => clearTimeout(timer);
+    } else if (!prevStreamingRef.current && streaming) {
+      setOpen(true);
+    }
+    prevStreamingRef.current = streaming;
+  }, [streaming]);
 
   if (!steps || steps.length === 0) return null;
 
@@ -493,7 +547,12 @@ export function ReasoningSection({
       <div className="flex items-center justify-start gap-2">
         <div
           onCopy={handleContainerCopy}
-          className="flex h-9 max-w-full items-center justify-between gap-2 rounded-full border border-border bg-card/80 backdrop-blur-xs px-3.5 py-1 text-xs shadow-xs"
+          className={cn(
+            "flex h-9 max-w-full items-center justify-between gap-2 rounded-full border px-3.5 py-1 text-xs shadow-xs transition-all duration-300",
+            streaming
+              ? "border-brand/40 bg-brand/5 shadow-brand/10 ring-1 ring-brand/20"
+              : "border-border bg-card/80 backdrop-blur-xs hover:border-brand/30 hover:bg-card"
+          )}
         >
           <CollapsibleTrigger asChild>
             <button
@@ -502,12 +561,16 @@ export function ReasoningSection({
             >
               {streaming ? (
                 <>
-                  <span className="size-2 rounded-full bg-brand animate-ping shrink-0" />
-                  <span className="font-semibold text-brand shrink-0">
-                    Suy luận {processingCount > 0 ? `(${processingCount} đang chạy)` : ""}
+                  <span className="relative flex size-2 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-brand" />
                   </span>
-                  <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                    [{steps.length} bước]
+                  <span className="font-semibold text-brand shrink-0 flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-brand animate-pulse" />
+                    Đang suy luận
+                  </span>
+                  <span className="font-mono text-[10px] text-brand/90 bg-brand/15 px-2 py-0.5 rounded-full shrink-0 font-medium">
+                    {processingCount > 0 ? `${processingCount} đang xử lý • ` : ""}{steps.length} bước
                   </span>
                 </>
               ) : (
@@ -516,14 +579,18 @@ export function ReasoningSection({
                   <span className="font-medium text-foreground shrink-0">
                     Tiến trình suy luận
                   </span>
-                  <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                    [{steps.length} bước]
+                  <span className="font-mono text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
+                    {steps.length} bước
+                  </span>
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                    <Check className="size-3" />
+                    Hoàn tất
                   </span>
                 </>
               )}
               <ChevronDown
                 className={cn(
-                  "size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:text-foreground ml-auto",
+                  "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:text-foreground ml-auto",
                   open && "rotate-180"
                 )}
               />
@@ -556,7 +623,10 @@ export function ReasoningSection({
 
       <CollapsibleContent
         onCopy={handleContainerCopy}
-        className="mt-2 border-l-2 border-brand/25 pl-4 ml-3 py-1 space-y-1 animate-in fade-in-0 duration-150"
+        className={cn(
+          "mt-2 border-l-2 pl-4 ml-3 py-1 space-y-1.5 transition-colors duration-200",
+          streaming ? "border-brand/40" : "border-border/60"
+        )}
       >
         {steps.map((step, index) => (
           <StepItem

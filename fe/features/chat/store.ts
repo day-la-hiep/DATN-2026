@@ -279,42 +279,6 @@ export const useChatStore = create<ChatState>((set, get) => {
         }));
         break;
       }
-      case "message.delta": {
-        patchMessage(event.messageId, (m) => ({
-          ...m,
-          content: `${m.content}${event.delta}`,
-        }));
-        break;
-      }
-      case "message.steered": {
-        set((state) => {
-          const messagesByConversation = { ...state.messagesByConversation };
-          for (const convId of Object.keys(messagesByConversation)) {
-            const list = messagesByConversation[convId];
-            const index = list.findIndex((m) => m.id === event.corrId);
-            if (index === -1) continue;
-
-            const next = [...list];
-            const exists = next.some((m) => m.id === event.messageId);
-            if (!exists) {
-              const userSteerMsg: ChatMessage = {
-                id: event.messageId,
-                conversationId: convId,
-                role: "user",
-                content: event.content,
-                status: "done",
-                createdAt: new Date().toISOString(),
-                isOptionResponse: true,
-              };
-              next.splice(index, 0, userSteerMsg);
-            }
-            messagesByConversation[convId] = next;
-            return { messagesByConversation };
-          }
-          return state;
-        });
-        break;
-      }
       case "message.question": {
         patchMessage(event.messageId, (m) => ({
           ...m,
@@ -354,7 +318,7 @@ export const useChatStore = create<ChatState>((set, get) => {
           const list = m.reasoning ?? [];
           const step: ReasoningStep = {
             id: stepId,
-            title: `Gọi tool: ${event.tool}`,
+            title: `${event.tool}`,
             input: event.input,
             content: event.content,
             status: "done",

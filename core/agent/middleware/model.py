@@ -1,5 +1,6 @@
 import re
 from typing import Any, Awaitable, Callable
+from langchain.agents import AgentState
 from langchain.agents.middleware import (
     ModelRequest,
     ModelResponse,
@@ -13,9 +14,11 @@ from langchain.messages import (
     SystemMessage,
     ToolMessage,
 )
+from langchain_core.messages import RemoveMessage
 
 from agent.graph.common import (
     MAX_CRITIC_RETRIES,
+    MAX_REASONING_RETRIES,
     THINKING_SUMMARY_MAX_LEN,
     THINKING_TITLE_RE,
     TOOL_DISPLAY_NAMES,
@@ -28,6 +31,13 @@ from agent.prompt.critic import CRITIC_SYSTEM
 from agent.prompt.orchestrator import SYSTEM_PROMPT
 from agent.state.context import AgentContext
 from agent.tools.memory import search_memories
+from agent.tools.reasoning import (
+    FEEDBACK_PREFIX,
+    TOOL_NAME as REASONING_TOOL,
+    analyze_turn,
+    needs_reasoning,
+    turn_messages,
+)
 
 
 @wrap_model_call
@@ -234,3 +244,108 @@ def _summarize_thinking(text: str) -> str:
     if len(summary) > THINKING_SUMMARY_MAX_LEN:
         summary = summary[: THINKING_SUMMARY_MAX_LEN - 1].rstrip() + "…"
     return summary
+
+
+@wrap_model_call
+async def force_reasoning(
+    request: ModelRequest[AgentContext],
+    handler: Callable[[ModelRequest[AgentContext]], Awaitable[ModelResponse]],
+) -> ModelResponse:
+    """Ngay SAU 1 đợt kết quả tool (message cuối là `ToolMessage`) mà chưa có lần lập luận hợp
+    lệ nào MỚI HƠN bằng chứng đó -> ÉP model gọi `record_reasoning` (chỉ bind đúng tool này +
+    `tool_choice` chỉ định tên) thay vì để nó tự chọn. Ép TRƯỚC khi model sinh chữ nên không có
+    bản nháp nào lọt ra stream `message.delta` (khác chặn sau bằng `after_model`, xem
+    `enforce_initial_reasoning`). `record_reasoning` trả "Không hợp lệ" -> ép lại, tối đa
+    `MAX_REASONING_RETRIES` lần rồi thả tự do. Provider bỏ qua `tool_choice` -> model có thể
+    vẫn trả lời chữ; `enforce_initial_reasoning` là lưới an toàn cho trường hợp đó."""
+    messages = request.state["messages"]
+    if messages and isinstance(messages[-1], ToolMessage):
+        state = analyze_turn(turn_messages(messages))
+        if state.pending_evidence and state.invalid_count < MAX_REASONING_RETRIES:
+            request = request.override(
+                tools=[t for t in request.tools if getattr(t, "name", None) == REASONING_TOOL],
+                tool_choice={"type": "function", "function": {"name": REASONING_TOOL}},
+            )
+    return await handler(request)
+
+
+@after_model(can_jump_to=["model"])
+async def enforce_initial_reasoning(
+    state: AgentState[Any], runtime: Runtime[AgentContext]
+) -> dict[str, Any] | None:
+    """Lưới an toàn sau mỗi lần model trả lời (`force_reasoning` không phủ được các trường
+    hợp này):
+      - R1: model gọi tool tra cứu mà chưa lập luận (lần đầu của turn, hoặc còn bằng chứng
+        mới chưa được lập luận vì provider bỏ qua `tool_choice`) và không kèm `record_reasoning`
+        hợp lệ trong cùng lượt gọi -> bỏ `AIMessage` đó (`RemoveMessage`, tránh `tool_calls` mồ
+        côi không có `ToolMessage`) và bắt làm lại. Tool call không có chữ nên chưa có gì lọt ra
+        `message.delta`.
+      - R2: model trả lời bằng chữ dù còn bằng chứng chưa được lập luận (provider bỏ qua
+        `tool_choice`) -> bắt viết lại; bản nháp CÓ thể đã stream ra (giới hạn đã biết, giống
+        `critic_review`), nên chỉ là phương án dự phòng.
+      - R3: phản hồi rỗng (không chữ, không tool call) -> bắt làm lại.
+    Lượt chào hỏi/ngoài phạm vi (không tool, không bằng chứng) không bị ép. Hết
+    `MAX_REASONING_RETRIES` thì cho qua."""
+    messages = state["messages"]
+    last = messages[-1] if messages else None
+    if not isinstance(last, AIMessage):
+        return None
+
+    turn = analyze_turn(turn_messages(messages[:-1]))
+    if turn.feedback_count >= MAX_REASONING_RETRIES:
+        return None
+
+    if last.tool_calls:
+        if last.id is None or not needs_reasoning(last):
+            return None
+        stage_hint = (
+            'stage="initial": nêu dữ kiện đã biết (kèm nguồn) và giả thuyết ban đầu'
+            if not turn.has_valid_reasoning
+            else 'stage="after_evidence" (hoặc "final"): cập nhật giả thuyết theo kết quả tool '
+            "vừa nhận"
+        )
+        if turn.has_valid_reasoning and not turn.pending_evidence:
+            return None
+        return {
+            "messages": [
+                RemoveMessage(id=last.id),
+                HumanMessage(
+                    content=(
+                        f"{FEEDBACK_PREFIX} Trước khi gọi thêm tool, hãy gọi `{REASONING_TOOL}` "
+                        f"với {stage_hint}. Sau đó mới tiếp tục tra cứu."
+                    )
+                ),
+            ],
+            "jump_to": "model",
+        }
+
+    if not last.text.strip():
+        # Phản hồi rỗng (không chữ, không tool call) — provider thỉnh thoảng trả về; không thể
+        # để người dùng nhận câu trả lời trống.
+        return {
+            "messages": [
+                RemoveMessage(id=last.id) if last.id else HumanMessage(content="."),
+                HumanMessage(
+                    content=(
+                        f"{FEEDBACK_PREFIX} Phản hồi vừa rồi rỗng. Hãy tiếp tục: gọi tool cần "
+                        "thiết hoặc trả lời người dùng."
+                    )
+                ),
+            ],
+            "jump_to": "model",
+        }
+
+    if turn.pending_evidence:
+        return {
+            "messages": [
+                HumanMessage(
+                    content=(
+                        f"{FEEDBACK_PREFIX} Bạn vừa nhận kết quả tool nhưng chưa lập luận. Hãy "
+                        f'gọi `{REASONING_TOOL}` (stage="after_evidence" hoặc "final") để cập '
+                        "nhật giả thuyết theo bằng chứng, rồi mới trả lời."
+                    )
+                )
+            ],
+            "jump_to": "model",
+        }
+    return None

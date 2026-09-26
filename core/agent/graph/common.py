@@ -17,7 +17,7 @@ from app.infra.redis_client import publish as redis_publish
 # người dùng cuối, map sang nhãn tiếng Việt dễ hiểu. Tool nào quên thêm vào đây thì
 # fallback về tên gốc.
 TOOL_DISPLAY_NAMES: dict[str, str] = {
-    "make_plan": "Lập kế hoạch",
+    "record_reasoning": "Lập luận",
     "ask_user": "Hỏi lại người dùng",
     "save_memory": "Lưu thông tin ghi nhớ",
     "query_dermatology_kg": "Tra cứu cơ sở tri thức da liễu",
@@ -27,6 +27,10 @@ TOOL_DISPLAY_NAMES: dict[str, str] = {
     "search_disease_guidelines": "Tra cứu tài liệu hướng dẫn lâm sàng",
     "get_disease_guideline_profile": "Xem hồ sơ chi tiết 1 bệnh",
     "classify_skin_image": "Phân tích ảnh tổn thương da",
+    "describe_morphology": "Chuẩn hoá mô tả triệu chứng",
+    "generate_differential": "Xếp hạng bệnh phù hợp",
+    "search_trusted_web": "Tra cứu nguồn web uy tín",
+    "fetch_trusted_page": "Đọc trang web uy tín",
 }
 
 
@@ -53,6 +57,9 @@ class CriticState(AgentState):
 
 
 MAX_CRITIC_RETRIES = 1
+# Số lần tối đa/turn middleware lập luận (`middleware/model.py`) ép model làm lại — hết lượt thì
+# CHO QUA (như `MAX_CRITIC_RETRIES`) để không treo turn.
+MAX_REASONING_RETRIES = 2
 
 
 class CriticVerdict(BaseModel):
