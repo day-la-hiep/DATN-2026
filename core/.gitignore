@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+notebook/draft
+
+# data_ingest: chỉ commit script + README. Mọi input/ và output/ đều được ignore
+# (tái tạo bằng `python data_ingest/run.py ...`).
+data_ingest/*/input/
+data_ingest/*/output/
+data_ingest/input_data/
+# Ngoại lệ: byt/who/medlineplus biên soạn tay, không có script sinh lại -> giữ output (rất nhỏ)
+!data_ingest/byt/output/
+!data_ingest/who/output/
+!data_ingest/medlineplus/output/

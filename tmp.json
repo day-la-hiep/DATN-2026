@@ -1,0 +1,681 @@
+    {
+    "entities": [
+        {
+            "text": "xerosis",
+            "type": "symptom",
+            "dermo": null,
+            "primekg_relations": [],
+            "kb_disease_id": null
+        },
+        {
+            "text": "pruritus",
+            "type": "symptom",
+            "dermo": {
+                "id": "DERMO:0002968",
+                "name": "pruritus",
+                "def": "",
+                "synonyms": [],
+                "parents": [
+                    "pruritus or dysesthesia"
+                ]
+            },
+            "primekg_relations": [
+                {
+                    "entity": "aquagenic pruritus",
+                    "entity_type": "disease",
+                    "relation": "DISEASE_DISEASE",
+                    "related": "embryonic cement gland",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "aquagenic pruritus",
+                    "entity_type": "disease",
+                    "relation": "DISEASE_DISEASE",
+                    "related": "embryonic cement gland",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "peeling skin syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "zinc efflux active transmembrane transporter activity",
+                    "related_type": "molecular_function"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "zinc efflux active transmembrane transporter activity",
+                    "related_type": "molecular_function"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "peeling skin syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "lichen planus",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "lumbar splanchnic nerve",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "ZNF207",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "dermatitis herpetiformis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "supcapsular region of posterior region of lens",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "biphenyl metabolic process",
+                    "related_type": "biological_process"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "cutaneous collagenous vasculopathy",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "benzoyl acetate-CoA ligase activity",
+                    "related_type": "molecular_function"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "phosphotransferase activity, nitrogenous group as acceptor",
+                    "related_type": "molecular_function"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "H3C6",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "pulmonary lymphatic vessel",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "iprodione amidohydrolase activity",
+                    "related_type": "molecular_function"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "store-operated calcium channel activity",
+                    "related_type": "molecular_function"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "Golgi to ER transport vesicle membrane",
+                    "related_type": "cellular_component"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "peeling skin syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "autosomal recessive congenital ichthyosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "dermatitis, atopic",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "lamellar ichthyosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "urticaria",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "calmodulin-lysine N-methyltransferase activity",
+                    "related_type": "molecular_function"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "CSDE1",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "LILRA1",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "peduncle of neuraxis",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Pruritus",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "primary cutaneous amyloidosis",
+                    "related_type": "disease"
+                }
+            ],
+            "kb_disease_id": null
+        },
+        {
+            "text": "erythema",
+            "type": "symptom",
+            "dermo": {
+                "id": "DERMO:0003151",
+                "name": "erythema",
+                "def": "",
+                "synonyms": [],
+                "parents": [
+                    "urticaria, erythema or purpura"
+                ]
+            },
+            "primekg_relations": [
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "DISEASE_DISEASE",
+                    "related": "embryonic cement gland",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "DISEASE_DISEASE",
+                    "related": "toxic dermatosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "DISEASE_DISEASE",
+                    "related": "embryonic cement gland",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "DISEASE_DISEASE",
+                    "related": "toxic dermatosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Cortisone acetate",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Prednisolone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Triamcinolone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Cortisone acetate",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Prednisone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Dexamethasone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Dexamethasone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Methylprednisolone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Betamethasone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Prednisone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Hydrocortisone acetate",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Methylprednisolone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Hydrocortisone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Hydrocortisone acetate",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Prednisolone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Betamethasone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Hydrocortisone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "erythema multiforme",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Triamcinolone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Desoximetasone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Flumethasone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Mometasone furoate",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Methylprednisolone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Amcinonide",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Betamethasone",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Flurandrenolide",
+                    "related_type": "drug"
+                },
+                {
+                    "entity": "discoid lupus erythematosus",
+                    "entity_type": "disease",
+                    "relation": "INDICATION",
+                    "related": "Cortisone acetate",
+                    "related_type": "drug"
+                }
+            ],
+            "kb_disease_id": null
+        },
+        {
+            "text": "scaling",
+            "type": "symptom",
+            "dermo": null,
+            "primekg_relations": [
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "distal carpal bone 1 cartilage",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "4-carboxy-4'-sulfoazobenzene metabolic process",
+                    "related_type": "biological_process"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "QKI",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "neonatal inflammatory skin and bowel disease",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "external cervical os",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "tunica media of artery",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "ventral lateral sacrocaudal muscle",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "DDX19B",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "peeling skin syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "primary cutaneous amyloidosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "QKI",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "4-carboxy-4'-sulfoazobenzene metabolic process",
+                    "related_type": "biological_process"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "distal carpal bone 1 cartilage",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "autosomal recessive congenital ichthyosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "peeling skin-leukonuchia-acral punctate keratoses-cheilitis-knuckle pads syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "acral peeling skin syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "neonatal inflammatory skin and bowel disease",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "primary cutaneous amyloidosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "tunica media of artery",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "external cervical os",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "acral peeling skin syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "peeling skin syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "autosomal recessive congenital ichthyosis",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "ventral lateral sacrocaudal muscle",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "DDX19B",
+                    "related_type": "gene/protein"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_POSITIVE",
+                    "related": "peeling skin-leukonuchia-acral punctate keratoses-cheilitis-knuckle pads syndrome",
+                    "related_type": "disease"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "histidine catabolic process to hydantoin-5-propionate",
+                    "related_type": "biological_process"
+                },
+                {
+                    "entity": "Scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "histidine catabolic process to hydantoin-5-propionate",
+                    "related_type": "biological_process"
+                },
+                {
+                    "entity": "Palmoplantar scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "distal carpal bone 1 cartilage",
+                    "related_type": "anatomy"
+                },
+                {
+                    "entity": "Palmoplantar scaling skin",
+                    "entity_type": "effect/phenotype",
+                    "relation": "DISEASE_PHENOTYPE_NEGATIVE",
+                    "related": "distal carpal bone 1 cartilage",
+                    "related_type": "anatomy"
+                }
+            ],
+            "kb_disease_id": null
+        }
+    ]
+}

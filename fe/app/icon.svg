@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#DC2626"/>
+  <path d="M16 6V25" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M8 25H24" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M7 11H25" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M16 6L7 11" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M16 6L25 11" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Đĩa cân trái -->
+  <path d="M7 11L4 18C4 18 5.5 20 8.5 20C11.5 20 13 18 13 18L10 11" fill="white" fill-opacity="0.25" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+  <!-- Đĩa cân phải -->
+  <path d="M25 11L22 18C22 18 23.5 20 26.5 20C29.5 20 31 18 31 18L28 11" fill="white" fill-opacity="0.25" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+</svg>
