@@ -1,0 +1,2779 @@
+[
+  {
+    "id": "benh_choc_andrews",
+    "name": "Bệnh chốc",
+    "english_name": "Bullous impetigo",
+    "type": "14 Bacterial Infections",
+    "summary": "14  Bacterial Infections 250 A and B, elaborated by the staphylococcus in remote sites.  Usually, staphylococci are present at a distant focus, such as  the pharynx, nose, ear, or conjunctiva. Septicemia or a cutaneous infection may also be the causative focus. Clinical manifestations of SSSS begin abruptly with fever,  skin tenderness, and erythema involving the neck, groins, and  axillae ( Fig. 14-12 ). There is sparing of the palms, soles, and  mucous membranes. Nikolsky’s sign is positive. G",
+    "common_features": [
+      "mun_nuoc",
+      "mun_mu",
+      "vay_mat_ong",
+      "ngua"
+    ],
+    "suggestive_phrases": [
+      "vảy mật ong",
+      "bọng nước nhanh vỡ"
+    ],
+    "typical_locations": [
+      "mặt",
+      "tay",
+      "cổ",
+      "chi dưới"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "trẻ nhỏ",
+      "nóng ẩm",
+      "ghẻ",
+      "viêm da cơ địa"
+    ],
+    "differential_diagnoses": [
+      "nam_da",
+      "thuy_dau",
+      "herpes_da",
+      "hoi_chung_bong_vay_da_do_tu_cau"
+    ],
+    "differential_diagnosis_details": "Phân biệt Nấm da (tổn thương đa cung, bờ có mụn nước nhỏ, xét nghiệm nấm dương tính); Thủy đậu (mụn nước đồng loạt mặt và thân mình, lõm giữa, có triệu chứng viêm long sốt); Herpes simplex (mụn nước chùm ở môi/sinh dục đau rát); SSSS (trẻ sơ sinh, bong da diện rộng như giấy cuốn thuốc lá).",
+    "red_flags": [
+      "sot_cao",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Tắm rửa hoặc ngâm rửa bằng dung dịch sát khuẩn nhẹ như nước thuốc tím loãng 1/10.000 hoặc nước muối sinh lý 0,9%.",
+      "Tuyệt đối không cạy vảy, không chà xát gãi mạnh để tránh tự lây lan ra các vùng da khác và phòng biến chứng viêm cầu thận cấp.",
+      "Cần đưa người bệnh, đặc biệt là trẻ em, đi khám chuyên khoa Da liễu để được bác sĩ chỉ định thuốc bôi hoặc kháng sinh thích hợp; kiểm tra nước tiểu tuần thứ 3 để phát hiện biến chứng thận."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 294,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "viem_nang_long_pdf_andrews",
+    "name": "Viêm nang lông",
+    "english_name": "Folliculitis",
+    "type": "14 Bacterial Infections",
+    "summary": "14  Bacterial Infections 246 patients with acquired immunodeficiency syndrome (AIDS)  and may be a cause of pruritus. An atypical, plaquelike form  has been reported. Treatment Deep lesions of folliculitis represent small follicular abscesses  and must be drained. Superficial pustules will rupture and  drain spontaneously. Many patients will heal with drainage  and topical therapy. Bacitracin (Bactroban) or retapamulin  ointment and topical clindamycin (Cleocin) solution are effective topical ag",
+    "common_features": [
+      "mun_quanh_nang",
+      "mun_mu",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "quanh lỗ chân lông",
+      "viêm nang lông"
+    ],
+    "typical_locations": [
+      "đầu",
+      "mặt",
+      "cổ",
+      "lưng",
+      "đùi"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "cạo hoặc nhổ lông",
+      "mồ hôi",
+      "quần áo chật",
+      "corticoid kéo dài"
+    ],
+    "differential_diagnoses": [
+      "nhot",
+      "mun_trung_ca",
+      "viem_tuyen_mo_hoi_mu"
+    ],
+    "differential_diagnosis_details": "Phân biệt Nhọt (viêm hoại tử sâu tạo ngòi áp xe đau nhức nhiều); Sẩn ngứa (sẩn chắc ngoài nang lông, rất ngứa); Trứng cá (vùng tiết bã mặt ngực lưng, có nhân đầu đen/đầu trắng).",
+    "red_flags": [
+      "sot_cao",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Tạm dừng việc cạo râu, nhổ lông, wax lông và tránh mặc quần áo chật, bó sát làm bí tắc chân lông.",
+      "Tắm rửa sạch sẽ hàng ngày bằng xà phòng sát khuẩn nhẹ; giữ da luôn khô thoáng, tránh môi trường nóng ẩm và dầu mỡ.",
+      "Không tự ý bôi các loại thuốc corticoid dài ngày; nếu tổn thương lan rộng hoặc nhiều mụn mủ, cần đi khám chuyên khoa để xác định do tụ cầu hay do nấm."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 290,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "hoi_chung_bong_vay_da_do_tu_cau_andrews",
+    "name": "Hội chứng bong vảy da do tụ cầu",
+    "english_name": "Staphylococcal scalded skin syndrome",
+    "type": "14 Bacterial Infections",
+    "summary": "14  Bacterial Infections 250 A and B, elaborated by the staphylococcus in remote sites.  Usually, staphylococci are present at a distant focus, such as  the pharynx, nose, ear, or conjunctiva. Septicemia or a cutaneous infection may also be the causative focus. Clinical manifestations of SSSS begin abruptly with fever,  skin tenderness, and erythema involving the neck, groins, and  axillae ( Fig. 14-12 ). There is sparing of the palms, soles, and  mucous membranes. Nikolsky’s sign is positive. G",
+    "common_features": [
+      "man_do",
+      "mun_nuoc",
+      "lan_nhanh",
+      "soat_cao"
+    ],
+    "suggestive_phrases": [
+      "bong như giấy cuốn thuốc lá",
+      "Nikolsky dương tính"
+    ],
+    "typical_locations": [
+      "quanh miệng",
+      "nếp gấp",
+      "toàn thân"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "trẻ sơ sinh",
+      "suy thận",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "hoi_chung_stevens_johnson",
+      "hoi_chung_lyell",
+      "benh_choc"
+    ],
+    "differential_diagnosis_details": "Phân biệt Hội chứng Lyell/TEN (do thuốc, hoại tử toàn bộ thượng bì, tổn thương niêm mạc nặng nề, gặp ở người lớn); Bệnh chốc bọng nước lớn; Bỏng nắng; Pemphigus thể đỏ da.",
+    "red_flags": [
+      "sot_cao",
+      "lan_nhanh",
+      "bong_da_dien_rong"
+    ],
+    "safe_advice": [
+      "Đây là tình trạng cấp cứu da liễu ở trẻ em; cần đưa trẻ đến bệnh viện ngay lập tức để được cách ly, bù dịch điện giải và dùng kháng sinh đường tĩnh mạch.",
+      "Chăm sóc nhẹ nhàng, tránh chà xát cọ xát vào da trẻ; bôi kem dưỡng ẩm dịu da theo chỉ định của bác sĩ để hỗ trợ phục hồi hàng rào thượng bì.",
+      "Tuyệt đối không tự ý dùng thuốc bôi corticoid hay đắp các loại lá dân gian lên vùng da trợt của trẻ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 294,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "mun_trung_ca_pdf_andrews",
+    "name": "Trứng cá",
+    "english_name": "13 Acne",
+    "type": "13 Acne",
+    "summary": "225    Acne 13  ACNE VULGARIS Clinical features Acne vulgaris is a chronic inflammatory disease of the pilose - baceous follicles, characterized by comedones, papules, pus - tules, nodules, and often scars. The comedo is the primary  lesion of acne. It may be seen as a flat or slightly elevated  papule with a dilated central opening filled with blackened  keratin (open comedo or blackhead) ( Fig. 13-1 ). Closed com - edones (whiteheads) are usually 1-mm yellowish papules that  may require stretc",
+    "common_features": [
+      "mun_dau_den",
+      "mun_dau_trang",
+      "mun_mu",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "mụn đầu đen",
+      "mụn đầu trắng",
+      "mụn bọc"
+    ],
+    "typical_locations": [
+      "mặt",
+      "lưng",
+      "ngực"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tuổi dậy thì",
+      "stress",
+      "mỹ phẩm",
+      "thuốc và hormon"
+    ],
+    "differential_diagnoses": [
+      "viem_nang_long",
+      "dày sừng quanh nang lông"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm nang lông (sẩn mủ ngay chân lông, không có nhân comedon); Dày sừng quanh nang lông; Giang mai II dạng trứng cá; Á lao sẩn hoại tử.",
+    "red_flags": [
+      "dau_du_doi",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Rửa mặt nhẹ nhàng ngày 2 lần bằng sữa rửa mặt phù hợp cho da nhờn mụn; tránh chà xát mạnh và không tự ý dùng tay cạy nặn mụn.",
+      "Điều chỉnh chế độ sinh hoạt: hạn chế đồ ngọt, sữa bò, sô cô la, đồ rán dầu mỡ; ngủ đủ giấc, tránh stress thức khuya.",
+      "Không tự ý bôi các loại kem trộn, thuốc đông y không rõ nguồn gốc chứa corticoid; đến khám bác sĩ da liễu để được kê đơn thuốc bôi (retinoid, benzoyl peroxid, kháng sinh) hoặc thuốc uống phù hợp với mức độ bệnh."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 268,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "lao_da_andrews",
+    "name": "Bệnh lao da",
+    "english_name": "Diagnosis of cutaneous tuberculosis",
+    "type": "16 Mycobacterial Diseases",
+    "summary": "Tuberculosis 325 histology of nodular tuberculid may be identical or very similar  to polyarteritis nodosa. More rarely, small-vessel vasculitis  (leukocytoclastic vasculitis) or Sweet syndrome–like lesions  may be seen as a “reaction” to an underlying focus of TB. Erythema induratum must be distinguished from erythema  nodosum, nodular vasculitis, polyarteritis nodosa, tertiary  syphilis, and other infectious and inflammatory panniculiti - des. Erythema nodosum is of relatively short duration, ",
+    "common_features": [
+      "vet_loet",
+      "man_do",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "củ lao",
+      "lupus lao",
+      "lao da"
+    ],
+    "typical_locations": [
+      "mặt",
+      "cổ",
+      "chi",
+      "niêm mạc"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "suy dinh dưỡng",
+      "suy giảm miễn dịch",
+      "tiền sử lao"
+    ],
+    "differential_diagnoses": [
+      "nam_sau",
+      "giang_mai",
+      "ung_thu_da",
+      "sarcoidosis"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: . Erythema induratum and vascular reactions   caused by tuberculosis (nodular tuberculid   and nodular granulomatous phlebitis) Erythema induratum (Bazin disease) is chronic and occurs  predominantly (80%) in women of middle age. Lesions favor  the posterior lower calf, which may also show acrocyanosis.  Individual lesions are tender, erythematous or violaceous,  1–2 cm subcutaneous nodules (Fig. ",
+    "red_flags": [
+      "vet_loet",
+      "lan_nhanh",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Cần đến ngay bệnh viện chuyên khoa Da liễu hoặc bệnh viện Lao & Bệnh phổi để được làm sinh thiết mô bệnh học, cấy vi khuẩn và xét nghiệm PCR lao.",
+      "Khi đã được chẩn đoán lao da, bắt buộc phải tuân thủ nghiêm ngặt phác đồ đa hóa trị liệu chống lao (uống đủ thuốc, đúng giờ, đủ liệu trình 6-9 tháng), không tự ý bỏ thuốc.",
+      "Giữ vệ sinh vết loét, nâng cao thể trạng bằng chế độ ăn giàu dinh dưỡng và theo dõi chức năng gan, thận, thị lực định kỳ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 377,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "benh_phong_andrews",
+    "name": "Bệnh phong",
+    "english_name": "Histoid leprosy",
+    "type": "17 Hansen’s Disease",
+    "summary": "Nerve involvement 335 pathologic hallmark of Hansen’s disease. Nerve involvement  is responsible for the clinical findings of anesthesia within  lesions (paucibacillary and borderline leprosy), and of a pro - gressive stocking-glove peripheral neuropathy (lepromatous  leprosy). The neuropathy is termed “primary impairments”  (WHO grade 1). Secondary (or visible) impairments (WHO  grade 2) are a consequence of the neuropathy and include skin  fissures, wounds, clawing of digits, contractures, sho",
+    "common_features": [
+      "da_doi_mau",
+      "roi_loan_cam_giac",
+      "kho_da",
+      "roi_loan_van_dong"
+    ],
+    "suggestive_phrases": [
+      "mất cảm giác",
+      "dày dây thần kinh",
+      "bệnh phong"
+    ],
+    "typical_locations": [
+      "da",
+      "tay",
+      "chân",
+      "mặt"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tiếp xúc lâu dài",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "lang_ben",
+      "bach_bien",
+      "nam_da",
+      "sarcoidosis"
+    ],
+    "differential_diagnosis_details": "Phân biệt Phong thể củ với Hắc lào, Giang mai củ, U hạt hình nhẫn; Phong thể bất định với Lang ben, Bạch biến, Bớt sắc tố; Phong thể u với Sarcoidosis, U hạt bệnh máu.",
+    "red_flags": [
+      "roi_loan_cam_giac",
+      "roi_loan_van_dong",
+      "ton_thuong_mat"
+    ],
+    "safe_advice": [
+      "Bệnh phong ngày nay hoàn toàn có thể chữa khỏi bằng thuốc Đa hóa trị liệu (MDT) miễn phí theo chương trình y tế quốc gia.",
+      "Cần đến ngay các cơ sở chuyên khoa Da liễu để được khám, rạch da xét nghiệm tìm trực khuẩn phong và bắt đầu điều trị sớm nhằm phòng ngừa tàn tật.",
+      "Bệnh phong rất khó lây và giảm khả năng lây nhanh chóng sau khi bắt đầu dùng thuốc; các thành viên trong gia đình cần được khám tầm soát định kỳ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 388,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "benh_ghe_andrews",
+    "name": "Bệnh ghẻ",
+    "english_name": "Scabies",
+    "type": "20 Parasitic Infestations, Stings, and Bites",
+    "summary": "Class arachnida 445 Australia are the most important causes of tick paralysis.  Because Dermacentor ticks typically attach to the scalp, they  may go unnoticed. Commins SP , et al: Tick bites and red meat allergy. Curr Opin Allergy  Clin Immunol 2013; 13(4):354–359. Garza Ocañas L, et al: Images in clinical medicine: cutaneous  loxoscelism. N Engl J Med 2013; 369(5):e6. Hamsten C, et al: Identification of galactose-α-1,3-galactose in the  gastrointestinal tract of the tick Ixodes ricinus: possib",
+    "common_features": [
+      "ngua",
+      "ngua_dem",
+      "mun_nuoc",
+      "duong_ham"
+    ],
+    "suggestive_phrases": [
+      "ngứa về đêm",
+      "cả nhà cùng ngứa",
+      "luống ghẻ"
+    ],
+    "typical_locations": [
+      "kẽ ngón tay",
+      "cổ tay",
+      "rốn",
+      "bẹn",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tiếp xúc gần",
+      "sống đông người",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "to_dia",
+      "viem_da_co_dia",
+      "nam_da",
+      "giang_mai"
+    ],
+    "differential_diagnosis_details": "Phân biệt Tổ đỉa (mụn nước sâu ở rìa ngón tay chân, không có luống ghẻ, không lây); Sẩn ngứa (sẩn huyết thanh rải rác khắp người); Viêm da cơ địa; Săng giang mai (vết trợt đơn độc nền cứng không ngứa ở sinh dục).",
+    "red_flags": [
+      "sot_cao",
+      "mun_mu",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Phải điều trị đồng thời cho tất cả mọi người trong gia đình hoặc sống chung phòng cùng một thời điểm, kể cả những người chưa có triệu chứng ngứa.",
+      "Tất cả quần áo, chăn màn, ga gối, khăn tắm phải được giặt sạch bằng nước nóng, phơi nắng to và là ủi kỹ mặt trong trước khi dùng lại.",
+      "Tắm sạch bằng xà phòng vào buổi tối, lau khô rồi bôi thuốc diệt ghẻ (Permethrin 5%, DEP, hoặc mỡ lưu huỳnh) toàn thân từ cổ xuống chân; không cào gãi mạnh để tránh chàm hóa và viêm cầu thận cấp."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 509,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "lang_ben_pdf_andrews",
+    "name": "Lang ben",
+    "english_name": "Tinea versicolor (pityriasis versicolor)",
+    "type": "15 Diseases Resulting from Fungi and Yeasts",
+    "summary": "15  Diseases Resulting from Fungi and Yeasts 300 Eucalyptus globulus have demonstrated efficacy against Tricho ­ sporon ovoides. Richini-Pereira VB, et al: White piedra: molecular identification of  Trichosporon inkin in members of the same family. Rev Soc Bras Med  T rop 2012; 45(3):402–404. Saxena S, et al: Inhibitory effect of essential oils against Trichosporon  ovoides causing piedra hair infection. Braz J Microbiol 2012;  43(4):1347–1354. Uniyal V, et al: Screening of some essential oils a",
+    "common_features": [
+      "da_doi_mau",
+      "bong_troc",
+      "ngua"
+    ],
+    "suggestive_phrases": [
+      "lang ben",
+      "vỏ bào",
+      "đèn Wood vàng"
+    ],
+    "typical_locations": [
+      "ngực",
+      "lưng",
+      "da đầu",
+      "bẹn"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "nóng ẩm",
+      "da dầu",
+      "mồ hôi nhiều",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "bach_bien",
+      "nam_da",
+      "viem_da_dau",
+      "vay_phan_hong"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: Tinea versicolor must be differentiated from seborrheic der - matitis, pityriasis rosea, pityriasis rubra pilaris, pityriasis alba,  Hansen’s disease, syphilis, and vitiligo. In the atrophic variant,  the lesions may suggest parapsoriasis, mycosis fungoides,  anetoderma, LE, or steroid atrophy. The diagnosis in all forms  of tinea versicolor is generally easily established by KOH  examination. In ",
+    "red_flags": [
+      "lan_nhanh",
+      "sot_cao",
+      "nhiem_trung"
+    ],
+    "safe_advice": [
+      "Mặc quần áo rộng rãi, thoáng mát bằng vải cotton; tắm rửa sạch sẽ và lau khô người ngay sau khi vận động ra mồ hôi.",
+      "Gội đầu hoặc tắm bằng dầu gội/xà phòng có chứa Ketoconazol 2% hoặc Selenium sulfid 2,5% 2 lần/tuần trong 2-4 tuần theo hướng dẫn.",
+      "Lưu ý vùng da bị mất/giảm sắc tố có thể cần vài tháng sau khi hết nấm mới phục hồi đều màu trở lại; không tự ý uống thuốc kháng nấm toàn thân khi chưa được bác sĩ xét nghiệm chức năng gan."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 348,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "nam_toc_andrews",
+    "name": "Nấm tóc",
+    "english_name": "Tinea capitis",
+    "type": "15 Diseases Resulting from Fungi and Yeasts",
+    "summary": "15  Diseases Resulting from Fungi and Yeasts 286 is less prone to produce inflammatory lesions. Deep, tender,  boggy plaques exuding pus are known as kerion celsii ( Fig.  15-2 ). Kerion may be followed by scarring and permanent  alopecia in the areas of inflammation and suppuration. Sys - temic corticosteroids for a short period, along with appropri - ate antifungal therapy, will greatly diminish the inflammatory  response and reduce the risk of scarring, and this therapy  should be considered ",
+    "common_features": [
+      "bong_troc",
+      "mun_mu",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "rụng tóc thành mảng",
+      "nấm đầu",
+      "kerion"
+    ],
+    "typical_locations": [
+      "da đầu",
+      "tóc",
+      "râu"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "trẻ nhỏ",
+      "tiếp xúc người bệnh",
+      "tiếp xúc động vật"
+    ],
+    "differential_diagnoses": [
+      "viem_da_dau",
+      "rụng tóc thành mảng",
+      "viem_nang_long"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm da dầu da đầu (vảy nhờn lan tỏa, không gãy rụng tóc hàng loạt); Rụng tóc thể mảng (da đầu nhẵn bóng không viêm không vảy); Tật nhổ tóc (sợi tóc dài ngắn không đều, soi nấm âm tính); Viêm nang lông da đầu.",
+    "red_flags": [
+      "mun_mu",
+      "sot_cao",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Cắt ngắn tóc vùng tổn thương, gội đầu bằng dầu gội chống nấm (chứa ketoconazol hoặc selenium sulfid).",
+      "Không dùng chung lược, mũ nón, khăn lau đầu, gối với người khác; giặt sạch và phơi nắng các vật dụng cá nhân.",
+      "Cần đưa người bệnh đi khám chuyên khoa Da liễu sớm để được xét nghiệm soi nấm và chỉ định thuốc kháng nấm đường uống; điều trị sớm là chìa khóa tránh rụng tóc sẹo vĩnh viễn."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 334,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "nam_mong_pdf_andrews",
+    "name": "Nấm móng",
+    "english_name": "Onychomycosis (tinea unguium)",
+    "type": "15 Diseases Resulting from Fungi and Yeasts",
+    "summary": "15  Diseases Resulting from Fungi and Yeasts 292 recurrent attacks of lymphangitis and inguinal adenitis. Gramnegative toe web infections may also supervene. Hyperhidro - sis is frequently present in this type of dermatophytosis. The  sweat between the toes and on the soles has a high pH, and  damp keratin is a good culture medium for the fungi. Dermatophytid of the hands may be associated with inflam - matory tinea of the feet and begins with the appearance of  groups of minute, clear vesicles ",
+    "common_features": [
+      "mong_bat_thuong",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "móng vàng",
+      "móng dày",
+      "nấm móng"
+    ],
+    "typical_locations": [
+      "móng tay",
+      "móng chân"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "ẩm ướt",
+      "đái tháo đường",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "vay_nen_mong",
+      "lichen_mong",
+      "viem_quanh_mong"
+    ],
+    "differential_diagnosis_details": "Phân biệt Vảy nến thể móng (móng rỗ như cái đê khâu, giọt dầu, thường kèm mảng vảy nến trên da); Lichen móng (khía dọc móng, teo móng); Loạn dưỡng móng do sang chấn; Viêm quanh móng do vi khuẩn.",
+    "red_flags": [
+      "dau_du_doi",
+      "mun_mu"
+    ],
+    "safe_advice": [
+      "Cắt tỉa móng gọn gàng, vệ sinh chân tay sạch sẽ, luôn giữ móng khô ráo và mang giày tất thông thoáng rộng rãi.",
+      "Không dùng chung bấm móng tay, dũa móng hoặc dụng cụ làm móng với người khác để tránh lây nhiễm.",
+      "Nấm móng đòi hỏi điều trị kiên trì nhiều tháng; cần đến cơ sở y tế để được cạo mủn móng soi nấm và chỉ định thuốc bôi/uống kháng nấm đúng phác đồ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 340,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "zona_than_kinh_andrews",
+    "name": "Bệnh zona",
+    "english_name": "Disseminated herpes zoster",
+    "type": "19 Viral Diseases",
+    "summary": "19  Viral Diseases 372 are often umbilicated and may be hemorrhagic. Visceral dis - semination to the lungs and CNS may occur in the patient with  disseminated zoster. Disseminated zoster requires careful  evaluation and systemic antiviral therapy. Initially, IV acyclo - vir is given, which may be changed to an oral antiviral agent  once visceral involvement has been excluded and the patient  has received at least 2–3 days of IV therapy. Ophthalmic zoster In herpes zoster ophthalmicus, the ophth",
+    "common_features": [
+      "mun_nuoc",
+      "dau_day_than_kinh",
+      "man_do",
+      "dau_ran"
+    ],
+    "suggestive_phrases": [
+      "zona",
+      "giời leo",
+      "mụn nước một bên"
+    ],
+    "typical_locations": [
+      "ngực",
+      "bụng",
+      "mặt",
+      "tai",
+      "mắt"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "người cao tuổi",
+      "suy giảm miễn dịch",
+      "stress"
+    ],
+    "differential_diagnoses": [
+      "herpes_da",
+      "viem_da_tiep_xuc_con_trung",
+      "benh_choc"
+    ],
+    "differential_diagnosis_details": "Phân biệt Khởi phát đau với đau đầu, đau nửa đầu, đau thắt ngực, sỏi mật, đau ruột thừa; Giai đoạn mụn nước phân biệt với Herpes simplex (tái phát, ở môi/sinh dục, không theo dây thần kinh); Viêm da tiếp xúc do kiến khoang; Pemphigus.",
+    "red_flags": [
+      "ton_thuong_mat",
+      "dau_du_doi",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Đến khám bác sĩ ngay trong vòng 72 giờ đầu kể từ khi phát bệnh để được điều trị bằng thuốc kháng virus (Acyclovir/Valacyclovir), giúp nhanh lành tổn thương và phòng ngừa biến chứng đau sau zona.",
+      "Giữ vùng da tổn thương sạch sẽ, mặc quần áo rộng mềm; chấm các dung dịch làm dịu sát khuẩn (hồ nước, xanh methylen), không chọc vỡ bọng nước.",
+      "Đặc biệt đi khám cấp cứu ngay nếu tổn thương ở vùng mắt, mũi hoặc tai vì có nguy cơ biến chứng loét giác mạc, giảm thị lực hoặc hội chứng Ramsay Hunt."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 429,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "hat_com_andrews",
+    "name": "Bệnh hạt cơm",
+    "english_name": "Flat warts",
+    "type": "19 Viral Diseases",
+    "summary": "Papovavirus group 401 women who shave their legs, numerous flat warts may develop  as a result of autoinoculation. A useful finding is the tendency  for the warts to undergo koebnerization, forming linear,  slightly raised, papular lesions. Hyperpigmented lesions  occur, and when scarcely elevated, may be confused with lentigines or ephelides. Plaquelike lesions may be confused with  verrucous nevus, lichen planus, and molluscum contagiosum.  When lesions occur only on the central face and are e",
+    "common_features": [
+      "hat_sui",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "mụn cóc",
+      "hạt cơm",
+      "sùi quanh móng"
+    ],
+    "typical_locations": [
+      "bàn tay",
+      "bàn chân",
+      "ngón tay",
+      "quanh móng"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "sang chấn da",
+      "tiếp xúc bể bơi",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "u_mem_lay",
+      "dày sừng da dầu",
+      "ung_thu_te_bao_vay"
+    ],
+    "differential_diagnosis_details": "Phân biệt Hạt cơm lòng bàn chân với Chai chân (chai chân không có chấm đen mao mạch, chỉ là khối sừng trơn nhẵn); Dày sừng da dầu; U mềm lây (sẩn nhẵn bóng lõm rốn ở giữa); Ung thư tế bào gai (sùi loét ở người cao tuổi).",
+    "red_flags": [
+      "dau_du_doi",
+      "chay_mau",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Tuyệt đối không dùng dao, kéo, kim chọc cạy hoặc cắt gọt nốt mụn cóc tại nhà vì rất dễ gây nhiễm khuẩn và làm virus lan rộng hơn.",
+      "Giữ vệ sinh chân tay khô ráo, đi dép khi vào các khu vực công cộng ẩm ướt như bể bơi, phòng tắm công cộng.",
+      "Đến cơ sở Da liễu để được bác sĩ điều trị bằng các phương pháp an toàn và hiệu quả (áp nitơ lỏng xịt lạnh, chấm thuốc bạt sừng chuyên dụng, hoặc laser CO2)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 458,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "u_mem_lay_andrews",
+    "name": "U mềm lây",
+    "english_name": "Molluscum contagiosum",
+    "type": "19 Viral Diseases",
+    "summary": "tahir99 - UnitedVRG 19  Viral Diseases 388 Molluscum contagiosum Molluscum contagiosum (MC) is caused by up to four closely  related types of poxvirus, MCV-1 to MCV-4, and their vari - ants. Although the proportion of infection caused by the  various types varies geographically, MCV-1 infections are  most common worldwide. In small children, virtually all infections are caused by MCV-1. There is no difference in the ana - tomic region of isolation with regard to infecting type, in  contrast to H",
+    "common_features": [
+      "not_lom_giua",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "nốt lõm giữa",
+      "u mềm lây"
+    ],
+    "typical_locations": [
+      "mặt",
+      "cổ",
+      "nếp gấp",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "trẻ em",
+      "viêm da cơ địa",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "hat_com",
+      "milia",
+      "sùi_mào_gà"
+    ],
+    "differential_diagnosis_details": "Phân biệt Milia (nang nhỏ chứa nhân trắng không lõm); Hạt cơm phẳng (sẩn phẳng thô ráp); U ống tuyến mồ hôi (sẩn nhỏ quanh mắt đối xứng, không lõm); Sùi mào gà (tổn thương dạng súp lơ ở sinh dục).",
+    "red_flags": [
+      "lan_nhanh",
+      "suy_giam_mien_dich"
+    ],
+    "safe_advice": [
+      "Tránh cào gãi, chà xát hoặc tự ý nặn bóp các nốt sẩn để ngăn virus lây lan sang các vùng da lành khác.",
+      "Không dùng chung khăn tắm, quần áo, dụng cụ thể thao và tránh tắm chung bồn tắm với người khác.",
+      "Nên đến khám chuyên khoa Da liễu để được xử trí loại bỏ nhân sẩn vô khuẩn bằng thìa nạo, áp nitơ lỏng hoặc chấm thuốc bôi thích hợp."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 445,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "lupus_ban_do_andrews",
+    "name": "Lupus ban đỏ",
+    "english_name": "Lupus erythematosus",
+    "type": "6 Contact Dermatitis and Drug Eruptions",
+    "summary": "Drug reactions 133 women. The symptoms are generally mild and include fever,  myalgias/arthralgias, and serositis. This form of DIL is associated with a positive ANA, homogeneous pattern, and antihis - tone antibodies, but a negative anti-dsDNA antibody and  normal complement levels. Procainamide, hydralazine, quinidine, captopril, isoniazid, minocycline, carbamazepine, pro - pylthiouracil, sulfasalazine, and the statins are among the  reported agents triggering this form of DIL. The TNF inhibi ",
+    "common_features": [
+      "man_do",
+      "da_doi_mau",
+      "vet_loet",
+      "dau_khop"
+    ],
+    "suggestive_phrases": [
+      "ban cánh bướm",
+      "lupus",
+      "nhạy cảm ánh sáng"
+    ],
+    "typical_locations": [
+      "mặt",
+      "cổ",
+      "bàn tay",
+      "niêm mạc"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "nữ trẻ",
+      "ánh nắng",
+      "di truyền",
+      "thuốc"
+    ],
+    "differential_diagnoses": [
+      "viem_da_do_anh_sang",
+      "viem_bi_co",
+      "lao_da",
+      "viem_da_dau"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm da do ánh nắng; Viêm bì cơ (ban heliotrope quanh mắt, sẩn Gottron khớp ngón, yếu cơ); Trứng cá đỏ; Lao da (củ lao vàng nâu ấn kính xẹp, Mantoux dương tính); Dị ứng thuốc.",
+    "red_flags": [
+      "dau_khop",
+      "kho_tho",
+      "vet_loet",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Chống nắng nghiêm ngặt: bôi kem chống nắng phổ rộng SPF 30+ trở lên hàng ngày, mặc quần áo dài tay, đội mũ rộng vành và hạn chế ra ngoài trời lúc nắng gắt.",
+      "Đây là bệnh tự miễn mạn tính cần được khám và theo dõi định kỳ tại bệnh viện chuyên khoa Da liễu hoặc Dị ứng - Miễn dịch lâm sàng để làm xét nghiệm tự kháng thể (ANA, anti-dsDNA) và kiểm tra chức năng thận, máu.",
+      "Tuyệt đối tuân thủ chỉ định điều trị của bác sĩ; không tự ý dùng hoặc ngưng thuốc corticoid, thuốc ức chế miễn dịch đột ngột."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 154,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "viem_bi_co_andrews",
+    "name": "Viêm bì cơ",
+    "english_name": "Dermatomyositis",
+    "type": "8 Connective Tissue Diseases",
+    "summary": "8  Connective Tissue Diseases 162 and mycophenolate mofetil but no oral steroids. Ann Rheum Dis 2013;  72(8):1280–1286. Erkan D, et al: A prospective open-label pilot study of fluvastatin on  proinflammatory and prothrombotic biomarkers in antiphospholipid  antibody positive patients. Ann Rheum Dis 2014; 73(6):1176–1180. Grech P , et al: T argeted therapies in systemic lupus erythematosus.  Lupus 2013; 22(10):978–986. Hassan AA, et al: Peripheral arterial disease in patients with systemic  lupus",
+    "common_features": [
+      "man_do",
+      "yeu_co",
+      "dau_khop"
+    ],
+    "suggestive_phrases": [
+      "sẩn Gottron",
+      "ban quanh mắt tím",
+      "yếu cơ đối xứng"
+    ],
+    "typical_locations": [
+      "mí mắt",
+      "mu bàn tay",
+      "khuỷu",
+      "đầu gối"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "nữ",
+      "người lớn tuổi",
+      "nhiễm trùng",
+      "u ác tính"
+    ],
+    "differential_diagnoses": [
+      "lupus_ban_do",
+      "viem_da_tiep_xuc_anh_sang",
+      "benh_co"
+    ],
+    "differential_diagnosis_details": "Phân biệt Lupus ban đỏ hệ thống; Bệnh xơ cứng bì; Bệnh lý cơ do nhiễm độc hoặc nội tiết (cường giáp, suy giáp); Bệnh nhược cơ.",
+    "red_flags": [
+      "yeu_co",
+      "kho_tho",
+      "kho_nuot"
+    ],
+    "safe_advice": [
+      "Đây là bệnh tự miễn nặng ảnh hưởng đến da và cơ bắp; cần đến ngay bệnh viện tuyến trung ương để được khám chuyên khoa Da liễu kết hợp Cơ Xương Khớp và Thần kinh.",
+      "Cần được làm các thăm dò chuyên sâu: định lượng men cơ CPK, điện cơ đồ (EMG), chụp cộng hưởng từ (MRI cơ), sinh thiết cơ và tầm soát khối u ác tính tiềm ẩn (đặc biệt ở người lớn tuổi).",
+      "Nghỉ ngơi hợp lý trong đợt viêm cấp, tránh tiếp xúc với ánh nắng mặt trời và tuân thủ liệu trình corticoid/thuốc điều chỉnh miễn dịch của bác sĩ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 188,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "pemphigus_andrews",
+    "name": "Pemphigus",
+    "english_name": "Pemphigus vulgaris",
+    "type": "21 Chronic Blistering Dermatoses",
+    "summary": "451    Chronic Blistering Dermatoses 21  In noninherited chronic blistering (vesicular or bullous) der - matoses, the cause of blistering is usually an autoimmune  reaction, and the pattern of immunofluorescence is critical in  establishing the diagnosis. Usually, antibodies are bound in  perilesional and nonbullous lesional skin, whereas blistered  skin often fails to demonstrate deposits. Lower extremity skin  should be avoided, if possible, because it may be prone to  false-negative reactions",
+    "common_features": [
+      "mun_nuoc",
+      "vet_loet",
+      "dau_ran",
+      "ton_thuong_niem_mac"
+    ],
+    "suggestive_phrases": [
+      "bọng nước nhẽo",
+      "trợt niêm mạc",
+      "Nikolsky dương tính"
+    ],
+    "typical_locations": [
+      "miệng",
+      "mặt",
+      "nách",
+      "bẹn",
+      "thân mình"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tuổi 40-60",
+      "tự miễn",
+      "một số thuốc"
+    ],
+    "differential_diagnoses": [
+      "pemphigoid",
+      "benh_duhring",
+      "hoi_chung_stevens_johnson",
+      "benh_choc"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: of herpes gestationis. The outlook for immunobullous diseases has improved since  the introduction of rituximab, intravenous immuno globulins,  and less toxic immunosuppressive regimens. Oral and ocular  involvement often requires a multidisciplinary approach. PEMPHIGUS VULGARIS Clinical features Pemphigus vulgaris (PV) is characterized by mucosal erosions  and by thin-walled, relatively flaccid, ",
+    "red_flags": [
+      "ton_thuong_niem_mac",
+      "lan_nhanh",
+      "mat_nuoc",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Pemphigus là bệnh bọng nước tự miễn nặng, có nguy cơ nhiễm trùng huyết, mất dịch điện giải nguy hiểm tính mạng; cần nhập viện điều trị nội trú ngay.",
+      "Chăm sóc da vô khuẩn: tắm ngâm nước thuốc tím loãng 1/10.000, chấm dung dịch màu sát khuẩn, mặc quần áo rộng mềm tránh cọ xát trợt da.",
+      "Vệ sinh răng miệng nhẹ nhàng bằng dung dịch sát khuẩn, ăn thức ăn lỏng nguội giàu đạm và tuân thủ tuyệt đối phác đồ corticoid/thuốc ức chế miễn dịch của bác sĩ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 518,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "pemphigoid_andrews",
+    "name": "Bọng nước dạng pemphigus",
+    "english_name": "Bullous pemphigoid",
+    "type": "21 Chronic Blistering Dermatoses",
+    "summary": "21  Chronic Blistering Dermatoses 458 Histologically, intraepidermal bullae with neutrophils, some  eosinophils, and acantholysis are seen. DIF shows intraepidermal IgA deposition, usually throughout the epidermis, and IIF  may reveal circulating autoantibody that binds to the same  location. There is evidence that the IgA specificity in individ - ual cases may be directed at either Dsg1 or Dsg3. Some patients  have concurrent IgG intercellular antibodies directed at Dsg1,  and some have a monoc",
+    "common_features": [
+      "mun_nuoc",
+      "ngua",
+      "phu",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "bọng nước căng",
+      "người lớn tuổi",
+      "pemphigoid"
+    ],
+    "typical_locations": [
+      "bụng dưới",
+      "mặt gấp chi",
+      "thân mình"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tuổi cao",
+      "thuốc",
+      "bệnh thần kinh"
+    ],
+    "differential_diagnoses": [
+      "pemphigus",
+      "benh_duhring",
+      "benh_da_bong_nuoc_do_thuoc"
+    ],
+    "differential_diagnosis_details": "Phân biệt Pemphigus thông thường (bọng nước nhẽo dễ vỡ, tổn thương niêm mạc nặng, mô bệnh học bọng nước trong thượng bì); Viêm da Duhring-Brocq (người trẻ, mụn nước cụm mặt duỗi nhạy cảm gluten); Dị ứng thuốc bọng nước.",
+    "red_flags": [
+      "ton_thuong_niem_mac",
+      "lan_nhanh",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Cần đến khám chuyên khoa Da liễu để được làm sinh thiết và xét nghiệm miễn dịch huỳnh quang giúp phân biệt chính xác với các bệnh bọng nước khác.",
+      "Giữ vệ sinh da sạch sẽ, không tự ý chọc vỡ các bọng nước lớn để tránh nguy cơ bội nhiễm vi khuẩn.",
+      "Tuân thủ phác đồ điều trị của bác sĩ; theo dõi sát các tác dụng phụ của thuốc ở người cao tuổi (đường huyết, huyết áp, loãng xương, chức năng thận)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 525,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "benh_duhring_andrews",
+    "name": "Viêm da dạng herpes Duhring-Brocq",
+    "english_name": "Dermatitis herpetiformis (Duhring disease)",
+    "type": "21 Chronic Blistering Dermatoses",
+    "summary": "21  Chronic Blistering Dermatoses 466 Associated disease Thyroid disorders are increased in incidence in patients with  DH. Neurologic disease, including ataxia, may occur. An  increased incidence of malignancy, especially small bowel  lymphoma, has also been noted in some studies, although  others have reported this increase with celiac disease but not  DH. In fact, the incidence of breast cancer may be lower in  those with DH than in the general population. Enteropathy Between 70% and 100% of ",
+    "common_features": [
+      "mun_nuoc",
+      "ngua",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "mụn nước thành cụm",
+      "nhạy cảm gluten",
+      "Duhring"
+    ],
+    "typical_locations": [
+      "khuỷu",
+      "đầu gối",
+      "lưng",
+      "mông"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "cơ địa miễn dịch",
+      "gluten",
+      "bệnh tuyến giáp"
+    ],
+    "differential_diagnoses": [
+      "pemphigus",
+      "pemphigoid",
+      "hoi_chung_stevens_johnson",
+      "porphyrin_da"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: at times are BP, bullous EM, scabies,  contact dermatitis, atopic dermatitis, nummular eczema, neu - rotic excoriations, insect bites, and chronic bullous disease  of childhood. The finding of IgA in a granular pattern at  the DEJ with accentuation in the dermal papillae is specific  for DH. Autoantibodies Circulating IgA antibodies against the smooth muscle cell  endomysium (antiendomysial antibo",
+    "red_flags": [
+      "ton_thuong_niem_mac",
+      "lan_nhanh",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Thực hiện chế độ ăn kiêng nghiêm ngặt không chứa gluten (tránh lúa mì, lúa mạch, bánh mì) để kiểm soát bệnh lâu dài và giảm liều thuốc.",
+      "Tránh các thuốc hoặc thực phẩm có chứa iod và hải sản vì có thể kích hoạt đợt bùng phát tổn thương.",
+      "Đến khám chuyên khoa Da liễu để được chẩn đoán xác định bằng xét nghiệm miễn dịch huỳnh quang và điều trị bằng thuốc đặc hiệu (Dapson)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 533,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "viem_da_co_dia_pdf_andrews",
+    "name": "Viêm da cơ địa",
+    "english_name": "Atopic dermatitis",
+    "type": "5 Atopic Dermatitis, Eczema, and Noninfectious Immunodeficiency Disorders",
+    "summary": "62",
+    "common_features": [
+      "ngua",
+      "kho_da",
+      "man_do",
+      "mun_nuoc",
+      "bong_troc"
+    ],
+    "suggestive_phrases": [
+      "chàm thể tạng",
+      "ngứa tái phát",
+      "nếp gấp"
+    ],
+    "typical_locations": [
+      "má trẻ nhỏ",
+      "khuỷu",
+      "khoeo",
+      "cổ",
+      "bàn tay"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tiền sử dị ứng",
+      "gia đình",
+      "bụi nhà",
+      "lông động vật",
+      "stress"
+    ],
+    "differential_diagnoses": [
+      "viem_da_tiep_xuc_di_ung",
+      "benh_ghe",
+      "nam_da",
+      "benh_vay_nen"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm da tiếp xúc dị ứng (liên quan dị nguyên rõ, test áp dương tính); Ghẻ (ngứa đêm, kẽ ngón tay sinh dục, người nhà cùng bị); Bệnh nấm da (bờ nổi gồ có mụn nước, soi tươi thấy nấm); Vảy nến.",
+    "red_flags": [
+      "sot_cao",
+      "mun_mu",
+      "lan_nhanh",
+      "ton_thuong_mat"
+    ],
+    "safe_advice": [
+      "Tắm nước ấm vừa phải (dưới 36°C), không tắm nước quá nóng; dùng sữa tắm dịu nhẹ ít kiềm và bôi kem dưỡng ẩm ngay trong vòng 3 phút sau khi tắm.",
+      "Bôi kem dưỡng ẩm đều đặn hàng ngày 2-3 lần để phục hồi hàng rào bảo vệ da; mặc quần áo vải cotton mềm mại, thoáng mát.",
+      "Không tự ý lạm dụng thuốc bôi corticoid mạnh dài ngày; khi có đợt bùng phát đỏ da nhiều mụn mủ hoặc ngứa dữ dội cần khám bác sĩ da liễu để được hướng dẫn điều trị đúng bậc thang."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 81,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "viem_da_tiep_xuc_di_ung_andrews",
+    "name": "Viêm da tiếp xúc dị ứng",
+    "english_name": "Allergic contact dermatitis",
+    "type": "6 Contact Dermatitis and Drug Eruptions",
+    "summary": "Contact dermatitis 93 Allergic contact dermatitis Allergic contact dermatitis results when an allergen comes into  contact with previously sensitized skin. It is caused by a spe - cific acquired hypersensitivity of the delayed type, also known  as cell-mediated (type IV) hypersensitivity. These sensitizers  do not cause demonstrable skin changes on initial contact.  Persons may be exposed to allergens for years before finally  developing hypersensitivity. Genetic variability in the immu - nologi",
+    "common_features": [
+      "ngua",
+      "man_do",
+      "mun_nuoc",
+      "bong_troc",
+      "vet_loet"
+    ],
+    "suggestive_phrases": [
+      "sau khi dùng mỹ phẩm",
+      "dị ứng nickel",
+      "test áp"
+    ],
+    "typical_locations": [
+      "tay",
+      "mặt",
+      "mí mắt",
+      "da đầu",
+      "vùng tiếp xúc"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "kim loại",
+      "mỹ phẩm",
+      "cao su",
+      "hóa chất nghề nghiệp"
+    ],
+    "differential_diagnoses": [
+      "viem_da_tiep_xuc_kich_ung",
+      "viem_da_co_dia_pdf",
+      "viem_da_dau",
+      "vay_nen"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm da tiếp xúc kích ứng (xảy ra ngay lập tức ở mọi người khi nồng độ chất đủ mạnh, giới hạn chặt chẽ ở vùng tiếp xúc); Viêm da cơ địa; Viêm da dầu; Vảy nến.",
+    "red_flags": [
+      "ton_thuong_mat",
+      "lan_nhanh",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Nguyên tắc quan trọng nhất là tìm và ngừng tiếp xúc hoàn toàn với chất nghi ngờ gây dị ứng.",
+      "Rửa sạch vùng da bằng nước sạch; tránh cào gãi chà xát làm trợt loét và bội nhiễm.",
+      "Khám chuyên khoa Da liễu để được làm xét nghiệm test áp (patch test) xác định chính xác dị nguyên và được kê đơn thuốc bôi chống viêm phù hợp."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 114,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "dress_andrews",
+    "name": "Hội chứng DRESS",
+    "english_name": "Drug-induced hypersensitivity syndrome or drug reaction with eosinophilia and systemic symptoms",
+    "type": "6 Contact Dermatitis and Drug Eruptions",
+    "summary": "Drug reactions 113 3. Allopurinol 4. Nevirapine 5. Abacavir 6. Dapsone 7. Minocycline Vancomycin has also recently been recognized as a cause, as  has trichloroethylene, an industrial solvent that causes DRESS  with reactivation of latent HHV-6. The skin eruption accompanying DRESS/DIHS is typically  morbilliform, often with follicular accentuation, and can vary  from faint and mild to severe with exfoliative erythroderma.  Facial edema often accompanies the skin eruption, and the  eruption may ",
+    "common_features": [
+      "man_do",
+      "soat_cao",
+      "phu",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "phát ban sau dùng thuốc",
+      "tăng bạch cầu ái toan",
+      "DRESS"
+    ],
+    "typical_locations": [
+      "toàn thân",
+      "mặt"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "carbamazepin",
+      "allopurinol",
+      "sulfonamid",
+      "vancomycin"
+    ],
+    "differential_diagnoses": [
+      "hoi_chung_stevens_johnson",
+      "hoi_chung_lyell",
+      "agep",
+      "nhiem_trung"
+    ],
+    "differential_diagnosis_details": "Phân biệt Hội chứng Stevens-Johnson/Lyell (bong trợt thượng bì hoại tử sớm 4-28 ngày, tổn thương niêm mạc nặng, không tăng bạch cầu ái toan); AGEP (mụn mủ cấp tính toàn thân dưới 3 ngày sau thuốc, tăng bạch cầu trung tính); Nhiễm khuẩn, nhiễm virus cấp.",
+    "red_flags": [
+      "sot_cao",
+      "lan_nhanh",
+      "kho_tho",
+      "ton_thuong_noi_tang"
+    ],
+    "safe_advice": [
+      "DRESS là phản ứng có hại nặng do thuốc đe dọa tính mạng, cần ngừng ngay lập tức tất cả các thuốc nghi ngờ và đến bệnh viện cấp cứu ngay.",
+      "Người bệnh cần được xét nghiệm công thức máu kiểm tra bạch cầu ái toan, đánh giá chức năng gan, thận và theo dõi nội trú chặt chẽ.",
+      "Tuyệt đối không bao giờ dùng lại loại thuốc đã gây dị ứng và cần ghi lại thông tin thuốc vào thẻ dị ứng cá nhân."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 134,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "hong_ban_da_dang_andrews",
+    "name": "Hồng ban đa dạng",
+    "english_name": "Erythema multiforme",
+    "type": "7 Erythema and Urticaria",
+    "summary": "Erythemas 137 when the offending medication is stopped or the associated  infection is treated or resolves. Specific exanthems associated  with bacterial or viral infections are discussed in Chapters 14  and 19 . Erythema toxicum neonatorum Erythema toxicum neonatorum occurs in just under half of  healthy full-term newborns, usually on the second or third day  of life ( Fig. 7-1 ). Because it is so common, dermatologists are  usually consulted only for the most florid or atypical cases.  Charact",
+    "common_features": [
+      "mang_bia_ban",
+      "man_do",
+      "mun_nuoc",
+      "ton_thuong_niem_mac"
+    ],
+    "suggestive_phrases": [
+      "hình bia bắn",
+      "hồng ban đa dạng"
+    ],
+    "typical_locations": [
+      "mu tay",
+      "cẳng tay",
+      "cẳng chân",
+      "mặt"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "HSV",
+      "Mycoplasma",
+      "thuốc",
+      "bệnh hệ thống"
+    ],
+    "differential_diagnoses": [
+      "hoi_chung_stevens_johnson",
+      "benh_duhring",
+      "thuy_dau",
+      "may_day"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: When characteristic target lesions are present, the diagnosis  of EM is established clinically. When bullae are present,  EM major must be distinguished from bullous arthropod reactions and autoimmune bullous diseases: pemphigus if mucous  membrane involvement is prominent, and bullous pemphi - goid if lesions are small and erythema is prominent at the  periphery of the bulla. Paraneoplastic pemph",
+    "red_flags": [
+      "ton_thuong_niem_mac",
+      "ton_thuong_mat",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Chăm sóc vết trợt ở niêm mạc miệng bằng cách súc miệng nước muối sinh lý, bôi thuốc làm dịu giảm đau theo hướng dẫn của bác sĩ.",
+      "Đa số các trường hợp nhẹ tự khỏi trong 2-4 tuần; cần đi khám để xác định nguyên nhân (do virus herpes hay do thuốc).",
+      "Nếu tổn thương ở mắt (đỏ mắt, đau cộm, chảy nước mắt) hoặc loét niêm mạc nhiều nơi, cần đi khám bác sĩ chuyên khoa mắt và da liễu ngay để tránh di chứng sẹo dính."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 160,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "hoi_chung_stevens_johnson_andrews",
+    "name": "Hội chứng Stevens-Johnson",
+    "english_name": "Bullous drug reactions: Stevens-Johnson syndrome and toxic epidermal necrolysis",
+    "type": "6 Contact Dermatitis and Drug Eruptions",
+    "summary": "Drug reactions 115 Karlin E, et al: Genotyping for severe drug hypersensitivity. Curr Allergy  Asthma Rep 2014; 14:418. Perkins JR, et al: The study of severe cutaneous drug hypersensitivity  reactions from a systems biology perspective. Curr Opin Allergy Clin  Immunol 2014; 14:301–306. Wei CH, et al: Identifying prognostic factors for drug rash with  eosinophilia and systemic symptoms (DRESS). Eur J Dermatol 2011;  21:930–937. Yang MS, et al: Clinical features and prognostic factors in severe  ",
+    "common_features": [
+      "man_do",
+      "mun_nuoc",
+      "vet_loet",
+      "ton_thuong_niem_mac",
+      "soat_cao"
+    ],
+    "suggestive_phrases": [
+      "trợt loét miệng mắt sinh dục",
+      "sau dùng thuốc",
+      "SJS"
+    ],
+    "typical_locations": [
+      "toàn thân",
+      "miệng",
+      "mắt",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "kháng sinh",
+      "thuốc chống co giật",
+      "NSAID",
+      "nhiễm trùng"
+    ],
+    "differential_diagnoses": [
+      "hoi_chung_lyell",
+      "hoi_chung_bong_vay_da_do_tu_cau",
+      "hong_ban_da_dang"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: , prevention, and",
+    "red_flags": [
+      "ton_thuong_mat",
+      "ton_thuong_niem_mac",
+      "bong_da_dien_rong",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Đây là tình trạng cấp cứu da liễu đe dọa tính mạng; phải ngừng ngay lập tức tất cả các thuốc đang dùng và đưa bệnh nhân đến phòng cấp cứu hồi sức bệnh viện.",
+      "Người bệnh cần được điều trị vô khuẩn, bù dịch, cân bằng điện giải và nuôi dưỡng tốt tương tự như bệnh nhân bỏng nặng.",
+      "Cần bác sĩ chuyên khoa Mắt khám và tách dính mi mắt hàng ngày để ngăn ngừa biến chứng loét giác mạc và mù lòa vĩnh viễn."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 136,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "hoi_chung_lyell_andrews",
+    "name": "Hội chứng Lyell",
+    "english_name": "Bullous drug reactions: Stevens-Johnson syndrome and toxic epidermal necrolysis",
+    "type": "6 Contact Dermatitis and Drug Eruptions",
+    "summary": "Drug reactions 115 Karlin E, et al: Genotyping for severe drug hypersensitivity. Curr Allergy  Asthma Rep 2014; 14:418. Perkins JR, et al: The study of severe cutaneous drug hypersensitivity  reactions from a systems biology perspective. Curr Opin Allergy Clin  Immunol 2014; 14:301–306. Wei CH, et al: Identifying prognostic factors for drug rash with  eosinophilia and systemic symptoms (DRESS). Eur J Dermatol 2011;  21:930–937. Yang MS, et al: Clinical features and prognostic factors in severe  ",
+    "common_features": [
+      "man_do",
+      "mun_nuoc",
+      "vet_loet",
+      "ton_thuong_niem_mac",
+      "soat_cao",
+      "lan_nhanh"
+    ],
+    "suggestive_phrases": [
+      "bong da như bỏng",
+      "hoại tử thượng bì",
+      "TEN"
+    ],
+    "typical_locations": [
+      "toàn thân",
+      "thân mình",
+      "niêm mạc"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "thuốc",
+      "nhiễm trùng",
+      "tuổi cao",
+      "bệnh nền"
+    ],
+    "differential_diagnoses": [
+      "hoi_chung_stevens_johnson",
+      "hoi_chung_bong_vay_da_do_tu_cau",
+      "pemphigus"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: , prevention, and",
+    "red_flags": [
+      "bong_da_dien_rong",
+      "ton_thuong_mat",
+      "sot_cao",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Hội chứng Lyell là tình trạng cấp cứu tối khẩn cấp với tỷ lệ tử vong 30-40%; chuyển ngay người bệnh vào buồng cấp cứu vô khuẩn hoặc đơn vị hồi sức tích cực/bỏng.",
+      "Ngừng ngay lập tức mọi loại thuốc nghi ngờ; thực hiện bồi phụ nước, điện giải, truyền đạm và chăm sóc vết thương da niêm mạc tuyệt đối vô khuẩn.",
+      "Không tự ý cho uống bất kỳ thuốc nào tại nhà; đánh giá tiên lượng tử vong bằng thang điểm SCORTEN ngay khi nhập viện."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 136,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "san_ngua_andrews",
+    "name": "Sẩn ngứa",
+    "english_name": "Actinic prurigo",
+    "type": "3 Dermatoses Resulting from Physical Factors",
+    "summary": "3  Dermatoses Resulting from Physical Factors 32 Boonstra HE, et al: Polymorphous light eruption: a clinical,  photobiologic, and follow-up study of 110 patients. J Am Acad  Dermatol 2000; 42:199. Chantorn R, et al: Photosensitivity disorders in children. Part 1. J Am  Acad Dermatol 2012; 67:1093.e1–e18. Chiam L Y , et al: Pinpoint popular polymorphous light eruption in Asian  skin. Photodermatol Photoimmunol Photomed 2009; 25:71. Gruber-Wackernagel A, et al: Polymorphous light eruption. Dermato",
+    "common_features": [
+      "ngua",
+      "man_do",
+      "mun_nuoc",
+      "vet_loet"
+    ],
+    "suggestive_phrases": [
+      "sẩn cục ngứa",
+      "sẩn ngứa",
+      "vết gãi"
+    ],
+    "typical_locations": [
+      "vùng da hở",
+      "chi",
+      "thân mình"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "côn trùng",
+      "dị ứng thức ăn",
+      "khô da",
+      "bệnh hệ thống",
+      "thai nghén"
+    ],
+    "differential_diagnoses": [
+      "viem_da_co_dia_pdf",
+      "viem_da_tiep_xuc_di_ung",
+      "herpes_da",
+      "hong_ban_da_dang"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm da cơ địa; Viêm da tiếp xúc; Nhiễm virus Herpes; Hồng ban đa dạng; Sẩn ngứa mày đay trên phụ nữ có thai (PUPPP).",
+    "red_flags": [
+      "sot_cao",
+      "lan_nhanh",
+      "vet_loet"
+    ],
+    "safe_advice": [
+      "Hạn chế tối đa cào gãi và chà xát mạnh; có thể cắt ngắn móng tay và chườm lạnh nhẹ để cắt cơn ngứa tạm thời.",
+      "Thường xuyên dùng kem dưỡng ẩm làm mềm da; dùng kem chống côn trùng đốt hoặc kem chống nắng nếu sẩn ngứa liên quan đến ánh sáng.",
+      "Khám chuyên khoa Da liễu để được kê đơn thuốc bôi chống viêm và làm xét nghiệm tầm soát nguyên nhân toàn thân nếu ngứa kéo dài dai dẳng."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 47,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "may_day_andrews",
+    "name": "Bệnh mày đay",
+    "english_name": "Cold urticaria",
+    "type": "7 Erythema and Urticaria",
+    "summary": "Urticaria (hives) 147 Antihistamines suppress this reaction. The addition of an H2  antihistamine may be of benefit. Antihistamines have been  combined with other agents, such as montelukast and pro - pranolol. Attenuated androgens, such as danazol, may be of  benefit in patients with refractory cholinergic urticaria. Adrenergic urticaria Adrenergic urticaria may occur alone or may coexist with  cholinergic urticaria. Bouts of urticaria are mediated by  norepinephrine. The eruption consists of s",
+    "common_features": [
+      "ngua",
+      "phu",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "nổi mày đay",
+      "sẩn phù",
+      "phù mạch"
+    ],
+    "typical_locations": [
+      "bất kỳ vùng da",
+      "môi",
+      "mi mắt",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "thức ăn",
+      "thuốc",
+      "nhiễm trùng",
+      "lạnh nóng",
+      "stress"
+    ],
+    "differential_diagnoses": [
+      "viem_mach_may_day",
+      "hong_ban_da_dang",
+      "phu_quincke"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm mạch mày đay (sẩn phù kéo dài >24 giờ, đau rát hơn ngứa, đáp ứng kém với kháng histamin); Hồng ban đa dạng; Phản ứng do côn trùng đốt.",
+    "red_flags": [
+      "kho_tho",
+      "sung_moi_luoi",
+      "ngat",
+      "dau_bung"
+    ],
+    "safe_advice": [
+      "Nếu có dấu hiệu sưng môi, sưng lưỡi, nghẹn họng, khó thở hoặc choáng váng (phù mạch/sốc phản vệ), hãy đến cơ sở y tế hoặc gọi cấp cứu ngay lập tức.",
+      "Tránh cào gãi mạnh làm da kích ứng thêm; có thể tắm hoặc chườm mát; mặc quần áo cotton rộng rãi, thoáng mát.",
+      "Ngừng ngay các thuốc hoặc thực phẩm nghi ngờ gây dị ứng (hải sản, trứng, nhộng...); dùng thuốc kháng histamin theo chỉ dẫn của nhân viên y tế."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 170,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "viem_da_dau_andrews",
+    "name": "Viêm da dầu",
+    "english_name": "Seborrheic dermatitis",
+    "type": "10 Seborrheic Dermatitis, Psoriasis, Recalcitrant Palmoplantar Eruptions, Pustular Dermatitis, and Erythroderma",
+    "summary": "185    Seborrheic Dermatitis, Psoriasis,  Recalcitrant Palmoplantar Eruptions,  Pustular Dermatitis, and Erythroderma 10  SEBORRHEIC DERMATITIS Clinical features Seborrheic dermatitis is common, occurring in 2–5% of the  population. It is a chronic, superficial, inflammatory disease  with a predilection for the scalp, eyebrows, eyelids, nasolabial  creases, lips, ears ( Fig. 10-1 ), sternal area, axillae, submam - mary folds, umbilicus, groins, and gluteal crease. The disease  is characterized b",
+    "common_features": [
+      "man_do",
+      "bong_troc",
+      "vay_nhon"
+    ],
+    "suggestive_phrases": [
+      "gàu da đầu",
+      "rãnh mũi má",
+      "viêm da dầu"
+    ],
+    "typical_locations": [
+      "da đầu",
+      "lông mày",
+      "rãnh mũi má",
+      "ngực"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "da dầu",
+      "stress",
+      "Parkinson",
+      "HIV"
+    ],
+    "differential_diagnoses": [
+      "vay_nen",
+      "lang_ben_pdf",
+      "lupus_ban_do",
+      "chay"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: Some cases of seborrheic dermatitis bear a close clinical resemblance to psoriasis, and the two conditions may overlap.  tahir99 - UnitedVRG  10  Seborrheic Dermatitis, Psoriasis, Recalcitrant Palmoplantar Eruptions, Pustular Dermatitis, and Erythroderma 186 tacrolimus, pimecrolimus, zinc pyrithione, and Quassia amara  extract preparations are all effective alone and in combination.  The antifunga",
+    "red_flags": [
+      "lan_nhanh",
+      "sot_cao",
+      "do_da_toan_than"
+    ],
+    "safe_advice": [
+      "Sử dụng dầu gội trị gàu chứa các hoạt chất chống nấm như Ketoconazol, Zinc pyrithione (ZnP), hoặc Selenium sulfide 2-3 lần/tuần.",
+      "Với vùng mặt và ngực, rửa mặt nhẹ nhàng bằng sữa rửa mặt dịu nhẹ; tránh dùng xà phòng tẩy rửa mạnh và không cào cạy vảy.",
+      "Không tự ý bôi các loại kem chứa corticoid mạnh dài ngày trên mặt vì có thể gây teo da, giãn mạch và phụ thuộc thuốc."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 220,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "vay_phan_hong_andrews",
+    "name": "Vảy phấn hồng Gibert",
+    "english_name": "Pityriasis rosea",
+    "type": "11 Pityriasis Rosea, Pityriasis Rubra Pilaris, and Other Papulosquamous and Hyperkeratotic Diseases",
+    "summary": "199    Pityriasis Rosea, Pityriasis Rubra Pilaris, and Other  Papulosquamous and Hyperkeratotic Diseases 11  SMALL PLAQUE PARAPSORIASIS Small plaque parapsoriasis (SPP) is characterized by hyperpigmented or yellowish red scaling patches, round to oval in  configuration, with sharply defined, regular borders. Most  lesions occur on the trunk, and all are 1–5 cm in diameter. In  the digitate variant, yellowish tan, elongated, fingerprintlike  lesions are oriented along the cleavage lines, predomin",
+    "common_features": [
+      "man_do",
+      "bong_troc",
+      "mang_hinh_vong"
+    ],
+    "suggestive_phrases": [
+      "mảng báo hiệu",
+      "hình cây thông",
+      "vảy phấn hồng"
+    ],
+    "typical_locations": [
+      "thân mình",
+      "cổ",
+      "gốc chi"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tuổi trẻ",
+      "mùa xuân thu",
+      "một số thuốc"
+    ],
+    "differential_diagnoses": [
+      "nam_da",
+      "vay_nen",
+      "giang_mai",
+      "viem_da_dau"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: Pityriasis rosea may closely mimic seborrheic dermatitis, tinea  corporis, macular syphilid, drug eruption, other viral exan - thems, and psoriasis. In seborrheic dermatitis, the scalp and  eyebrows are usually scaly; there is a predilection for the sternal  and interscapular regions, as well as the flexor surfaces of the  articulations, where the patches are covered with greasy scales.  Tinea cor",
+    "red_flags": [
+      "sot_cao",
+      "lan_nhanh",
+      "ton_thuong_niem_mac"
+    ],
+    "safe_advice": [
+      "Vảy phấn hồng là bệnh da cấp tính lành tính, thường tự khỏi hoàn toàn sau 6-8 tuần mà không để lại sẹo.",
+      "Tắm bằng nước ấm vừa phải, tránh dùng xà phòng có tính tẩy mạnh, tránh chà xát mạnh làm kích ứng da.",
+      "Bôi kem dưỡng ẩm dịu da; nếu ngứa nhiều có thể uống thuốc kháng histamin hoặc dùng kem corticoid nhẹ theo chỉ định của bác sĩ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 237,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "vay_nen_andrews",
+    "name": "Bệnh vảy nến",
+    "english_name": "Psoriasis",
+    "type": "10 Seborrheic Dermatitis, Psoriasis, Recalcitrant Palmoplantar Eruptions, Pustular Dermatitis, and Erythroderma",
+    "summary": "Psoriasis 187 Fig. 10-2 Psoriasis.  Fig. 10-3 Pustular  psoriasis of the hand.  Fig. 10-4 Nail with oil spot of psoriasis.  Fig. 10-5 Nail pitting  and distal onycholysis  in psoriasis.  Lee YW, et al: Evaluation of expression of lipases and phospholipases  of Malassezia restricta in patients with seborrheic dermatitis. Ann  Dermatol 2013; 25(3):310–314. PSORIASIS Clinical features Psoriasis is a common, chronic, and recurrent inflammatory  disease of the skin characterized by circumscribed, ery",
+    "common_features": [
+      "man_do",
+      "bong_troc",
+      "vay_bac",
+      "mong_bat_thuong",
+      "dau_khop"
+    ],
+    "suggestive_phrases": [
+      "vảy bạc",
+      "dấu Auspitz",
+      "vảy nến"
+    ],
+    "typical_locations": [
+      "khuỷu",
+      "đầu gối",
+      "da đầu",
+      "lưng",
+      "móng"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "di truyền",
+      "stress",
+      "nhiễm trùng",
+      "thuốc",
+      "rượu"
+    ],
+    "differential_diagnoses": [
+      "viem_da_dau",
+      "vay_phan_hong",
+      "vay_phan_do_nang_long",
+      "giang_mai"
+    ],
+    "differential_diagnosis_details": "Phân biệt Giang mai II (sẩn gồ thâm nhiễm viền vảy Biette, cạo Brocq âm tính, huyết thanh giang mai dương tính); Á vảy nến (cạo vảy dấu gắn xi); Vảy phấn hồng; Viêm da dầu; Vảy phấn đỏ nang lông.",
+    "red_flags": [
+      "do_da_toan_than",
+      "sot_cao",
+      "dau_khop",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Bệnh vảy nến là bệnh viêm mạn tính; mục tiêu điều trị là kiểm soát thương tổn, duy trì giai đoạn ổn định và nâng cao chất lượng cuộc sống.",
+      "Bôi kem dưỡng ẩm thường xuyên để làm mềm vảy và giảm khô nứt da; tránh cào gãi, chấn thương da (hiện tượng Koebner) và hạn chế stress, rượu bia, thuốc lá.",
+      "Tuyệt đối không tự ý tiêm, uống hoặc lạm dụng thuốc corticoid, thuốc nam/thuốc bắc không rõ nguồn gốc vì nguy cơ biến chứng đỏ da toàn thân và vảy nến thể mủ nguy hiểm."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 222,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "do_da_toan_than_andrews",
+    "name": "Đỏ da toàn thân",
+    "english_name": "Papuloerythroderma of Ofuji",
+    "type": "4 Pruritus and Neurocutaneous Dermatoses",
+    "summary": "Pruritic dermatoses 51 Drug-induced pruritus Medications should be considered a possible cause of pruritus  with or without a skin eruption. For example, pruritus is frequently present after opioid use. Also, chloroquine and to a  lesser degree other antimalarials produce pruritus in many  patients, especially African Americans, treated for malaria.  SSRIs and drugs causing cholestatic liver disease are other  frequent causes. Hydroxyethyl starch (HES) is used as a volume expander, a  substitute",
+    "common_features": [
+      "man_do",
+      "bong_troc",
+      "ngua",
+      "phu",
+      "lan_nhanh"
+    ],
+    "suggestive_phrases": [
+      "đỏ da toàn thân",
+      "bong vảy toàn thân"
+    ],
+    "typical_locations": [
+      "toàn thân",
+      "lòng bàn tay",
+      "lòng bàn chân"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "vảy nến",
+      "viêm da cơ địa",
+      "thuốc",
+      "bệnh máu ác tính"
+    ],
+    "differential_diagnoses": [
+      "vay_nen",
+      "viem_da_co_dia_pdf",
+      "hoi_chung_bong_vay_da_do_tu_cau",
+      "lymphoma_da"
+    ],
+    "differential_diagnosis_details": "Xác định căn nguyên: do Vảy nến (chiếm 23%, tiền sử vảy nến bùng phát sau corticoid/thuốc nam); do Viêm da cơ địa; do Dị ứng thuốc (chiếm 15%, khởi phát đột ngột sau dùng thuốc); do Bệnh máu ác tính (Hội chứng Sézary có tế bào Sézary máu ngoại vi >1000/mm3); hoặc đỏ da vô căn.",
+    "red_flags": [
+      "lan_nhanh",
+      "sot_cao",
+      "mat_nuoc",
+      "huyet_ap_thap"
+    ],
+    "safe_advice": [
+      "Đỏ da toàn thân là hội chứng da liễu nặng nguy hiểm, có nguy cơ rối loạn nước điện giải, hạ thân nhiệt và nhiễm trùng huyết; cần nhập viện điều trị nội trú ngay.",
+      "Giữ ấm cơ thể, nằm phòng ấm vô khuẩn; bôi kem dưỡng ẩm nhẹ nhàng, đắp gạc làm dịu da theo hướng dẫn của điều dưỡng.",
+      "Không tự ý bôi các loại thuốc mỡ corticoid diện rộng hoặc thuốc lá dân gian vì có thể gây ngộ độc toàn thân."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 68,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "lichen_phang_andrews",
+    "name": "Bệnh lichen phẳng",
+    "english_name": "Lichen planus",
+    "type": "12 Lichen Planus and Related Conditions",
+    "summary": "209    Lichen Planus and Related Conditions 12  LICHEN PLANUS Lichen planus (LP) is a common, pruritic, inflammatory  disease of the skin, mucous membranes, and hair follicles. It  occurs throughout the world, in all races. Cutaneous lichen  planus affects 0.3% of men and 0.1% of women. Oral LP affects  1.5% of men and 2.3% of women. It may be familial in rare  cases. The pattern of LP detected and the age distribution vary  among various genetic and geographic groups. In persons of  European de",
+    "common_features": [
+      "ngua",
+      "man_do",
+      "da_doi_mau",
+      "ton_thuong_niem_mac",
+      "mong_bat_thuong"
+    ],
+    "suggestive_phrases": [
+      "mạng lưới Wickham",
+      "sẩn tím đa giác",
+      "lichen phẳng"
+    ],
+    "typical_locations": [
+      "cổ tay",
+      "cẳng chân",
+      "thắt lưng",
+      "miệng",
+      "móng"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "thuốc",
+      "viêm gan C",
+      "stress",
+      "bệnh tự miễn"
+    ],
+    "differential_diagnoses": [
+      "vay_nen",
+      "giang_mai",
+      "viem_mieng_candida",
+      "lichen_don_dang"
+    ],
+    "differential_diagnosis_details": "Phân biệt Vảy nến (dát đỏ vảy trắng xà cừ, cạo Brocq dương tính); Lichen đơn dạng mạn tính (mảng dày sừng hằn cổ trâu ở gáy/cổ chân do gãi); Đào ban hoặc sẩn giang mai II; Viêm miệng do Candida (giả mạc trắng dễ lau bong).",
+    "red_flags": [
+      "ton_thuong_niem_mac",
+      "vet_loet",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Không cào gãi chà xát mạnh để tránh kích thích mọc thêm thương tổn mới dọc theo vết xước.",
+      "Nếu có tổn thương trong miệng: giữ vệ sinh răng miệng tốt, tránh thức ăn cay nóng, đồ chua, rượu bia, thuốc lá và súc miệng bằng dung dịch sát khuẩn nhẹ.",
+      "Khám chuyên khoa Da liễu để được chỉ định thuốc bôi chống viêm và xét nghiệm kiểm tra chức năng gan (đặc biệt tầm soát viêm gan C)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 248,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "giang_mai_andrews",
+    "name": "Bệnh giang mai",
+    "english_name": "Syphilis",
+    "type": "18 Syphilis, Yaws, Bejel, and Pinta",
+    "summary": "343    Syphilis, Yaws, Bejel, and Pinta 18  SYPHILIS Syphilis, also known as lues, is a contagious, sexually trans - mitted disease caused by the spirochete Treponema pallidum  subspecies pallidum. The only known host is the human. The  spirochete enters through the skin or mucous membranes,  where the primary manifestations are seen. In congenital  syphilis, the treponeme crosses the placenta and infects the  fetus. The risk of acquiring infection from sexual contact with  an infected partner i",
+    "common_features": [
+      "vet_loet",
+      "man_do",
+      "da_doi_mau",
+      "roi_loan_cam_giac"
+    ],
+    "suggestive_phrases": [
+      "săng cứng không đau",
+      "đào ban lòng bàn tay",
+      "giang mai"
+    ],
+    "typical_locations": [
+      "sinh dục",
+      "lòng bàn tay",
+      "lòng bàn chân",
+      "miệng",
+      "toàn thân"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "quan hệ tình dục không bảo vệ",
+      "bạn tình mắc bệnh",
+      "mẹ truyền sang con"
+    ],
+    "differential_diagnoses": [
+      "benh_ghe",
+      "vay_nen",
+      "vay_phan_hong",
+      "herpes_sinh_duc"
+    ],
+    "differential_diagnosis_details": "Phân biệt Săng giang mai với Hạ cam mềm (loét sâu bờ nham nhở rất đau, có mủ); Herpes sinh dục (mụn nước thành chùm đau rát); Đào ban giang mai II với vảy phấn hồng, dị ứng thuốc, phát ban virus.",
+    "red_flags": [
+      "ton_thuong_mat",
+      "roi_loan_than_kinh",
+      "thai_nghen",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Cần đến ngay phòng khám chuyên khoa Da liễu hoặc bệnh lây truyền qua đường tình dục để làm xét nghiệm huyết thanh chẩn đoán (RPR/VDRL và TPHA).",
+      "Tuyệt đối kiêng quan hệ tình dục cho đến khi được điều trị khỏi hoàn toàn và có kết quả xét nghiệm an toàn.",
+      "Bắt buộc phải thông báo và đưa bạn tình đi khám và điều trị đồng thời để tránh tái nhiễm; không tự ý mua kháng sinh uống làm lu mờ triệu chứng."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 397,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "herpes_sinh_duc_andrews",
+    "name": "Herpes sinh dục",
+    "english_name": "Genital herpes",
+    "type": "19 Viral Diseases",
+    "summary": "19  Viral Diseases 362 began to increase because of changes in sexual habits and  decreasing prevalence of orolabial HSV-1 infection in devel - oped nations. In women under age 25, HSV-1 represents more  than 50% of cases of genital herpes, whereas in women over  25 and in men of all ages, HSV-2 remains the most common  cause of genital herpes. HSV-1 in the genital area is much less  likely to recur. Only 20–50% of patients have a recurrence;  when it does recur, the average patient experiences ",
+    "common_features": [
+      "mun_nuoc",
+      "vet_loet",
+      "dau_ran",
+      "phu"
+    ],
+    "suggestive_phrases": [
+      "mụn nước thành chùm sinh dục",
+      "herpes sinh dục",
+      "đau rát sinh dục"
+    ],
+    "typical_locations": [
+      "sinh dục",
+      "hậu môn",
+      "miệng"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "quan hệ tình dục",
+      "suy giảm miễn dịch",
+      "thai nghén"
+    ],
+    "differential_diagnoses": [
+      "giang_mai",
+      "candida_sinh_duc",
+      "aphtose"
+    ],
+    "differential_diagnosis_details": "Phân biệt Săng giang mai (vết loét trợt đơn độc nền cứng như bìa, không đau không ngứa); Hạ cam mềm (loét sâu bờ nham nhở, đáy bẩn đau nhức); Áp tơ sinh dục; Nấm Candida sinh dục.",
+    "red_flags": [
+      "thai_nghen",
+      "sot_cao",
+      "dau_du_doi",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Không chọc vỡ các mụn nước và tránh quan hệ tình dục khi đang có tổn thương mụn nước hoặc vết trợt để không lây cho bạn tình.",
+      "Vệ sinh nhẹ nhàng bằng nước muối sinh lý, giữ vùng sinh dục khô thoáng; dùng thuốc kháng virus (Acyclovir/Valacyclovir) càng sớm càng tốt (trong 48-72 giờ đầu) theo đơn bác sĩ.",
+      "Phụ nữ mang thai bị herpes sinh dục cần thông báo ngay cho bác sĩ sản khoa để có biện pháp dự phòng lây truyền cho trẻ sơ sinh khi sinh nở."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 419,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "trichomoniasis_andrews",
+    "name": "Viêm âm đạo do trùng roi",
+    "english_name": "Trichomoniasis",
+    "type": "20 Parasitic Infestations, Stings, and Bites",
+    "summary": "Class mastigophora 419 median raphe may occur. Neonates may acquire the infection  during passage through the birth canal, but they require treatment only if symptomatic or if colonization lasts more than  4 weeks. Because this is otherwise almost exclusively a sexually transmitted disease (STD), Trichomonas vulvovaginitis in  a child should prompt suspicion of sexual abuse. Trichomoniasis is caused by Trichomonas vaginalis, a color - less piriform flagellate 5–15 µm long. T. vaginalis is demons",
+    "common_features": [
+      "ngua",
+      "dau_ran",
+      "man_do",
+      "phu"
+    ],
+    "suggestive_phrases": [
+      "khí hư vàng xanh có bọt",
+      "cổ tử cung hình quả dâu",
+      "trùng roi"
+    ],
+    "typical_locations": [
+      "âm đạo",
+      "cổ tử cung",
+      "niệu đạo"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "quan hệ tình dục",
+      "thai nghén"
+    ],
+    "differential_diagnoses": [
+      "candida_sinh_duc",
+      "benh_lau",
+      "chlamydia_sinh_duc"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm âm đạo do nấm Candida (khí hư vón cục như váng sữa, không hôi, pH < 4.5); Viêm âm đạo do vi khuẩn BV (khí hư tráng đều màu xám, mùi cá ươn, pH > 4.5, có tế bào Clue cell); Viêm cổ tử cung do lậu và chlamydia.",
+    "red_flags": [
+      "thai_nghen",
+      "sot_cao",
+      "dau_bung_duoi"
+    ],
+    "safe_advice": [
+      "Trùng roi là bệnh lây truyền qua đường tình dục, bắt buộc phải điều trị đồng thời cho cả hai vợ chồng hoặc bạn tình.",
+      "Uống thuốc kháng sinh chống trùng roi (như Metronidazol) theo đúng liều lượng chỉ định của bác sĩ; tuyệt đối không uống rượu bia trong thời gian dùng thuốc và 24 giờ sau khi ngừng thuốc.",
+      "Vệ sinh đồ lót sạch sẽ, giặt phơi nắng to hoặc luộc nước sôi; không dùng chung khăn tắm, chậu rửa."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 483,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "sui_mao_ga_sinh_duc_andrews",
+    "name": "Bệnh sùi mào gà sinh dục",
+    "english_name": "Genital warts in children",
+    "type": "19 Viral Diseases",
+    "summary": "Papovavirus group 407 women (age 24–45) the vaccine is also effective and may be  given as a “catch-up” vaccine in women with no evidence of  prior genital HPV infection with HPVs 6, 11, 16, or 18. Since  HPV-16 and HPV-18 are the primary types associated with  cervical cancer, it is hoped that the rate of cancers induced by  these high-risk genital HPV types can be reduced by vaccina - tion. The protection, thought to be type specific, did not appear  to prevent development of squamous intraepi",
+    "common_features": [
+      "hat_sui",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "sùi mào gà",
+      "tổn thương dạng súp lơ",
+      "HPV sinh dục"
+    ],
+    "typical_locations": [
+      "dương vật",
+      "âm hộ",
+      "âm đạo",
+      "cổ tử cung",
+      "hậu môn"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "quan hệ tình dục",
+      "nhiều bạn tình",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "u_mem_lay",
+      "hat_com",
+      "lichen_phang",
+      "giang_mai"
+    ],
+    "differential_diagnosis_details": "Phân biệt Chuỗi hạt ngọc dương vật (sẩn nhỏ đều nhau xếp thành hàng ở rãnh quy đầu, lành tính bình thường); U mềm lây (sẩn nhẵn bóng lõm giữa); Sẩn sùi giang mai II (sẩn phì đại bề mặt phẳng ướt ở nếp gấp sinh dục); Ung thư tế bào gai.",
+    "red_flags": [
+      "chay_mau",
+      "vet_loet",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Tuyệt đối không tự ý dùng kéo cắt, cạo hoặc tự bôi các loại thuốc axit trôi nổi trên mạng vào vùng sinh dục vì nguy cơ hoại tử, loét nặng và sẹo biến dạng.",
+      "Cần đến bệnh viện chuyên khoa Da liễu để được khám, soi và điều trị bằng phương pháp phù hợp (áp lạnh nitơ, laser CO2, hoặc bôi thuốc đặc hiệu theo đơn).",
+      "Khám tầm soát định kỳ các bệnh lây qua đường tình dục khác và phụ nữ nên làm xét nghiệm tầm soát ung thư cổ tử cung (Pap smear/HPV test)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 464,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "ung_thu_te_bao_day_andrews",
+    "name": "Ung thư tế bào đáy",
+    "english_name": "Basal cell carcinoma",
+    "type": "29 Epidermal Nevi, Neoplasms, and Cysts",
+    "summary": "29  Epidermal Nevi, Neoplasms, and Cysts 638 Anzalone CL, Cohen PR: Generalized eruptive keratoacanthomas of  Grzybowski. Int J Dermatol 2014; 53(2):131–136. Bogner PN, et al: Giant keratoacanthoma: case report and review of the  English literature. Am J Dermatopathol 2014; 36(3):252–257. Chandrakumar SF , Yeung J: Cutaneous adverse events during  vemurafenib therapy. J Cutan Med Surg 2014; 18(4):223–228. Chorny JA, et al: Eruptive keratoacanthomas in a new tattoo. Arch  Dermatol 2007; 143:1457.",
+    "common_features": [
+      "vet_loet",
+      "da_doi_mau",
+      "chay_mau"
+    ],
+    "suggestive_phrases": [
+      "hạt ngọc ung thư",
+      "vết loét lâu lành",
+      "ung thư tế bào đáy"
+    ],
+    "typical_locations": [
+      "mặt",
+      "đầu",
+      "cổ",
+      "thân trên"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "ánh nắng",
+      "tuổi cao",
+      "da sáng",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "lupus_ban_do",
+      "lao_da",
+      "ung_thu_hac_to",
+      "paget_ngoai_vu"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: includes  desmoplastic trichoepithelioma, a scar, microcystic adnexal  carcinoma, and desmoplastic melanoma. The unique histo - logic feature is the strands of basal cells interspersed amid  densely packed, hypocellular connective tissue. Morpheic  BCCs constitute 2–6% of all BCCs. Data suggest use of fluoro - uracil may be a risk factor for morpheaform versus nonmor - pheaform BCC. Infiltrative b",
+    "red_flags": [
+      "vet_loet",
+      "chay_mau",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Ung thư tế bào đáy là ung thư da phổ biến nhất nhưng tiến triển chậm và ít khi di căn xa nếu được phát hiện và phẫu thuật cắt bỏ triệt để sớm.",
+      "Cần đến ngay bệnh viện chuyên khoa Da liễu hoặc Ung bướu để được bác sĩ sinh thiết chẩn đoán xác định và phẫu thuật loại bỏ trọn vẹn khối u.",
+      "Luôn thực hiện các biện pháp chống nắng nghiêm ngặt: bôi kem chống nắng hàng ngày, đội mũ rộng vành khi ra ngoài trời."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 729,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "ung_thu_te_bao_vay_andrews",
+    "name": "Ung thư tế bào vảy",
+    "english_name": "Squamous cell carcinoma",
+    "type": "29 Epidermal Nevi, Neoplasms, and Cysts",
+    "summary": "29  Epidermal Nevi, Neoplasms, and Cysts 644 grow. Vismodegib, the hedgehog pathway inhibitor, reduces  BCC tumor burden and prevents growth of new BCCs in those  with NBCCS; however, poor tolerability of the medication  leads to a high rate of discontinuation (~50%). A topical for - mulation of a smoothened inhibitor appears to be effective and  better tolerated, leading to BCC regression. Surgical treat - ments are used for most lesions, either curettage and desiccation or excision. At times, ",
+    "common_features": [
+      "vet_loet",
+      "chay_mau",
+      "da_doi_mau",
+      "mun_mu"
+    ],
+    "suggestive_phrases": [
+      "u sùi loét",
+      "vết loét mạn tính",
+      "ung thư tế bào vảy"
+    ],
+    "typical_locations": [
+      "vùng phơi nắng",
+      "môi",
+      "quanh móng",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "ánh nắng",
+      "sẹo bỏng",
+      "loét mạn",
+      "HPV",
+      "suy giảm miễn dịch"
+    ],
+    "differential_diagnoses": [
+      "ung_thu_te_bao_day",
+      "lao_da",
+      "nam_sau",
+      "hat_com"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: Several other unique types of BCC presentation should not be  confused with NBCCS. One type is the linear unilateral BCC  syndrome, in which a linear arrangement of close-set papules,  sometimes interspersed with comedones, is present at birth.  Biopsy reveals BBCs, but they do not increase in size with the  age of the patient. A second type, referred to as Bazex syn - drome, is an X-linked domina",
+    "red_flags": [
+      "vet_loet",
+      "chay_mau",
+      "lan_nhanh",
+      "dau_du_doi"
+    ],
+    "safe_advice": [
+      "Ung thư tế bào vảy có khả năng xâm lấn sâu và di căn hạch cũng như các cơ quan nội tạng; cần đến bệnh viện chuyên khoa Ung bướu hoặc Da liễu để khám ngay lập tức.",
+      "Không tự ý đắp thuốc lá, cạo gọt hoặc dùng hóa chất lên khối u vì sẽ kích thích u phát triển nhanh và di căn.",
+      "Bảo vệ các vết sẹo cũ và vùng da phơi nắng; điều trị dứt điểm các tổn thương tiền ung thư (dày sừng ánh sáng, bạch sản)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 735,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "ung_thu_hac_to_andrews",
+    "name": "Ung thư tế bào hắc tố",
+    "english_name": "Melanoma (malignant melanoma)",
+    "type": "30 Melanocytic Nevi and Neoplasms",
+    "summary": "Melanoma (malignant melanoma) 689 Fig. 30-11 A, Dysplastic nevi, “ugly  duckling” sign, left shoulder. B,  Close-up of left shoulder lesion,  superficial spreading melanoma.  A B 3–6 months is recommended, with excision of nevi that change  in clinical appearance and new lesions suspicious for  melanoma. Narrow excisional biopsies of dysplastic nevi often fail to  remove the subclinical junctional component of the lesion. The  pathologist is left to comment on a specimen with melanocytic  atypia",
+    "common_features": [
+      "tang_sac_to",
+      "da_doi_mau",
+      "chay_mau",
+      "vet_loet"
+    ],
+    "suggestive_phrases": [
+      "ABCDE",
+      "nốt ruồi thay đổi",
+      "u hắc tố"
+    ],
+    "typical_locations": [
+      "da",
+      "lòng bàn tay",
+      "lòng bàn chân",
+      "dưới móng",
+      "niêm mạc"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "ánh nắng",
+      "nốt ruồi/bớt",
+      "tiền sử gia đình",
+      "da sáng"
+    ],
+    "differential_diagnoses": [
+      "ung_thu_te_bao_day",
+      "nevus",
+      "xuất huyết do chấn thương"
+    ],
+    "differential_diagnosis_details": "Phân biệt Nốt ruồi lành tính (đối xứng, bờ đều, màu đồng nhất, không thay đổi); Ung thư tế bào đáy thể sắc tố; U máu; Dày sừng da dầu; Xuất huyết dưới móng/gót chân do chấn thương (chuyển màu xanh vàng rồi hết sau 1-2 tuần).",
+    "red_flags": [
+      "tang_sac_to",
+      "lan_nhanh",
+      "chay_mau",
+      "vet_loet"
+    ],
+    "safe_advice": [
+      "Melanoma là dạng ung thư da ác tính nhất, nguy cơ di căn sớm rất cao; nếu có bất kỳ nốt ruồi hay đốm sắc tố nào nghi ngờ, cần đến ngay bệnh viện chuyên khoa để được bác sĩ soi da (dermatoscope) và sinh thiết.",
+      "Tuyệt đối không đi tẩy nốt ruồi bằng laser, đốt điện hay chấm axit tại các cơ sở thẩm mỹ khi chưa được bác sĩ chuyên khoa loại trừ ung thư hắc tố.",
+      "Chủ động kiểm tra toàn bộ da cơ thể định kỳ hàng tháng để phát hiện sớm các nốt sắc tố mới hoặc thay đổi bất thường."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 786,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "u_ong_tuyen_mo_hoi_andrews",
+    "name": "U ống tuyến mồ hôi",
+    "english_name": "Syringoma",
+    "type": "29 Epidermal Nevi, Neoplasms, and Cysts",
+    "summary": "29  Epidermal Nevi, Neoplasms, and Cysts 658 Dores GM, et al: Incidence of cutaneous sebaceous carcinoma and risk  of associated neoplasms: insight into Muir-T orre syndrome. Cancer  2008; 113(12):3372–3381. Eisen DB, Michael DJ: Sebaceous lesions and their associated  syndromes. Part I. J Am Acad Dermatol 2009; 61:549. Eisen DB, Michael DJ: Sebaceous lesions and their associated  syndromes. Part II. J Am Acad Dermatol 2009; 61:563. Harrington CR, et al: Extraocular sebaceous carcinoma in a pati",
+    "common_features": [
+      "man_do",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "sẩn nhỏ quanh mắt",
+      "u ống tuyến mồ hôi"
+    ],
+    "typical_locations": [
+      "mi dưới",
+      "gò má",
+      "cổ",
+      "ngực",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "nữ",
+      "gia đình",
+      "nóng",
+      "stress"
+    ],
+    "differential_diagnoses": [
+      "hat_com",
+      "u_tuyen_ba",
+      "trichoepithelioma"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: of “paisley tie” epithelial islands embedded in a  sclerotic stroma includes microcystic adnexal carcinoma (sclerosing sweat duct carcinoma), desmoplastic trichoepithelioma,  and morpheaform BCC.",
+    "red_flags": [
+      "lan_nhanh",
+      "sot_cao",
+      "nhiem_trung"
+    ],
+    "safe_advice": [
+      "U ống tuyến mồ hôi là u lành tính hoàn toàn của các ống tuyến mồ hôi, không gây nguy hiểm tính mạng mà chủ yếu ảnh hưởng thẩm mỹ.",
+      "Không tự ý nặn, bóp hoặc dùng kim chọc vì các nốt này không có nhân mủ và rất dễ để lại vết thâm sẹo xấu trên mặt.",
+      "Nếu muốn cải thiện thẩm mỹ, hãy đến các bệnh viện hoặc phòng khám Da liễu uy tín để được điều trị bằng laser CO2 chuyên biệt."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 749,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "vay_phan_do_nang_long_andrews",
+    "name": "Bệnh vảy phấn đỏ nang lông",
+    "english_name": "Pityriasis rubra pilaris",
+    "type": "11 Pityriasis Rosea, Pityriasis Rubra Pilaris, and Other Papulosquamous and Hyperkeratotic Diseases",
+    "summary": "Pityriasis rubra pilaris 201 Use of UVB light in erythema exposures expedites the involution of the lesions after the acute inflammatory stage has  passed. The erythema produced by UV treatment is followed  by superficial exfoliation. In a comparison study using a  “placebo” of 1-J UVA light on the untreated side compared  with the UVB-treated side, there was significant improvement  in disease severity on the treated side. However, there was no  difference in itchiness or disease course. Cortic",
+    "common_features": [
+      "man_do",
+      "bong_troc",
+      "kho_da",
+      "mong_bat_thuong"
+    ],
+    "suggestive_phrases": [
+      "sẩn nang lông đỏ",
+      "đảo da lành",
+      "vảy phấn đỏ nang lông"
+    ],
+    "typical_locations": [
+      "đầu",
+      "mặt",
+      "cổ",
+      "chi",
+      "lòng bàn tay chân"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tuổi hai đỉnh",
+      "nhiễm trùng",
+      "HIV"
+    ],
+    "differential_diagnoses": [
+      "vay_nen",
+      "viem_da_dau",
+      "do_da_toan_than"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: Pityriasis rosea may closely mimic seborrheic dermatitis, tinea  corporis, macular syphilid, drug eruption, other viral exan - thems, and psoriasis. In seborrheic dermatitis, the scalp and  eyebrows are usually scaly; there is a predilection for the sternal  and interscapular regions, as well as the flexor surfaces of the  articulations, where the patches are covered with greasy scales.  Tinea cor",
+    "red_flags": [
+      "do_da_toan_than",
+      "lan_nhanh",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Bôi kem dưỡng ẩm, vaseline làm mềm da thường xuyên để giảm khô ráp và nứt nẻ.",
+      "Tránh các thuốc kích ứng mạnh, không tắm nước quá nóng và hạn chế chà xát da.",
+      "Cần đến khám chuyên khoa Da liễu để được chẩn đoán phân biệt chính xác với vảy nến và theo dõi điều trị bằng các thuốc điều hòa sừng hóa đường uống (như Retinoid/Acitretin)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 239,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "u_xo_than_kinh_andrews",
+    "name": "U xơ thần kinh",
+    "english_name": "Neurofibromatosis (von Recklinghausen’s disease)",
+    "type": "27 Genodermatoses and Congenital Anomalies",
+    "summary": "27  Genodermatoses and Congenital Anomalies 548 clinical findings; up to 31% of asymptomatic parents have  been identified using these tests. Multiple periungual fibromas are highly correlated with the  syndrome, but solitary fibromas may occur in unaffected indi - viduals. Molecular analysis for TSC1 and TSC2 may be the  only way to identify “mildly affected” individuals. Treatment Adenoma sebaceum can be treated by shaving, dermabrasion,  or laser therapy. Lesions are likely to recur, requirin",
+    "common_features": [
+      "da_doi_mau",
+      "man_do"
+    ],
+    "suggestive_phrases": [
+      "dát cà phê sữa",
+      "u xơ thần kinh",
+      "NF1"
+    ],
+    "typical_locations": [
+      "da",
+      "nách",
+      "thân mình",
+      "mắt"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "di truyền trội",
+      "tiền sử gia đình"
+    ],
+    "differential_diagnoses": [
+      "hoi_chung_mc_cune_albright",
+      "u_da_lanh_tinh"
+    ],
+    "differential_diagnosis_details": "Phân biệt Dát cà phê sữa đơn độc ở người bình thường (10-20% trẻ); Hội chứng McCune-Albright; Các u mỡ, u bã lành tính dưới da.",
+    "red_flags": [
+      "dau_du_doi",
+      "u_tang_nhanh",
+      "roi_loan_than_kinh"
+    ],
+    "safe_advice": [
+      "U xơ thần kinh là bệnh di truyền cần được theo dõi định kỳ hàng năm bởi các chuyên khoa Da liễu, Mắt và Thần kinh.",
+      "Không tự ý chích rạch các khối u xơ dưới da; nếu khối u to nhanh, chèn ép gây đau nhức hoặc ảnh hưởng chức năng cần đi khám để được phẫu thuật.",
+      "Người mắc bệnh nên được tư vấn di truyền trước khi lập gia đình và sinh con."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 628,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "gai_den_andrews",
+    "name": "Bệnh gai đen",
+    "english_name": "Acanthosis nigricans",
+    "type": "24 Endocrine Diseases",
+    "summary": "Acanthosis nigricans 497 predisposition for certain racial groups to manifest AN, with  Native Americans most often affected, followed by African  Americans and Hispanics, all above the rates in Caucasians.  AN is obesity independent. Type I: acanthosis nigricans associated   with malignancy The rare type I AN may either precede (18%), accompany  (60%), or follow (22%) the onset of the internal cancer. It is  generally the most striking type clinically, from both the extent  of involvement and t",
+    "common_features": [
+      "tang_sac_to",
+      "kho_da"
+    ],
+    "suggestive_phrases": [
+      "da như nhung ở cổ",
+      "gai đen",
+      "nếp gấp sẫm màu"
+    ],
+    "typical_locations": [
+      "cổ",
+      "nách",
+      "bẹn",
+      "rốn"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "béo phì",
+      "đái tháo đường",
+      "thuốc",
+      "u ác tính"
+    ],
+    "differential_diagnoses": [
+      "erythrasma",
+      "pachydermoperiostosis",
+      "hailey_hailey"
+    ],
+    "differential_diagnosis_details": "Phân biệt Bệnh Pachydermoperiostosis (dày da và xương đầu chi); Bệnh Pemphigus lành tính Hailey-Hailey (có mụn nước bọng mủ trợt ở nếp gấp); Bệnh Erythrasma (dát thâm đỏ nhẵn ở bẹn/nách, đèn Wood phát màu đỏ san hô).",
+    "red_flags": [
+      "lan_nhanh",
+      "ton_thuong_niem_mac",
+      "sut_can"
+    ],
+    "safe_advice": [
+      "Biện pháp cốt lõi là điều chỉnh lối sống: giảm cân khoa học bằng chế độ ăn giảm tinh bột đường, tăng cường vận động thể lực để cải thiện tình trạng kháng insulin.",
+      "Kiểm tra sức khỏe toàn diện: xét nghiệm đường huyết, HbA1c, insulin máu và chức năng nội tiết.",
+      "Nếu vùng da đen dày xuất hiện nhanh và lan rộng ở người lớn tuổi kèm sụt cân, cần đi tầm soát kỹ các khối u nội tạng ác tính (thể gai đen cận ung thư)."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 573,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "vay_ca_andrews",
+    "name": "Bệnh vảy cá",
+    "english_name": "Ichthyosis vulgaris",
+    "type": "27 Genodermatoses and Congenital Anomalies",
+    "summary": "Disorders of cornification (ichthyoses and ichthyosiform syndromes)  557 ichthyosis is likely if the abdomen is more involved than the  back, and if the ichthyosis extends down the entire dorsum of  the leg. Keratosis pilaris is not present, and the incidence of  atopy is not increased. Corneal opacities (which do not affect  vision) are seen by slit-lamp examination on the posterior  capsule or Descemet’s membrane in about 50% of affected  males and female carriers. Another extracutaneous featu",
+    "common_features": [
+      "kho_da",
+      "bong_troc",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "da như vảy cá",
+      "vảy cá bẩm sinh",
+      "collodion baby"
+    ],
+    "typical_locations": [
+      "chi",
+      "thân mình",
+      "da đầu",
+      "lòng bàn tay"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "di truyền",
+      "bệnh hệ thống",
+      "suy dinh dưỡng",
+      "thuốc"
+    ],
+    "differential_diagnoses": [
+      "viem_da_co_dia_pdf",
+      "do_da_toan_than",
+      "vay_nen"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: includes  severe xerosis, X-linked ichthyosis, and acquired ichthyosis. X-linked ichthyosis X-linked ichthyosis is transmitted only to males by heterozy - gous mothers as an X-linked recessive trait. This condition  results from a deficiency of steroid sulfatase (arylsulfatase C),  and occurs in 1 : 2000–5000 male births. Onset is usually before  age 3 months. Cesarean birth is typical, with failu",
+    "red_flags": [
+      "do_da_toan_than",
+      "mat_nuoc",
+      "sot_cao",
+      "bong_da_dien_rong"
+    ],
+    "safe_advice": [
+      "Bôi kem dưỡng ẩm, làm mềm da (chứa urea 10%, acid lactic hoặc vaseline) ngay sau khi tắm hàng ngày và nhiều lần trong ngày, đặc biệt vào mùa đông.",
+      "Tắm bằng nước ấm vừa phải, dùng sữa tắm không chứa xà phòng tẩy rửa mạnh; giữ độ ẩm trong phòng ngủ.",
+      "Tránh cạo gọt vảy thô bạo gây trầy xước chảy máu và nhiễm trùng da; trẻ nhỏ cần được bác sĩ da liễu khám định kỳ để chọn nồng độ thuốc bôi an toàn."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 637,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "sarcoidosis_andrews",
+    "name": "Sarcoidosis",
+    "english_name": "Sarcoidosis",
+    "type": "31 Macrophage/Monocyte Disorders",
+    "summary": "31  Macrophage/Monocyte Disorders 706 lymphoma in a patient with Sjögren syndrome. Am J Dermatopathol  2011; 33:855. Peyman A, et al: Necrobiotic xanthogranuloma associated with  necrotizing scleritis. Am J Dermatopathol 2012; 34:644. Rose A, et al: Necrobiotic xanthogranuloma. Dermatol Online J 2012;  18:30. Ryan E, et al: Necrobiotic xanthogranuloma: response to chlorambucil.  Australas J Dermatol 2012; 55:e23. Santosaputri E, et al: A multisystem granulomatous disease: necrobiotic  xanthogran",
+    "common_features": [
+      "man_do",
+      "da_doi_mau",
+      "phu"
+    ],
+    "suggestive_phrases": [
+      "lupus pernio",
+      "u hạt không bã đậu",
+      "sarcoid"
+    ],
+    "typical_locations": [
+      "mặt",
+      "mũi",
+      "tai",
+      "chi",
+      "phổi"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "rối loạn miễn dịch",
+      "nữ",
+      "tuổi 40-50"
+    ],
+    "differential_diagnoses": [
+      "lao_da",
+      "benh_phong",
+      "giang_mai",
+      "lichen_phang"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: includes necrobiosis lipoidica and other histiocytoses. NXG has more atypical and Touton giant cells, lymphoid  nodules, and cholesterol clefts. As in plane xanthomas seen  with paraproteinemia, the associated monoclonal gammopathy of undetermined significance (MGUS) appears to enhance  the intracellular accumulation of cholesterol within the  macrophages/histiocytes. The",
+    "red_flags": [
+      "kho_tho",
+      "ton_thuong_mat",
+      "sot_cao",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Sarcoidosis là bệnh hệ thống u hạt mạn tính có thể ảnh hưởng đến phổi, mắt, tim và các cơ quan nội tạng; cần khám chuyên khoa Da liễu, Hô hấp và Mắt để được đánh giá toàn diện.",
+      "Thực hiện chụp X-quang/CT ngực, đo chức năng hô hấp, khám mắt và sinh thiết tổn thương da để xác định chẩn đoán.",
+      "Tuân thủ kế hoạch điều trị và tái khám định kỳ theo dõi chức năng các cơ quan; không tự ý dùng thuốc khi chưa có chỉ định."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 807,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "bach_bien_andrews",
+    "name": "Bệnh bạch biến",
+    "english_name": "Vitiligo",
+    "type": "36 Disturbances of Pigmentation",
+    "summary": "Vitiligo 865 VITILIGO Vitiligo usually begins in childhood or young adulthood, with  a peak onset between ages 10 and 30. About half of cases begin  before age 20. The prevalence ranges from 0.5% to 1% in most  countries, but more than 8% in some regions of India. Although  females are disproportionately represented among patients  seeking care, it is not known whether they are actually more  frequently affected or simply more likely to seek medical care.  Vitiligo does begin at a younger age in",
+    "common_features": [
+      "mat_sac_to",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "mảng trắng mất sắc tố",
+      "bạch biến",
+      "tóc trắng tại tổn thương"
+    ],
+    "typical_locations": [
+      "mặt",
+      "tay",
+      "cổ",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "tự miễn",
+      "di truyền",
+      "chấn thương",
+      "cháy nắng"
+    ],
+    "differential_diagnoses": [
+      "lang_ben_pdf",
+      "benh_phong",
+      "piebaldism",
+      "cham_kho"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: Vitiligo must be differentiated from morphea and lichen sclerosus, both of which are hypopigmented but associated with  a change in the skin texture. Pityriasis alba has a fine scale, is  slightly papular, and is poorly defined. Tinea versicolor favors  the center back and chest and has a fine scale; yeast and hyphal  forms are demonstrable with potassium hydroxide (KOH)  examination. The tertiary",
+    "red_flags": [
+      "lan_nhanh",
+      "ton_thuong_mat"
+    ],
+    "safe_advice": [
+      "Luôn bôi kem chống nắng chỉ số cao (SPF 50+) lên vùng da mất sắc tố vì vùng da này đã mất melanin bảo vệ, rất dễ bị cháy nắng và tăng nguy cơ ung thư da.",
+      "Tránh các chấn thương cơ học, cọ xát mạnh hoặc vết trầy xước vì có thể kích hoạt mọc thêm mảng trắng mới (hiện tượng Koebner).",
+      "Khám chuyên khoa Da liễu để được tư vấn các liệu pháp phục hồi sắc tố (thuốc bôi ức chế miễn dịch tại chỗ, chiếu tia cực tím UVB dải hẹp) và kiểm tra tầm soát bệnh tuyến giáp đi kèm."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 980,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "sam_da_andrews",
+    "name": "Sạm da",
+    "english_name": "Hemosiderin hyperpigmentation",
+    "type": "36 Disturbances of Pigmentation",
+    "summary": "Abnormal pigmentation 857 2. Dermal melanosis from melanin dropout from the  epidermis into the dermis Wood’s light examination will distinguish these two patterns  of postinflammatory hyperpigmentation. Lesions of hyperpigmentation tend to be tan to brown ( Fig. 36-2 ) and may have a  gray hue, caused by dermal melanin. Hypopigmented lesions are prominently lighter than the  surrounding area. Histologically, there is melanin in the upper  dermis and around upper dermal vessels, located primaril",
+    "common_features": [
+      "tang_sac_to",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "da sạm",
+      "tăng sắc tố",
+      "đốm nâu toàn thân"
+    ],
+    "typical_locations": [
+      "mặt",
+      "cổ",
+      "vùng hở",
+      "toàn thân"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "ánh nắng",
+      "mỹ phẩm",
+      "thuốc",
+      "rối loạn nội tiết",
+      "sau viêm"
+    ],
+    "differential_diagnoses": [
+      "ram_ma",
+      "tang_sac_to_sau_viem",
+      "addison",
+      "benh he thong"
+    ],
+    "differential_diagnosis_details": "Phân biệt Rám má (khu trú đối xứng ở hai gò má phụ nữ); Tăng sắc tố sau viêm (trên nền tổn thương cũ); Sạm da do hóa chất/mỹ phẩm (cảm quang); Bệnh Addison.",
+    "red_flags": [
+      "lan_nhanh",
+      "sut_can",
+      "sot_cao"
+    ],
+    "safe_advice": [
+      "Chống nắng nghiêm ngặt: bôi kem chống nắng phổ rộng trước khi ra ngoài 30 phút, đội mũ rộng vành, đeo kính râm và mặc áo dài tay.",
+      "Ngừng ngay các loại mỹ phẩm, nước hoa hoặc hóa chất nghi ngờ gây cảm quang kích thích tăng sắc tố da.",
+      "Đi khám chuyên khoa Da liễu để xác định vị trí sắc tố (nằm ở thượng bì, trung bì hay hỗn hợp qua đèn Wood) và có phác đồ điều trị an toàn, tránh dùng kem lột tẩy trôi nổi."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 972,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "ram_ma_andrews",
+    "name": "Rám má",
+    "english_name": "Melasma (chloasma)",
+    "type": "36 Disturbances of Pigmentation",
+    "summary": "36  Disturbances of Pigmentation 858 patients have multiple types, so this classification is not very  useful therapeutically. The pigmented patches are usually  sharply demarcated. Although melasma has classically been  classified as epidermal or dermal, based on the presence or  absence of Wood’s light enhancement, respectively, most cases  show both epidermal and dermal melanin. Dermal melano - phages are a normal finding in sun-exposed Asian skin. Inde - pendent of Wood’s light findings, a t",
+    "common_features": [
+      "tang_sac_to",
+      "da_doi_mau"
+    ],
+    "suggestive_phrases": [
+      "nám má",
+      "mảng nâu hai gò má",
+      "melasma"
+    ],
+    "typical_locations": [
+      "gò má",
+      "trán",
+      "mũi",
+      "quanh miệng"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "mang thai",
+      "thuốc tránh thai",
+      "ánh nắng",
+      "nội tiết"
+    ],
+    "differential_diagnoses": [
+      "tang_sac_to_sau_viem",
+      "nevus",
+      "benh_he_thong"
+    ],
+    "differential_diagnosis_details": "Phân biệt Tăng sắc tố sau viêm (không đối xứng, có tiền sử viêm trước đó); Bớt Ota hoặc bớt sắc tố bẩm sinh (xuất hiện từ nhỏ, màu xanh xám, một bên mặt); Sạm da do hóa chất mỹ phẩm.",
+    "red_flags": [
+      "lan_nhanh",
+      "sot_cao",
+      "nhiem_trung"
+    ],
+    "safe_advice": [
+      "Kem chống nắng phổ rộng (chống cả UVA và UVB, SPF từ 30-50) là biện pháp bắt buộc và quan trọng nhất trong điều trị nám má; cần bôi lại sau mỗi 2-3 giờ khi ở ngoài trời.",
+      "Đội mũ rộng vành, đeo khẩu trang tối màu dày khi ra nắng; tránh thức khuya, giảm stress và hạn chế uống thuốc tránh thai nếu có thể.",
+      "Khám chuyên khoa Da liễu để được tư vấn thuốc bôi ức chế sắc tố an toàn (như acid azelaic, retinoid, hydroquinon theo dõi y khoa); không dùng kem trộn chứa corticoid làm teo da, giãn mạch và dội ngược sắc tố nặng hơn."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 973,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "aphtose_andrews",
+    "name": "Bệnh aphtose",
+    "english_name": "Recurrent aphthous stomatitis (canker sores, aphthosis)",
+    "type": "34 Disorders of the Mucous Membranes",
+    "summary": "Recurrent aphthous stomatitis (canker sores, aphthosis)  803 clusters. The site of involvement is a key feature in suspecting  the diagnosis. The keratinized or masticatory mucosa—the  palate, gingiva, and tongue—is affected. The grouped vesicles  rupture rapidly to form punctate erosions with a red base.  Smears from the base prepared with Wright stain will show  giant multinucleated epithelial cells. Immunofluorescent tests  and viral cultures are also confirmatory. The differential diagnosis ",
+    "common_features": [
+      "vet_loet",
+      "dau_ran",
+      "ton_thuong_niem_mac"
+    ],
+    "suggestive_phrases": [
+      "nhiệt miệng tái phát",
+      "loét áp tơ",
+      "aphtose"
+    ],
+    "typical_locations": [
+      "miệng",
+      "sinh dục"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "stress",
+      "thiếu máu",
+      "suy giảm miễn dịch",
+      "bệnh Behcet"
+    ],
+    "differential_diagnoses": [
+      "herpes_sinh_duc",
+      "benh_behcet",
+      "candida_da_niem_mac",
+      "giang_mai"
+    ],
+    "differential_diagnosis_details": "Chẩn đoán phân biệt theo Andrews: of this uncommon manifestation  of HSV includes oral herpes zoster, herpangina, and oral aphthosis. The latter two involve nonattached mucosa, whereas  recurrent HSV involves mucosa fixed to bone. Differentiation  from zoster is made on clinical grounds or by culture and  immunofluorescent testing. Chronic progressive ulcerative and nodular intraoral herpes  are seen occasionally in HIV-infected p",
+    "red_flags": [
+      "vet_loet",
+      "sot_cao",
+      "kho_nuot",
+      "lan_nhanh"
+    ],
+    "safe_advice": [
+      "Vệ sinh răng miệng nhẹ nhàng bằng bàn chải mềm, súc miệng nước muối sinh lý hoặc dung dịch sát khuẩn dịu nhẹ (Chlorhexidin) hàng ngày.",
+      "Tránh các thức ăn cay nóng, đồ chua nhiều acid, đồ cứng giòn gây cọ xát vết loét; bổ sung vitamin nhóm B, vitamin C, kẽm và sắt.",
+      "Có thể chấm gel giảm đau tại chỗ (như Kamistad) trước bữa ăn; nếu vết loét lớn (>1cm kéo dài nhiều tuần) hoặc kèm loét sinh dục, cần đi khám bác sĩ ngay."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 913,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  },
+  {
+    "id": "pellagra_andrews",
+    "name": "Bệnh Pellagra",
+    "english_name": "Niacin deficiency (pellagra)",
+    "type": "22 Nutritional Diseases",
+    "summary": "Niacin deficiency (pellagra) 475 the eruption may be vesicular or bullous (wet pellagra). Compared with normal sunburn, the pellagrous skin takes about  four times longer to recover from the acute phototoxic injury.  After several phototoxic events, thickening, scaling, and  hyperpigmentation of the affected skin occur. The skin has a  copper or mahogany hue. In protracted cases, the skin ulti - mately becomes dry, smooth, paper-thin, and glassy with a  parchmentlike consistency. Scarring rarely",
+    "common_features": [
+      "man_do",
+      "bong_troc",
+      "tang_sac_to",
+      "roi_loan_tieu_hoa"
+    ],
+    "suggestive_phrases": [
+      "viêm da vùng hở kèm tiêu chảy",
+      "thiếu vitamin PP",
+      "Pellagra"
+    ],
+    "typical_locations": [
+      "mặt",
+      "cổ áo",
+      "mu tay",
+      "mu chân"
+    ],
+    "course": "Diễn tiến lâm sàng theo phân loại Andrews' Diseases of the Skin.",
+    "risk_factors": [
+      "suy dinh dưỡng",
+      "nghiện rượu",
+      "rối loạn hấp thu",
+      "thuốc"
+    ],
+    "differential_diagnoses": [
+      "viem_da_tiep_xuc",
+      "lupus_ban_do",
+      "benh_da_do_anh_sang"
+    ],
+    "differential_diagnosis_details": "Phân biệt Viêm da tiếp xúc ánh sáng (không có rối loạn tiêu hóa và tâm thần); Lupus ban đỏ hệ thống (ban cánh bướm, xét nghiệm ANA dương tính); Sạm da do các nguyên nhân khác.",
+    "red_flags": [
+      "roi_loan_tieu_hoa",
+      "roi_loan_than_kinh",
+      "sot_cao",
+      "suy dinh duong"
+    ],
+    "safe_advice": [
+      "Pellagra là bệnh lý do thiếu vitamin PP (niacin) hoặc rối loạn chuyển hóa acid amin tryptophan, có thể nguy hiểm đến tính mạng nếu không được điều trị; cần đến bệnh viện khám ngay.",
+      "Điều chỉnh chế độ ăn uống giàu dinh dưỡng: bổ sung thịt, cá, trứng, sữa, đậu đỗ và các loại ngũ cốc đa dạng; tuyệt đối không chỉ ăn ngô hoặc lúa miến đơn thuần.",
+      "Bảo vệ vùng da tổn thương khỏi ánh nắng mặt trời; bổ sung vitamin PP liều điều trị kết hợp các vitamin nhóm B theo đúng hướng dẫn của bác sĩ."
+    ],
+    "references": [
+      {
+        "source_id": "andrews_2015",
+        "page_start": 547,
+        "title": "Andrews' Diseases of the Skin: Clinical Dermatology (12th Edition)",
+        "publisher": "Elsevier",
+        "year": 2015
+      }
+    ],
+    "medical_review_status": "needs_clinical_review"
+  }
+]
