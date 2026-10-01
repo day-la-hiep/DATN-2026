@@ -9,7 +9,7 @@ Nguồn gốc (neo) của toàn bộ hệ thống: 65 bệnh này là danh sách
 | Scripts | không có — dữ liệu được biên soạn/rà tay từ PDF |
 | Output | `output/pdf_guideline_2015.json` — 65 bệnh |
 
-## Schema (chung cho `byt`, `who`, `medlineplus`)
+## Schema (chung cho `byt`, `who`, `medlineplus`, `andrews`)
 
 `id`, `name` (vi), `english_name`, `type`, `summary`, `common_features` (mã triệu chứng), `suggestive_phrases`,
 `typical_locations`, `course`, `risk_factors`, `differential_diagnoses` (id bệnh khác) +

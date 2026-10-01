@@ -27,6 +27,7 @@ SOURCES = {
     "byt": INGEST_DIR / "byt" / "output" / "pdf_guideline_2015.json",
     "who": INGEST_DIR / "who" / "output" / "who_skin_diseases.json",
     "medlineplus": INGEST_DIR / "medlineplus" / "output" / "medlineplus_skin_conditions.json",
+    "andrews": INGEST_DIR / "andrews" / "output" / "andrews_diseases.json",
 }
 
 STR_FIELDS = ["id", "name", "english_name", "type", "summary", "course", "medical_review_status"]
