@@ -37,7 +37,7 @@ export function ChatHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
               </span>
             ) : (
               <span className="flex items-center gap-1.5 font-sans">
-                <span className="size-2 rounded-full bg-emerald-500 animate-pulse-subtle" />
+                <span className="size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse-subtle" />
                 <span>Trực tuyến // Sẵn sàng</span>
               </span>
             )}

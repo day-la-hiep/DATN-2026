@@ -71,7 +71,7 @@ function SidebarInner({
               onClick={collapsed ? onToggleCollapse : undefined}
               aria-label={collapsed ? "Mở rộng thanh bên" : "Trợ lý da liễu"}
               className={cn(
-                "group/logo relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-white shadow-xs transition-all outline-hidden cursor-pointer",
+                "group/logo relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-brand-foreground shadow-xs transition-all outline-hidden cursor-pointer",
                 collapsed ? "hover:shadow-accent hover:-translate-y-0.5" : "cursor-default"
               )}
             >
@@ -135,7 +135,7 @@ function SidebarInner({
               }}
               tooltip="Cuộc trò chuyện mới"
               className={cn(
-                "rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-white font-medium text-xs shadow-xs transition-all hover:shadow-accent hover:-translate-y-0.5 active:scale-[0.98] overflow-hidden cursor-pointer",
+                "rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-brand-foreground font-medium text-xs shadow-xs transition-all hover:shadow-accent hover:-translate-y-0.5 active:scale-[0.98] overflow-hidden cursor-pointer",
                 collapsed
                   ? "size-9 p-0 justify-center mx-auto"
                   : "w-full justify-start gap-2.5 px-3.5 py-2.5"
