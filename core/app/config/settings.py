@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Repo root = 3 cấp trên file này (core/app/core/config.py -> core/app -> core ->
+# Repo root = 3 cấp trên file này (core/app/config/settings.py -> core/app -> core ->
 # derma_hospital) — dùng làm mặc định cho path trỏ ra ngoài core/ (checkpoint model ở
 # ../model/, cùng kiểu monorepo-relative-path như data/PrimeKG, data/dermo).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -36,6 +36,12 @@ class Settings(BaseSettings):
 
     # ----- PostgreSQL (SQLAlchemy async engine, driver asyncpg) -----
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/derma_hospital_db"
+    # Ping kết nối trước khi lấy từ pool: tránh lỗi "connection closed" sau khi Postgres/mạng đứt giữa chừng.
+    DATABASE_POOL_PRE_PING: bool = True
+    # `False` giữ session đọc được thuộc tính sau commit (route trả ORM → DTO sau khi `get_db` commit);
+    # autoflush tắt để repository chủ động `flush()` (xem docs/quy-uoc.md mục 4).
+    DATABASE_EXPIRE_ON_COMMIT: bool = False
+    DATABASE_AUTOFLUSH: bool = False
 
     # ----- Redis (Pub/Sub) -----
     REDIS_HOST: str = "localhost"
@@ -61,6 +67,9 @@ class Settings(BaseSettings):
     # Phenotype PrimeKG (tên embed) — `describe_morphology` chuẩn hoá mô tả tự do sang nút
     # phenotype, ingest qua data-ingest/01_normalize/scripts/load_phenotypes.py.
     QDRANT_PHENOTYPE_COLLECTION: str = "derma_phenotypes"
+    # Chunk sách giáo khoa (pipeline/book_ingest, bước "Lưu vào kho tri thức"): mỗi point = 1 chunk đã gắn phần/chương/mục/trang,
+    # payload có `book_id` để xoá/lọc theo sách. Cùng embedding local như KB guideline (384 chiều, cosine).
+    QDRANT_BOOK_COLLECTION: str = "derma_book_chunks"
 
     # ----- Neo4j (knowledge graph da liễu — PrimeKG, xem
     # app/agent/knowledge_graph.py + data/PrimeKG/load_to_neo4j.py) -----
@@ -156,7 +165,7 @@ class Settings(BaseSettings):
     # thống user auth thật — không user/password/JWT, chỉ 1 token tĩnh dùng chung) -----
     # Rỗng = tắt hoàn toàn (mặc định dev, không phá luồng hiện có). Set giá trị trong
     # .env để bật — mọi request tới API (trừ /health) phải kèm header
-    # `Authorization: Bearer <token>` (xem app/core/auth.py).
+    # `Authorization: Bearer <token>` (xem app/config/auth.py).
     APP_ACCESS_TOKEN: str = ""
 
     # TTL (giây) cho các Redis key phục vụ 1 turn nhưng phụ thuộc client mở SSE:
@@ -176,6 +185,9 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str = "minio"
     MINIO_SECRET_KEY: str = "minio123"
     MINIO_BUCKET: str = "derma-attachments"
+    # Bucket riêng cho sách giáo khoa của pipeline/book_ingest: PDF, ảnh trang, mọi JSON/JSONL kết quả, trạng thái, nhật ký
+    # (prefix `toc/<book_id>/`). Toàn bộ do backend đọc/ghi — FE không truy cập MinIO trực tiếp.
+    MINIO_BOOKS_BUCKET: str = "derma-books"
     MINIO_SECURE: bool = False
 
     # ----- Skin CNN classifier (app/agent/tools/skin_image_classifier.py) -----

@@ -1,7 +1,8 @@
-"""RabbitMQ client dùng chung (aio-pika), quản lý 1 connection/channel cho cả app.
+"""RabbitMQ client dùng chung (aio-pika): 1 connection/channel cho cả app + capability generic (declare/publish/consume theo queue).
 
 Vòng đời: gọi connect() lúc app startup (FastAPI lifespan), close() lúc shutdown.
 """
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
@@ -14,12 +15,14 @@ from aio_pika.abc import (
     AbstractRobustConnection,
 )
 
-from app.core.config import settings
+from app.config.settings import settings
 
 MessageHandler = Callable[[AbstractIncomingMessage], Awaitable[None]]
 
 
 class RabbitMQClient:
+    """Instance do `app/api/deps.py` tạo; Core/Worker gọi `connect()` lúc khởi động và `close()` lúc tắt."""
+
     def __init__(self, url: str | None = None) -> None:
         self._url = url or settings.RABBITMQ_URL
         self._connection: AbstractRobustConnection | None = None
@@ -46,7 +49,9 @@ class RabbitMQClient:
             raise RuntimeError("RabbitMQ chưa connect — gọi connect() trước.")
         return self._channel
 
-    async def declare_queue(self, name: str, *, durable: bool = True) -> AbstractQueue:
+    async def declare_queue(
+        self, name: str, *, durable: bool = True
+    ) -> AbstractQueue:
         return await self.channel.declare_queue(name, durable=durable)
 
     async def publish(
@@ -72,5 +77,3 @@ class RabbitMQClient:
         q = await self.declare_queue(queue)
         await q.consume(handler)
 
-
-rabbitmq_client = RabbitMQClient()

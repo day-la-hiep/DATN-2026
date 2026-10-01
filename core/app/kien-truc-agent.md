@@ -122,7 +122,7 @@ Turn bắt đầu (message.started)
   connection đóng lại nhưng turn (và Step, và Reasoning đang dở) vẫn "còn sống", chờ resume.
 - Turn KHÔNG có giới hạn số Step/Reasoning cứng trong thiết kế — nhưng implementation nên có
   1 `MAX_STEPS` an toàn (tránh loop vô hạn khi LLM không hội tụ) tương tự
-  `AGENT_MAX_REASONING_STEPS` đã có trong `app/core/config.py` (đặt tên theo Reasoning vì đó
+  `AGENT_MAX_REASONING_STEPS` đã có trong `app/config/settings.py` (đặt tên theo Reasoning vì đó
   mới là đơn vị lặp thật sự — xem mục 7 để đối chiếu tên biến).
 
 ## 3. "Hỏi người dùng" = 1 Reasoning kiểu "gọi tool" (`ask_user`)

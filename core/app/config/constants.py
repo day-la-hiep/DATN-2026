@@ -20,3 +20,14 @@ AGENT_ACTIVE_TURN_KEY = "agent:active_turn:{conversation_id}"
 # `GETDEL` key này ngay sau khi `subscribe` xong rồi mới publish cho Worker.
 # Xem docs/async-api-doc.md mục 1 + 6.
 AGENT_PENDING_TURN_KEY = "agent:pending_turn:{conversation_id}"
+
+# ----- Database -----
+# Naming convention cho constraint (index/fk/uq/ck/pk) — giúp Alembic autogenerate đặt tên nhất quán,
+# tránh migration bị lệch tên constraint giữa các lần chạy.
+DB_NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}

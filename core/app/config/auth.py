@@ -9,9 +9,10 @@ qua bình thường (mặc định dev, không phá luồng hiện có khi chưa
 Áp dụng bằng `dependencies=[Depends(require_app_token)]` ở router (xem `main.py`) —
 không áp cho `health.py` (health-check không cần token, vd để uptime monitor gọi được).
 """
+
 from fastapi import HTTPException, Request
 
-from app.core.config import settings
+from app.config.settings import settings
 
 
 async def require_app_token(request: Request) -> None:
@@ -21,4 +22,6 @@ async def require_app_token(request: Request) -> None:
     auth_header = request.headers.get("Authorization", "")
     token = auth_header.removeprefix("Bearer ").strip()
     if token != settings.APP_ACCESS_TOKEN:
-        raise HTTPException(status_code=401, detail="Thiếu hoặc sai access token.")
+        raise HTTPException(
+            status_code=401, detail="Thiếu hoặc sai access token."
+        )

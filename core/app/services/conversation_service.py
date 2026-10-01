@@ -1,6 +1,7 @@
 """Business logic cho Conversation (`docs/api-doc.md` mục 1)."""
-from app.core.config import settings
-from app.core.ids import new_conversation_id
+
+from app.config.settings import settings
+from app.config.ids import new_conversation_id
 from app.dto.conversation import ConversationOutput, CreateConversationInput
 from app.models.conversation import Conversation
 from app.repositories.conversation_repository import ConversationRepository
@@ -20,7 +21,9 @@ class ConversationService:
         self._conversations = conversation_repository
         self._messages = message_service
 
-    async def list_conversations(self, user_id: str) -> list[ConversationOutput]:
+    async def list_conversations(
+        self, user_id: str
+    ) -> list[ConversationOutput]:
         conversations = await self._conversations.list_by_user(user_id)
         return [_to_output(c) for c in conversations]
 
@@ -55,7 +58,9 @@ class ConversationService:
         conversation = await self._conversations.get(conversation_id)
         if conversation is None:
             raise ConversationNotFoundError(conversation_id)
-        conversation = await self._conversations.update_model(conversation, model)
+        conversation = await self._conversations.update_model(
+            conversation, model
+        )
         return _to_output(conversation)
 
 

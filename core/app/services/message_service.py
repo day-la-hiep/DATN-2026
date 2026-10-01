@@ -4,13 +4,13 @@ mục 4–6.
 """
 
 from agent.dto.schemas import TurnAttachment, TurnRequest
-from app.core.config import settings
-from app.core.constants import (
+from app.config.settings import settings
+from app.config.constants import (
     AGENT_ACTIVE_TURN_KEY,
     AGENT_PENDING_TURN_KEY,
     AGENT_REQUEST_QUEUE,
 )
-from app.core.ids import new_message_id
+from app.config.ids import new_message_id
 from app.dto.message import (
     MessageAnswerDto,
     MessageMetadataDto,
@@ -18,10 +18,8 @@ from app.dto.message import (
     SendMessageInput,
     SendMessageResult,
 )
-from app.infra.rabbitmq_client import rabbitmq_client
-from app.infra.redis_client import get as redis_get
-from app.infra.redis_client import get_del as redis_get_del
-from app.infra.redis_client import set_value as redis_set
+from app.infra.rabbitmq_client import RabbitMQClient
+from app.infra.redis_client import RedisClient
 from app.models.message import Message
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
@@ -36,9 +34,11 @@ class MessageService:
         self,
         message_repository: MessageRepository,
         conversation_repository: ConversationRepository,
+        redis: RedisClient,
     ) -> None:
         self._messages = message_repository
         self._conversations = conversation_repository
+        self._redis = redis
 
     async def _apply_model_choice(
         self, conversation_id: str, model_id: str | None
@@ -107,7 +107,7 @@ class MessageService:
         )
         await self._messages.create(assistant_message)
 
-        await redis_set(
+        await self._redis.set_value(
             AGENT_ACTIVE_TURN_KEY.format(conversation_id=conversation_id),
             assistant_message.id,
             ex_seconds=settings.AGENT_TURN_KEY_TTL,
@@ -131,7 +131,7 @@ class MessageService:
     ) -> SendMessageResult:
         """`POST /conversations/{id}/messages` (mục 2.1) — turn mới hoặc Steer tuỳ có
         turn đang chạy hay không (Redis `AGENT_ACTIVE_TURN_KEY`)."""
-        active_turn_id = await redis_get(
+        active_turn_id = await self._redis.get(
             AGENT_ACTIVE_TURN_KEY.format(conversation_id=conversation_id)
         )
 
@@ -240,14 +240,14 @@ class MessageService:
 
     async def _defer_turn(self, conversation_id: str, req: TurnRequest) -> None:
         """Lưu `TurnRequest` chờ flush (handler SSE publish sau khi subscribe)."""
-        await redis_set(
+        await self._redis.set_value(
             AGENT_PENDING_TURN_KEY.format(conversation_id=conversation_id),
             req.model_dump_json(),
             ex_seconds=settings.AGENT_TURN_KEY_TTL,
         )
 
 
-async def flush_pending_turn(conversation_id: str) -> None:
+async def flush_pending_turn(conversation_id: str, redis: RedisClient, rabbitmq: RabbitMQClient) -> None:
     """Đẩy `TurnRequest` đang chờ (nếu có) của `conversation_id` vào `agent_request_queue`.
 
     Gọi từ handler SSE NGAY SAU khi `pubsub.subscribe()` hoàn tất — lúc này client chắc
@@ -256,17 +256,17 @@ async def flush_pending_turn(conversation_id: str) -> None:
     session) nên an toàn gọi trong generator của `StreamingResponse`.
     """
     key = AGENT_PENDING_TURN_KEY.format(conversation_id=conversation_id)
-    payload = await redis_get_del(key)
+    payload = await redis.get_del(key)
     if not payload:
         return
     try:
-        await rabbitmq_client.publish(
+        await rabbitmq.publish(
             AGENT_REQUEST_QUEUE, payload.encode("utf-8")
         )
     except Exception:
         # Publish hỏng SAU khi đã GETDEL — trả `payload` lại Redis để lần mở SSE kế tiếp
         # (client tự reconnect) thử lại, tránh mất turn / assistant row kẹt "queued".
-        await redis_set(key, payload, ex_seconds=settings.AGENT_TURN_KEY_TTL)
+        await redis.set_value(key, payload, ex_seconds=settings.AGENT_TURN_KEY_TTL)
         raise
 
 

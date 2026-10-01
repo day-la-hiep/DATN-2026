@@ -1,13 +1,14 @@
 """Router Conversation + Message — REST (`docs/api-doc.md`) và SSE (`docs/async-api-doc.md`)."""
+
 from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import get_conversation_service, get_message_service
-from app.core.config import settings
-from app.core.constants import AGENT_EVENTS_CHANNEL, STREAM_DONE_SENTINEL
+from app.api.deps import get_conversation_service, get_message_service, get_rabbitmq_client, get_redis_client
+from app.config.settings import settings
+from app.config.constants import AGENT_EVENTS_CHANNEL, STREAM_DONE_SENTINEL
 from app.dto.common import ApiResponse
 from app.dto.conversation import (
     ConversationOutput,
@@ -15,13 +16,14 @@ from app.dto.conversation import (
     ModelOption,
     UpdateConversationModelInput,
 )
+from app.infra.rabbitmq_client import RabbitMQClient
+from app.infra.redis_client import RedisClient
 from app.dto.message import (
     MessageAnswerDto,
     MessageOutput,
     SendMessageInput,
     SendMessageResult,
 )
-from app.infra.redis_client import redis_client
 from app.services.conversation_service import (
     ConversationNotFoundError,
     ConversationService,
@@ -34,7 +36,9 @@ from app.services.message_service import (
 
 router = APIRouter(tags=["conversations"])
 
-ConversationServiceDep = Annotated[ConversationService, Depends(get_conversation_service)]
+ConversationServiceDep = Annotated[
+    ConversationService, Depends(get_conversation_service)
+]
 MessageServiceDep = Annotated[MessageService, Depends(get_message_service)]
 
 
@@ -45,10 +49,13 @@ MessageServiceDep = Annotated[MessageService, Depends(get_message_service)]
 )
 async def list_model_options() -> ApiResponse[list[ModelOption]]:
     """Danh sách model FE cho user chọn lúc tạo/đổi hội thoại (`AGENT_MODEL_CHOICES`,
-    `app/core/config.py`) — `id` là giá trị gửi lên `CreateConversationInput.model`/
+    `app/config/settings.py`) — `id` là giá trị gửi lên `CreateConversationInput.model`/
     `PATCH /conversations/{id}/model`."""
     return ApiResponse(
-        data=[ModelOption(id=model_id) for model_id in settings.AGENT_MODEL_CHOICES]
+        data=[
+            ModelOption(id=model_id)
+            for model_id in settings.AGENT_MODEL_CHOICES
+        ]
     )
 
 
@@ -149,7 +156,9 @@ async def answer_question(
 ) -> ApiResponse[MessageOutput]:
     """`docs/api-doc.md` mục 2.2 — trả lời `tool_ask` đang chờ, KHÔNG tạo `messages` mới."""
     try:
-        message = await service.answer_question(conversation_id, question_id, body)
+        message = await service.answer_question(
+            conversation_id, question_id, body
+        )
     except MessageNotFoundError as exc:
         raise HTTPException(
             status_code=404, detail="Không tìm thấy câu hỏi đang chờ trả lời."
@@ -157,7 +166,7 @@ async def answer_question(
     return ApiResponse(data=message)
 
 
-async def _sse_event_stream(conversation_id: str) -> AsyncIterator[str]:
+async def _sse_event_stream(redis: RedisClient, rabbitmq: RabbitMQClient, conversation_id: str) -> AsyncIterator[str]:
     """Forward nguyên văn từng message từ Redis Pub/Sub ra SSE — Core là pure forwarder,
     không transform (`docs/async-api-doc.md` mục 1).
 
@@ -166,10 +175,10 @@ async def _sse_event_stream(conversation_id: str) -> AsyncIterator[str]:
     Worker mới thực sự bắt đầu xử lý turn, nên không event nào rơi mất.
     """
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=conversation_id)
-    pubsub = redis_client.pubsub()
+    pubsub = redis.pubsub()
     await pubsub.subscribe(channel)
     try:
-        await flush_pending_turn(conversation_id)
+        await flush_pending_turn(conversation_id, redis, rabbitmq)
         async for message in pubsub.listen():
             if message["type"] != "message":
                 continue
@@ -183,12 +192,16 @@ async def _sse_event_stream(conversation_id: str) -> AsyncIterator[str]:
 
 
 @router.get("/conversations/{conversation_id}/stream", include_in_schema=False)
-async def stream_conversation(conversation_id: str) -> StreamingResponse:
+async def stream_conversation(
+    conversation_id: str,
+    redis: Annotated[RedisClient, Depends(get_redis_client)],
+    rabbitmq: Annotated[RabbitMQClient, Depends(get_rabbitmq_client)],
+) -> StreamingResponse:
     """`docs/async-api-doc.md` mục 1 — SSE, đóng khi nhận sentinel `[DONE]`.
 
     `include_in_schema=False`: SSE thuộc phạm vi `docs/asyncapi.yaml`, không lặp lại
     trong `docs/openapi.yaml` (OpenAPI mô tả REST request/response thông thường).
     """
     return StreamingResponse(
-        _sse_event_stream(conversation_id), media_type="text/event-stream"
+        _sse_event_stream(redis, rabbitmq, conversation_id), media_type="text/event-stream"
     )
