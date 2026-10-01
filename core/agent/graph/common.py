@@ -8,8 +8,8 @@ from typing import Any, NotRequired
 from langchain.agents import AgentState
 from pydantic import BaseModel, Field
 
-from app.core.constants import AGENT_EVENTS_CHANNEL
-from app.infra.redis_client import publish as redis_publish
+from app.config.constants import AGENT_EVENTS_CHANNEL
+from app.api.deps import get_redis_client
 
 # Tên tool hiển thị cho người dùng khi FE render bước "đang tra cứu ..." (SSE
 # `message.tool_result`/`message.thinking`, xem `emit_tool_result`/`emit_reasoning_step`
@@ -36,7 +36,9 @@ TOOL_DISPLAY_NAMES: dict[str, str] = {
 
 async def emit(conversation_id: str, payload: dict[str, Any]) -> None:
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=conversation_id)
-    await redis_publish(channel, json.dumps(payload, ensure_ascii=False, default=str))
+    await get_redis_client().publish(
+        channel, json.dumps(payload, ensure_ascii=False, default=str)
+    )
 
 
 # Gemini (`include_thoughts=True`, `llm.py`) mở đầu mỗi đoạn "thinking" bằng 1 dòng tiêu

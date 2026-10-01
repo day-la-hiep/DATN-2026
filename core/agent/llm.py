@@ -18,7 +18,7 @@ gọi thay vì để lọt qua rồi lỗi runtime khó hiểu lúc gọi model.
   - còn lại    : Gemini (`google_genai`) — dùng `thinking_level`/`include_thoughts`.
 
 Model chọn theo từng conversation (`Conversation.model`, `AGENT_MODEL_CHOICES` ở
-`app/core/config.py`) — `get_model()` được middleware `graph.py::select_model` gọi lại
+`app/config/settings.py`) — `get_model()` được middleware `graph.py::select_model` gọi lại
 NHIỀU LẦN/turn (mỗi lần LLM suy nghĩ trong vòng lặp ReAct), nên cache instance theo chuỗi
 "provider:model" bằng `lru_cache` thay vì tạo `BaseChatModel` mới mỗi lần (tốn khởi tạo
 HTTP client, mất connection pooling reuse)."""
@@ -28,7 +28,7 @@ from functools import lru_cache
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 
-from app.core.config import settings
+from app.config.settings import settings
 
 
 def get_model(model: str | None = None) -> BaseChatModel:

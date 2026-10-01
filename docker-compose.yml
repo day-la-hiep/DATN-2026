@@ -9,7 +9,7 @@ name: derma-hospital
 #
 # Nếu máy bạn ĐÃ có sẵn 1 MinIO khác chạy ngoài compose này (đụng cổng 9000/9001):
 # sửa thẳng cổng ở service `minio` bên dưới hoặc trỏ `MINIO_ENDPOINT`/`MINIO_ACCESS_KEY`/
-# `MINIO_SECRET_KEY` (core/app/core/config.py) vào instance đó, không cần khởi động
+# `MINIO_SECRET_KEY` (core/app/config/settings.py) vào instance đó, không cần khởi động
 # service `minio`.
 # App (core, agent worker, fe) vẫn chạy thủ công như hiện tại:
 #   docker compose up -d
@@ -18,7 +18,7 @@ name: derma-hospital
 #   cd fe   && pnpm dev
 #
 # Mọi giá trị ở đây ghi thẳng (không đọc biến môi trường/.env) và khớp default trong
-# `core/app/core/config.py`. Muốn đổi thì sửa trực tiếp file này.
+# `core/app/config/settings.py`. Muốn đổi thì sửa trực tiếp file này.
 
 services:
   postgres:
@@ -32,7 +32,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - derma-postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d derma_hospital_db"]
       interval: 5s
@@ -49,7 +49,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - derma-redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -69,7 +69,7 @@ services:
       - "5672:5672"     # AMQP
       - "15672:15672"  # Management UI (guest/guest)
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - derma-rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
@@ -88,7 +88,7 @@ services:
       - "6333:6333"      # REST
       - "6334:6334" # gRPC
     volumes:
-      - qdrant_data:/qdrant/storage
+      - derma-qdrant_data:/qdrant/storage
     networks:
       - derma-net
 
@@ -103,8 +103,8 @@ services:
       - "7474:7474"  # Browser UI
       - "7687:7687"  # Bolt (driver, langchain-neo4j)
     volumes:
-      - neo4j_data:/data
-      - neo4j_import:/import
+      - derma-neo4j_data:/data
+      - derma-neo4j_import:/import
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
       interval: 5s
@@ -118,7 +118,7 @@ services:
     container_name: derma-minio
     restart: unless-stopped
     environment:
-      # Khớp default `MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY` trong `core/app/core/config.py`.
+      # Khớp default `MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY` trong `core/app/config/settings.py`.
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
     command: server /data --console-address ":9001"
@@ -126,7 +126,7 @@ services:
       - "9000:9000"          # S3 API
       - "9001:9001"  # Console UI
     volumes:
-      - minio_data:/data
+      - derma-minio_data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -136,13 +136,13 @@ services:
       - derma-net
 
 volumes:
-  postgres_data:
-  redis_data:
-  rabbitmq_data:
-  qdrant_data:
-  neo4j_data:
-  neo4j_import:
-  minio_data:
+  derma-postgres_data:
+  derma-redis_data:
+  derma-rabbitmq_data:
+  derma-qdrant_data:
+  derma-neo4j_data:
+  derma-neo4j_import:
+  derma-minio_data:
 
 networks:
   derma-net:

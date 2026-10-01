@@ -99,7 +99,7 @@ async def emit_reasoning_step(
     (không chỉ lần cuối) — không đổi hành vi model, chỉ quan sát `response.result` rồi
     forward tiếp. Có "thinking" block thật từ provider (Gemini, `include_thoughts=True`)
     -> tóm tắt như cũ. KHÔNG có (đa số model qua OpenRouter hiện dùng,
-    `app/core/config.py::AGENT_MODEL`) nhưng model vừa quyết định gọi tool -> tự tổng hợp
+    `app/config/settings.py::AGENT_MODEL`) nhưng model vừa quyết định gọi tool -> tự tổng hợp
     1 dòng từ `TOOL_DISPLAY_NAMES` thay vì im lặng bỏ qua như bản cũ (`worker.py::_drive`
     trước đây chỉ emit khi có reasoning block) — cho người dùng thấy được bước suy luận dù
     provider không hỗ trợ "thinking" riêng. Không có cả 2 (vd lượt trả lời cuối, nội dung

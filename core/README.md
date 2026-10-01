@@ -147,7 +147,7 @@ python main.py
 
 # 5) (Tuỳ chọn) chạy Agent Worker để test hết luồng chat thật — mặc định dùng
 #    Gemini 2.0 Flash-Lite (đã cài langchain[google-genai]), cần set GOOGLE_API_KEY
-#    trong .env. Đổi provider khác: xem AGENT_MODEL trong app/core/config.py.
+#    trong .env. Đổi provider khác: xem AGENT_MODEL trong app/config/settings.py.
 cd core && python -m app.agent.worker
 ```
 
@@ -159,8 +159,10 @@ hướng dẫn từng bước khi thêm model/DTO/endpoint/kênh Redis/queue Rab
 
 ## Ghi chú
 
-- DB dùng SQLAlchemy **async** (driver `asyncpg`). `Base.metadata.create_all` chạy tự động
-  lúc startup cho tiện dev — khi lên production nên chuyển sang Alembic migration.
+- DB dùng SQLAlchemy **async** (driver `asyncpg`; pipeline sách chạy trong thread nền dùng thêm
+  driver đồng bộ `psycopg`). Schema do **Alembic** quản lý (`migrations/`):
+  - áp migration: `uv run alembic upgrade head` (chạy trước `python main.py`; image Docker tự chạy);
+  - đổi model: `uv run alembic revision --autogenerate -m "mô tả"`, đọc lại file sinh ra rồi commit.
 - Giá trị mặc định trong `.env.example` khớp với `docker-compose.yml` ở gốc repo, nên chạy
   `docker compose up -d` xong là dùng được ngay, không cần chỉnh gì thêm.
 

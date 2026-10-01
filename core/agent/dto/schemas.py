@@ -1,5 +1,5 @@
 """Message contract Core (FastAPI) ⇄ Agent Worker qua RabbitMQ (2 queue,
-`app/core/constants.py`).
+`app/config/constants.py`).
 
 `TurnRequest`: Core -> Worker (`agent_request_queue`) — mở turn mới/Steer (`type="turn"`)
 hoặc resume câu hỏi `ask_user` đang chờ (`type="resume"`, xem `app/agent/tools.py`).

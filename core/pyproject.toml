@@ -6,9 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aio-pika>=9.4",
+    "alembic>=1.13",
     "asyncpg>=0.29",
     "celery>=5.4",
     "datasets>=5.0.1",
+    "docling>=2.130.0",
     "fastapi[standard]>=0.141.1",
     "ipykernel>=7.3.0",
     "jupyter>=1.1.1",
@@ -19,10 +21,14 @@ dependencies = [
     "langchain[google-genai]>=0.3",
     "langgraph>=0.2",
     "minio>=7.2.20",
+    "numpy>=2.5.2",
+    "onnxruntime>=1.30.0",
     "pillow>=10.0",
+    "psycopg[binary]>=3.2",
     "pydantic-settings>=2.0",
     "qdrant-client>=1.19.0",
     "redis>=5.0",
+    "scipy>=1.18.1",
     "sentence-transformers>=6.0.1",
     "sqlalchemy>=2.0.52",
     "torch>=2.4",
@@ -53,7 +59,7 @@ typeCheckingMode = "basic"
 pythonVersion = "3.12"
 venvPath = "."
 venv = ".venv"
-include = ["app", "agent", "main.py"]
+include = ["app", "agent", "pipeline", "main.py"]
 exclude = ["**/__pycache__", ".venv"]
 
 [dependency-groups]

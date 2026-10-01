@@ -22,9 +22,9 @@ from aio_pika.abc import AbstractIncomingMessage
 
 from agent.dto.schemas import TurnRequest
 from agent.turn import handle_resume, handle_turn
-from app.core.config import log_startup_infra, settings
-from app.core.constants import AGENT_REQUEST_QUEUE
-from app.infra.rabbitmq_client import rabbitmq_client
+from app.config.settings import log_startup_infra, settings
+from app.config.constants import AGENT_REQUEST_QUEUE
+from app.api.deps import close_clients, get_rabbitmq_client
 
 # 1 Lock/conversation_id — `create_agent` KHÔNG hỗ trợ 2 lần `ainvoke()` đồng thời trên
 # CÙNG `thread_id` (đụng checkpoint). Turn/Steer mới tới khi turn TRƯỚC của CÙNG hội
@@ -56,10 +56,13 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
 async def main() -> None:
     log_startup_infra()
     print(f"[Agent Worker] model: {settings.AGENT_MODEL}")
-    await rabbitmq_client.connect()
+    await get_rabbitmq_client().connect()
     print(f"[Agent Worker] listening on '{AGENT_REQUEST_QUEUE}'...")
-    await rabbitmq_client.consume(AGENT_REQUEST_QUEUE, _on_message)
-    await asyncio.Event().wait()  # chạy tới khi bị dừng (Ctrl+C)
+    await get_rabbitmq_client().consume(AGENT_REQUEST_QUEUE, _on_message)
+    try:
+        await asyncio.Event().wait()  # chạy tới khi bị dừng (Ctrl+C)
+    finally:
+        await close_clients()
 
 
 if __name__ == "__main__":

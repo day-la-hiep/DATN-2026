@@ -4,7 +4,7 @@ Adaptive GeM pooling, 22 lớp bệnh) huấn luyện sẵn ở `model/` (repo r
 để load đúng `model_state_dict` trong checkpoint, KHÔNG import trực tiếp từ `model/` vì
 đó là thư mục thử nghiệm ngoài `core/`, không phải dependency Python cài đặt được).
 
-Ảnh vào tool qua object key MinIO (`app/infra/file_storage.py`), KHÔNG phải path đĩa
+Ảnh vào tool qua object key MinIO (`app/services/file_store_service.py`), KHÔNG phải path đĩa
 cục bộ hay base64 — luồng đầy đủ: FE `POST /uploads` -> `FileAttachmentDto.id` (=
 object key) -> `SendMessageInput.attachments` -> Core forward qua `TurnRequest.attachments`
 (`app/agent/schemas.py`) -> `worker.py::_human_message_content` chèn `object_key` vào
@@ -30,8 +30,8 @@ from PIL import Image
 from torchvision import models, transforms  # pyright: ignore[reportMissingTypeStubs]
 
 from agent.state.context import AgentContext
-from app.core.config import settings
-from app.infra.file_storage import get_object_bytes
+from app.config.settings import settings
+from app.api.deps import get_file_store_service
 
 IMG_SIZE = 224
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -164,7 +164,11 @@ class SkinCNNPredictor:
         self, image_bytes: bytes, top_k: int = 5
     ) -> list[dict[str, Any]]:
         image = Image.open(BytesIO(image_bytes)).convert("RGB")
-        x = cast(torch.Tensor, self.transform(image)).unsqueeze(0).to(self.device)
+        x = (
+            cast(torch.Tensor, self.transform(image))
+            .unsqueeze(0)
+            .to(self.device)
+        )
 
         logits = self.model(x)
         probabilities = torch.softmax(logits, dim=1)[0]
@@ -212,7 +216,9 @@ def _resolve_object_key(object_key: str, turn_keys: list[str]) -> str:
 
 
 @tool
-async def classify_skin_image(object_key: str, runtime: ToolRuntime[AgentContext, Any]) -> str:
+async def classify_skin_image(
+    object_key: str, runtime: ToolRuntime[AgentContext, Any]
+) -> str:
     """Phân loại ảnh tổn thương da bằng CNN đã huấn luyện (22 lớp bệnh da liễu phổ
     biến: Acne, Eczema, Psoriasis, Tinea, SkinCancer...), trả về top-5 kèm % tin cậy.
 
@@ -231,7 +237,7 @@ async def classify_skin_image(object_key: str, runtime: ToolRuntime[AgentContext
     """
     ctx: AgentContext = runtime.context  # type: ignore[assignment]
     object_key = _resolve_object_key(object_key, ctx.image_keys)
-    image_bytes = await get_object_bytes(object_key)
+    image_bytes = await get_file_store_service().get_object_bytes(object_key)
     if image_bytes is None:
         return f"Không tìm thấy ảnh với object_key='{object_key}'."
 

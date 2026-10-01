@@ -13,6 +13,7 @@ An toàn:
     rõ, prompt hệ thống (mục 1) yêu cầu bỏ qua mọi lệnh nằm trong dữ liệu.
   - Cache Redis theo query/URL (TTL 24h); lỗi Redis không làm hỏng tool.
 """
+
 import asyncio
 import hashlib
 import ipaddress
@@ -26,8 +27,8 @@ import trafilatura
 from langchain_core.tools import tool
 
 from agent.tools.knowledge_base_search import get_kb_embeddings
-from app.core.config import settings
-from app.infra.redis_client import redis_client
+from app.config.settings import settings
+from app.api.deps import get_redis_client
 
 _TAVILY_URL = "https://api.tavily.com/search"
 _CACHE_TTL = 24 * 3600
@@ -50,7 +51,10 @@ def _host_allowed(host: str | None) -> bool:
     if not host:
         return False
     host = host.lower().rstrip(".")
-    return any(host == d or host.endswith("." + d) for d in settings.TRUSTED_WEB_DOMAINS)
+    return any(
+        host == d or host.endswith("." + d)
+        for d in settings.TRUSTED_WEB_DOMAINS
+    )
 
 
 def _url_allowed(url: str) -> bool:
@@ -73,20 +77,23 @@ def _is_public_host(host: str) -> bool:
 
 async def _cache_get(key: str) -> str | None:
     try:
-        return await redis_client.get(key)  # type: ignore[no-any-return]
+        return await get_redis_client().get(key)
     except Exception:  # noqa: BLE001
         return None
 
 
 async def _cache_set(key: str, value: str) -> None:
     try:
-        await redis_client.set(key, value, ex=_CACHE_TTL)
+        await get_redis_client().set_value(key, value, ex_seconds=_CACHE_TTL)
     except Exception:  # noqa: BLE001
         pass
 
 
 def _cache_key(kind: str, *parts: str) -> str:
-    return f"agent:web:{kind}:" + hashlib.sha1("|".join(parts).encode()).hexdigest()
+    return (
+        f"agent:web:{kind}:"
+        + hashlib.sha1("|".join(parts).encode()).hexdigest()
+    )
 
 
 @tool
@@ -140,11 +147,15 @@ async def search_trusted_web(query: str, top_k: int = 5) -> str:
                 "title": r["title"],
                 "url": url,
                 "domain": urlparse(url).hostname,
-                "snippet": " ".join(str(r.get("content", "")).split())[:_SNIPPET_CHARS],
+                "snippet": " ".join(str(r.get("content", "")).split())[
+                    :_SNIPPET_CHARS
+                ],
             }
         )
     if not results:
-        return "Không tìm thấy kết quả nào từ các nguồn uy tín cho truy vấn này."
+        return (
+            "Không tìm thấy kết quả nào từ các nguồn uy tín cho truy vấn này."
+        )
 
     out = _UNTRUSTED_HEADER + "\n" + _dumps({"results": results})
     await _cache_set(key, out)
@@ -153,15 +164,23 @@ async def search_trusted_web(query: str, top_k: int = 5) -> str:
 
 async def _fetch_html(url: str) -> str:
     """Tải HTML, theo redirect THỦ CÔNG để kiểm tra allowlist + IP công cộng ở mọi bước."""
-    async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=False) as client:
+    async with httpx.AsyncClient(
+        timeout=_TIMEOUT, follow_redirects=False
+    ) as client:
         for _ in range(_MAX_REDIRECTS + 1):
             parsed = urlparse(url)
             if not _url_allowed(url):
                 raise ValueError(f"URL ngoài danh sách nguồn uy tín: {url}")
-            if not await asyncio.to_thread(_is_public_host, parsed.hostname or ""):
+            if not await asyncio.to_thread(
+                _is_public_host, parsed.hostname or ""
+            ):
                 raise ValueError("Host không phân giải ra địa chỉ công cộng.")
             async with client.stream(
-                "GET", url, headers={"User-Agent": "DermaHospitalBot/1.0 (+medical research)"}
+                "GET",
+                url,
+                headers={
+                    "User-Agent": "DermaHospitalBot/1.0 (+medical research)"
+                },
             ) as response:
                 if response.is_redirect:
                     url = urljoin(url, response.headers.get("location", ""))
@@ -169,13 +188,17 @@ async def _fetch_html(url: str) -> str:
                 response.raise_for_status()
                 ctype = response.headers.get("content-type", "")
                 if "html" not in ctype and "text" not in ctype:
-                    raise ValueError(f"Định dạng không hỗ trợ: {ctype or 'không rõ'}")
+                    raise ValueError(
+                        f"Định dạng không hỗ trợ: {ctype or 'không rõ'}"
+                    )
                 body = bytearray()
                 async for chunk in response.aiter_bytes():
                     body.extend(chunk)
                     if len(body) > _MAX_BYTES:
                         raise ValueError("Trang quá lớn (>2MB).")
-                return bytes(body).decode(response.encoding or "utf-8", errors="replace")
+                return bytes(body).decode(
+                    response.encoding or "utf-8", errors="replace"
+                )
     raise ValueError("Quá nhiều lần chuyển hướng.")
 
 
@@ -187,10 +210,14 @@ def _select_focused(text: str, focus: str) -> str:
     embeddings = get_kb_embeddings()
     vectors = embeddings.embed_documents(paragraphs)
     query = embeddings.embed_query(focus)
-    scores = [sum(a * b for a, b in zip(v, query)) for v in vectors]  # đã chuẩn hoá -> cosine
+    scores = [
+        sum(a * b for a, b in zip(v, query)) for v in vectors
+    ]  # đã chuẩn hoá -> cosine
     chosen: set[int] = set()
     total = 0
-    for i in sorted(range(len(paragraphs)), key=lambda i: scores[i], reverse=True):
+    for i in sorted(
+        range(len(paragraphs)), key=lambda i: scores[i], reverse=True
+    ):
         if total + len(paragraphs[i]) > _MAX_TEXT_CHARS:
             continue
         chosen.add(i)

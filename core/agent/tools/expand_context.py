@@ -27,10 +27,7 @@ from typing import Any, LiteralString
 from langchain_core.tools import tool
 
 from agent.tools.dermo_terms import get_driver, search_dermo_terms
-from app.infra.qdrant_client import (
-    get_kb_chunks_by_disease_id,
-    get_kb_disease_id_by_dermo_id,
-)
+from app.api.deps import get_knowledge_base_service
 
 _MAX_INPUTS = 6
 _SHARED_CAP = 2.0  # trần điểm 2-hop: bệnh nhiều triệu chứng chung (toàn thân) không được lấn át tín hiệu trực tiếp
@@ -158,7 +155,7 @@ async def _attach_kb(candidate: dict[str, Any]) -> dict[str, Any]:
     dermo = await _exact_dermo(candidate["name"])
     candidate["dermo_id"] = dermo["id"] if dermo else None
     candidate["kb_disease_id"] = (
-        await get_kb_disease_id_by_dermo_id(dermo["id"]) if dermo else None
+        await get_knowledge_base_service().get_kb_disease_id_by_dermo_id(dermo["id"]) if dermo else None
     )
     return candidate
 
@@ -214,7 +211,7 @@ async def expand_entity_context(entities: list[str], top_n: int = 3) -> str:
         c.pop("_rank")
         c["guideline"] = []
         if c["kb_disease_id"]:
-            records = await get_kb_chunks_by_disease_id(c["kb_disease_id"])
+            records = await get_knowledge_base_service().get_kb_chunks_by_disease_id(c["kb_disease_id"])
             by_type = {(r.payload or {}).get("chunk_type"): r.payload or {} for r in records}
             c["guideline"] = [
                 {"chunk_type": t, "text": _trim(str(by_type[t].get("text", ""))),
