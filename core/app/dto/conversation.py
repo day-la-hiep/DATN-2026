@@ -1,7 +1,8 @@
 """DTO cho resource Conversation (`docs/api-doc.md` mục 1)."""
+
 from pydantic import field_validator
 
-from app.core.config import settings
+from app.config.settings import settings
 from app.dto.common import CamelModel
 
 
@@ -34,7 +35,7 @@ class CreateConversationInput(CamelModel):
     user_id: str
     init_message: str
     title: str | None = None
-    # id trong `AGENT_MODEL_CHOICES` (`app/core/config.py`) — bỏ trống dùng
+    # id trong `AGENT_MODEL_CHOICES` (`app/config/settings.py`) — bỏ trống dùng
     # `AGENT_DEFAULT_MODEL_ID`.
     model: str | None = None
 

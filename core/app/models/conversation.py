@@ -1,22 +1,23 @@
 """Conversation — 1 cuộc hội thoại của 1 user (`docs/db-diagram.md` mục 1)."""
+
 from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.config import settings
-from app.db.base import Base
+from app.config.settings import settings
+from app.models.base import Base
 
 
 class Conversation(Base):
     __tablename__ = "conversations"
 
-    # 64 (không phải 36 = độ dài UUID trần) vì `new_conversation_id()` (`app/core/ids.py`)
+    # 64 (không phải 36 = độ dài UUID trần) vì `new_conversation_id()` (`app/config/ids.py`)
     # sinh id có tiền tố resource (`conv-<uuid4>` = 41 ký tự).
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     title: Mapped[str] = mapped_column(String(255), default="")
-    # id ngắn trong `AGENT_MODEL_CHOICES` (`app/core/config.py`), KHÔNG phải chuỗi
+    # id ngắn trong `AGENT_MODEL_CHOICES` (`app/config/settings.py`), KHÔNG phải chuỗi
     # "provider:model" thật — worker tự map sang chuỗi thật lúc chạy turn
     # (`app/agent/worker.py::_conversation_for`) để đổi danh sách model không cần
     # migration cột này. Chọn 1 lần lúc tạo hội thoại, đổi được sau qua `PATCH

@@ -30,7 +30,7 @@ khi đã chắc chắn đúng bệnh.
 Embedding: LOCAL (`app/agent/embeddings.py`, sentence-transformers — KHÔNG cần API
 key, cùng embedding dùng bởi long-term memory `app/agent/memory.py`), 384 chiều —
 PHẢI khớp `KB_EMBEDDING_DIM` dùng khi ingest (`data-ingest/01_normalize/scripts/load_knowledge_base.py`)
-và `ensure_kb_collection(dim=...)` (`app/infra/qdrant_client.py`). Collection Qdrant
+và `ensure_kb_collection(dim=...)` (`app/services/knowledge_base_service.py`). Collection Qdrant
 riêng (`settings.QDRANT_KB_COLLECTION`), KHÔNG lẫn với collection memory người dùng.
 """
 
@@ -40,11 +40,7 @@ from langchain_core.tools import tool
 from qdrant_client.models import Record, ScoredPoint
 
 from agent.embeddings import EMBEDDING_DIM, LocalEmbeddings
-from app.infra.qdrant_client import (
-    get_kb_chunks_by_disease_id,
-    get_kb_disease_id_by_dermo_id,
-    search_kb_chunks,
-)
+from app.api.deps import get_knowledge_base_service
 
 KB_EMBEDDING_DIM = EMBEDDING_DIM
 
@@ -91,7 +87,7 @@ def _format_record(record: Record) -> str:
 
 async def find_disease_id_by_dermo_id(dermo_id: str) -> str | None:
     """Wrapper mỏng cho `entity_grounding.py` — xem docstring module ở đầu file."""
-    return await get_kb_disease_id_by_dermo_id(dermo_id)
+    return await get_knowledge_base_service().get_kb_disease_id_by_dermo_id(dermo_id)
 
 
 @tool
@@ -113,7 +109,7 @@ async def search_disease_guidelines(query: str, chunk_type: str = "all", top_k: 
     """
     top_k = min(max(top_k, 1), 10)
     vector = await get_kb_embeddings().aembed_query(query)
-    matches = await search_kb_chunks(vector=vector, limit=top_k, chunk_type=chunk_type)
+    matches = await get_knowledge_base_service().search_kb_chunks(vector=vector, limit=top_k, chunk_type=chunk_type)
 
     if not matches:
         return "Không tìm thấy đoạn guideline nào phù hợp trong cơ sở dữ liệu."
@@ -133,7 +129,7 @@ async def get_disease_guideline_profile(disease_id: str) -> str:
         disease_id: Id bệnh lấy từ payload kết quả `search_disease_guidelines` (field
             `disease_id`, vd "mun_trung_ca_medlineplus"), KHÔNG phải tên bệnh tự do.
     """
-    records = await get_kb_chunks_by_disease_id(disease_id)
+    records = await get_knowledge_base_service().get_kb_chunks_by_disease_id(disease_id)
 
     if not records:
         return f"Không tìm thấy bệnh nào với disease_id='{disease_id}' trong cơ sở dữ liệu."

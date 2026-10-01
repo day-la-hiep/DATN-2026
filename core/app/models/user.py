@@ -5,13 +5,13 @@ from datetime import UTC, datetime
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.models.base import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    # 64 (không phải 36 = độ dài UUID trần) vì `new_user_id()` (`app/core/ids.py`) sinh
+    # 64 (không phải 36 = độ dài UUID trần) vì `new_user_id()` (`app/config/ids.py`) sinh
     # id có tiền tố resource (`user-<uuid4>` = 41 ký tự).
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     name: Mapped[str | None] = mapped_column(String(255), default=None)

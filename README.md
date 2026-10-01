@@ -104,7 +104,7 @@ docker compose ps    # 6 container: postgres, redis, rabbitmq, qdrant, neo4j, mi
 ```
 
 Mọi giá trị trong `docker-compose.yml` ghi thẳng (không đọc `.env`) và khớp default của
-`core/app/core/config.py`: Postgres `postgres:postgres@localhost:5432/derma_hospital_db`, Neo4j
+`core/app/config/settings.py`: Postgres `postgres:postgres@localhost:5432/derma_hospital_db`, Neo4j
 `neo4j/derma12345`, MinIO `minio/minio123`, RabbitMQ `guest/guest`. Muốn đổi thì sửa thẳng file này.
 
 ### 5.2. Backend (Core)

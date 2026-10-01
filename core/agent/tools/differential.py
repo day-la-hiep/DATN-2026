@@ -35,10 +35,7 @@ from agent.tools.expand_context import (
 )
 from agent.llm import get_model
 from agent.tools.knowledge_base_search import get_kb_embeddings
-from app.infra.qdrant_client import (
-    get_kb_chunks_by_disease_id,
-    search_phenotypes,
-)
+from app.api.deps import get_knowledge_base_service
 
 # Điểm cosine tối thiểu để coi 1 phenotype là "khớp". MiniLM chỉ khớp bề mặt chữ nên điểm cao
 # chưa chắc đúng nghĩa (đã thấy "asdfgh" -> 0.61): khớp thật thường >= 0.75 khi truy vấn là thuật
@@ -133,7 +130,7 @@ async def describe_morphology(description: str, top_k: int = 5) -> str:
     best: dict[str, Any] = {}
     for term in terms:
         vector = await embeddings.aembed_query(term)
-        for m in await search_phenotypes(vector=vector, limit=top_k):
+        for m in await get_knowledge_base_service().search_phenotypes(vector=vector, limit=top_k):
             pid = str((m.payload or {}).get("primekg_id"))
             if pid not in best or m.score > best[pid].score:
                 best[pid] = m
@@ -178,7 +175,7 @@ def _dedupe_by_name(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 async def _guideline_snippets(kb_disease_id: str) -> list[dict[str, str]]:
-    records = await get_kb_chunks_by_disease_id(kb_disease_id)
+    records = await get_knowledge_base_service().get_kb_chunks_by_disease_id(kb_disease_id)
     by_type = {
         (r.payload or {}).get("chunk_type"): r.payload or {} for r in records
     }

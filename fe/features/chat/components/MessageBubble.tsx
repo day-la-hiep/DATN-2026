@@ -55,21 +55,21 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         <div id={`msg-${message.id}`} className="flex w-full justify-end py-1">
           <div
             ref={contentRef}
-            className="w-auto max-w-[90%] sm:max-w-[80%] rounded-2xl rounded-tr-xs bg-brand text-white p-4 shadow-sm shadow-brand/20"
+            className="w-auto max-w-[90%] sm:max-w-[80%] rounded-2xl rounded-tr-xs bg-brand text-brand-foreground p-4 shadow-sm shadow-brand/20"
           >
             <div className="flex flex-col gap-2">
               {qaPairs.map((pair, index) => (
                 <div key={index} className="flex items-start gap-2 text-xs sm:text-sm">
-                  <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-white/20 text-white shrink-0">
+                  <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-brand-foreground/15 text-brand-foreground shrink-0">
                     Q{index + 1}
                   </span>
                   <div className="flex-1 min-w-0 leading-relaxed">
                     {pair.question && (
-                      <span className="text-white/80 mr-1.5">
+                      <span className="text-brand-foreground/80 mr-1.5">
                         {pair.question}:
                       </span>
                     )}
-                    <span className="font-medium text-white">
+                    <span className="font-medium text-brand-foreground">
                       {pair.answer}
                     </span>
                   </div>
@@ -94,7 +94,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         >
           <div
             ref={contentRef}
-            className="w-full rounded-2xl rounded-tr-xs bg-brand text-white px-4 py-3 sm:px-5 sm:py-3.5 shadow-sm shadow-brand/20 leading-relaxed"
+            className="w-full rounded-2xl rounded-tr-xs bg-brand text-brand-foreground px-4 py-3 sm:px-5 sm:py-3.5 shadow-sm shadow-brand/20 leading-relaxed"
           >
             {/* Trích dẫn selection */}
             {(() => {
@@ -109,12 +109,12 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
                   {refs.map((ref, idx) => (
                     <div
                       key={`${ref.source}-${ref.refId}-${idx}`}
-                      className="rounded-xl border-l-2 border-white/60 bg-white/10 p-2.5 text-white text-xs"
+                      className="rounded-xl border-l-2 border-brand-foreground/60 bg-brand-foreground/10 p-2.5 text-brand-foreground text-xs"
                     >
-                      <span className="block text-[10px] font-mono uppercase tracking-wider text-white/80 font-semibold">
+                      <span className="block text-[10px] font-mono uppercase tracking-wider text-brand-foreground/80 font-semibold">
                         Trích dẫn {refs.length > 1 ? `#${idx + 1}` : ""}:
                       </span>
-                      <p className="mt-0.5 whitespace-pre-wrap text-white/95 line-clamp-3">
+                      <p className="mt-0.5 whitespace-pre-wrap text-brand-foreground/95 line-clamp-3">
                         “{ref.text}”
                       </p>
                     </div>
@@ -129,7 +129,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
                 {message.attachments.map((file) => {
                   const isPreviewableImage = file.type?.startsWith("image/") && file.url;
                   return isPreviewableImage ? (
-                    <div key={file.id} className="rounded-xl overflow-hidden border border-white/20">
+                    <div key={file.id} className="rounded-xl overflow-hidden border border-brand-foreground/20">
                       <ImageThumbnail
                         url={file.url!}
                         name={file.name}
@@ -140,7 +140,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
                   ) : (
                     <div
                       key={file.id}
-                      className="flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-xs text-white"
+                      className="flex items-center gap-1.5 rounded-lg border border-brand-foreground/20 bg-brand-foreground/10 px-2.5 py-1.5 text-xs text-brand-foreground"
                     >
                       <FileText className="size-3.5" />
                       <span>{file.name}</span>
@@ -150,7 +150,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
               </div>
             )}
 
-            <p className="whitespace-pre-wrap text-sm sm:text-base font-normal text-white">{message.content}</p>
+            <p className="whitespace-pre-wrap text-sm sm:text-base font-normal text-brand-foreground">{message.content}</p>
           </div>
         </SelectionAsk>
       </div>

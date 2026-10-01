@@ -270,7 +270,7 @@ function StepItem({
                     variant="outline"
                     className="shrink-0 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400 py-0 px-2 font-medium rounded-full"
                   >
-                    <CheckCircle2 className="size-2.5 text-emerald-500 mr-1" />
+                    <CheckCircle2 className="size-2.5 text-emerald-500 dark:text-emerald-400 mr-1" />
                     <span className="max-w-[120px] truncate">{step.choice?.answered?.label}</span>
                   </Badge>
                 )}
@@ -378,7 +378,7 @@ function StepItem({
                         >
                           {outputCopied ? (
                             <>
-                              <Check className="size-3 text-emerald-500" />
+                              <Check className="size-3 text-emerald-500 dark:text-emerald-400" />
                               <span className="text-emerald-600 dark:text-emerald-400 font-medium">Đã chép</span>
                             </>
                           ) : (
@@ -431,7 +431,7 @@ function StepItem({
                     <span className="size-1.5 rounded-full bg-brand" />
                     <span>Lựa chọn đã ghi nhận: <strong className="text-brand font-semibold">{step.choice?.answered?.label}</strong></span>
                   </div>
-                  <Badge variant="outline" className="border-brand/30 bg-brand text-white text-[10px] py-0 px-2 rounded-full">
+                  <Badge variant="outline" className="border-brand/30 bg-brand text-brand-foreground text-[10px] py-0 px-2 rounded-full">
                     Đã chọn
                   </Badge>
                 </div>

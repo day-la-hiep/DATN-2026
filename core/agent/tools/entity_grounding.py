@@ -28,6 +28,7 @@ CỨNG trên payload Qdrant `dermo_id` (gắn sẵn lúc ingest bởi
 tên bệnh rồi semantic search như trước. Hiện ~64/87 bệnh trong KB match được DermO term
 (phần còn lại `kb_disease_id: null`, fallback về `search_disease_guidelines` như cũ).
 """
+
 import json
 from typing import Any, Literal
 
@@ -39,7 +40,7 @@ from pydantic import BaseModel, Field
 from agent.llm import get_model
 from agent.tools.dermo_terms import search_dermo_terms
 from agent.tools.knowledge_base_search import find_disease_id_by_dermo_id
-from app.core.config import settings
+from app.config.settings import settings
 
 _EXTRACT_SYSTEM = (
     "Trích xuất các thực thể y khoa DA LIỄU (tên bệnh, triệu chứng, thuốc) được nhắc "
@@ -83,6 +84,7 @@ def _resolve_relation_types(relation_types: list[str] | None) -> list[str]:
     valid = [r for r in relation_types if r.upper() in _PRIMEKG_ALL_RELS]
     return [r.upper() for r in valid] or _PRIMEKG_DEFAULT_RELS
 
+
 _PRIMEKG_SEARCH_QUERY = """
 MATCH (n:Entity)
 WHERE any(name IN $names WHERE toLower(n.name) CONTAINS toLower(name))
@@ -107,14 +109,17 @@ class ExtractedEntity(BaseModel):
 
 
 class ExtractedEntities(BaseModel):
-    entities: list[ExtractedEntity] = Field(default_factory=lambda: list[ExtractedEntity]())
+    entities: list[ExtractedEntity] = Field(
+        default_factory=lambda: list[ExtractedEntity]()
+    )
 
 
 def _get_primekg_driver() -> AsyncDriver:
     global _primekg_driver
     if _primekg_driver is None:
         _primekg_driver = AsyncGraphDatabase.driver(  # pyright: ignore[reportUnknownMemberType]
-            settings.NEO4J_URL, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
+            settings.NEO4J_URL,
+            auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
         )
     return _primekg_driver
 
@@ -122,11 +127,13 @@ def _get_primekg_driver() -> AsyncDriver:
 async def _extract_entities(query: str) -> list[ExtractedEntity]:
     # `method="function_calling"` bắt buộc — mặc định (tự chọn theo model, thường ngả
     # về "json_schema" strict) làm proxy OpenRouter cho model hiện dùng
-    # (`nvidia/nemotron-3-super-120b-a12b:free`, xem `app/core/config.py::AGENT_MODEL`)
+    # (`nvidia/nemotron-3-super-120b-a12b:free`, xem `app/config/settings.py::AGENT_MODEL`)
     # trả response rỗng/`choices=None`, khiến `openai` SDK crash lúc parse
     # (`TypeError: 'NoneType' object is not iterable`) — đã verify "function_calling"
     # chạy ổn định với model này.
-    model = get_model().with_structured_output(ExtractedEntities, method="function_calling")
+    model = get_model().with_structured_output(
+        ExtractedEntities, method="function_calling"
+    )
     result = await model.ainvoke(
         [SystemMessage(content=_EXTRACT_SYSTEM), HumanMessage(content=query)]
     )
@@ -155,7 +162,9 @@ async def _search_primekg(
 
 
 @tool
-async def ground_medical_entities(query: str, relation_types: list[str] | None = None) -> str:
+async def ground_medical_entities(
+    query: str, relation_types: list[str] | None = None
+) -> str:
     """Chuyển câu hỏi tự nhiên của người dùng thành CONTEXT y khoa có cấu trúc (JSON):
     trích xuất từng thực thể (bệnh/triệu chứng/thuốc) nhắc tới trong câu hỏi, chuẩn hoá
     qua DermO (id/định nghĩa/từ đồng nghĩa), rồi dùng các từ đồng nghĩa đó search PrimeKG
@@ -187,7 +196,10 @@ async def ground_medical_entities(query: str, relation_types: list[str] | None =
     entities = await _extract_entities(query)
     if not entities:
         return json.dumps(
-            {"entities": [], "note": "Không trích xuất được thực thể y khoa nào từ câu hỏi."},
+            {
+                "entities": [],
+                "note": "Không trích xuất được thực thể y khoa nào từ câu hỏi.",
+            },
             ensure_ascii=False,
         )
 
@@ -197,7 +209,11 @@ async def ground_medical_entities(query: str, relation_types: list[str] | None =
         # phải ontology thuốc — map `type == "drug"` qua đây dễ khớp nhầm (vd "aspirin"
         # từng khớp nhầm "aspirin burn", 1 bệnh lý bỏng do hoá chất, không phải thuốc).
         # Thực thể `drug` search PrimeKG thẳng bằng tên gốc, bỏ qua bước chuẩn hoá DermO.
-        dermo_records = await search_dermo_terms(entity.text, limit=1) if entity.type != "drug" else []
+        dermo_records = (
+            await search_dermo_terms(entity.text, limit=1)
+            if entity.type != "drug"
+            else []
+        )
         dermo_info: dict[str, Any] | None = None
         search_names = [entity.text]
 
@@ -211,7 +227,9 @@ async def ground_medical_entities(query: str, relation_types: list[str] | None =
                 "synonyms": record.get("synonyms") or [],
                 "parents": record.get("parents") or [],
             }
-            search_names = list({entity.text, record["name"], *dermo_info["synonyms"]})
+            search_names = list(
+                {entity.text, record["name"], *dermo_info["synonyms"]}
+            )
             # Cầu nối id-based với guideline KB (xem docstring
             # `knowledge_base_search.py::find_disease_id_by_dermo_id`) — chỉ set được khi
             # bệnh này đã match DermO lúc ingest (`04_link_dermo_ids.py`); `None` nghĩa là

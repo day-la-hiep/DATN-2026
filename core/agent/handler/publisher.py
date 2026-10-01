@@ -6,13 +6,12 @@ import json
 from typing import Any, Literal
 
 from agent.dto.schemas import AgentResponseMessage, TurnRequest
-from app.core.constants import AGENT_RESPONSE_QUEUE, STREAM_DONE_SENTINEL
-from app.infra.rabbitmq_client import rabbitmq_client
-from app.infra.redis_client import publish as redis_publish
+from app.config.constants import AGENT_RESPONSE_QUEUE, STREAM_DONE_SENTINEL
+from app.api.deps import get_rabbitmq_client, get_redis_client
 
 
 async def emit(channel: str, payload: dict[str, Any]) -> None:
-    await redis_publish(channel, json.dumps(payload))
+    await get_redis_client().publish(channel, json.dumps(payload))
 
 
 async def finish_turn(
@@ -29,8 +28,8 @@ async def finish_turn(
     `[DONE]`, rồi báo Core (`agent_response_queue`) để upsert dòng assistant.
     `reasoning` rỗng -> None để Core không ghi đè `Message.extra.reasoning` bằng list rỗng."""
     await emit(channel, event)
-    await redis_publish(channel, STREAM_DONE_SENTINEL)
-    await rabbitmq_client.publish(
+    await get_redis_client().publish(channel, STREAM_DONE_SENTINEL)
+    await get_rabbitmq_client().publish(
         AGENT_RESPONSE_QUEUE,
         AgentResponseMessage(
             conversation_id=req.conversation_id,

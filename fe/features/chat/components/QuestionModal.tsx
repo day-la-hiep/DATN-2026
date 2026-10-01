@@ -132,7 +132,7 @@ export function QuestionModal({ conversationId }: QuestionModalProps) {
         >
           <Sparkles className="size-3.5 text-brand animate-spin" />
           <span>Có câu hỏi làm rõ từ AI ({unansweredMessages.length})</span>
-          <span className="bg-brand text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">Xem</span>
+          <span className="bg-brand text-brand-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full">Xem</span>
         </button>
       </div>
     );

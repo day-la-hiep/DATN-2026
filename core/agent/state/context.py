@@ -28,7 +28,7 @@ class AgentContext:
     # tham số LLM truyền vào với danh sách này vì LLM hay chép sai chuỗi hex dài.
     image_keys: list[str] = field(default_factory=list)
     # Chuỗi "provider:model" (KHÔNG phải id ngắn) của conversation hiện tại — worker đã
-    # resolve từ `Conversation.model` qua `AGENT_MODEL_CHOICES` (`app/core/config.py`)
+    # resolve từ `Conversation.model` qua `AGENT_MODEL_CHOICES` (`app/config/settings.py`)
     # trước khi build context này, xem `app/agent/worker.py::_conversation_for`. Rỗng ->
     # middleware `select_model` (`app/agent/graph.py`) fallback `settings.AGENT_MODEL`.
     model: str = ""

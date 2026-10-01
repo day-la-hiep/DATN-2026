@@ -16,9 +16,9 @@ from agent.dto.schemas import TurnRequest
 from agent.graph.chat_graph import agent_graph, config_for
 from agent.state.context import AgentContext
 from agent.handler.publisher import emit, finish_turn
-from app.core.config import settings
-from app.core.constants import AGENT_EVENTS_CHANNEL
-from app.db.session import AsyncSessionLocal
+from app.config.settings import settings
+from app.config.constants import AGENT_EVENTS_CHANNEL
+from app.api.deps import get_postgres_client
 from app.dto.message import ChoiceOptionDto, MessageChoiceDto
 from app.repositories.conversation_repository import ConversationRepository
 
@@ -30,11 +30,11 @@ _ERROR_TEXT = (
 
 async def _conversation_for(conversation_id: str) -> tuple[str, str]:
     """`(user_id, model)` — `model` đã resolve từ id ngắn (`Conversation.model`) sang
-    chuỗi "provider:model" thật qua `AGENT_MODEL_CHOICES` (`app/core/config.py`). Id
+    chuỗi "provider:model" thật qua `AGENT_MODEL_CHOICES` (`app/config/settings.py`). Id
     rỗng/không còn trong `AGENT_MODEL_CHOICES` (model bị gỡ khỏi danh sách sau khi
     conversation đã chọn) -> trả rỗng, `AgentContext.model` rỗng -> middleware
     `select_model` tự fallback `settings.AGENT_MODEL`."""
-    async with AsyncSessionLocal() as db:
+    async with get_postgres_client().session_factory() as db:
         conversation = await ConversationRepository(db).get(conversation_id)
     if conversation is None:
         return "", ""
@@ -98,7 +98,8 @@ async def _stream_graph(
             # vượt ngưỡng), không lẫn vào stream trả lời user.
             if meta.get("langgraph_node") == "model" and msg.text:
                 await emit(
-                    channel, {"type": "message.delta", "delta": msg.text, **base}
+                    channel,
+                    {"type": "message.delta", "delta": msg.text, **base},
                 )
             continue
 
@@ -128,7 +129,9 @@ async def _finish_with_question(
     ĐÚNG lần dừng này) dùng làm `questionId` cho FE (`POST
     .../questions/{questionId}/answer`, `docs/api-doc.md` mục 2.2)."""
     raw: Any = interrupt.value
-    payload: dict[str, Any] = cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
+    payload: dict[str, Any] = (
+        cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
+    )
     choice = MessageChoiceDto(
         question_id=interrupt.id,
         question=str(payload.get("question", "")),
@@ -157,7 +160,9 @@ async def _drive(req: TurnRequest, input_: object) -> None:
         "messageId": req.message_id,
     }
 
-    await emit(channel, {"type": "message.started", "corrId": req.corr_id, **base})
+    await emit(
+        channel, {"type": "message.started", "corrId": req.corr_id, **base}
+    )
 
     try:
         final_message, interrupt = await _stream_graph(

@@ -579,7 +579,7 @@ export function ChatInput({
                 onClick={handleSend}
                 disabled={!canSend}
                 aria-label="Gửi tin nhắn"
-                className="flex size-9 items-center justify-center rounded-xl bg-linear-to-r from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-white shadow-xs hover:shadow-accent hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:pointer-events-none disabled:opacity-30 cursor-pointer"
+                className="flex size-9 items-center justify-center rounded-xl bg-linear-to-r from-[var(--brand)] to-[var(--brand-secondary,#4d7cff)] text-brand-foreground shadow-xs hover:shadow-accent hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:pointer-events-none disabled:opacity-30 cursor-pointer"
               >
                 <ArrowUp className="size-4.5" />
               </button>

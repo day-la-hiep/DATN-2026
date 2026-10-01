@@ -9,10 +9,8 @@ from typing import Any
 from aio_pika.abc import AbstractIncomingMessage
 
 from agent.dto.schemas import AgentResponseMessage
-from app.core.constants import AGENT_ACTIVE_TURN_KEY, AGENT_RESPONSE_QUEUE
-from app.db.session import AsyncSessionLocal
-from app.infra.rabbitmq_client import rabbitmq_client
-from app.infra.redis_client import delete as redis_delete
+from app.config.constants import AGENT_ACTIVE_TURN_KEY, AGENT_RESPONSE_QUEUE
+from app.api.deps import get_postgres_client, get_rabbitmq_client, get_redis_client
 from app.repositories.message_repository import MessageRepository
 
 
@@ -37,7 +35,7 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
         if msg.choice is not None:
             extra["choice"] = msg.choice
 
-        async with AsyncSessionLocal() as db:
+        async with get_postgres_client().session_factory() as db:
             repo = MessageRepository(db)
             await repo.upsert_assistant(
                 message_id=msg.message_id,
@@ -51,7 +49,7 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
         if msg.status == "done":
             # Turn tạm dừng (`status="question"`) vẫn CÒN active — resume tiếp tục CÙNG
             # `message_id`, chỉ xoá key khi turn thật sự kết thúc.
-            await redis_delete(
+            await get_redis_client().delete(
                 AGENT_ACTIVE_TURN_KEY.format(
                     conversation_id=msg.conversation_id
                 )
@@ -61,4 +59,4 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
 async def start_consuming() -> None:
     """Đăng ký consumer rồi return ngay (không block) — gọi trong `main.py` lifespan
     TRƯỚC `yield`, an toàn vì `consume()` chỉ đăng ký callback."""
-    await rabbitmq_client.consume(AGENT_RESPONSE_QUEUE, _on_message)
+    await get_rabbitmq_client().consume(AGENT_RESPONSE_QUEUE, _on_message)

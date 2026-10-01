@@ -15,6 +15,7 @@ Enterprise) — `ReadOnlyNeo4jGraph` chặn Cypher có từ khoá ghi (CREATE/ME
 REMOVE/DROP...) ở tầng ứng dụng trước khi thực thi, phòng LLM sinh nhầm Cypher ghi đè dữ
 liệu tham khảo tĩnh này.
 """
+
 import re
 from typing import Any
 
@@ -24,7 +25,7 @@ from langchain_neo4j import GraphCypherQAChain, Neo4jGraph
 from langchain_neo4j.chains.graph_qa.prompts import CYPHER_GENERATION_PROMPT
 
 from agent.llm import get_model
-from app.core.config import settings
+from app.config.settings import settings
 
 # Dữ liệu gốc PrimeKG đặt tên node theo THỂ BỆNH CỤ THỂ (vd "guttate psoriasis",
 # "pustular psoriasis"), hiếm khi có node tên đúng dạng chung chung (vd không có node
@@ -35,7 +36,7 @@ from app.core.config import settings
 _CYPHER_GENERATION_TEMPLATE = (
     CYPHER_GENERATION_PROMPT.template
     + "\n\nLưu ý QUAN TRỌNG: tên node trong dữ liệu này thường là thể bệnh/thực thể CỤ "
-    "THỂ (vd \"guttate psoriasis\" thay vì \"psoriasis\"), KHÔNG so khớp tuyệt đối "
+    'THỂ (vd "guttate psoriasis" thay vì "psoriasis"), KHÔNG so khớp tuyệt đối '
     "`{{name: 'psoriasis'}}` — dùng `toLower(n.name) CONTAINS toLower('psoriasis')` để "
     "bắt được mọi thể bệnh liên quan. Ví dụ:\n"
     "MATCH (d:Drug)-[r:CONTRAINDICATION]->(dis:Disease) "
@@ -81,7 +82,12 @@ _EXCLUDE_TYPES = [
 class ReadOnlyNeo4jGraph(Neo4jGraph):
     """`Neo4jGraph` chặn Cypher có từ khoá ghi — xem docstring module."""
 
-    def query(self, query: str, params: dict[str, Any] | None = None, session_params: dict[str, Any] | None = None) -> list[dict[str, Any]]:  # type: ignore[override]
+    def query(
+        self,
+        query: str,
+        params: dict[str, Any] | None = None,
+        session_params: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:  # type: ignore[override]
         if _WRITE_CLAUSE_RE.search(query):
             raise ValueError(
                 f"Cypher bị từ chối (có từ khoá ghi, chỉ cho phép đọc): {query!r}"
@@ -127,4 +133,7 @@ async def query_dermatology_kg(question: str) -> str:
     """
     chain = _get_chain()
     result = await chain.ainvoke({"query": question})
-    return str(result.get("result") or "Không tìm thấy thông tin liên quan trong knowledge graph.")
+    return str(
+        result.get("result")
+        or "Không tìm thấy thông tin liên quan trong knowledge graph."
+    )

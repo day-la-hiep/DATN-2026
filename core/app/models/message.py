@@ -10,13 +10,13 @@ from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.models.base import Base
 
 
 class Message(Base):
     __tablename__ = "messages"
 
-    # 64 (không phải 36 = độ dài UUID trần) vì `new_message_id()` (`app/core/ids.py`)
+    # 64 (không phải 36 = độ dài UUID trần) vì `new_message_id()` (`app/config/ids.py`)
     # sinh id có tiền tố resource (`msg-<uuid4>` = 40 ký tự).
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"))

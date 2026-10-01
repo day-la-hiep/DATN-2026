@@ -1,25 +1,198 @@
-"""Provider DI (FastAPI `Depends`) — dựng cây service/repository theo `AsyncSession`
-request-scoped (`docs/quy-uoc.md` mục 4)."""
-from typing import Annotated
+"""Quản lý vòng đời các instance + provider DI (FastAPI `Depends`).
+
+- **Infra client** (`app/infra/*`: Postgres, Redis, RabbitMQ, Qdrant, MinIO, Docling, Embedding): MỖI client một instance cho cả process,
+  tạo lười ở lần dùng đầu tiên và đóng trong `close_clients()` (gọi ở shutdown của `main.py::lifespan` / worker).
+- **Service dùng chung** xây trên client (KnowledgeBaseService, FileStoreService, pipeline sách): cũng một instance mỗi process.
+- **Theo request** (cây: service -> repository -> db): `get_db` (1 AsyncSession/request, commit/rollback) -> `get_*_repository` (dựng trên session đó)
+  -> `get_*_service` (dựng trên repository + client dùng chung). FastAPI cache dependency trong 1 request nên mỗi repository chỉ có 1 instance (`docs/quy-uoc.md` mục 4).
+
+Các hàm `get_*` là hàm thường nên cũng gọi được ngoài FastAPI (agent worker, script ingest); trong route thì dùng `Depends(get_*)`. Test thay
+instance bằng `set_instance(...)` / `reset_instances()` hoặc `app.dependency_overrides`."""
+
+import threading
+from collections.abc import AsyncGenerator, Callable
+from typing import Annotated, Any, TypeVar
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db
+from app.config.settings import settings
+from app.infra.docling_client import DoclingClient
+from app.infra.embedding_client import EmbeddingClient
+from app.infra.minio_client import MinioClient
+from app.infra.postgres_client import PostgresClient
+from app.infra.qdrant_client import QdrantVectorClient
+from app.infra.rabbitmq_client import RabbitMQClient
+from app.infra.redis_client import RedisClient
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
+from app.services.file_store_service import FileStoreService
+from app.repositories.book_repository import BookRepository
+from app.services.book_service import BookService
 from app.services.conversation_service import ConversationService
+from app.services.knowledge_base_service import KnowledgeBaseService
 from app.services.message_service import MessageService
+from app.services.book_ingest_pipeline_service import BookIngestPipelineService
+
+T = TypeVar("T")
+
+# ---------------------------------------------------------------- registry instance (một mỗi process)
+_instances: dict[str, Any] = {}
+_guard = threading.RLock()
+
+
+def _singleton(key: str, factory: Callable[[], T]) -> T:
+    with _guard:
+        if key not in _instances:
+            _instances[key] = factory()
+        return _instances[key]  # type: ignore[no-any-return]
+
+
+def set_instance(key: str, instance: Any) -> None:
+    """Test thay một instance (key = tên hàm `get_*` bỏ tiền tố `get_`, vd "redis_client")."""
+    with _guard:
+        _instances[key] = instance
+
+
+def reset_instances() -> None:
+    """Quên mọi instance (không đóng). Dùng trong test."""
+    with _guard:
+        _instances.clear()
+
+
+async def close_clients() -> None:
+    """Đóng mọi client đã tạo — gọi khi tắt Core/worker."""
+    with _guard:
+        items = list(_instances.values())
+        _instances.clear()
+    for obj in items:
+        close = getattr(obj, "close", None)
+        if close is None:
+            continue
+        result = close()
+        if hasattr(result, "__await__"):
+            await result
+
+
+# ---------------------------------------------------------------- infra client
+def get_postgres_client() -> PostgresClient:
+    return _singleton("postgres_client", PostgresClient.from_settings)
+
+
+def get_redis_client() -> RedisClient:
+    return _singleton("redis_client", RedisClient.from_settings)
+
+
+def get_rabbitmq_client() -> RabbitMQClient:
+    return _singleton("rabbitmq_client", RabbitMQClient)
+
+
+def get_qdrant_client() -> QdrantVectorClient:
+    return _singleton("qdrant_client", QdrantVectorClient.from_settings)
+
+
+def get_minio_client() -> MinioClient:
+    return _singleton("minio_client", MinioClient.from_settings)
+
+
+def get_docling_client() -> DoclingClient:
+    return _singleton("docling_client", DoclingClient)
+
+
+def get_embedding_client() -> EmbeddingClient:
+    return _singleton("embedding_client", EmbeddingClient)
+
+
+# ---------------------------------------------------------------- service dùng chung
+def get_knowledge_base_service() -> KnowledgeBaseService:
+    return _singleton(
+        "knowledge_base_service",
+        lambda: KnowledgeBaseService(get_qdrant_client()),
+    )
+
+
+def get_file_store_service() -> FileStoreService:
+    """Kho file của bucket ảnh đính kèm tin nhắn."""
+    return _singleton("file_store_service", lambda: FileStoreService(get_minio_client(), settings.MINIO_BUCKET))
+
+
+def get_book_file_store() -> FileStoreService:
+    """Kho file của bucket sách (pipeline `book_ingest`)."""
+    return _singleton("book_file_store", lambda: FileStoreService(get_minio_client(), settings.MINIO_BOOKS_BUCKET))
+
+
+def get_book_repository() -> BookRepository:
+    return _singleton("book_repository", lambda: BookRepository(get_book_file_store(), get_postgres_client().sync_session_factory))
+
+
+def get_book_service() -> BookService:
+    return _singleton(
+        "book_service",
+        lambda: BookService(
+            get_book_repository(),
+            get_qdrant_client(),
+            settings.QDRANT_BOOK_COLLECTION,
+        ),
+    )
+
+
+def get_book_ingest_pipeline_service() -> BookIngestPipelineService:
+    return _singleton(
+        "book_ingest_pipeline_service",
+        lambda: BookIngestPipelineService(
+            get_book_service(),
+            get_book_repository(),
+            docling=get_docling_client(),
+            embedding=get_embedding_client(),
+        ),
+    )
+
+
+# ---------------------------------------------------------------- theo request
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI dependency: yield 1 AsyncSession request-scoped.
+
+    Tự `commit()` khi route xử lý xong không lỗi (Unit of Work — 1 request = 1
+    transaction), tự `rollback()` khi route raise exception. Repository chỉ
+    `flush()` (không tự `commit()`) — xem `docs/quy-uoc.md` mục 4.
+    """
+    async with get_postgres_client().session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
+
+def get_conversation_repository(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ConversationRepository:
+    return ConversationRepository(db)
+
+
+def get_message_repository(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> MessageRepository:
+    return MessageRepository(db)
 
 
 def get_message_service(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    message_repository: Annotated[
+        MessageRepository, Depends(get_message_repository)
+    ],
+    conversation_repository: Annotated[
+        ConversationRepository, Depends(get_conversation_repository)
+    ],
+    redis: Annotated[RedisClient, Depends(get_redis_client)],
 ) -> MessageService:
-    return MessageService(MessageRepository(db), ConversationRepository(db))
+    return MessageService(message_repository, conversation_repository, redis)
 
 
 def get_conversation_service(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    conversation_repository: Annotated[
+        ConversationRepository, Depends(get_conversation_repository)
+    ],
     message_service: Annotated[MessageService, Depends(get_message_service)],
 ) -> ConversationService:
-    return ConversationService(ConversationRepository(db), message_service)
+    return ConversationService(conversation_repository, message_service)

@@ -114,7 +114,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/v1/co
 docker compose -f docker-compose.prod.yml exec -T derma-core-api python -c "
 import asyncio
 from app.infra.qdrant_client import client
-from app.core.config import settings
+from app.config.settings import settings
 async def m(): print('Qdrant KB points:', (await client.count(settings.QDRANT_KB_COLLECTION)).count)
 asyncio.run(m())"          # kỳ vọng 435
 ```

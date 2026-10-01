@@ -12,7 +12,7 @@ Phần còn lại tuỳ biến qua `middleware` (cơ chế mở rộng CÓ SẴN
     chỉ nén lại).
   - `select_model` (`wrap_model_call`, đứng ĐẦU middleware): override model theo
     `AgentContext.model` — model chọn theo TỪNG conversation (`Conversation.model`,
-    `app/core/config.py::AGENT_MODEL_CHOICES`), không còn 1 model cố định toàn hệ thống.
+    `app/config/settings.py::AGENT_MODEL_CHOICES`), không còn 1 model cố định toàn hệ thống.
   - `inject_long_term_memory` (`wrap_model_call`, phải tự viết vì đây là logic
     nghiệp vụ — LangChain không biết trước "nhớ gì" cho app cụ thể): trước mỗi lần gọi
     LLM, semantic search long-term memory liên quan (`app/agent/memory.py`) rồi chèn

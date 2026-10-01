@@ -9,12 +9,13 @@ id/định nghĩa/từ đồng nghĩa/thuật ngữ cha (is_a) chuẩn hoá tron
 (CONTAINS trên `name` + `synonyms`), không qua LLM sinh Cypher — rẻ, nhanh, không rủi ro
 sinh sai truy vấn cho 1 thao tác tra từ điển đơn giản.
 """
+
 from typing import Any
 
 from langchain_core.tools import tool
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
-from app.core.config import settings
+from app.config.settings import settings
 
 _driver: AsyncDriver | None = None
 
@@ -57,7 +58,8 @@ def get_driver() -> AsyncDriver:
     global _driver
     if _driver is None:
         _driver = AsyncGraphDatabase.driver(  # pyright: ignore[reportUnknownMemberType]
-            settings.NEO4J_URL, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
+            settings.NEO4J_URL,
+            auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
         )
     return _driver
 
