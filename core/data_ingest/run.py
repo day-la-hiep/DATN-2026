@@ -14,11 +14,15 @@ Qdrant, Neo4j) phải chạy tay — xem README.
 Lưu ý `all` gồm cả `dermnet` (bước 03 cào web, chạy lâu) — thường không cần chạy lại.
 byt / who / medlineplus không có script: output là dữ liệu đã biên soạn tay từ tài liệu gốc.
 """
+import io
 import re
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+# Fix Unicode stdout tren Windows terminal
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 INGEST_DIR = Path(__file__).resolve().parent
 

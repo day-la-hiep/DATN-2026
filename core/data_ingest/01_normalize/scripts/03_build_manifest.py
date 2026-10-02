@@ -5,10 +5,14 @@ số bản ghi) để biết bộ data đang deploy được build từ đâu v�
 Chạy: python data-ingest/01_normalize/scripts/03_build_manifest.py
 """
 import hashlib
+import io
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 OUT_ROOT = Path(__file__).resolve().parents[1] / "output"
 

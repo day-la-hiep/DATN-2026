@@ -63,6 +63,10 @@ CHUNK_TYPES = ("overview", "symptoms", "differential", "advice", "risk")
 
 SOURCE_LABEL = {
     "byt_75_2015": "BYT 75/QĐ-BYT 2015",
+    "andrews_13th": "Andrews' Diseases of the Skin (13th ed.)",
+    "dhyd_2020": "ĐHYD TP.HCM - Bệnh da liễu thường gặp (2020)",
+    "who_icd11": "WHO ICD-11",
+    "medlineplus": "MedlinePlus Dermatology",
 }
 
 

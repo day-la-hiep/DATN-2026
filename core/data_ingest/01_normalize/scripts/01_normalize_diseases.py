@@ -16,9 +16,13 @@ Việc làm:
 
 Chạy: python data-ingest/01_normalize/scripts/01_normalize_diseases.py [-v]
 """
+import io
 import json
 import sys
 from pathlib import Path
+
+# Fix Unicode stdout tren Windows terminal
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 INGEST_DIR = Path(__file__).resolve().parents[2]
 OUT_DIR = Path(__file__).resolve().parents[1] / "output" / "diseases"
@@ -28,6 +32,7 @@ SOURCES = {
     "who": INGEST_DIR / "who" / "output" / "who_skin_diseases.json",
     "medlineplus": INGEST_DIR / "medlineplus" / "output" / "medlineplus_skin_conditions.json",
     "andrews": INGEST_DIR / "andrews" / "output" / "andrews_diseases.json",
+    "dhyd": INGEST_DIR / "dhyd" / "output" / "dhyd_diseases.json",
 }
 
 STR_FIELDS = ["id", "name", "english_name", "type", "summary", "course", "medical_review_status"]

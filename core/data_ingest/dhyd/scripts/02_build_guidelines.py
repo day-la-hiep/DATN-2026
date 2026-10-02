@@ -1,0 +1,1004 @@
+#!/usr/bin/env python3
+"""02_build_guidelines.py - Giai đoạn 2: Trích xuất và cấu trúc hóa JSON các bệnh lý 
+từ giáo trình 'Bệnh da liễu thường gặp' - Đại học Y Dược TP.HCM (2020) theo chuẩn DATN.
+
+Input : 
+  - core/data_ingest/dhyd/output/dhyd_toc.json
+  - core/data_ingest/byt/output/pdf_guideline_2015.json (đối chiếu mã chuẩn và triệu chứng)
+  - Đại học y dược TP HCM - Bệnh da liễu thường gặp.pdf
+
+Output: 
+  - core/data_ingest/dhyd/output/dhyd_diseases.json
+"""
+import io
+import json
+import sys
+from pathlib import Path
+
+# Fix Unicode stdout trên Windows terminal
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+DHYD_DIR = SCRIPT_DIR.parent
+INGEST_DIR = DHYD_DIR.parent
+CORE_DIR = INGEST_DIR.parent
+REPO_ROOT = CORE_DIR.parent
+
+TOC_PATH = DHYD_DIR / "output" / "dhyd_toc.json"
+BYT_PATH = INGEST_DIR / "byt" / "output" / "pdf_guideline_2015.json"
+OUT_PATH = DHYD_DIR / "output" / "dhyd_diseases.json"
+
+# Định nghĩa dữ liệu chi tiết của 36 bệnh lý và chủ đề lâm sàng theo giáo trình ĐHYD TP.HCM
+DISEASES_DATA = [
+    # CHƯƠNG 1: Phát ban dạng chàm
+    {
+        "base_id": "viem_da_tiep_xuc_kich_ung",
+        "name": "Viêm da tiếp xúc kích ứng",
+        "english_name": "Irritant Contact Dermatitis",
+        "type": "Chương 1: Phát ban dạng chàm",
+        "chapter_number": 1,
+        "book_start_page": 9,
+        "pdf_start_page": 10,
+        "summary": "Phản ứng viêm không đặc hiệu của da với các tác nhân hóa học, vật lý bên ngoài làm tổn hại trực tiếp hàng rào bảo vệ da mà không thông qua cơ chế miễn dịch dị ứng. Chiếm 70 - 80% các trường hợp viêm da tiếp xúc, đặc biệt phổ biến trong bệnh da nghề nghiệp.",
+        "common_features": ["man_do", "bong_rat", "phu", "nut_ne", "troc_vay"],
+        "suggestive_phrases": ["bỏng rát nhiều hơn ngứa", "giới hạn rõ tại vùng tiếp xúc", "viêm da kiến ba khoang", "tiếp xúc xà phòng chất tẩy rửa"],
+        "typical_locations": ["bàn tay", "ngón tay", "cổ", "mặt", "vùng da hở"],
+        "course": "Cấp tính xuất hiện nhanh sau tiếp xúc chất kích ứng mạnh; hoặc mạn tính tiến triển từ từ do tiếp xúc lặp lại nhiều lần với chất kích ứng nhẹ.",
+        "risk_factors": ["nghề nghiệp tiếp xúc hóa chất dung môi", "da khô", "tiền căn viêm da cơ địa", "thời tiết lạnh khô"],
+        "differential_diagnoses": ["viem_da_tiep_xuc_di_ung", "viem_da_co_dia", "nam_da"],
+        "differential_diagnosis_details": "Phân biệt với Viêm da tiếp xúc dị ứng (ngứa dữ dội, sang thương lan ra ngoài vùng tiếp xúc, test áp da dương tính); Viêm da cơ địa (tiền căn dị ứng bản thân/gia đình, sang thương ở nếp gấp); Nấm da (bờ đa cung tiến triển ly tâm, soi tươi tìm thấy sợi nấm).",
+        "red_flags": ["bong_rat_du_doi", "hoai_tu_da", "boi_nhiem_vi_trung", "lan_dien_rong"],
+        "safe_advice": [
+            "Lập tức rửa sạch vùng da nghi ngờ tiếp xúc với xà phòng dịu nhẹ và nhiều nước mát.",
+            "Xác định và cách ly triệt để với tác nhân gây kích ứng (hóa chất, xà phòng tẩy rửa, côn trùng).",
+            "Sử dụng kem dưỡng ẩm phục hồi hàng rào bảo vệ da đều đặn nhiều lần trong ngày.",
+            "Đeo găng tay bảo hộ bằng cao su/vinyl khi làm việc với hóa chất hoặc rửa dọn.",
+            "Đi khám chuyên khoa Da liễu nếu vùng da đau rát nhiều, có mụn mủ hoặc tổn thương lan rộng."
+        ]
+    },
+    {
+        "base_id": "viem_da_tiep_xuc_di_ung",
+        "name": "Viêm da tiếp xúc dị ứng",
+        "english_name": "Allergic Contact Dermatitis",
+        "type": "Chương 1: Phát ban dạng chàm",
+        "chapter_number": 1,
+        "book_start_page": 17,
+        "pdf_start_page": 18,
+        "summary": "Phản ứng quá mẫn qua trung gian tế bào (quá mẫn týp IV) xảy ra ở người đã được mẫn cảm trước đó với dị nguyên tiếp xúc ngoài da. Biểu hiện lâm sàng nổi bật với cảm giác ngứa dữ dội và sang thương chàm lan tỏa ra ngoài vùng tiếp xúc trực tiếp.",
+        "common_features": ["ngua", "hong_ban", "mun_nuoc", "ri_dich", "dong_may"],
+        "suggestive_phrases": ["ngứa dữ dội", "phản ứng dị ứng chậm sau 24-48 giờ", "tiếp xúc kim loại niken mỹ phẩm thuốc nhuộm", "lan ra ngoài vị trí tiếp xúc"],
+        "typical_locations": ["mặt", "mí mắt", "dái tai", "cổ tay", "bàn tay", "bàn chân"],
+        "course": "Thường bùng phát sau 24 - 48 giờ tiếp xúc lại với dị nguyên và có thể kéo dài 2 - 3 tuần sau khi ngừng tiếp xúc.",
+        "risk_factors": ["tiếp xúc trang sức kim loại (niken, coban)", "mỹ phẩm nước hoa", "thuốc thoa ngoài da (neomycin)", "cao su chất dẻo"],
+        "differential_diagnoses": ["viem_da_tiep_xuc_kich_ung", "viem_da_co_dia", "viem_da_tiet_ba"],
+        "differential_diagnosis_details": "Phân biệt với Viêm da tiếp xúc kích ứng (triệu chứng rát bỏng chiếm ưu thế, giới hạn chuẩn theo ranh giới tiếp xúc); Viêm da tiết bã (vị trí vùng tiết bã nhờn, vảy mỡ vàng, không liên quan tiếp xúc dị nguyên).",
+        "red_flags": ["ngua_du_doi_mat_ngu", "boi_nhiem_mu", "sot", "lan_toan_than"],
+        "safe_advice": [
+            "Ngừng ngay việc sử dụng sản phẩm hoặc trang sức nghi ngờ gây dị ứng.",
+            "Thực hiện xét nghiệm áp da (Patch test) tại bệnh viện chuyên khoa để xác định chính xác dị nguyên.",
+            "Rửa da nhẹ nhàng, chườm gạc mát giảm viêm và ngứa.",
+            "Bôi kem làm dịu da và corticoid tại chỗ theo đúng chỉ định của bác sĩ da liễu.",
+            "Không gãi cào làm trầy xước để phòng ngừa nhiễm trùng thứ phát."
+        ]
+    },
+    {
+        "base_id": "viem_da_tiet_ba",
+        "name": "Viêm da tiết bã",
+        "english_name": "Seborrheic Dermatitis",
+        "type": "Chương 1: Phát ban dạng chàm",
+        "chapter_number": 1,
+        "book_start_page": 21,
+        "pdf_start_page": 22,
+        "summary": "Bệnh da mạn tính tái phát đặc trưng bởi các dát hồng ban tróc vảy mỡ màu vàng dính ở các vùng da giàu tuyến bã như da đầu, rãnh mũi má, vùng giữa chân mày, ngực và lưng. Bệnh liên quan mật thiết với sự phát triển quá mức của vi nấm men Malassezia và tăng tiết bã nhờn.",
+        "common_features": ["man_do", "vay_mo_vang", "ngua_nhe", "da_nhon"],
+        "suggestive_phrases": ["vảy nhờn màu vàng", "rãnh mũi má đỏ tróc vảy", "gàu da đầu ngứa", "bùng phát khi stress thời tiết lạnh"],
+        "typical_locations": ["da đầu", "rãnh mũi má", "chân mày", "vùng trước xương ức", "vùng liên bả vai"],
+        "course": "Mạn tính, dai dẳng và dễ tái phát từng đợt, thường nặng hơn vào mùa đông khô lạnh hoặc khi căng thẳng thần kinh.",
+        "risk_factors": ["tăng tiết bã nhờn", "nhiễm nấm Malassezia", "stress lo âu", "bệnh Parkinson", "suy giảm miễn dịch HIV"],
+        "differential_diagnoses": ["vay_nen", "viem_da_co_dia", "lupus_ban_do", "lang_ben"],
+        "differential_diagnosis_details": "Phân biệt với Vảy nến (vảy trắng bạc xếp lớp dày như sáp nến, dấu Auspitz dương tính, tổn thương rõ rệt ở vùng tì đè); Viêm da cơ địa (ngứa nhiều hơn, thường kèm khô da toàn thân và tổn thương nếp gấp).",
+        "red_flags": ["do_da_toan_than", "nhiem_trung_da", "khang_tri_nghi_ngo_hiv"],
+        "safe_advice": [
+            "Sử dụng dầu gội kháng nấm chứa ketoconazole 2%, kẽm pyrithione hoặc selenium sulfide 2 - 3 lần/tuần.",
+            "Vệ sinh mặt hàng ngày bằng sữa rửa mặt dịu nhẹ, không chứa cồn hay hương liệu nồng gắt.",
+            "Hạn chế cào gãi, bóc vảy gây trầy xước tổn thương da.",
+            "Duy trì lối sống lành mạnh, tránh thức khuya, giảm căng thẳng stress."
+        ]
+    },
+    {
+        "base_id": "vay_phan_trang",
+        "name": "Vảy phấn trắng",
+        "english_name": "Pityriasis Alba",
+        "type": "Chương 1: Phát ban dạng chàm",
+        "chapter_number": 1,
+        "book_start_page": 23,
+        "pdf_start_page": 24,
+        "summary": "Một thể chàm nhẹ rất phổ biến ở trẻ em và thanh thiếu niên, biểu hiện bằng các dát giảm sắc tố hình tròn hoặc bầu dục, bề mặt có vảy mịn như phấn, xuất hiện chủ yếu ở vùng mặt và cánh tay, rõ hơn sau khi tiếp xúc với ánh nắng mặt trời.",
+        "common_features": ["giam_sac_to", "vay_min", "khong_ngua_hoac_ngua_nhe"],
+        "suggestive_phrases": ["đốm trắng có vảy mịn", "vết giảm sắc tố ở má trẻ em", "rõ hơn sau khi đi nắng"],
+        "typical_locations": ["má", "cằm", "trán", "cổ", "mặt ngoài cánh tay"],
+        "course": "Lành tính, tự giới hạn nhưng thường kéo dài nhiều tháng đến vài năm trước khi sắc tố da hồi phục hoàn toàn.",
+        "risk_factors": ["tiền căn cơ địa dị ứng atopy", "tiếp xúc ánh nắng nhiều mà không chống nắng", "tắm rửa xà phòng tẩy mạnh"],
+        "differential_diagnoses": ["lang_ben", "bach_bien", "viem_da_co_dia"],
+        "differential_diagnosis_details": "Phân biệt với Lang ben (soi tươi tìm thấy nấm sợi men hình mì sợi thịt viên, phân bố ở ngực lưng); Bạch biến (mất sắc tố hoàn toàn trắng sứ, bờ viền tăng sắc tố, không có vảy phấn trên bề mặt).",
+        "red_flags": ["mat_sac_to_hoan_toan_nghi_bach_bien", "lan_rong_toan_than"],
+        "safe_advice": [
+            "Thoa kem chống nắng phổ rộng SPF 30+ hàng ngày để tránh tương phản màu da giữa vùng da lành và vùng tổn thương.",
+            "Tích cực dưỡng ẩm vùng da giảm sắc tố bằng kem dưỡng ẩm dịu nhẹ 2 - 3 lần mỗi ngày.",
+            "Tránh tắm nước quá nóng và hạn chế sử dụng xà phòng có độ kiềm cao.",
+            "Trấn an phụ huynh rằng bệnh lành tính và sắc tố da sẽ từ từ phục hồi."
+        ]
+    },
+    {
+        "base_id": "cham_khac",
+        "name": "Các dạng chàm khác (Chàm đồng tiền, Chàm tổ đỉa)",
+        "english_name": "Other Eczematous Dermatoses (Nummular and Dyshidrotic Eczema)",
+        "type": "Chương 1: Phát ban dạng chàm",
+        "chapter_number": 1,
+        "book_start_page": 24,
+        "pdf_start_page": 25,
+        "summary": "Các biến thể lâm sàng đặc thù của phát ban dạng chàm, gồm Chàm đồng tiền (sang thương hình tròn/bầu dục như đồng xu tróc vảy rỉ dịch) và Chàm tổ đỉa (mụn nước sâu ngứa nhiều ở rìa ngón tay ngón chân và lòng bàn tay bàn chân).",
+        "common_features": ["mun_nuoc_sau", "san_tron_dong_tien", "ngua_du_doi", "nut_ne", "troc_vay"],
+        "suggestive_phrases": ["tổn thương hình đồng xu", "mụn nước sâu chìm dưới da lòng bàn tay", "ngứa râm ran rìa ngón tay"],
+        "typical_locations": ["lòng bàn tay", "lòng bàn chân", "rìa ngón tay chân", "cẳng chân", "mặt duỗi chi"],
+        "course": "Tiến triển mạn tính, hay tái phát theo chu kỳ hoặc khi thời tiết thay đổi, căng thẳng.",
+        "risk_factors": ["da khô", "tiếp xúc hóa chất", "tăng tiết mồ hôi tay chân", "căng thẳng thần kinh"],
+        "differential_diagnoses": ["nam_da", "ghe", "viem_da_tiep_xuc"],
+        "differential_diagnosis_details": "Phân biệt Chàm đồng tiền với Nấm thân (nấm có bờ gồ mụn nước viền quanh trung tâm lành, soi nấm dương tính); Phân biệt Tổ đỉa với Ghẻ (ghẻ có luống ghẻ ở kẽ ngón và ngứa đêm kèm lây lan gia đình).",
+        "red_flags": ["nhiem_trung_mu_boi_nhiem", "sung_tay_hach_vung"],
+        "safe_advice": [
+            "Tránh cào gãi hoặc chọc vỡ các mụn nước sâu để tránh nhiễm trùng thứ phát.",
+            "Dưỡng ẩm thường xuyên cho bàn tay, bàn chân với thuốc mỡ hoặc kem làm mềm da.",
+            "Bảo vệ tay bằng găng cotton lót trong găng cao su khi dọn dẹp hoặc tiếp xúc nước hóa chất."
+        ]
+    },
+
+    # CHƯƠNG 2: Viêm da cơ địa
+    {
+        "base_id": "viem_da_co_dia",
+        "name": "Viêm da cơ địa",
+        "english_name": "Atopic Dermatitis",
+        "type": "Chương 2: Viêm da cơ địa",
+        "chapter_number": 2,
+        "book_start_page": 26,
+        "pdf_start_page": 27,
+        "summary": "Bệnh lý viêm da mạn tính tái phát phổ biến nhất, đặc trưng bởi ngứa dữ dội, khô da và tổn thương dạng chàm biến đổi theo độ tuổi (mặt và mặt duỗi ở trẻ nhũ nhi; nếp gấp khuỷu khoeo ở trẻ lớn và người trưởng thành). Bệnh có liên quan mật thiết với suy yếu hàng rào da (đột biến filaggrin) và cơ địa dị ứng (hen suyễn, viêm mũi dị ứng).",
+        "common_features": ["ngua_du_doi", "kho_da", "hong_ban", "mun_nuoc", "day_da_lichen_hoa"],
+        "suggestive_phrases": ["ngứa dữ dội càng gãi càng ngứa", "tổn thương nếp gấp khuỷu khoeo", "chàm thể tạng ở trẻ em", "tiền căn hen suyễn viêm mũi dị ứng"],
+        "typical_locations": ["mặt", "hai má (trẻ nhũ nhi)", "nếp gấp khuỷu tay", "khoeo chân", "cổ", "cổ tay"],
+        "course": "Mạn tính, kéo dài nhiều năm với các đợt bùng phát xen kẽ các giai đoạn thuyên giảm.",
+        "risk_factors": ["đột biến gen filaggrin", "tiền sử gia đình có bệnh atopy", "thời tiết khô lạnh", "tiếp xúc dị nguyên dị ứng thức ăn mạt bụi", "stress"],
+        "differential_diagnoses": ["viem_da_tiep_xuc", "viem_da_tiet_ba", "ghe", "vay_nen"],
+        "differential_diagnosis_details": "Phân biệt với Ghẻ (ngứa nhiều về đêm, có người nhà cùng bị, rãnh ghẻ ở kẽ tay bộ phận sinh dục); Viêm da tiếp xúc (khởi phát liên quan đến dị nguyên cụ thể, không theo phân bố nếp gấp điển hình); Vảy nến (tổn thương vùng tì đè, vảy dày trắng bạc, ít ngứa hơn).",
+        "red_flags": ["nhiem_trung_da_lan_rong", "sot_cao", "choc_hoa", "nhiem_herpes_chàm_eczema_herpeticum"],
+        "safe_advice": [
+            "Bôi kem dưỡng ẩm làm mềm da ngay sau khi tắm (nguyên tắc 3 phút) và duy trì 2 - 3 lần/ngày.",
+            "Tắm nước ấm vừa phải (dưới 37°C), không tắm quá 10 - 15 phút, dùng sữa tắm không xà phòng có pH sinh lý.",
+            "Mặc quần áo chất liệu cotton rộng rãi thoáng mát, tránh đồ len dạ tiếp xúc trực tiếp lên da.",
+            "Cắt ngắn móng tay để giảm chấn thương trầy xước da khi vô thức cào gãi.",
+            "Tái khám định kỳ tại chuyên khoa da liễu để được kiểm soát đợt bùng phát bằng thuốc thoa an toàn."
+        ]
+    },
+
+    # CHƯƠNG 3: Mày đay
+    {
+        "base_id": "may_day",
+        "name": "Mày đay và Phù mạch",
+        "english_name": "Urticaria and Angioedema",
+        "type": "Chương 3: Mày đay",
+        "chapter_number": 3,
+        "book_start_page": 41,
+        "pdf_start_page": 42,
+        "summary": "Bệnh lý da đặc trưng bởi sự xuất hiện đột ngột của các sẩn phù (mảng phù nề màu hồng hoặc đỏ, ngứa nhiều, thoáng qua biến mất trong vòng 24 giờ không để lại dấu vết) do giải phóng histamin từ dưỡng bào. Phù mạch là tổn thương phù nề ở lớp bì sâu và mô dưới da (mí mắt, môi, thanh quản).",
+        "common_features": ["san_phu", "ngua", "phu_mach_moi_mat", "bien_mat_trong_24h"],
+        "suggestive_phrases": ["sẩn phù nổi gồ ngứa", "nốt phù lặn trong 24 giờ", "sưng phù mí mắt môi", "bùng phát sau ăn hải sản uống thuốc"],
+        "typical_locations": ["thân mình", "tay chân", "mặt", "môi", "mí mắt", "toàn thân"],
+        "course": "Cấp tính (kéo dài dưới 6 tuần, thường do dị ứng thức ăn, thuốc, nhiễm trùng) hoặc Mạn tính (kéo dài từ 6 tuần trở lên, thường tự phát hoặc tự miễn).",
+        "risk_factors": ["dị ứng thuốc (kháng sinh NSAID)", "dị ứng thức ăn (hải sản trứng sữa)", "nhiễm siêu vi", "yếu tố vật lý (lạnh nóng cọ xát áp lực)"],
+        "differential_diagnoses": ["viem_mach_may_day", "hong_ban_da_dang", "phan_ve"],
+        "differential_diagnosis_details": "Phân biệt với Viêm mạch mày đay (sẩn phù tồn tại trên 24 giờ, có cảm giác đau rát hơn ngứa, để lại dát thâm xuất huyết sau khi lặn); Hồng ban đa dạng (tổn thương hình bia bắn tròn đồng tâm); Phản vệ (kèm khó thở, tụt huyết áp, co thắt phế quản).",
+        "red_flags": ["kho_tho", "kho_nuot", "khan_tieng", "phu_thanh_quan", "tut_huyet_ap_soc_phan_ve"],
+        "safe_advice": [
+            "NẾU CÓ KHÓ THỞ, PHÙ MÔI HỌNG, CHÓNG MẶT: CẦN CẤP CỨU Y TẾ NGAY LẬP TỨC (Dấu hiệu phản vệ đe dọa tính mạng).",
+            "Ngừng ngay các loại thực phẩm hoặc thuốc mới sử dụng nghi ngờ gây dị ứng.",
+            "Tránh cọ xát, tránh tắm nước nóng và không mặc quần áo quá chật bó sát.",
+            "Uống thuốc kháng histamin thế hệ 2 theo đơn của bác sĩ để kiểm soát triệu chứng ngứa và phù nề."
+        ]
+    },
+
+    # CHƯƠNG 4: Mụn trứng cá
+    {
+        "base_id": "mun_trung_ca",
+        "name": "Mụn trứng cá",
+        "english_name": "Acne Vulgaris",
+        "type": "Chương 4: Mụn trứng cá",
+        "chapter_number": 4,
+        "book_start_page": 57,
+        "pdf_start_page": 58,
+        "summary": "Bệnh lý viêm mạn tính của đơn vị nang lông - tuyến bã, phát triển do 4 cơ chế bệnh sinh then chốt: tăng tiết bã nhờn, sừng hóa cổ nang lông, sự tăng sinh của vi khuẩn Cutibacterium acnes và phản ứng viêm. Sang thương gồm tổn thương không viêm (nhân đóng, nhân mở) và tổn thương viêm (sẩn, mụn mủ, nốt, nang).",
+        "common_features": ["nhan_mun_trang_den", "san_viem_do", "mun_mu", "not_nang_viem", "tang_tiet_ba_nhon"],
+        "suggestive_phrases": ["mụn đầu đen đầu trắng", "sẩn mủ sưng đau vùng mặt", "da dầu nhờn tuổi dậy thì", "để lại sẹo rỗ vết thâm"],
+        "typical_locations": ["mặt", "trán", "má", "cằm", "ngực", "lưng trên"],
+        "course": "Tiến triển mạn tính, đỉnh điểm ở lứa tuổi dậy thì và thanh thiếu niên, có thể kéo dài dai dẳng sang tuổi trưởng thành nếu không điều trị đúng cách.",
+        "risk_factors": ["thay đổi nội tiết androgen", "da tăng tiết nhờn", "sử dụng mỹ phẩm bít tắc chứa dầu", "chế độ ăn nhiều đường sữa", "thức khuya stress"],
+        "differential_diagnoses": ["viem_nang_long", "viem_da_quanh_mieng", "rosacea_chung_do"],
+        "differential_diagnosis_details": "Phân biệt với Viêm nang lông (mụn mủ đồng dạng tập trung quanh nang lông, không có nhân comedone); Rosacea (đỏ da bừng mặt kèm giãn mạch, không có nhân trứng cá); Viêm da quanh miệng (sẩn đỏ quanh miệng chừa bờ môi, tiền sử lạm dụng corticoid thoa).",
+        "red_flags": ["mun_nang_cuc_viem_nang_bien_dang", "sot_mun_trung_ca_toi_cap_acne_fulminans", "nhiem_trung_lan_vung_tam_giac_mat"],
+        "safe_advice": [
+            "Rửa mặt nhẹ nhàng 2 lần/ngày bằng sữa rửa mặt tạo bọt dịu nhẹ, tránh chà xát mạnh gây trầy xước.",
+            "TUYỆT ĐỐI KHÔNG tự ý nặn bóp mụn bằng tay chưa khử khuẩn để phòng ngừa sẹo lõm và nhiễm trùng sâu.",
+            "Lựa chọn mỹ phẩm và kem chống nắng có nhãn 'Non-comedogenic' (không gây nhân mụn), 'Oil-free'.",
+            "Hạn chế đồ ăn ngọt nhiều đường tinh chế, sữa bò béo và thức khuya.",
+            "Khám bác sĩ chuyên khoa da liễu để được chỉ định phác đồ thoa retinoid, kháng sinh hoặc isotretinoin phù hợp."
+        ]
+    },
+
+    # CHƯƠNG 5: Bệnh da do nhiễm
+    {
+        "base_id": "benh_choc",
+        "name": "Bệnh chốc",
+        "english_name": "Impetigo",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 75,
+        "pdf_start_page": 76,
+        "summary": "Nhiễm trùng nông ở biểu bì da rất dễ lây lan do tụ cầu vàng (Staphylococcus aureus) hoặc liên cầu (Streptococcus pyogenes) gây ra, thường gặp nhất ở trẻ em dưới 6 tuổi vào mùa nóng ẩm. Hai thể lâm sàng chính là chốc không bọng nước (chiếm 70%, vảy mài màu mật ong) và chốc bọng nước.",
+        "common_features": ["mun_nuoc_bong_nuoc", "vay_mai_mau_mat_ong", "trot_da", "ngua_nhe"],
+        "suggestive_phrases": ["vảy mài màu mật ong", "bọng nước nhanh vỡ đóng vảy vàng", "chốc quanh mũi miệng trẻ em", "lây lan nhanh giữa các trẻ"],
+        "typical_locations": ["quanh mũi", "quanh miệng", "mặt", "tay chân"],
+        "course": "Cấp tính, lây lan nhanh nếu không giữ vệ sinh, thường đáp ứng tốt và lành trong 1 - 2 tuần khi được điều trị kháng sinh thích hợp.",
+        "risk_factors": ["trẻ em dưới 6 tuổi", "khí hậu nóng ẩm mùa hè", "vệ sinh kém", "bệnh da gây ngứa cào gãi trước đó (ghẻ, viêm da cơ địa)"],
+        "differential_diagnoses": ["thuy_dau", "herpes_da_niem", "nam_da", "hoi_chung_ssss"],
+        "differential_diagnosis_details": "Phân biệt với Thủy đậu (mụn nước rải rác toàn thân kèm sốt phát ban đồng loạt); Herpes simplex (mụn nước mọc thành chùm trên nền hồng ban đau rát); Nấm da (bờ ly tâm có viền mụn nước, soi nấm dương tính); SSSS (trẻ sơ sinh, đỏ da và bong tróc diện rộng).",
+        "red_flags": ["sot_cao", "lan_nhanh_toan_than", "nuoc_tieu_sam_mau_viem_cau_than_hau_nhiem_lien_cau", "bong_troc_dien_rong"],
+        "safe_advice": [
+            "Tắm rửa nhẹ nhàng, ngâm rửa tổn thương bằng dung dịch sát khuẩn loãng (thuốc tím 1/10.000) để làm mềm vảy.",
+            "Không cạy giật vảy mài thô bạo, tránh làm trầy xước phát tán vi khuẩn ra vùng da lành.",
+            "Thoa thuốc mỡ kháng sinh (acid fusidic, mupirocin) theo đúng hướng dẫn của bác sĩ.",
+            "Cho trẻ nghỉ học tạm thời, dùng riêng khăn mặt, gối, đồ dùng cá nhân để tránh lây nhiễm cho các bạn.",
+            "Đưa trẻ đi khám ngay nếu có sốt hoặc thấy nước tiểu chuyển màu nâu đỏ sau 2 - 3 tuần (nghi viêm cầu thận cấp)."
+        ]
+    },
+    {
+        "base_id": "viem_nang_long",
+        "name": "Viêm nang lông",
+        "english_name": "Folliculitis",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 79,
+        "pdf_start_page": 80,
+        "summary": "Tình trạng viêm nông hoặc sâu ở một hoặc nhiều nang lông, nguyên nhân vi sinh vật phổ biến nhất là tụ cầu vàng (Staphylococcus aureus). Sang thương cơ bản là sẩn viêm đỏ hoặc mụn mủ nhỏ kích thước 1 - 4 mm nằm ngay tại lỗ chân lông, có lông xuyên qua.",
+        "common_features": ["san_mun_mu_o_nang_long", "long_xuyen_qua_tam", "ngua", "dau_nhe", "hong_ban"],
+        "suggestive_phrases": ["mụn mủ ở chân lông", "sợi lông xuyên giữa mụn", "viêm nang lông vùng râu da đầu", "bùng phát sau cạo lông tẩy lông"],
+        "typical_locations": ["vùng râu cằm", "da đầu", "lưng", "ngực", "mông", "đùi"],
+        "course": "Cấp tính hoặc mạn tính tái phát, có thể tiến triển thành nhọt hoặc cụm nhọt nếu nhiễm trùng ăn sâu vào mô xung quanh.",
+        "risk_factors": ["cạo nhổ lông không đúng cách", "mặc quần áo bó sát chà xát", "thời tiết nóng ẩm mồ hôi nhiều", "đái tháo đường", "bôi corticoid kéo dài"],
+        "differential_diagnoses": ["mun_trung_ca", "nhot", "nam_nang_long_malassezia"],
+        "differential_diagnosis_details": "Phân biệt với Mụn trứng cá (có nhân mụn đầu đen/đầu trắng); Nhọt (tổn thương viêm sâu hoại tử thành ngòi mủ sưng đau dữ dội); Viêm nang lông do nấm Malassezia (ngứa nhiều ở thân mình, không đáp ứng kháng sinh vi khuẩn).",
+        "red_flags": ["ap_xe_hoa_nhot_to", "sot", "sung_nong_do_dau_lan_rong_viem_mo_te_bao"],
+        "safe_advice": [
+            "Tạm dừng việc cạo lông, tẩy lông hoặc wax lông tại vùng da đang bị viêm.",
+            "Tắm rửa sạch sẽ hàng ngày bằng xà phòng diệt khuẩn dịu nhẹ, lau khô người hoàn toàn sau tắm.",
+            "Mặc đồ lót và quần áo cotton rộng rãi, thoáng khí, thấm hút mồ hôi tốt.",
+            "Vệ sinh sạch sẽ dao cạo râu và thay lưỡi dao định kỳ nếu phải cạo râu.",
+            "Bôi thuốc kháng khuẩn tại chỗ theo hướng dẫn y tế."
+        ]
+    },
+    {
+        "base_id": "herpes_da_niem",
+        "name": "Nhiễm virus Herpes Simplex da niêm",
+        "english_name": "Herpes Simplex Virus (HSV) Infection",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 81,
+        "pdf_start_page": 82,
+        "summary": "Nhiễm trùng do virus HSV-1 (thường gây bệnh ở môi miệng) hoặc HSV-2 (ở sinh dục), đặc trưng bởi các mụn nước nhỏ mọc thành chùm trên nền hồng ban phù nề, kèm cảm giác ngứa rát châm chích. Sau nhiễm nguyên phát, virus ẩn trong hạch thần kinh cảm giác và tái hoạt từng đợt.",
+        "common_features": ["mun_nuoc_thanh_chum", "cam_giac_chong_rat", "trot_nong", "hong_ban"],
+        "suggestive_phrases": ["mụn nước mọc thành chùm ở môi", "cảm giác châm chích rát bỏng báo trước", "herpes tái phát khi sốt cảm lạnh"],
+        "typical_locations": ["môi", "quanh miệng", "bộ phận sinh dục", "hậu môn"],
+        "course": "Tái phát từng đợt, mỗi đợt kéo dài khoảng 7 - 10 ngày rồi tự đóng vảy và lành.",
+        "risk_factors": ["tiếp xúc dịch tiết người mang virus", "sốt cảm cúm", "tiếp xúc ánh nắng gắt", "kinh nguyệt", "căng thẳng stress suy giảm miễn dịch"],
+        "differential_diagnoses": ["benh_choc", "thuy_dau", "zona", "loet_aphthous"],
+        "differential_diagnosis_details": "Phân biệt với Chốc (vảy mật ong dày, không thành chùm đặc thù); Zona (phân bố một bên theo khoanh da thần kinh, đau nhức dây thần kinh nhiều); Loét Aphthous (loét nông trong khoang miệng niêm mạc không sừng hóa, không có mụn nước ban đầu).",
+        "red_flags": ["ton_thuong_o_mat_viem_giac_mac", "lan_rong_tren_benh_nhan_viem_da_co_dia_eczema_herpeticum", "viem_nao_mang_nao"],
+        "safe_advice": [
+            "Bôi thuốc kháng virus (acyclovir) càng sớm càng tốt, lý tưởng là trong giai đoạn tiền triệu châm chích.",
+            "Tránh hôn, không dùng chung ly uống nước, son môi, khăn lau mặt với người khác khi đang nổi mụn rộp.",
+            "Không sờ tay lên nốt mụn rộp rồi chạm vào mắt (phòng nguy cơ viêm giác mạc do Herpes rất nguy hiểm).",
+            "Giữ vệ sinh vùng tổn thương khô sạch, chườm mát giảm đau rát."
+        ]
+    },
+    {
+        "base_id": "thuy_dau",
+        "name": "Bệnh thủy đậu",
+        "english_name": "Varicella (Chickenpox)",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 84,
+        "pdf_start_page": 85,
+        "summary": "Bệnh truyền nhiễm cấp tính do virus Varicella Zoster (VZV) gây ra qua đường hô hấp hoặc tiếp xúc trực tiếp dịch nốt đậu. Đặc trưng bởi sốt nhẹ, mệt mỏi và phát ban bọng nước tiến triển nhanh từ dát đỏ -> sẩn -> mụn nước hình giọt sương trên nền hồng ban -> mụn mủ -> đóng vảy, xuất hiện nhiều lứa tuổi khác nhau trên cùng một vùng da.",
+        "common_features": ["mun_nuoc_hinh_giot_suong", "nhieu_lua_tuoi_khac_nhau", "sot", "ngua", "dong_may"],
+        "suggestive_phrases": ["mụn nước hình giọt sương trên cánh hoa hồng", "tổn thương nhiều lứa tuổi cùng lúc", "phát ban từ thân mình lan ra mặt và chi"],
+        "typical_locations": ["thân mình", "mặt", "da đầu", "tay chân", "niêm mạc miệng"],
+        "course": "Cấp tính, kéo dài 10 - 14 ngày; nguy cơ biến chứng cao hơn ở người lớn, phụ nữ có thai và người suy giảm miễn dịch.",
+        "risk_factors": ["chưa tiêm ngừa vaccine thủy đậu", "tiếp xúc gần người bệnh", "trẻ em tuổi đi học", "suy giảm miễn dịch"],
+        "differential_diagnoses": ["tay_chan_mieng", "herpes_da_niem", "choc", "sot_phat_ban"],
+        "differential_diagnosis_details": "Phân biệt với Tay chân miệng (mụn nước bầu dục phân bố đặc thù ở lòng bàn tay, bàn chân, gối, mông và loét miệng); Chốc (thường khu trú, vảy mật ong dày, không có sốt phát ban đồng loạt dạng giọt sương).",
+        "red_flags": ["kho_tho_ho_viem_phoi_do_thuy_dau", "sot_cao_co_giat_viem_nao", "mun_nuoc_xuat_huyet_hoai_tu", "phu_nu_mang_thai_nhiem_benh"],
+        "safe_advice": [
+            "Cách ly người bệnh tại phòng riêng thoáng mát cho đến khi tất cả các nốt mụn nước đã đóng vảy khô hoàn toàn.",
+            "Tắm rửa nhẹ nhàng hàng ngày bằng nước ấm sạch, không kiêng tắm kiêng gió tiêu cực làm tăng nguy cơ bội nhiễm.",
+            "Chấm dung dịch sát khuẩn (như xanh methylen hoặc milian) lên các nốt bọng nước vỡ.",
+            "Cắt ngắn móng tay cho trẻ để tránh cào gãi làm sẹo lõm vĩnh viễn và bội nhiễm vi khuẩn.",
+            "Chủ động tiêm phòng vaccine thủy đậu cho trẻ từ 12 tháng tuổi và người lớn chưa có miễn dịch."
+        ]
+    },
+    {
+        "base_id": "herpes_zoster",
+        "name": "Herpes Zoster (Zona)",
+        "english_name": "Herpes Zoster (Shingles)",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 87,
+        "pdf_start_page": 88,
+        "summary": "Bệnh lý do sự tái hoạt của virus Varicella Zoster (VZV) tiềm ẩn tại hạch rễ sau của tủy sống sau đợt nhiễm thủy đậu trước đó. Đặc trưng bởi đau nhức thần kinh dữ dội đi kèm với các mụn nước mọc thành chùm phân bố một bên cơ thể theo vùng da chi phối của dây thần kinh cảm giác (dermatome). Biến chứng đáng ngại nhất là đau thần kinh sau zona ở người cao tuổi.",
+        "common_features": ["dau_rat_than_kinh", "mun_nuoc_thanh_chum", "phan_bo_mot_ben_dermatome", "hong_ban"],
+        "suggestive_phrases": ["đau rát nhức nhối một bên cơ thể", "mụn nước chạy dọc theo liên sườn một bên", "không vượt qua đường giữa cơ thể", "đau sau zona ở người già"],
+        "typical_locations": ["vùng ngực liên sườn", "nhánh V1 dây thần kinh sinh ba ở mặt mắt", "thắt lưng", "cổ"],
+        "course": "Thường kéo dài 2 - 4 tuần; tuy nhiên cơn đau dây thần kinh có thể tồn tại dai dẳng nhiều tháng đến nhiều năm (đau sau zona).",
+        "risk_factors": ["tuổi cao trên 50", "suy giảm miễn dịch (ung thư, đái tháo đường, dùng thuốc ức chế miễn dịch)", "stress căng thẳng thể chất tâm lý"],
+        "differential_diagnoses": ["herpes_da_niem", "dau_that_nguc_nhoi_mau_co_tim", "viem_ruot_thua"],
+        "differential_diagnosis_details": "Phân biệt với Herpes simplex (thường tái phát nhiều lần tại một vị trí, không phân bố theo một dermatome thần kinh dài); Trong giai đoạn tiền triệu đau trước khi mọc mụn nước cần phân biệt với Cơn đau thắt ngực (nếu ở ngực trái) hoặc Đau bụng cấp ngoại khoa.",
+        "red_flags": ["ton_thuong_dau_mui_mat_nguy_co_viem_giac_mac_mu_mat_ramsay_hunt", "liet_mat_ngoai_bien", "sot_dau_dau_cung_gay"],
+        "safe_advice": [
+            "ĐI KHÁM ĐỂ ĐƯỢC UỐNG THUỐC KHÁNG VIRUS TRONG VÒNG 72 GIỜ ĐẦU kể từ khi phát ban để giảm đau và ngừa biến chứng.",
+            "Không đắp lá cây, không đắp đậu xanh nhai hay bôi các chất lạ theo mẹo dân gian lên tổn thương zona.",
+            "Giữ vùng tổn thương sạch sẽ, mặc đồ lỏng nhẹ tránh cọ xát gây đau đớn.",
+            "Kiểm soát cơn đau bằng thuốc giảm đau theo đúng đơn bác sĩ.",
+            "Người từ 50 tuổi trở lên nên tiêm vaccine phòng ngừa Zona thần kinh."
+        ]
+    },
+    {
+        "base_id": "ghe",
+        "name": "Bệnh ghẻ",
+        "english_name": "Scabies",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 90,
+        "pdf_start_page": 91,
+        "summary": "Bệnh da truyền nhiễm do ký sinh trùng cái ghẻ Sarcoptes scabiei hominis đào hầm trong lớp sừng thượng bì và đẻ trứng. Bệnh lây truyền rất nhanh qua tiếp xúc da kề da trực tiếp hoặc qua đồ dùng chung. Triệu chứng kinh điển là ngứa dữ dội về đêm và các sang thương đặc hiệu gồm rãnh ghẻ (đường hầm ghẻ), mụn nước kẽ tay và sẩn cục ở vùng sinh dục.",
+        "common_features": ["ngua_du_doi_ve_dem", "ranh_ghe_duong_ham", "mun_nuoc_ke_tay", "san_cuc_sinh_duc", "vet_cao_xuoc"],
+        "suggestive_phrases": ["ngứa dữ dội ban đêm", "rãnh ghẻ ở kẽ ngón tay", "sẩn cục ở bìu dương vật", "nhiều người trong gia đình cùng bị ngứa"],
+        "typical_locations": ["kẽ ngón tay", "nếp gấp cổ tay", "nách", "quanh rốn", "bẹn", "bìu dương vật (nam)", "quầng vú (nữ)"],
+        "course": "Kéo dài dai dẳng nếu không được điều trị triệt để, dễ tái nhiễm nếu người thân sống cùng không được điều trị đồng thời.",
+        "risk_factors": ["sống trong môi trường tập thể đông đúc (ký túc xá, nhà dưỡng lão)", "vệ sinh cá nhân kém", "tiếp xúc gần gũi với người mắc bệnh"],
+        "differential_diagnoses": ["viem_da_co_dia", "to_dia", "mun_mu_viem_da", "nhiem_ky_sinh_trung_khac"],
+        "differential_diagnosis_details": "Phân biệt với Viêm da cơ địa (ngứa cả ngày, không có tính chất lây lan gia đình, không có rãnh ghẻ); Tổ đỉa (chỉ ở lòng bàn tay bàn chân, không có sang thương ở kẽ tay, nách, sinh dục).",
+        "red_flags": ["ghe_na_uy_dong_vay_day_tren_nguoi_suy_giam_mien_dich", "nhiem_trung_mu_lan_rong_bien_chung_viem_cau_than"],
+        "safe_advice": [
+            "ĐIỀU TRỊ ĐỒNG THỜI TẤT CẢ CÁC THÀNH VIÊN TRONG GIA ĐÌNH hoặc bạn cùng phòng, kể cả người chưa có triệu chứng ngứa.",
+            "Tắm sạch bằng xà phòng, lau khô rồi thoa thuốc đặc trị (Permethrin 5% hoặc DEP) từ cổ xuống tận đầu ngón chân vào buổi tối.",
+            "Giặt toàn bộ quần áo, mền, ga trải giường bằng nước nóng trên 60°C và phơi nắng to hoặc ủi nóng.",
+            "Những đồ dùng không giặt được cần bọc kín trong túi nilon buộc chặt miệng trong ít nhất 3 - 5 ngày để cái ghẻ chết.",
+            "Cắt móng tay, không gãi để tránh bội nhiễm vi khuẩn gây chốc lở."
+        ]
+    },
+    {
+        "base_id": "nam_da",
+        "name": "Nhiễm vi nấm nông (Nấm sợi tơ da, tóc, móng)",
+        "english_name": "Dermatophytosis (Tinea Infections)",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 92,
+        "pdf_start_page": 93,
+        "summary": "Bệnh nhiễm nấm sợi tơ (Trichophyton, Microsporum, Epidermophyton) tại các cấu trúc chứa keratin như lớp sừng của da, tóc và móng. Tổn thương da đặc trưng là các mảng hồng ban hình tròn hoặc bầu dục có bờ gồ cao viền mụn nước nhỏ, tiến triển ly tâm với vùng trung tâm có xu hướng lành dần.",
+        "common_features": ["mang_do_bo_vien_mun_nuoc", "lan_ly_tam_lanh_trung_tam", "ngua", "troc_vay"],
+        "suggestive_phrases": ["hồng ban bờ viền đa cung", "trung tâm lành bờ gồ mụn nước", "nấm bẹn nấm thân lác đồng tiền", "móng dày mủn đổi màu vàng nâu"],
+        "typical_locations": ["thân mình", "bẹn", "kẽ ngón chân", "bàn chân", "da đầu", "móng"],
+        "course": "Bán cấp hoặc mạn tính, lan rộng khi gặp điều kiện nóng ẩm mồ hôi hoặc thoa nhầm corticoid.",
+        "risk_factors": ["khí hậu nóng ẩm", "mặc quần áo ẩm ướt bó sát", "tiếp xúc vật nuôi chó mèo mang nấm", "sử dụng chung đồ dùng cá nhân"],
+        "differential_diagnoses": ["viem_da_tiep_xuc", "cham_dong_tien", "vay_phan_hong", "vay_nen"],
+        "differential_diagnosis_details": "Phân biệt với Chàm đồng tiền (không có hiện tượng trung tâm lành, tổn thương rỉ dịch đóng mày nhiều); Vảy phấn hồng (tổn thương mẹ herald patch, sau đó phát ban hình cây thông dọc nếp da); Xét nghiệm soi tươi cạo vảy da tìm thấy sợi tơ nấm có vách ngăn là tiêu chuẩn chẩn đoán xác định.",
+        "red_flags": ["tinea_incognito_nam_da_bien_dang_do_thoa_corticoid", "nhiem_trung_mu_lan_rong_ap_xe_kerion_da_dau"],
+        "safe_advice": [
+            "TUYỆT ĐỐI KHÔNG BÔI CÁC THUỐC CHỨA CORTICOID (như bảy màu, corticoid pha) lên vùng nghi nấm vì sẽ làm nấm bùng phát dữ dội.",
+            "Thoa thuốc kháng nấm (terbinafine, clotrimazole, ketoconazole) lan rộng ra ngoài bờ tổn thương 1 - 2 cm và tiếp tục bôi thêm 1 - 2 tuần sau khi da lành.",
+            "Giữ các vùng nếp gấp (bẹn, kẽ chân) luôn khô ráo, mặc đồ lót rộng thoáng.",
+            "Kiểm tra và điều trị nấm cho thú cưng (chó, mèo) nếu gia đình có nuôi động vật."
+        ]
+    },
+    {
+        "base_id": "nhiem_nam_candida",
+        "name": "Nhiễm nấm Candida da niêm",
+        "english_name": "Cutaneous and Mucosal Candidiasis",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 97,
+        "pdf_start_page": 98,
+        "summary": "Nhiễm trùng cơ hội do nấm men Candida (chủ yếu là Candida albicans) xảy ra tại các nếp gấp da, móng hoặc niêm mạc khi có các yếu tố thuận lợi tại chỗ hoặc toàn thân. Dấu hiệu lâm sàng đặc trưng ở da là mảng hồng ban trợt đỏ rực, bờ có viền vảy bong và các sẩn mụn mủ vệ tinh (satellite lesions) xung quanh.",
+        "common_features": ["hong_ban_trot_do_ruc", "sang_thuong_ve_tinh_satellite", "ngua_bong_rat", "vay_trang_kem"],
+        "suggestive_phrases": ["mảng đỏ rực ở nếp gấp kẽ", "sẩn mụn mủ vệ tinh xung quanh", "hăm đỏ kẽ bẹn nách ở người béo phì đái tháo đường"],
+        "typical_locations": ["nếp dưới vú", "nách", "bẹn", "kẽ ngón tay chân", "quanh hậu môn", "niêm mạc miệng âm đạo"],
+        "course": "Bán cấp hoặc mạn tính tái phát, phụ thuộc mật thiết vào việc kiểm soát các bệnh nền thuận lợi.",
+        "risk_factors": ["đái tháo đường không kiểm soát", "béo phì nhiều nếp gấp", "dùng kháng sinh phổ rộng kéo dài", "suy giảm miễn dịch", "môi trường ẩm ướt liên tục"],
+        "differential_diagnoses": ["viem_da_tiep_xuc", "nam_soi_to", "hac_lao_ben"],
+        "differential_diagnosis_details": "Phân biệt với Nấm sợi tơ da (nấm sợi tơ có bờ tiến triển viền mụn nước rõ và trung tâm lành, hiếm khi có các sẩn mủ vệ tinh rải rác xung quanh như Candida).",
+        "red_flags": ["nhiem_candida_xuyen_sau_lan_mau", "loet_trot_dien_rong_khang_tri"],
+        "safe_advice": [
+            "Giữ các nếp gấp da luôn sạch sẽ và khô ráo, có thể dùng bột talc hút ẩm.",
+            "Kiểm soát tốt đường huyết nếu bệnh nhân mắc đái tháo đường.",
+            "Thoa kem kháng nấm nhóm azole hoặc nystatin theo chỉ dẫn của bác sĩ.",
+            "Thay quần áo lót thường xuyên, tránh mặc đồ quá bó chật gây bí bách ẩm ướt."
+        ]
+    },
+    {
+        "base_id": "lang_ben",
+        "name": "Lang ben",
+        "english_name": "Pityriasis Versicolor (Tinea Versicolor)",
+        "type": "Chương 5: Bệnh da do nhiễm",
+        "chapter_number": 5,
+        "book_start_page": 100,
+        "pdf_start_page": 101,
+        "summary": "Nhiễm nấm men nông mạn tính ở lớp sừng thượng bì do loài nấm Malassezia (Pityrosporum) gây nên. Biểu hiện bởi các dát đổi màu đa dạng (giảm sắc tố màu trắng hoặc tăng sắc tố màu nâu hồng), bề mặt có vảy mịn (dấu hiệu phết vỏ bào Besnier dương tính), thường tập trung ở vùng da nhiều mồ hôi và bã nhờn.",
+        "common_features": ["dat_doi_mau_trang_nau_hong", "vay_min_phe_vo_bao", "ngua_nhe_khi_do_mo_hoi"],
+        "suggestive_phrases": ["đốm trắng hoặc nâu ở ngực lưng", "vảy mịn cạo ra như vỏ bào", "châm chích ngứa khi ra mồ hôi nắng"],
+        "typical_locations": ["ngực", "lưng", "vai", "cổ", "mặt trong cánh tay"],
+        "course": "Mạn tính, lành tính nhưng rất hay tái phát vào mùa hè nóng ẩm, vết đổi màu da có thể mất nhiều tháng mới đồng đều sắc tố sau khi sạch nấm.",
+        "risk_factors": ["khí hậu nóng ẩm", "ra nhiều mồ hôi", "da nhờn", "thanh thiếu niên hoạt động thể lực nhiều", "suy dinh dưỡng hoặc suy giảm miễn dịch"],
+        "differential_diagnoses": ["bach_bien", "vay_phan_trang", "nam_da"],
+        "differential_diagnosis_details": "Phân biệt với Bạch biến (mất sắc tố hoàn toàn không có vảy mịn, soi nấm âm tính); Vảy phấn trắng (thường ở mặt trẻ em, ít gặp ở ngực lưng); Soi tươi dưới kính hiển vi thấy hình ảnh 'mì sợi và thịt viên' (spaghetti and meatballs) đặc thù của Malassezia.",
+        "red_flags": ["lan_rong_toan_than_khang_tri"],
+        "safe_advice": [
+            "Tắm gội bằng dầu gội hoặc sữa tắm chứa ketoconazole 2% hoặc selenium sulfide thoa để 5 - 10 phút rồi xả sạch.",
+            "Mặc quần áo chất liệu cotton thoáng mát, thấm mồ hôi, thay đồ ngay sau khi vận động thể thao.",
+            "Giải thích cho người bệnh hiểu rằng màu da có thể cần 2 - 3 tháng sau khi nấm đã chết mới hồi phục lại bình thường.",
+            "Tránh thoa các loại dầu dừa, dầu khoáng gây bí tắc da."
+        ]
+    },
+
+    # CHƯƠNG 6: Bệnh vảy nến
+    {
+        "base_id": "benh_vay_nen",
+        "name": "Bệnh vảy nến",
+        "english_name": "Psoriasis Vulgaris",
+        "type": "Chương 6: Bệnh vảy nến",
+        "chapter_number": 6,
+        "book_start_page": 103,
+        "pdf_start_page": 105,
+        "summary": "Bệnh viêm hệ thống mạn tính qua trung gian miễn dịch (trục IL-23/Th17/IL-17), ảnh hưởng khoảng 2 - 3% dân số. Tổn thương da kinh điển là các mảng hồng ban giới hạn rất rõ, gồ cao, phủ nhiều lớp vảy trắng bạc như sáp nến dễ tróc (dấu hiệu cạo vảy Brocq và hiện tượng sương máu Auspitz dương tính). Bệnh thường kết hợp với tổn thương móng, viêm khớp vảy nến và các hội chứng chuyển hóa.",
+        "common_features": ["mang_hong_ban_gioi_han_ro", "vay_trang_bac_nhieu_lop", "dau_hieu_auspitz", "day_mong_ro_mong"],
+        "suggestive_phrases": ["mảng đỏ vảy trắng bạc tì đè", "cạo vảy như sáp nến ra sương máu", "tổn thương khuỷu tay đầu gối rìa chân tóc", "rỗ móng tay như đê khâu"],
+        "typical_locations": ["khuỷu tay", "đầu gối", "vùng xương cùng cụt", "da đầu", "móng tay chân", "vùng tì đè"],
+        "course": "Mạn tính suốt đời với các đợt bùng phát và thuyên giảm thất thường, không lây nhiễm.",
+        "risk_factors": ["yếu tố di truyền (HLA-Cw6)", "chấn thương cơ học tại chỗ (hiện tượng Koebner)", "nhiễm trùng (viêm họng liên cầu kích phát thể giọt)", "stress căng thẳng", "thuốc (chẹn beta, lithium, ngừng đột ngột corticoid toan than)"],
+        "differential_diagnoses": ["viem_da_tiet_ba", "nam_da", "a_vay_nen", "giang_mai_thoi_ky_ii"],
+        "differential_diagnosis_details": "Phân biệt với Viêm da tiết bã (vảy mỡ vàng nhờn, ở rãnh mũi má và da đầu, không có mảng gồ dày và dấu Auspitz); Nấm thân (bờ đa cung tiến triển trung tâm lành, soi nấm dương tính); Giang mai II (sẩn vảy kèm hạch toàn thân, đào ban lòng bàn tay chân).",
+        "red_flags": ["vay_nen_do_da_toan_than", "vay_nen_the_mu_toan_than_sot_cao", "viem_khop_vay_nen_bien_dang_khop", "ngung_corticoid_toan_than_dot_ngot_gay_bung_phat_nang"],
+        "safe_advice": [
+            "TUYỆT ĐỐI KHÔNG TỰ Ý UỐNG HOẶC TIÊM CORTICOID (vì khi ngưng thuốc sẽ bùng phát thể đỏ da toàn thân hoặc thể mủ đe dọa tính mạng).",
+            "Dưỡng ẩm da toàn thân đều đặn mỗi ngày bằng kem dưỡng ẩm đậm đặc để làm mềm vảy và giảm ngứa rát.",
+            "Tắm nắng có kiểm soát vào sáng sớm (quang trị liệu tự nhiên) có tác dụng hỗ trợ cải thiện tổn thương.",
+            "Hạn chế tối đa rượu bia, thuốc lá và giữ tinh thần thoải mái, kiểm soát stress.",
+            "Tái khám định kỳ tại bệnh viện da liễu để được chỉ định các liệu pháp thoa, quang trị liệu hoặc thuốc sinh học."
+        ]
+    },
+
+    # CHƯƠNG 7: Các bệnh bóng nước tự miễn
+    {
+        "base_id": "pemphigus",
+        "name": "Nhóm bệnh Pemphigus (Pemphigus thông thường & thể lá)",
+        "english_name": "Pemphigus (Pemphigus Vulgaris and Foliaceus)",
+        "type": "Chương 7: Các bệnh bóng nước tự miễn",
+        "chapter_number": 7,
+        "book_start_page": 124,
+        "pdf_start_page": 126,
+        "summary": "Nhóm bệnh bóng nước tự miễn trong biểu bì nghiêm trọng, gây ra bởi tự kháng thể IgG chống lại các phân tử liên kết cầu nối gai desmoglein 1 và 3, dẫn đến hiện tượng tiêu gai (acantholysis). Pemphigus thông thường (PV) gây tổn thương loét trợt nặng nề ở niêm mạc miệng trước khi xuất hiện bọng nước mềm nhẽo trên da, dấu hiệu Nikolsky dương tính.",
+        "common_features": ["bong_nuoc_mem_nhao", "vet_trot_da_dau_don", "loet_niem_mac_mieng", "dau_hieu_nikolsky_duong_tinh"],
+        "suggestive_phrases": ["bọng nước mềm nhẽo dễ vỡ", "loet trợt niêm mạc miệng dai dẳng", "dấu hiệu Nikolsky miết da trợt", "mùi hôi tanh đặc thù vết loét"],
+        "typical_locations": ["niêm mạc miệng", "họng", "da đầu", "ngực", "lưng", "vùng tì đè"],
+        "course": "Tiến triển mạn tính tiến triển nặng dần, có thể gây tử vong do mất dịch, suy kiệt và nhiễm trùng huyết nếu không được điều trị ức chế miễn dịch tích cực.",
+        "risk_factors": ["yếu tố di truyền HLA", "tuổi trung niên 40 - 60", "thuốc chứa nhóm thiol (penicillamine, captopril)"],
+        "differential_diagnoses": ["pemphigoid_bong_nuoc", "hoi_chung_sjs_ten", "choc_bong_nuoc", "aphthous"],
+        "differential_diagnosis_details": "Phân biệt với Pemphigoid bọng nước (bọng nước to căng chắc dưới thượng bì, Nikolsky âm tính, hiếm khi tổn thương niêm mạc miệng nặng); SJS/TEN (tiền sử dùng thuốc rõ, hoại tử thượng bì cấp tính lan tràn, sốt cao).",
+        "red_flags": ["nhiem_trung_huyet_tu_vet_trot", "mat_dich_roi_loan_dien_giai", "trot_da_dien_rong_tren_30_dien_tich_co_the"],
+        "safe_advice": [
+            "ĐÂY LÀ BỆNH NẶNG CẦN NHẬP VIỆN CHUYÊN KHOA DA LIỄU để được chẩn đoán sinh thiết mô học, miễn dịch huỳnh quang và điều trị thuốc ức chế miễn dịch.",
+            "Chăm sóc da vô khuẩn, tắm rửa bằng dung dịch sát khuẩn nhẹ, đắp gạc chống dính vào các vết trợt da.",
+            "Vệ sinh răng miệng nhẹ nhàng bằng nước muối sinh lý, ăn thức ăn mềm nguội lỏng tránh làm đau và rách niêm mạc miệng.",
+            "Tuân thủ nghiêm ngặt phác đồ corticoid và thuốc ức chế miễn dịch, không tự ý giảm liều đột ngột."
+        ]
+    },
+    {
+        "base_id": "pemphigoid_bong_nuoc",
+        "name": "Pemphigoid bọng nước",
+        "english_name": "Bullous Pemphigoid",
+        "type": "Chương 7: Các bệnh bóng nước tự miễn",
+        "chapter_number": 7,
+        "book_start_page": 135,
+        "pdf_start_page": 137,
+        "summary": "Bệnh lý da bóng nước tự miễn dưới biểu bì hay gặp nhất ở người cao tuổi (thường trên 60 tuổi), sinh bệnh học do tự kháng thể IgG chống lại kháng nguyên màng đáy BP180 và BP230. Đặc trưng bởi các bọng nước to, căng chắc, khó vỡ nổi trên nền da đỏ phù nề dạng mày đay hoặc da lành, kèm cảm giác ngứa dữ dội. Dấu hiệu Nikolsky âm tính.",
+        "common_features": ["bong_nuoc_cang_chac", "kho_vo", "ngua_du_doi", "san_phu_dang_may_day", "dau_hieu_nikolsky_am_tinh"],
+        "suggestive_phrases": ["bọng nước căng chắc khó vỡ ở người già", "ngứa nhiều trước khi mọc bọng nước", "dấu hiệu Nikolsky âm tính", "hiếm khi loét niêm mạc miệng"],
+        "typical_locations": ["bụng dưới", "mặt trong đùi", "mặt gấp cẳng tay", "nách", "bẹn"],
+        "course": "Mạn tính, tái phát từng đợt nhưng tiên lượng nhìn chung thuận lợi hơn pemphigus nếu được kiểm soát tốt.",
+        "risk_factors": ["tuổi già trên 60 tuổi", "bệnh lý thần kinh (tai biến mạch máu não, Parkinson, sa sút trí tuệ)", "thuốc ức chế DPP-4 trị đái tháo đường"],
+        "differential_diagnoses": ["pemphigus", "may_day", "hong_ban_da_dang", "choc_bong_nuoc"],
+        "differential_diagnosis_details": "Phân biệt với Pemphigus thông thường (bọng nước mềm nhẽo dễ vỡ, trợt miệng nặng, Nikolsky dương tính); Mày đay (chỉ có sẩn phù lặn trong 24 giờ, không có bọng nước căng).",
+        "red_flags": ["nhiem_trung_boi_nhiem_vi_khuan", "suy_tim_tac_dung_phu_do_dung_corticoid_o_nguoi_gia"],
+        "safe_advice": [
+            "Người cao tuổi xuất hiện các bọng nước căng cần đến bệnh viện khám chuyên khoa Da liễu sớm.",
+            "Không tự ý chọc thủng bọng nước để tránh đưa vi khuẩn vào gây nhiễm trùng máu.",
+            "Chăm sóc tổn thương da nhẹ nhàng, băng phủ các vết trợt bằng gạc không dính.",
+            "Theo dõi sát huyết áp, đường huyết và các bệnh lý nền mạn tính khi dùng thuốc điều trị."
+        ]
+    },
+
+    # CHƯƠNG 8: Phản ứng da do thuốc
+    {
+        "base_id": "hong_ban_co_dinh_do_thuoc",
+        "name": "Hồng ban cố định tái phát do thuốc",
+        "english_name": "Fixed Drug Eruption (FDE)",
+        "type": "Chương 8: Phản ứng da do thuốc",
+        "chapter_number": 8,
+        "book_start_page": 147,
+        "pdf_start_page": 149,
+        "summary": "Phản ứng có hại của thuốc trên da rất đặc trưng, biểu hiện bởi một hoặc vài dát hồng ban hoặc mảng phù nề hình tròn/bầu dục màu đỏ sẫm hoặc tím hoa cà, đôi khi có bọng nước ở trung tâm. Đặc điểm then chốt là luôn tái phát đúng tại vị trí cũ mỗi khi sử dụng lại thuốc gây dị ứng, và để lại dát thâm nhiễm sắc tố màu xám nâu kéo dài sau khi lành.",
+        "common_features": ["dat_hong_ban_hinh_tron_mau_tim", "tai_phat_dung_vi_tri_cu", "tang_sac_to_xam_nau_sau_lanh", "bong_rat_ngua"],
+        "suggestive_phrases": ["tái phát đúng chỗ cũ sau uống thuốc", "dát tròn màu tím hoa cà", "thâm đen lâu mờ sau khi lặn", "ở quy đầu môi sinh dục"],
+        "typical_locations": ["môi", "quy đầu", "bộ phận sinh dục", "thân mình", "tay chân"],
+        "course": "Xuất hiện sau uống thuốc vài giờ đến vài ngày; lành sau 1 - 2 tuần để lại dát thâm kéo dài.",
+        "risk_factors": ["thuốc kháng sinh (cotrimoxazole, tetracycline)", "thuốc giảm đau chống viêm NSAID (paracetamol, ibuprofen, mefenamic acid)", "thuốc an thần"],
+        "differential_diagnoses": ["herpes_da_niem", "hac_lao", "vet_can_con_trung"],
+        "differential_diagnosis_details": "Phân biệt với Herpes simplex da niêm (mụn nước chùm ngứa rát, không để lại mảng thâm xám tròn đồng tâm điển hình); Vết cắn côn trùng (không có tính chất tái phát đúng vị trí cũ sau dùng thuốc).",
+        "red_flags": ["the_bong_nuoc_lan_rong_toan_than_generalized_bullous_fde_nguy_co_nham_ten"],
+        "safe_advice": [
+            "NGỪNG NGAY LẬP TỨC THUỐC NGHI NGỜ VÀ GHI NHỚ TÊN THUỐC đó vào sổ y bạ cá nhân.",
+            "Báo cho mọi bác sĩ và dược sĩ trong các lần khám sau về tiền sử dị ứng thuốc cố định.",
+            "Không tự ý mua và dùng lại các loại thuốc cảm sốt, giảm đau không rõ nguồn gốc.",
+            "Chăm sóc bôi kem làm dịu da theo hướng dẫn của bác sĩ da liễu."
+        ]
+    },
+    {
+        "base_id": "hoi_chung_stevens_johnson_ten",
+        "name": "Hội chứng Stevens-Johnson và Hoại tử thượng bì nhiễm độc (SJS/TEN)",
+        "english_name": "Stevens-Johnson Syndrome and Toxic Epidermal Necrolysis (SJS/TEN)",
+        "type": "Chương 8: Phản ứng da do thuốc",
+        "chapter_number": 8,
+        "book_start_page": 151,
+        "pdf_start_page": 153,
+        "summary": "Phản ứng da do thuốc thể nặng đe dọa trực tiếp tính mạng, đặc trưng bởi sự hoại tử và bong tróc diện rộng của lớp biểu bì da cùng tổn thương viêm loét trợt nặng nề ở ít nhất hai hốc tự nhiên (mắt, miệng, sinh dục). Phân loại theo diện tích bong da: SJS (< 10%), Thể chồng lấp SJS/TEN (10 - 30%), và TEN (> 30% diện tích cơ thể, tương tự bỏng nặng độ 2).",
+        "common_features": ["trot_da_hoai_tu_dien_rong", "loet_trot_mat_mieng_sinh_duc", "dau_hieu_nikolsky_duong_tinh", "sot_cao", "dau_rat_da_du_doi"],
+        "suggestive_phrases": ["bong tróc da như bị bỏng nước sôi", "loét trợt môi miệng chảy máu", "đau rát da dữ dội trước khi bong", "dấu hiệu Nikolsky dương tính sau uống thuốc"],
+        "typical_locations": ["mặt", "thân mình", "niêm mạc mắt", "niêm mạc miệng", "bộ phận sinh dục", "toàn thân"],
+        "course": "Cấp tính tối khẩn cấp, xuất hiện từ 1 - 3 tuần sau khi bắt đầu dùng thuốc nghi ngờ, tỷ lệ tử vong cao do nhiễm trùng huyết và suy đa tạng.",
+        "risk_factors": ["thuốc trị gout allopurinol", "thuốc chống động kinh (carbamazepine, phenytoin)", "kháng sinh sulfamid", "thuốc kháng viêm NSAID", "yếu tố gen HLA-B*1502 hoặc HLA-B*5801"],
+        "differential_diagnoses": ["hoi_chung_ssss", "pemphigus", "agep", "bong_nhiet"],
+        "differential_diagnosis_details": "Phân biệt với SSSS (thường ở trẻ sơ sinh, do độc tố tụ cầu, không có tổn thương niêm mạc hốc tự nhiên); Pemphigus (tiến triển mạn tính, không sốt cấp tính rầm rộ sau uống thuốc mới).",
+        "red_flags": ["trot_da_tren_10_dien_tich_co_the", "mat_thi_luc_viem_dinh_ket_mac", "sot_cao_tut_huyet_ap_nhiem_trung_huyet", "suy_ho_hap_suy_than_cap"],
+        "safe_advice": [
+            "CẤP CỨU Y TẾ NGAY LẬP TỨC: Đây là tình trạng cấp cứu nội - da liễu khẩn cấp tương tự bỏng nặng.",
+            "LẬP TỨC NGỪNG TOÀN BỘ CÁC THUỐC NGHI NGỜ VÀ MANG THEO DANH SÁCH THUỐC đến bệnh viện.",
+            "Chăm sóc bệnh nhân trong môi trường vô trùng tại phòng hồi sức tích cực hoặc đơn vị bỏng.",
+            "Tuyệt đối không bôi đắp bất kỳ loại thuốc nam, cao dán hay hóa chất nào lên da bệnh nhân."
+        ]
+    },
+    {
+        "base_id": "hoi_chung_dress",
+        "name": "Hội chứng DRESS",
+        "english_name": "Drug Reaction with Eosinophilia and Systemic Symptoms (DRESS)",
+        "type": "Chương 8: Phản ứng da do thuốc",
+        "chapter_number": 8,
+        "book_start_page": 156,
+        "pdf_start_page": 158,
+        "summary": "Phản ứng có hại của thuốc thể nặng đặc trưng bởi bộ ba triệu chứng lâm sàng: phát ban da dạng dát sẩn thâm nhiễm lan rộng (thường kèm phù nề mặt), sốt cao kéo dài, và tổn thương các cơ quan nội tạng (viêm gan, viêm thận, viêm phổi) đi kèm tăng bạch cầu ái toan máu. Bệnh thường khởi phát muộn (2 - 8 tuần sau dùng thuốc).",
+        "common_features": ["phat_ban_do_toan_than", "phu_ne_mat", "sot_cao", "tang_bach_cau_ai_toan", "ton_thuong_gan_than"],
+        "suggestive_phrases": ["phù nề mặt phát ban đỏ toàn thân", "sốt cao sau 2-6 tuần uống thuốc", "tăng bạch cầu ái toan", "men gan tăng cao sau dùng thuốc chống động kinh allopurinol"],
+        "typical_locations": ["mặt (phù nề)", "thân mình", "chi", "toàn thân"],
+        "course": "Kéo dài dai dẳng nhiều tuần đến nhiều tháng ngay cả khi đã ngừng thuốc gây bệnh.",
+        "risk_factors": ["thuốc chống động kinh (carbamazepine, lamotrigine)", "allopurinol", "sulfonamid", "sự tái hoạt của virus herpes người (HHV-6)"],
+        "differential_diagnoses": ["nhiem_sieu_vi_cap", "sjs_ten", "benh_ly_huyet_hoc_lymphoma"],
+        "differential_diagnosis_details": "Phân biệt với SJS/TEN (DRESS không có hiện tượng hoại tử bong tróc thượng bì diện rộng, nổi bật là phù mặt, hạch to và tăng bạch cầu ái toan máu); Nhiễm siêu vi cấp (DRESS có tiền sử dùng thuốc rõ và kéo dài dai dẳng hơn).",
+        "red_flags": ["viem_gan_cap_suy_gan", "viem_than_cap", "viem_co_tim", "sot_cao_suy_da_tang"],
+        "safe_advice": [
+            "CẦN NHẬP VIỆN ĐIỀU TRỊ CHUYÊN KHOA NGAY: Cần theo dõi chức năng gan, thận, tim phổi chặt chẽ.",
+            "Ngừng ngay lập tức loại thuốc gây dị ứng.",
+            "Tuân thủ điều trị corticoid đường toàn thân dài ngày theo chỉ định của bác sĩ và giảm liều từ từ để phòng tái phát.",
+            "Lập thẻ dị ứng thuốc cá nhân để không bao giờ tái sử dụng thuốc đó."
+        ]
+    },
+    {
+        "base_id": "ngoai_ban_mun_mu_toan_than_cap_agep",
+        "name": "Ngoại ban mụn mủ toàn thân cấp tính (AGEP)",
+        "english_name": "Acute Generalized Exanthematous Pustulosis (AGEP)",
+        "type": "Chương 8: Phản ứng da do thuốc",
+        "chapter_number": 8,
+        "book_start_page": 160,
+        "pdf_start_page": 162,
+        "summary": "Phản ứng da do thuốc thể nặng khởi phát rất nhanh (thường 24 - 48 giờ sau dùng thuốc, đặc biệt là kháng sinh), đặc trưng bởi hàng chục đến hàng trăm mụn mủ nhỏ vô trùng nông dưới sừng (kích thước < 5 mm) nổi chi chít trên nền hồng ban phù nề, ưu thế ở các nếp gấp lớn, kèm theo sốt cao và tăng bạch cầu đa nhân trung tính trong máu.",
+        "common_features": ["hang_tram_mun_mu_nho_vo_trung", "hong_ban_phu_ne", "sot_cao", "tang_bach_cau_da_nhan_trung_tinh"],
+        "suggestive_phrases": ["mụn mủ nhỏ li ti rải rác trên nền đỏ", "nổi rầm rộ sau 1-2 ngày uống kháng sinh", "sốt cao mụn mủ ở nếp gấp nách bẹn"],
+        "typical_locations": ["vùng nếp gấp (nách, bẹn, cổ)", "thân mình", "toàn thân"],
+        "course": "Cấp tính; sau khi ngừng thuốc gây dị ứng, mụn mủ thường tự thoái triển nhanh và bong vảy trong vòng 1 - 2 tuần.",
+        "risk_factors": ["kháng sinh nhóm beta-lactam (aminopenicillin, cephalosporin)", "macrolide", "thuốc kháng nấm terbinafine", "chẹn kênh canxi diltiazem"],
+        "differential_diagnoses": ["vay_nen_the_mu_toan_than", "nhiem_trung_da_mu", "sjs_ten"],
+        "differential_diagnosis_details": "Phân biệt với Vảy nến thể mủ toàn thân (vảy nến mủ tiến triển kéo dài, tiền sử vảy nến trước đó, không hồi phục nhanh sau khi ngừng thuốc); SJS/TEN (AGEP có mụn mủ nhỏ không phải bọng nước hoại tử, không loét niêm mạc trợt).",
+        "red_flags": ["boi_nhiem_vi_khuan_thu_phat", "sot_cao_keo_dai_suy_kien"],
+        "safe_advice": [
+            "Ngừng ngay lập tức loại kháng sinh hoặc thuốc nghi ngờ.",
+            "Đến bệnh viện chuyên khoa để được xét nghiệm máu và chăm sóc tổn thương mụn mủ bằng dung dịch sát khuẩn dịu nhẹ.",
+            "Bù đủ nước và điện giải trong giai đoạn sốt cao.",
+            "Ghi nhận tiền sử dị ứng thuốc để tránh dùng lại nhóm thuốc này trong tương lai."
+        ]
+    },
+
+    # CHƯƠNG 9: Tiếp cận và xử trí bệnh nhân ngứa
+    {
+        "base_id": "tiep_can_ngua",
+        "name": "Ngứa da mạn tính",
+        "english_name": "Chronic Pruritus",
+        "type": "Chương 9: Tiếp cận và xử trí bệnh nhân ngứa",
+        "chapter_number": 9,
+        "book_start_page": 165,
+        "pdf_start_page": 167,
+        "summary": "Tình trạng cảm giác khó chịu tại da thôi thúc phản xạ cào gãi, được định nghĩa là mạn tính khi kéo dài từ 6 tuần trở lên. Ngứa có thể xuất phát từ nguyên nhân da liễu (viêm da cơ địa, ghẻ, mày đay, vảy nến), bệnh lý toàn thân (suy thận mạn tính, ứ mật xơ gan, đái tháo đường, ung thư hạch lymphoma), nguyên nhân thần kinh hoặc tâm căn.",
+        "common_features": ["ngua_du_doi_keo_dai", "vet_cao_gai_tray_xuoc", "san_ngua_cuc", "lichen_hoa"],
+        "suggestive_phrases": ["ngứa kéo dài trên 6 tuần", "càng gãi càng ngứa tạo vòng xoắn bệnh lý", "ngứa kèm khô da ở người già", "ngứa toàn thân không rõ ban da"],
+        "typical_locations": ["toàn thân", "lưng", "cẳng chân", "tay", "vùng da tay với tới được"],
+        "course": "Kéo dài mạn tính, ảnh hưởng nghiêm trọng đến chất lượng giấc ngủ và tâm lý người bệnh.",
+        "risk_factors": ["tuổi già (khô da lão hóa)", "suy thận mạn chạy thận nhân tạo", "bệnh gan tắc mật", "bệnh lý tuyến giáp", "căng thẳng stress lo âu"],
+        "differential_diagnoses": ["ghe", "viem_da_co_dia", "viem_da_tiep_xuc", "kho_da"],
+        "differential_diagnosis_details": "Cần khám kỹ toàn diện để phân biệt giữa Ngứa có tổn thương da nguyên phát (ghẻ, viêm da cơ địa, vảy nến) với Ngứa trên da bình thường chỉ có tổn thương thứ phát do cào gãi (gợi ý nguyên nhân nội khoa toàn thân, gan, thận, ung thư).",
+        "red_flags": ["ngua_kem_sot_sut_can_do_mo_hoi_dem_nghi_lymphoma", "ngua_kem_vang_da_nuoc_tieu_sam", "suy_than_ure_mau_cao"],
+        "safe_advice": [
+            "Cắt ngắn móng tay, xoa nhẹ hoặc chườm mát thay vì dùng móng cào gãi mạnh gây tổn thương da.",
+            "Tắm nước ấm nhanh, không dùng nước nóng, thoa kem dưỡng ẩm làm mềm da ngay sau khi tắm.",
+            "Mặc quần áo cotton thoáng mát, tránh tiếp xúc đồ len dạ trực tiếp lên da.",
+            "Đi khám toàn diện gồm xét nghiệm công thức máu, chức năng gan, thận, tuyến giáp để tìm nguyên nhân gốc rễ gây ngứa."
+        ]
+    },
+
+    # CHƯƠNG 10: Bệnh lây truyền qua đường tình dục
+    {
+        "base_id": "benh_giang_mai",
+        "name": "Bệnh giang mai",
+        "english_name": "Syphilis",
+        "type": "Chương 10: Bệnh lây truyền qua đường tình dục",
+        "chapter_number": 10,
+        "book_start_page": 184,
+        "pdf_start_page": 186,
+        "summary": "Bệnh nhiễm trùng toàn thân lây truyền qua đường tình dục hoặc từ mẹ sang con do xoắn khuẩn Treponema pallidum gây ra. Diễn tiến qua nhiều giai đoạn: Giang mai thời kỳ I (săng giang mai - vết loét tròn/bầu dục nông, đáy sạch, bờ cứng, không đau kèm hạch bẹn), Thời kỳ II (đào ban giang mai lòng bàn tay chân, sẩn sùi condyloma lata), Thời kỳ kín (tiềm ẩn) và Thời kỳ III (gôm giang mai, tổn thương tim mạch và thần kinh).",
+        "common_features": ["sang_giang_mai_khong_dau", "hach_ben_khong_dau", "dao_ban_long_ban_tay_chan", "san_sui_condyloma_lata"],
+        "suggestive_phrases": ["vết loét không đau ở bộ phận sinh dục", "sờ vết loét thấy nền cứng đáy sạch", "đào ban màu hồng ở lòng bàn tay bàn chân", "sẩn sùi ẩm ướt ở vùng hậu môn sinh dục"],
+        "typical_locations": ["quy đầu", "thân dương vật", "âm hộ âm đạo", "hậu môn", "lòng bàn tay", "lòng bàn chân"],
+        "course": "Mạn tính kéo dài nhiều năm nếu không được điều trị, gây tổn thương phá hủy xương, thần kinh và tim mạch đe dọa tính mạng.",
+        "risk_factors": ["quan hệ tình dục không an toàn không dùng bao cao su", "nhiều bạn tình", "nam quan hệ tình dục đồng giới (MSM)", "tiền sử mắc các bệnh STDs khác"],
+        "differential_diagnoses": ["ha_cam_mem", "herpes_sinh_duc", "sui_mao_ga", "phat_ban_thuoc"],
+        "differential_diagnosis_details": "Phân biệt với Hạ cam mềm (vết loét sâu, đáy bẩn tiết mủ, bờ nham nhở rất đau đớn, hạch bẹn sưng mủ vỡ); Herpes sinh dục (mụn nước mọc thành chùm đau rát tái phát nhiều lần).",
+        "red_flags": ["giang_mai_than_kinh_roi_loan_tri_giac", "giang_mai_mat_suy_giam_thi_luc", "phinh_dong_mach_chu_do_giang_mai", "giang_mai_o_phu_nu_mang_thai_nguy_co_say_thai_di_tat"],
+        "safe_advice": [
+            "ĐIỀU TRỊ KHẨN CẤP BẰNG PENICILLIN G THEO PHÁC ĐỒ CHUẨN TẠI CƠ SỞ Y TẾ CHUYÊN KHOA.",
+            "Xét nghiệm và điều trị đồng thời cho bạn tình để cắt đứt chuỗi lây nhiễm.",
+            "Kiêng quan hệ tình dục cho đến khi cả hai đã hoàn thành đủ phác đồ điều trị và vết loét lành hẳn.",
+            "Xét nghiệm tầm soát thêm các bệnh lây truyền qua đường tình dục khác như HIV, viêm gan B, C.",
+            "Phụ nữ mang thai cần làm xét nghiệm sàng lọc giang mai trong 3 tháng đầu thai kỳ."
+        ]
+    },
+    {
+        "base_id": "benh_lau",
+        "name": "Bệnh lậu",
+        "english_name": "Gonorrhea",
+        "type": "Chương 10: Bệnh lây truyền qua đường tình dục",
+        "chapter_number": 10,
+        "book_start_page": 190,
+        "pdf_start_page": 192,
+        "summary": "Bệnh nhiễm trùng sinh mủ lây truyền qua đường tình dục do song cầu khuẩn Gram âm Neisseria gonorrhoeae gây ra. Ở nam giới, biểu hiện rầm rộ với viêm niệu đạo cấp tính: tiểu buốt, tiểu rắt và chảy mủ niệu đạo đặc màu vàng xanh (giọt sương ban mai). Ở nữ giới, triệu chứng thường kín đáo hơn (khí hư, tiểu khó nhẹ) nhưng dễ biến chứng viêm vùng chậu (PID) dẫn đến vô sinh và thai ngoài tử cung.",
+        "common_features": ["tieu_buot", "chay_mu_nieu_dao_vang_xanh", "tieu_rat", "khi_hu_bat_thuong", "phu_ne_lo_sao"],
+        "suggestive_phrases": ["tiểu buốt buốt như dao cắt", "chảy giọt mủ vàng đặc đầu bãi buổi sáng", "khí hư mủ ở phụ nữ sau quan hệ không an toàn"],
+        "typical_locations": ["niệu đạo (nam)", "cổ tử cung niệu đạo (nữ)", "họng", "trực tràng"],
+        "course": "Cấp tính, khởi phát nhanh sau 2 - 7 ngày ủ bệnh; nguy cơ mạn tính gây chít hẹp niệu đạo, viêm mào tinh hoàn và vô sinh.",
+        "risk_factors": ["quan hệ tình dục không an toàn qua ngả âm đạo, miệng hoặc hậu môn", "bạn tình mới hoặc nhiều bạn tình"],
+        "differential_diagnoses": ["viem_nieu_dao_khong_do_lau_chlamydia", "nhiem_trung_tieu_thong_thuong", "nhiem_trichomonas"],
+        "differential_diagnosis_details": "Phân biệt với Nhiễm Chlamydia trachomatis (triệu chứng tiết dịch niệu đạo trong hoặc nhầy mờ đục, số lượng ít hơn, tiểu buốt nhẹ hơn); Nhuộm soi dịch niệu đạo thấy song cầu Gram âm nằm trong bạch cầu đa nhân là bằng chứng tin cậy.",
+        "red_flags": ["viem_vung_chau_cap_dau_bung_duoi_sot", "viem_khop_nhiem_trung_do_lau", "lau_lan_toa_nhiem_trung_huyet"],
+        "safe_advice": [
+            "ĐI KHÁM ĐỂ ĐƯỢC TIÊM VÀ UỐNG KHÁNG SINH THEO PHÁC ĐỒ PHỐI HỢP ĐIỀU TRỊ CẢ LẬU VÀ CHLAMYDIA (do tình trạng lậu cầu kháng thuốc và đồng nhiễm rất cao).",
+            "Điều trị bắt buộc cho cả bạn tình hiện tại.",
+            "Tuyệt đối không quan hệ tình dục trong ít nhất 7 ngày sau khi kết thúc điều trị.",
+            "Tái khám xét nghiệm lại để đảm bảo đã khỏi bệnh hoàn toàn.",
+            "Luôn sử dụng bao cao su đúng cách trong mọi hành vi quan hệ tình dục."
+        ]
+    },
+    {
+        "base_id": "nhiem_chlamydia",
+        "name": "Nhiễm Chlamydia trachomatis sinh dục",
+        "english_name": "Genital Chlamydia Trachomatis Infection",
+        "type": "Chương 10: Bệnh lây truyền qua đường tình dục",
+        "chapter_number": 10,
+        "book_start_page": 194,
+        "pdf_start_page": 196,
+        "summary": "Nhiễm trùng lây truyền qua đường tình dục do vi khuẩn nội bào Chlamydia trachomatis gây ra. Đây là nguyên nhân hàng đầu của viêm niệu đạo không do lậu ở nam giới và viêm cổ tử cung ở nữ giới. Đặc điểm nổi bật là phần lớn các trường hợp (đặc biệt ở nữ) không có triệu chứng lâm sàng rõ ràng ('kẻ giết người thầm lặng'), nhưng âm thầm gây biến chứng tắc vòi trứng, vô sinh và viêm khớp phản ứng (hội chứng Reiter).",
+        "common_features": ["tiet_dich_nhay_trong_nieu_dao", "tieu_kho_nhe", "khi_hu_nhay_mu", "khong_trieu_chung"],
+        "suggestive_phrases": ["chảy dịch nhầy trong lượng ít ở miệng sáo", "tiểu ngứa rát nhẹ kéo dài", "viêm niệu đạo dai dẳng sau điều trị lậu"],
+        "typical_locations": ["niệu đạo", "cổ tử cung", "trực tràng"],
+        "course": "Bán cấp hoặc không triệu chứng, tiến triển âm thầm nhiều tháng đến nhiều năm nếu không được xét nghiệm PCR sàng lọc.",
+        "risk_factors": ["hoạt động tình dục ở người trẻ tuổi", "không sử dụng biện pháp rào cản bảo vệ", "đồng nhiễm bệnh lậu"],
+        "differential_diagnoses": ["benh_lau", "nhiem_mycoplasma_genitalium", "nhiem_trichomonas"],
+        "differential_diagnosis_details": "Phân biệt với Bệnh lậu (lậu chảy mủ nhiều vàng đặc rầm rộ, trong khi Chlamydia chảy dịch nhầy mỏng, lượng ít; chẩn đoán phân biệt chính xác nhờ xét nghiệm sinh học phân tử NAAT/PCR).",
+        "red_flags": ["viem_vung_chau_viem_vo_trung_nguy_co_vo_sinh", "hoi_chung_reiter_viem_khop_viem_ket_mac_viem_nieu_dao"],
+        "safe_advice": [
+            "Uống thuốc kháng sinh đặc hiệu (Azithromycin hoặc Doxycycline) đúng liều lượng chỉ dẫn của bác sĩ.",
+            "Xét nghiệm và điều trị đồng thời cho bạn tình trong vòng 60 ngày gần nhất.",
+            "Kiêng quan hệ tình dục 7 ngày sau khi bắt đầu dùng thuốc.",
+            "Thực hiện tầm soát định kỳ bằng xét nghiệm PCR nếu có đời sống tình dục năng động."
+        ]
+    },
+    {
+        "base_id": "herpes_sinh_duc",
+        "name": "Herpes sinh dục",
+        "english_name": "Genital Herpes",
+        "type": "Chương 10: Bệnh lây truyền qua đường tình dục",
+        "chapter_number": 10,
+        "book_start_page": 197,
+        "pdf_start_page": 198,
+        "summary": "Bệnh viêm loét sinh dục tái phát phổ biến do virus Herpes Simplex týp 2 (HSV-2) hoặc týp 1 (HSV-1) lây qua tiếp xúc tình dục. Sang thương là các mụn nước nhỏ mọc thành chùm trên nền hồng ban phù nề, nhanh chóng vỡ tạo thành các vết loét trợt nông đau rát, sau đó đóng vảy và lành tự nhiên trong 1 - 2 tuần nhưng virus vẫn ẩn trong hạch thần kinh cùng và tái phát định kỳ.",
+        "common_features": ["mun_nuoc_thanh_chum_sinh_duc", "loet_trot_nong_dau_rat", "hach_ben_sung_dau", "cam_giac_chong_rat_bao_truoc"],
+        "suggestive_phrases": ["mụn nước mọc chùm ở bao quy đầu âm hộ", "vết trợt nông đau rát khi đi tiểu", "tái phát nhiều lần tại vùng sinh dục"],
+        "typical_locations": ["quy đầu", "thân dương vật", "bìu", "môi lớn", "môi bé", "vùng hậu môn đáy chậu"],
+        "course": "Tái phát mạn tính theo đợt, đợt đầu tiên (nguyên phát) thường đau rát dữ dội kèm sốt và sưng hạch bẹn; các đợt tái phát sau nhẹ hơn.",
+        "risk_factors": ["quan hệ tình dục không an toàn", "nhiễm HSV-2", "căng thẳng mệt mỏi suy giảm sức đề kháng"],
+        "differential_diagnoses": ["giang_mai_thoi_ky_i", "ha_cam_mem", "hong_ban_co_dinh_do_thuoc"],
+        "differential_diagnosis_details": "Phân biệt với Săng giang mai (vết loét đơn độc, bờ cứng, đáy sạch, hoàn toàn không đau); Hạ cam mềm (loét sâu bẩn mủ nham nhở đau dữ dội).",
+        "red_flags": ["phu_nu_mang_thai_nhiem_herpes_sinh_duc_chuyen_da_nguy_co_lay_cho_tre_so_sinh", "bi_tieu_cap_do_dau"],
+        "safe_advice": [
+            "Dùng thuốc kháng virus (acyclovir, valacyclovir) sớm ngay khi xuất hiện dấu hiệu nóng rát châm chích đầu tiên.",
+            "KIÊNG HOÀN TOÀN QUAN HỆ TÌNH DỤC KHI ĐANG CÓ MỤN NƯỚC HOẶC VẾT LOÉT TRỢT.",
+            "Sử dụng bao cao su trong tất cả các lần quan hệ dù không có triệu chứng (vì virus vẫn có thể phóng thích không triệu chứng).",
+            "Phụ nữ mang thai cần thông báo cho bác sĩ sản khoa nếu có tiền sử herpes sinh dục để có kế hoạch mổ lấy thai bảo vệ bé."
+        ]
+    },
+    {
+        "base_id": "sui_mao_ga",
+        "name": "Sùi mào gà (Mụn cóc sinh dục)",
+        "english_name": "Anogenital Warts (Condyloma Acuminata)",
+        "type": "Chương 10: Bệnh lây truyền qua đường tình dục",
+        "chapter_number": 10,
+        "book_start_page": 199,
+        "pdf_start_page": 201,
+        "summary": "Bệnh u nhú lây truyền qua đường tình dục rất phổ biến do virus gây u nhú ở người (Human Papillomavirus - HPV), phổ biến nhất là týp 6 và 11 (nguy cơ thấp). Tổn thương biểu hiện là các sẩn mềm, màu da, hồng hoặc nâu, tiến triển thành các khối nhú sùi có bề mặt gồ ghề dạng hoa súp lơ hoặc mào gà ở vùng niêm mạc và bán niêm mạc hậu môn sinh dục.",
+        "common_features": ["sang_thuong_sui_nhu_gai", "hinh_mao_ga_sup_lo", "khong_dau", "de_chay_mau_khi_va_cham"],
+        "suggestive_phrases": ["nốt sùi như mào gà hoa cải", "u nhú không đau vùng sinh dục", "khối sùi ẩm ướt hậu môn sinh dục"],
+        "typical_locations": ["rãnh quy đầu", "thân dương vật", "miệng sáo", "âm hộ", "âm đạo", "quanh hậu môn", "ống hậu môn"],
+        "course": "Tiến triển kéo dài, phát triển nhanh trong môi trường ẩm ướt hoặc suy giảm miễn dịch, tỷ lệ tái phát sau điều trị khá cao.",
+        "risk_factors": ["quan hệ tình dục sớm không dùng bao cao su", "nhiều bạn tình", "hút thuốc lá", "nhiễm HIV hoặc suy giảm miễn dịch"],
+        "differential_diagnoses": ["giang_mai_condyloma_lata", "chuoi_hat_ngoc_duong_vat", "u_mem_lay", "ung_thu_te_bao_gai"],
+        "differential_diagnosis_details": "Phân biệt với Sẩn sùi giang mai thời kỳ II (Condyloma lata - sẩn phẳng ẩm ướt chứa nhiều xoắn khuẩn, huyết thanh giang mai dương tính); Chuỗi hạt ngọc dương vật (các sẩn nhỏ li ti màu ngọc xếp đều đặn quanh vành quy đầu, là biến thể giải phẫu lành tính).",
+        "red_flags": ["sui_mao_ga_khong_lo_buschke_lowenstein_nguy_co_ac_tinh_hoa", "dong_nhiem_hpv_nguy_co_cao_16_18_gay_ung_thu_co_tu_cung_duong_vat"],
+        "safe_advice": [
+            "Đến khám chuyên khoa để được điều trị loại bỏ tổn thương (chấm thuốc podophyllin/imiquimod, đốt điện, laser CO2 hoặc áp nitơ lỏng).",
+            "Khám và điều trị đồng thời cho bạn tình.",
+            "Tiêm vaccine phòng ngừa HPV (Gardasil) cho thanh thiếu niên và người trưởng thành.",
+            "Phụ nữ nên làm xét nghiệm Pap smear và HPV định kỳ để tầm soát ung thư cổ tử cung."
+        ]
+    },
+
+    # CHƯƠNG 11: Bệnh lý niêm mạc miệng
+    {
+        "base_id": "loet_aphthous",
+        "name": "Loét Aphthous tái phát",
+        "english_name": "Recurrent Aphthous Stomatitis (RAS)",
+        "type": "Chương 11: Bệnh lý niêm mạc miệng",
+        "chapter_number": 11,
+        "book_start_page": 203,
+        "pdf_start_page": 205,
+        "summary": "Bệnh lý viêm loét niêm mạc miệng mạn tính tái phát thường gặp nhất trong cộng đồng (thường gọi là nhiệt miệng). Biểu hiện đặc trưng là một hoặc nhiều vết loét tròn hoặc bầu dục, đáy nông phủ màng giả màu vàng xám, bao quanh bởi một viền hồng ban đỏ rực rất đau rát, xuất hiện chủ yếu trên niêm mạc miệng không sừng hóa (mặt trong môi, má, sàn miệng, dưới lưỡi).",
+        "common_features": ["vet_loet_nong_day_vang_xam", "vien_hong_ban_bao_quanh", "dau_rat_khi_an_nhai", "tai_phat_nhieu_lan"],
+        "suggestive_phrases": ["nhiệt miệng tái phát nhiều đợt", "vết loét viền đỏ đáy vàng trong miệng", "đau rát khi ăn đồ chua cay mặn"],
+        "typical_locations": ["mặt trong môi", "niêm mạc má", "ngách tiền đình", "mặt dưới lưỡi", "sàn miệng"],
+        "course": "Tự lành trong vòng 7 - 14 ngày không để lại sẹo (thể aphthous nhỏ Minor); thể Major vết loét to sâu hơn và lành để lại sẹo sau vài tuần.",
+        "risk_factors": ["chấn thương cơ học nhẹ (cắn vào môi má, bàn chải đánh răng thô)", "căng thẳng stress", "thiếu hụt vi chất (sắt, kẽm, folate, vitamin B12)", "thay đổi nội tiết tố"],
+        "differential_diagnoses": ["herpes_mieng", "lichen_phang_mieng", "loet_ung_thu_te_bao_gai", "hoi_chung_behcet"],
+        "differential_diagnosis_details": "Phân biệt với Herpes miệng (có mụn nước chùm ban đầu, thường ở niêm mạc sừng hóa như vòm khẩu cái, nướu răng); Loét ung thư (vết loét đáy sùi cứng, bờ nham nhở gồ cao, kéo dài quá 3 tuần không lành).",
+        "red_flags": ["loet_keo_dai_tren_3_tuan_khong_lanh_nguy_co_ung_thu", "loet_mieng_kem_loet_sinh_duc_va_viem_mat_hoi_chung_behcet"],
+        "safe_advice": [
+            "Súc miệng hàng ngày bằng nước muối sinh lý 0,9% hoặc dung dịch chlorhexidine sát khuẩn không cồn.",
+            "Bôi gel giảm đau và kem corticoid thoa miệng (triamcinolone acetonide in orabase) theo hướng dẫn y tế.",
+            "Tránh ăn các thức ăn quá cay nóng, nhiều axit chua hoặc đồ cứng giòn gây cọ sát vết loét.",
+            "Dùng bàn chải lông mềm và đánh răng nhẹ nhàng.",
+            "Bổ sung chế độ ăn giàu vitamin và khoáng chất (rau xanh, trái cây)."
+        ]
+    },
+    {
+        "base_id": "lichen_phang_mieng",
+        "name": "Lichen phẳng niêm mạc miệng",
+        "english_name": "Oral Lichen Planus (OLP)",
+        "type": "Chương 11: Bệnh lý niêm mạc miệng",
+        "chapter_number": 11,
+        "book_start_page": 209,
+        "pdf_start_page": 211,
+        "summary": "Bệnh lý viêm mạn tính qua trung gian tế bào T ảnh hưởng đến niêm mạc miệng. Thể lưới là thể phổ biến nhất với tổn thương đặc trưng là các dải, vân hoặc mảng màu trắng đan xen như mạng lưới ren (dải Wickham), thường đối xứng hai bên niêm mạc má. Thể trợt loét gây cảm giác đau rát bỏng nhiều và có nguy cơ chuyển dạng ác tính thấp.",
+        "common_features": ["mang_luoi_van_trang_wickham", "trot_loet_niem_mac", "dau_rat_kho_chiu", "doi_xung_hai_ben"],
+        "suggestive_phrases": ["mạng lưới ren trắng ở niêm mạc má", "dải Wickham hai bên má", "viêm lợi bong vảy", "đau rát dai dẳng trong miệng"],
+        "typical_locations": ["niêm mạc má (hai bên)", "lưỡi", "nướu răng (viêm nướu bong vảy)"],
+        "course": "Mạn tính, dai dẳng nhiều năm, có những giai đoạn ổn định xen kẽ đợt viêm đau trợt cấp.",
+        "risk_factors": ["rối loạn tự miễn", "nhiễm virus viêm gan C (HCV)", "stress lo âu", "vật liệu nha khoa kim loại hàn răng"],
+        "differential_diagnoses": ["bach_san_mieng", "nhiem_nam_candida_mieng", "lupus_ban_do_niem_mac"],
+        "differential_diagnosis_details": "Phân biệt với Bạch sản (mảng trắng đơn độc không đối xứng, không cạo tróc, không có dạng mạng lưới ren); Nấm Candida miệng (mảng trắng bở như sữa chua cạo tróc để lại nền đỏ rỉ máu).",
+        "red_flags": ["loet_trot_sui_cung_khang_tri_nguy_co_chuyen_dang_ung_thu_te_bao_gai"],
+        "safe_advice": [
+            "Cần sinh thiết mô bệnh học để khẳng định chẩn đoán và loại trừ tổn thương tiền ác tính.",
+            "Khám nha khoa định kỳ mỗi 6 tháng để theo dõi sát tổn thương niêm mạc.",
+            "Vệ sinh răng miệng sạch sẽ, nhẹ nhàng, trám sửa các răng mẻ cạnh sắc nhọn.",
+            "TUYỆT ĐỐI KHÔNG HÚT THUỐC LÁ VÀ KHÔNG UỐNG RƯỢU BIA (yếu tố làm tăng vọt nguy cơ ung thư hóa).",
+            "Bôi corticoid tại chỗ dạng gel cho niêm mạc miệng trong các đợt trợt loét đau rát."
+        ]
+    },
+    {
+        "base_id": "nhiem_nam_candida_mieng",
+        "name": "Nhiễm nấm Candida niêm mạc miệng",
+        "english_name": "Oral Candidiasis (Oral Thrush)",
+        "type": "Chương 11: Bệnh lý niêm mạc miệng",
+        "chapter_number": 11,
+        "book_start_page": 215,
+        "pdf_start_page": 217,
+        "summary": "Nhiễm nấm men cơ hội ở khoang miệng do Candida albicans. Thể màng giả (đẹn trăng) là thể hay gặp nhất, biểu hiện bởi các mảng trắng mềm, bở như váng sữa hoặc sữa chua bám trên niêm mạc miệng, lưỡi; khi cạo tróc để lại nền niêm mạc đỏ rực, phù nề và có thể rỉ máu.",
+        "common_features": ["mang_trang_bo_nhu_sua_chua", "cao_troc_de_lai_nen_do", "rat_mieng", "roi_loan_vi_giac"],
+        "suggestive_phrases": ["mảng trắng như váng sữa trong miệng", "đẹn miệng ở trẻ nhỏ", "cạo tróc thấy nền đỏ rát", "nấm miệng sau dùng kháng sinh hoặc xịt corticoid"],
+        "typical_locations": ["lưng lưỡi", "niêm mạc má", "vòm khẩu cái", "họng"],
+        "course": "Cấp tính hoặc mạn tính tái phát phụ thuộc vào việc loại bỏ yếu tố nguy cơ nền.",
+        "risk_factors": ["dùng kháng sinh phổ rộng", "dùng thuốc xịt corticoid trị hen suyễn mà không súc miệng", "đeo hàm giả tháo lắp vệ sinh kém", "suy giảm miễn dịch (HIV/AIDS, đái tháo đường, ung thư)"],
+        "differential_diagnoses": ["bach_san_mieng", "lichen_phang_mieng", "can_sua_o_tre_em"],
+        "differential_diagnosis_details": "Phân biệt với Cặn sữa ở trẻ nhỏ (dễ lau sạch không để lại nền đỏ rát); Bạch sản (mảng trắng dính chặt không thể cạo bong ra được).",
+        "red_flags": ["nhiem_nam_lan_xuong_thuc_quan_gay_nuot_dau_nghi_hiv_aids"],
+        "safe_advice": [
+            "Súc miệng thật sạch bằng nước sau mỗi lần xịt thuốc corticoid điều trị hen suyễn.",
+            "Vệ sinh sạch sẽ và ngâm rửa hàm răng giả tháo lắp trong dung dịch sát khuẩn vào ban đêm.",
+            "Rà miệng bằng dung dịch kháng nấm nystatin hoặc miconazole gel theo chỉ định bác sĩ.",
+            "Người lớn tự nhiên bị nấm miệng nặng tái phát cần đi làm xét nghiệm kiểm tra đường huyết và tầm soát HIV."
+        ]
+    },
+    {
+        "base_id": "bach_san_mieng",
+        "name": "Bạch sản niêm mạc miệng",
+        "english_name": "Oral Leukoplakia",
+        "type": "Chương 11: Bệnh lý niêm mạc miệng",
+        "chapter_number": 11,
+        "book_start_page": 220,
+        "pdf_start_page": 222,
+        "summary": "Tổn thương tiền ác tính phổ biến nhất ở khoang miệng, được định nghĩa lâm sàng là một mảng hoặc dát màu trắng trên niêm mạc miệng không thể cạo tróc được và không thể chẩn đoán thành bất kỳ thực thể bệnh lý nào khác. Tỷ lệ chuyển dạng thành ung thư biểu mô tế bào gai khoang miệng dao động từ 1 - 20%.",
+        "common_features": ["mang_trang_dinh_chat", "khong_cao_troc_duoc", "khong_trieu_chung_hoac_hoi_com", "ranh_gioi_ro"],
+        "suggestive_phrases": ["mảng trắng không cạo tróc được trong miệng", "vết trắng sần sùi ở bờ lưỡi người hút thuốc lào thuốc lá", "tổn thương tiền ung thư miệng"],
+        "typical_locations": ["bờ bên của lưỡi", "sàn miệng", "niêm mạc má", "vòm khẩu cái"],
+        "course": "Mạn tính tiến triển chậm, nguy cơ hóa ác tính tăng cao theo thời gian nếu tiếp tục hút thuốc lá rượu bia.",
+        "risk_factors": ["hút thuốc lá thuốc lào", "uống nhiều rượu bia", "nhai trầu cau", "nhiễm virus HPV", "kích thích cơ học mạn tính từ răng giả nhọn"],
+        "differential_diagnoses": ["lichen_phang_mieng", "nhiem_nam_candida_mieng", "ung_thu_te_bao_gai_mieng"],
+        "differential_diagnosis_details": "Phân biệt với Nấm Candida (nấm cạo tróc được); Lichen phẳng (có dải mạng lưới Wickham đối xứng hai bên); Sinh thiết mô bệnh học là bắt buộc đối với mọi tổn thương bạch sản để đánh giá mức độ nghịch sản biểu mô.",
+        "red_flags": ["mang_trang_xen_lan_dom_do_erythroleukoplakia_nguy_co_ac_tinh_rat_cao", "ton_thuong_sui_cung_loet_chay_mau"],
+        "safe_advice": [
+            "BẮT BUỘC ĐI KHÁM VÀ SINH THIẾT MÔ HỌC TẠI CHUYÊN KHOA để tầm soát tế bào ác tính.",
+            "BỎ HÚT THUỐC LÁ, THUỐC LÀO VÀ BỎ UỐNG RƯỢU BIA NGAY LẬP TỨC.",
+            "Tránh nhai trầu cau và chỉnh sửa các răng giả, răng sứt mẻ gây chấn thương cọ xát niêm mạc.",
+            "Tái khám định kỳ mỗi 3 - 6 tháng để theo dõi chặt chẽ kích thước và tính chất tổn thương."
+        ]
+    },
+
+    # CHƯƠNG 12 & 13: Chăm sóc & Dược lý da liễu
+    {
+        "base_id": "cham_soc_da_lieu",
+        "name": "Chăm sóc bệnh nhân da liễu và phục hồi hàng rào bảo vệ da",
+        "english_name": "Dermatological Patient Care and Skin Barrier Maintenance",
+        "type": "Chương 12: Chăm sóc bệnh nhân da liễu",
+        "chapter_number": 12,
+        "book_start_page": 226,
+        "pdf_start_page": 228,
+        "summary": "Nguyên tắc và quy trình chăm sóc lâm sàng toàn diện cho người bệnh da liễu, đặc biệt là nhóm bệnh có trợt da bóng nước (pemphigus, SJS/TEN), đỏ da toàn thân và các bệnh da ngứa mạn tính. Tập trung vào việc bảo vệ hàng rào thượng bì, kiểm soát nhiễm khuẩn, hỗ trợ tâm lý và giáo dục sức khỏe ban đầu.",
+        "common_features": ["trot_da", "kho_da", "ngua", "ton_thuong_hang_rao_da"],
+        "suggestive_phrases": ["nguyên tắc vô khuẩn chăm sóc vết trợt", "phục hồi hàng rào bảo vệ da", "tư vấn tâm lý bệnh nhân da mạn tính"],
+        "typical_locations": ["toàn thân", "vùng da tổn thương trợt"],
+        "course": "Xuyên suốt quá trình điều trị nội khoa và duy trì sau xuất viện.",
+        "risk_factors": ["nhiễm trùng bệnh viện", "mất nước điện giải", "trầm cảm lo âu do bệnh da mạn tính"],
+        "differential_diagnoses": [],
+        "differential_diagnosis_details": "Hướng dẫn thực hành chăm sóc và điều dưỡng da liễu chuyên sâu.",
+        "red_flags": ["nhiem_trung_benh_vien", "suy_mon_mat_protein_qua_da"],
+        "safe_advice": [
+            "Thực hiện vô khuẩn tối đa khi thay băng và chăm sóc các tổn thương da trợt bọng nước.",
+            "Sử dụng gạc mềm không dính để tránh làm bong tróc thêm thượng bì khi thay băng.",
+            "Đảm bảo chế độ dinh dưỡng giàu đạm và vitamin để hỗ trợ tái tạo mô hạt và biểu bì.",
+            "Lắng nghe, thấu cảm và hỗ trợ tâm lý cho bệnh nhân da mạn tính."
+        ]
+    },
+    {
+        "base_id": "nguyen_tac_thuoc_thoa",
+        "name": "Nguyên tắc sử dụng thuốc thoa trong da liễu",
+        "english_name": "Principles of Topical Dermatotherapy",
+        "type": "Chương 13: Nguyên tắc sử dụng thuốc thoa",
+        "chapter_number": 13,
+        "book_start_page": 233,
+        "pdf_start_page": 235,
+        "summary": "Các nguyên tắc dược lý lâm sàng nền tảng trong lựa chọn và sử dụng thuốc bôi ngoài da: chọn dạng thuốc (dung dịch, lotion, gel, cream, mỡ ointment) phù hợp với giai đoạn thương tổn (ướt dùng nước, khô dùng mỡ); phân loại bậc hoạt lực của corticoid thoa và các tác dụng phụ khi lạm dụng; hướng dẫn đơn vị đốt ngón tay (Fingertip Unit - FTU) để định lượng chính xác lượng thuốc cần thoa.",
+        "common_features": ["thuoc_thoa_ngoai_da", "corticoid_thoa", "dang_thuoc_phu_hop"],
+        "suggestive_phrases": ["ướt dùng nước khô dùng mỡ", "đơn vị đốt ngón tay FTU", "hoạt lực corticoid bôi", "tác dụng phụ teo da giãn mạch do corticoid"],
+        "typical_locations": ["toàn thân theo vị trí tổn thương"],
+        "course": "Áp dụng trong toàn bộ các phác đồ điều trị da liễu ngoại trú và nội trú.",
+        "risk_factors": ["tự ý mua corticoid thoa kéo dài", "thoa corticoid mạnh lên mặt nếp gấp", "thoa lượng thuốc quá nhiều hoặc quá ít"],
+        "differential_diagnoses": [],
+        "differential_diagnosis_details": "Hướng dẫn thực hành dược lý lâm sàng thuốc thoa da liễu.",
+        "red_flags": ["teo_da_gian_mach_ran_da_do_corticoid", "suy_tuyen_thuong_than_do_hap_thu_corticoid_toan_than"],
+        "safe_advice": [
+            "Áp dụng nguyên tắc 'Ướt dùng ướt, khô dùng khô': tổn thương cấp tính chảy dịch dùng dung dịch đắp gạc; tổn thương mạn tính khô dày dùng cream hoặc mỡ.",
+            "Dùng đơn vị đốt ngón tay (1 FTU = lượng thuốc bóp từ tuýp ra một đốt ngón tay trỏ, thoa đủ cho diện tích bằng 2 lòng bàn tay người lớn).",
+            "KHÔNG ĐƯỢC BÔI CORTICOID HOẠT LỰC MẠNH LÊN VÙNG MẶT VÀ CÁC NẾP GẤP (nách, bẹn) để tránh teo da, giãn mạch.",
+            "Chỉ sử dụng thuốc thoa theo đúng thời gian và hướng dẫn của bác sĩ da liễu, không tự ý kéo dài."
+        ]
+    }
+]
+
+
+def build_disease_record(item: dict, byt_lookup: dict) -> dict:
+    base_id = item["base_id"]
+    byt_ref = byt_lookup.get(base_id, {})
+    
+    # Kế thừa mã triệu chứng và chẩn đoán phân biệt chuẩn từ BYT nếu có
+    common_features = item.get("common_features") or byt_ref.get("common_features", [])
+    typical_locations = item.get("typical_locations") or byt_ref.get("typical_locations", [])
+    suggestive_phrases = item.get("suggestive_phrases") or byt_ref.get("suggestive_phrases", [])
+    risk_factors = item.get("risk_factors") or byt_ref.get("risk_factors", [])
+    red_flags = item.get("red_flags") or byt_ref.get("red_flags", [])
+    safe_advice = item.get("safe_advice") or byt_ref.get("safe_advice", [])
+    
+    diff_ids = item.get("differential_diagnoses", [])
+    if not diff_ids and byt_ref:
+        diff_ids = byt_ref.get("differential_diagnoses", [])
+        
+    diff_details = item.get("differential_diagnosis_details", "")
+    if not diff_details and byt_ref:
+        diff_details = byt_ref.get("differential_diagnosis_details", "")
+
+    return {
+        "id": f"{base_id}_dhyd",
+        "name": item["name"],
+        "english_name": item["english_name"],
+        "type": item["type"],
+        "summary": item["summary"],
+        "common_features": common_features,
+        "suggestive_phrases": suggestive_phrases,
+        "typical_locations": typical_locations,
+        "course": item["course"],
+        "risk_factors": risk_factors,
+        "differential_diagnoses": diff_ids,
+        "differential_diagnosis_details": diff_details,
+        "red_flags": red_flags,
+        "safe_advice": safe_advice,
+        "references": [
+            {
+                "source_id": "dhyd_2020",
+                "page_start": item["book_start_page"],
+                "pdf_page_start": item["pdf_start_page"],
+                "title": "Bệnh da liễu thường gặp",
+                "publisher": "Đại học Y Dược TP.HCM - NXB Y Học",
+                "year": 2020
+            }
+        ],
+        "medical_review_status": "needs_clinical_review"
+    }
+
+
+def main():
+    byt_lookup = {}
+    if BYT_PATH.exists():
+        byt_data = json.loads(BYT_PATH.read_text(encoding="utf-8"))
+        for b in byt_data:
+            byt_lookup[b["id"]] = b
+        print(f"[INFO] Đọc thành công {len(byt_lookup)} bệnh mốc từ BYT...")
+
+    records = []
+    for item in DISEASES_DATA:
+        rec = build_disease_record(item, byt_lookup)
+        records.append(rec)
+
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUT_PATH.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n[HOÀN TẤT] Đã tạo thành công {len(records)} bệnh lý từ giáo trình ĐHYD TP.HCM ra: {OUT_PATH}")
+
+
+if __name__ == "__main__":
+    main()
