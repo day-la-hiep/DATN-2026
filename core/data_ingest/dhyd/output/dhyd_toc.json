@@ -1,0 +1,500 @@
+[
+  {
+    "chapter_number": 1,
+    "title": "Phát ban dạng chàm",
+    "authors": [
+      "PGS.TS.BS. Văn Thế Trung",
+      "ThS.BS. Phạm Quốc Thảo Trang",
+      "TS.BS. Nguyễn Thị Hồng Chuyên"
+    ],
+    "book_start_page": 7,
+    "book_end_page": 25,
+    "pdf_start_page": 8,
+    "pdf_end_page": 26,
+    "sections": [
+      {
+        "id": "viem_da_tiep_xuc_kich_ung",
+        "title": "Viêm da tiếp xúc kích ứng",
+        "english_name": "Irritant Contact Dermatitis",
+        "book_start_page": 9,
+        "book_end_page": 17,
+        "pdf_start_page": 10,
+        "pdf_end_page": 18
+      },
+      {
+        "id": "viem_da_tiep_xuc_di_ung",
+        "title": "Viêm da tiếp xúc dị ứng",
+        "english_name": "Allergic Contact Dermatitis",
+        "book_start_page": 17,
+        "book_end_page": 21,
+        "pdf_start_page": 18,
+        "pdf_end_page": 22
+      },
+      {
+        "id": "viem_da_tiet_ba",
+        "title": "Viêm da tiết bã",
+        "english_name": "Seborrheic Dermatitis",
+        "book_start_page": 21,
+        "book_end_page": 23,
+        "pdf_start_page": 22,
+        "pdf_end_page": 24
+      },
+      {
+        "id": "vay_phan_trang",
+        "title": "Vảy phấn trắng",
+        "english_name": "Pityriasis Alba",
+        "book_start_page": 23,
+        "book_end_page": 24,
+        "pdf_start_page": 24,
+        "pdf_end_page": 25
+      },
+      {
+        "id": "cham_khac",
+        "title": "Các dạng chàm khác (Chàm đồng tiền, Chàm tổ đỉa)",
+        "english_name": "Other Eczema (Nummular and Dyshidrotic Eczema)",
+        "book_start_page": 24,
+        "book_end_page": 25,
+        "pdf_start_page": 25,
+        "pdf_end_page": 26
+      }
+    ]
+  },
+  {
+    "chapter_number": 2,
+    "title": "Viêm da cơ địa",
+    "authors": [
+      "PGS.TS.BS. Văn Thế Trung"
+    ],
+    "book_start_page": 26,
+    "book_end_page": 40,
+    "pdf_start_page": 27,
+    "pdf_end_page": 41,
+    "sections": [
+      {
+        "id": "viem_da_co_dia",
+        "title": "Viêm da cơ địa",
+        "english_name": "Atopic Dermatitis",
+        "book_start_page": 26,
+        "book_end_page": 40,
+        "pdf_start_page": 27,
+        "pdf_end_page": 41
+      }
+    ]
+  },
+  {
+    "chapter_number": 3,
+    "title": "Mày đay",
+    "authors": [
+      "BS.CKI. Vương Thế Bích Thanh"
+    ],
+    "book_start_page": 41,
+    "book_end_page": 56,
+    "pdf_start_page": 42,
+    "pdf_end_page": 57,
+    "sections": [
+      {
+        "id": "may_day",
+        "title": "Mày đay và Phù mạch",
+        "english_name": "Urticaria and Angioedema",
+        "book_start_page": 41,
+        "book_end_page": 56,
+        "pdf_start_page": 42,
+        "pdf_end_page": 57
+      }
+    ]
+  },
+  {
+    "chapter_number": 4,
+    "title": "Mụn trứng cá",
+    "authors": [
+      "TS.BS. Lê Thái Vân Thanh"
+    ],
+    "book_start_page": 57,
+    "book_end_page": 73,
+    "pdf_start_page": 58,
+    "pdf_end_page": 74,
+    "sections": [
+      {
+        "id": "mun_trung_ca",
+        "title": "Mụn trứng cá",
+        "english_name": "Acne Vulgaris",
+        "book_start_page": 57,
+        "book_end_page": 73,
+        "pdf_start_page": 58,
+        "pdf_end_page": 74
+      }
+    ]
+  },
+  {
+    "chapter_number": 5,
+    "title": "Bệnh da do nhiễm",
+    "authors": [
+      "BS.CKI. Lê Minh Phúc"
+    ],
+    "book_start_page": 74,
+    "book_end_page": 102,
+    "pdf_start_page": 75,
+    "pdf_end_page": 104,
+    "sections": [
+      {
+        "id": "benh_choc",
+        "title": "Bệnh chốc",
+        "english_name": "Impetigo",
+        "book_start_page": 75,
+        "book_end_page": 79,
+        "pdf_start_page": 76,
+        "pdf_end_page": 80
+      },
+      {
+        "id": "viem_nang_long",
+        "title": "Viêm nang lông",
+        "english_name": "Folliculitis",
+        "book_start_page": 79,
+        "book_end_page": 81,
+        "pdf_start_page": 80,
+        "pdf_end_page": 82
+      },
+      {
+        "id": "herpes_da_niem",
+        "title": "Nhiễm virus Herpes Simplex da niêm",
+        "english_name": "Herpes Simplex Virus Infection",
+        "book_start_page": 81,
+        "book_end_page": 83,
+        "pdf_start_page": 82,
+        "pdf_end_page": 84
+      },
+      {
+        "id": "thuy_dau",
+        "title": "Thủy đậu",
+        "english_name": "Varicella",
+        "book_start_page": 84,
+        "book_end_page": 86,
+        "pdf_start_page": 85,
+        "pdf_end_page": 87
+      },
+      {
+        "id": "zona",
+        "title": "Herpes Zoster (Zona)",
+        "english_name": "Herpes Zoster",
+        "book_start_page": 87,
+        "book_end_page": 89,
+        "pdf_start_page": 88,
+        "pdf_end_page": 90
+      },
+      {
+        "id": "ghe",
+        "title": "Bệnh ghẻ",
+        "english_name": "Scabies",
+        "book_start_page": 90,
+        "book_end_page": 92,
+        "pdf_start_page": 91,
+        "pdf_end_page": 93
+      },
+      {
+        "id": "nam_da",
+        "title": "Nhiễm vi nấm nông (Nấm sợi tơ da, tóc, móng)",
+        "english_name": "Dermatophytosis",
+        "book_start_page": 92,
+        "book_end_page": 97,
+        "pdf_start_page": 93,
+        "pdf_end_page": 98
+      },
+      {
+        "id": "nhiem_nam_candida",
+        "title": "Nhiễm nấm Candida da niêm",
+        "english_name": "Cutaneous and Mucosal Candidiasis",
+        "book_start_page": 97,
+        "book_end_page": 99,
+        "pdf_start_page": 98,
+        "pdf_end_page": 100
+      },
+      {
+        "id": "lang_ben",
+        "title": "Lang ben",
+        "english_name": "Pityriasis Versicolor",
+        "book_start_page": 100,
+        "book_end_page": 101,
+        "pdf_start_page": 101,
+        "pdf_end_page": 102
+      }
+    ]
+  },
+  {
+    "chapter_number": 6,
+    "title": "Bệnh vảy nến",
+    "authors": [
+      "TS.BS. Nguyễn Thị Hồng Chuyên"
+    ],
+    "book_start_page": 103,
+    "book_end_page": 123,
+    "pdf_start_page": 105,
+    "pdf_end_page": 125,
+    "sections": [
+      {
+        "id": "vay_nen",
+        "title": "Bệnh vảy nến",
+        "english_name": "Psoriasis Vulgaris",
+        "book_start_page": 103,
+        "book_end_page": 123,
+        "pdf_start_page": 105,
+        "pdf_end_page": 125
+      }
+    ]
+  },
+  {
+    "chapter_number": 7,
+    "title": "Các bệnh bóng nước tự miễn",
+    "authors": [
+      "BS.CKI. Nguyễn Lê Trà Mi"
+    ],
+    "book_start_page": 124,
+    "book_end_page": 144,
+    "pdf_start_page": 126,
+    "pdf_end_page": 146,
+    "sections": [
+      {
+        "id": "pemphigus",
+        "title": "Nhóm bệnh Pemphigus (Pemphigus thông thường & thể lá)",
+        "english_name": "Pemphigus",
+        "book_start_page": 124,
+        "book_end_page": 134,
+        "pdf_start_page": 126,
+        "pdf_end_page": 136
+      },
+      {
+        "id": "pemphigoid_bong_nuoc",
+        "title": "Pemphigoid bọng nước",
+        "english_name": "Bullous Pemphigoid",
+        "book_start_page": 135,
+        "book_end_page": 142,
+        "pdf_start_page": 137,
+        "pdf_end_page": 144
+      }
+    ]
+  },
+  {
+    "chapter_number": 8,
+    "title": "Phản ứng da do thuốc",
+    "authors": [
+      "TS.BS. Lê Thái Vân Thanh"
+    ],
+    "book_start_page": 145,
+    "book_end_page": 164,
+    "pdf_start_page": 147,
+    "pdf_end_page": 166,
+    "sections": [
+      {
+        "id": "hong_ban_co_dinh_do_thuoc",
+        "title": "Hồng ban cố định tái phát do thuốc",
+        "english_name": "Fixed Drug Eruption (FDE)",
+        "book_start_page": 147,
+        "book_end_page": 150,
+        "pdf_start_page": 149,
+        "pdf_end_page": 152
+      },
+      {
+        "id": "hoi_chung_stevens_johnson_ten",
+        "title": "Hội chứng Stevens-Johnson và Hoại tử thượng bì nhiễm độc (SJS/TEN)",
+        "english_name": "Stevens-Johnson Syndrome and Toxic Epidermal Necrolysis",
+        "book_start_page": 151,
+        "book_end_page": 155,
+        "pdf_start_page": 153,
+        "pdf_end_page": 157
+      },
+      {
+        "id": "hoi_chung_dress",
+        "title": "Hội chứng DRESS (Phản ứng thuốc kèm tăng bạch cầu ái toan và triệu chứng toàn thân)",
+        "english_name": "Drug Reaction with Eosinophilia and Systemic Symptoms (DRESS)",
+        "book_start_page": 156,
+        "book_end_page": 159,
+        "pdf_start_page": 158,
+        "pdf_end_page": 161
+      },
+      {
+        "id": "ngoai_ban_mun_mu_toan_than_cap_agep",
+        "title": "Ngoại ban mụn mủ toàn thân cấp tính (AGEP)",
+        "english_name": "Acute Generalized Exanthematous Pustulosis (AGEP)",
+        "book_start_page": 160,
+        "book_end_page": 163,
+        "pdf_start_page": 162,
+        "pdf_end_page": 165
+      }
+    ]
+  },
+  {
+    "chapter_number": 9,
+    "title": "Tiếp cận và xử trí bệnh nhân ngứa",
+    "authors": [
+      "ThS.BS. Võ Quang Đỉnh"
+    ],
+    "book_start_page": 165,
+    "book_end_page": 181,
+    "pdf_start_page": 167,
+    "pdf_end_page": 183,
+    "sections": [
+      {
+        "id": "tiep_can_ngua",
+        "title": "Tiếp cận và xử trí bệnh nhân ngứa",
+        "english_name": "Clinical Approach and Management of Pruritus",
+        "book_start_page": 165,
+        "book_end_page": 181,
+        "pdf_start_page": 167,
+        "pdf_end_page": 183
+      }
+    ]
+  },
+  {
+    "chapter_number": 10,
+    "title": "Tiếp cận và xử trí bệnh nhân bệnh lây truyền qua đường tình dục",
+    "authors": [
+      "PGS.TS.BS. Lê Ngọc Diệp"
+    ],
+    "book_start_page": 182,
+    "book_end_page": 200,
+    "pdf_start_page": 184,
+    "pdf_end_page": 202,
+    "sections": [
+      {
+        "id": "benh_giang_mai",
+        "title": "Bệnh giang mai",
+        "english_name": "Syphilis",
+        "book_start_page": 184,
+        "book_end_page": 189,
+        "pdf_start_page": 186,
+        "pdf_end_page": 191
+      },
+      {
+        "id": "benh_lau",
+        "title": "Bệnh lậu",
+        "english_name": "Gonorrhea",
+        "book_start_page": 190,
+        "book_end_page": 193,
+        "pdf_start_page": 192,
+        "pdf_end_page": 195
+      },
+      {
+        "id": "nhiem_chlamydia",
+        "title": "Nhiễm Chlamydia trachomatis sinh dục",
+        "english_name": "Chlamydia Trachomatis Genital Infection",
+        "book_start_page": 194,
+        "book_end_page": 196,
+        "pdf_start_page": 196,
+        "pdf_end_page": 198
+      },
+      {
+        "id": "herpes_sinh_duc",
+        "title": "Herpes sinh dục",
+        "english_name": "Genital Herpes",
+        "book_start_page": 197,
+        "book_end_page": 198,
+        "pdf_start_page": 199,
+        "pdf_end_page": 200
+      },
+      {
+        "id": "sui_mao_ga",
+        "title": "Sùi mào gà (Mụn cóc sinh dục)",
+        "english_name": "Anogenital Warts (Condyloma Acuminata)",
+        "book_start_page": 199,
+        "book_end_page": 200,
+        "pdf_start_page": 201,
+        "pdf_end_page": 202
+      }
+    ]
+  },
+  {
+    "chapter_number": 11,
+    "title": "Bệnh lý niêm mạc miệng",
+    "authors": [
+      "ThS.BS. Phạm Quốc Thảo Trang",
+      "PGS.TS.BS. Văn Thế Trung"
+    ],
+    "book_start_page": 201,
+    "book_end_page": 225,
+    "pdf_start_page": 203,
+    "pdf_end_page": 227,
+    "sections": [
+      {
+        "id": "loet_aphthous",
+        "title": "Loét Aphthous tái phát",
+        "english_name": "Recurrent Aphthous Stomatitis",
+        "book_start_page": 203,
+        "book_end_page": 208,
+        "pdf_start_page": 205,
+        "pdf_end_page": 210
+      },
+      {
+        "id": "lichen_phang_mieng",
+        "title": "Lichen phẳng niêm mạc miệng",
+        "english_name": "Oral Lichen Planus",
+        "book_start_page": 209,
+        "book_end_page": 214,
+        "pdf_start_page": 211,
+        "pdf_end_page": 216
+      },
+      {
+        "id": "nhiem_nam_candida_mieng",
+        "title": "Nhiễm nấm Candida niêm mạc miệng",
+        "english_name": "Oral Candidiasis",
+        "book_start_page": 215,
+        "book_end_page": 219,
+        "pdf_start_page": 217,
+        "pdf_end_page": 221
+      },
+      {
+        "id": "bach_san_mieng",
+        "title": "Bạch sản niêm mạc miệng",
+        "english_name": "Oral Leukoplakia",
+        "book_start_page": 220,
+        "book_end_page": 224,
+        "pdf_start_page": 222,
+        "pdf_end_page": 226
+      }
+    ]
+  },
+  {
+    "chapter_number": 12,
+    "title": "Chăm sóc bệnh nhân da liễu",
+    "authors": [
+      "ThS.BS. Trần Thị Thúy Phượng",
+      "PGS.TS.BS. Văn Thế Trung"
+    ],
+    "book_start_page": 226,
+    "book_end_page": 232,
+    "pdf_start_page": 228,
+    "pdf_end_page": 234,
+    "sections": [
+      {
+        "id": "cham_soc_da_lieu",
+        "title": "Chăm sóc bệnh nhân da liễu và phục hồi hàng rào bảo vệ da",
+        "english_name": "Dermatological Patient Care and Skin Barrier Maintenance",
+        "book_start_page": 226,
+        "book_end_page": 232,
+        "pdf_start_page": 228,
+        "pdf_end_page": 234
+      }
+    ]
+  },
+  {
+    "chapter_number": 13,
+    "title": "Nguyên tắc sử dụng thuốc thoa",
+    "authors": [
+      "ThS.BS. Trần Thị Thúy Phượng",
+      "PGS.TS.BS. Văn Thế Trung"
+    ],
+    "book_start_page": 233,
+    "book_end_page": 247,
+    "pdf_start_page": 235,
+    "pdf_end_page": 249,
+    "sections": [
+      {
+        "id": "nguyen_tac_thuoc_thoa",
+        "title": "Nguyên tắc sử dụng thuốc thoa trong da liễu",
+        "english_name": "Principles of Topical Dermatotherapy",
+        "book_start_page": 233,
+        "book_end_page": 247,
+        "pdf_start_page": 235,
+        "pdf_end_page": 249
+      }
+    ]
+  }
+]

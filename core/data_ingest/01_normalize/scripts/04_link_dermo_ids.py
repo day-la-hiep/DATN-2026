@@ -28,10 +28,14 @@ Output: ghi đè lại CHÍNH 01_normalize/output/diseases/*.json, thêm field `
 
 Chạy: python data-ingest/01_normalize/scripts/04_link_dermo_ids.py [-v]
 """
+import io
 import json
 import re
 import sys
 from pathlib import Path
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 INGEST_DIR = Path(__file__).resolve().parents[2]
 DISEASES_DIR = Path(__file__).resolve().parents[1] / "output" / "diseases"

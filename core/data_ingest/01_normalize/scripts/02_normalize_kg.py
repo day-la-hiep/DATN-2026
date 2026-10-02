@@ -15,10 +15,14 @@ Kiểm tra:
 Chạy: python data-ingest/01_normalize/scripts/02_normalize_kg.py
 """
 import csv
+import io
 import json
 import shutil
 import sys
 from pathlib import Path
+
+# Fix Unicode stdout tren Windows terminal
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 INGEST_DIR = Path(__file__).resolve().parents[2]
 OUT_DIR = Path(__file__).resolve().parents[1] / "output" / "kg"
