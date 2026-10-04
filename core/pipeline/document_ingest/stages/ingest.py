@@ -41,6 +41,19 @@ def _row(n: int, header: str, printed: int | None, text: str, noise_set: set[int
             "noise": reason is not None, "noise_reason": reason, "noise_score": noise_score(text)}
 
 
+def _save_figures(files: Any, blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Ghi ảnh hình minh hoạ ra `figures/` rồi thay bytes bằng `image_key` để part JSON vẫn serialize được."""
+    per_page: Counter[int] = Counter()
+    for blk in blocks:
+        png = blk.pop("image_png", None)
+        if blk["label"] != "figure" or png is None:
+            continue
+        per_page[blk["page"]] += 1
+        blk["image_key"] = f"figures/p{blk['page']:05d}_{per_page[blk['page']]:02d}.png"
+        files.put_bytes(blk["image_key"], png, "image/png")
+    return blocks
+
+
 def _run_docling(ctx: StageContext) -> dict:
     from pypdf import PdfReader
 
@@ -51,6 +64,7 @@ def _run_docling(ctx: StageContext) -> dict:
     key = f"force_ocr={ext.docling_force_ocr};tables={ext.docling_tables}"
     if files.get_text("docling_parts/key.txt") not in (None, key):
         files.delete_prefix("docling_parts/")  # cấu hình đổi: kết quả cũ không dùng lại được
+        files.delete_prefix("figures/")
     files.put_text("docling_parts/key.txt", key)
 
     step = ext.docling_chunk_pages
@@ -61,7 +75,7 @@ def _run_docling(ctx: StageContext) -> dict:
         if files.exists(part):  # đã đọc ở lần chạy trước (dừng/làm lại không mất)
             continue
         blocks = ctx.require_docling().convert_pages(pdf, a, b, force_ocr=ext.docling_force_ocr, tables=ext.docling_tables)
-        files.write_json(part, blocks)
+        files.write_json(part, _save_figures(files, blocks))
         ctx.log(f"trang {a}-{b}: {len(blocks)} khối")
     ctx.progress(len(spans), len(spans), "dựng pages.jsonl")
 
@@ -81,11 +95,35 @@ def _run_docling(ctx: StageContext) -> dict:
         lines = [("• " if b["label"] == "list" else "") + " ".join(b["text"].split()) for b in blocks if b["label"] in _BODY_LABELS]
         rows.append(_row(n, header, printed, "\n".join(lines), noise_set, ext.page_offset))
     files.write_jsonl("pages.jsonl", rows)
-    return _summary("docling", rows, first, last)
+    figures = _figure_rows(ctx.document_id, files, by_page, first, last)
+    files.write_json("figures.json", figures)
+    summary = _summary("docling", rows, first, last)
+    summary["figures"] = len(figures)
+    return summary
+
+
+def _figure_rows(document_id: str, files: Any, by_page: dict[int, list[dict]], first: int, last: int) -> list[dict[str, Any]]:
+    """Danh sách ảnh theo thứ tự trang -> `figures.json`, khớp field của `DocumentFigure` (dto/base).
+    Khoá dùng tên Python gốc vì đây là file trong MinIO, không phải API response."""
+    out: list[dict[str, Any]] = []
+    for n in range(first, last + 1):
+        for blk in by_page.get(n, []):
+            if blk["label"] != "figure" or "image_key" not in blk:
+                continue
+            seq = len(out) + 1
+            out.append({
+                "figure_id": f"{document_id}:f{seq:05d}", "document_id": document_id, "page": n, "seq": seq,
+                "bbox": blk.get("bbox"), "caption": blk["text"],
+                "image_file": {"file_name": blk["image_key"].split("/")[-1], "storage_key": files.key(blk["image_key"]),
+                               "content_type": "image/png"},
+            })
+    return out
 
 
 def _run_pdftotext(ctx: StageContext) -> dict:
     files, ext = ctx.files, ctx.profile.extraction
+    files.delete_prefix("figures/")  # pdftotext không trích ảnh; xoá ảnh của lần chạy docling trước (nếu có)
+    files.write_json("figures.json", [])
     cmd = ["pdftotext"] + (["-layout"] if ext.layout else []) + [str(ctx.local_pdf()), "-"]
     ctx.log("chạy: " + " ".join(cmd))
     try:

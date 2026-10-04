@@ -177,6 +177,24 @@ class ApiTest(Base):
             (exp.status_code, exp.text.count("\n")), (200, lst["counts"]["all"])
         )
 
+    def test_figures_list_and_image(self) -> None:
+        png = b"\x89PNG\r\n\x1a\nfake"
+        self.files.put_bytes("figures/p00002_01.png", png)
+        self.files.write_json("figures.json", [{
+            "figure_id": "tbook:f00001", "document_id": "tbook", "page": 2, "seq": 1, "bbox": [1, 2, 3, 4],
+            "caption": "Hình 1", "image_file": {"file_name": "p00002_01.png", "storage_key": "x"},
+        }])
+        lst = self.c.get(f"{self.base}/documents/tbook/figures").json()["data"]
+        self.assertEqual(
+            [(f["figureId"], f["page"], f["caption"]) for f in lst], [("tbook:f00001", 2, "Hình 1")]
+        )
+        img = self.c.get(f"{self.base}/documents/tbook/figures/tbook:f00001/image")
+        self.assertEqual((img.status_code, img.content), (200, png))
+        self.assertEqual(
+            self.c.get(f"{self.base}/documents/tbook/figures/tbook:f99999/image").status_code, 404
+        )
+        self.assertEqual(self.c.get(f"{self.base}/documents/nosuch/figures").json()["data"], [])
+
     def test_pages_text_and_image(self) -> None:
         self.assertEqual(
             self.c.get(f"{self.base}/documents/tbook/pages/2").json()["data"][

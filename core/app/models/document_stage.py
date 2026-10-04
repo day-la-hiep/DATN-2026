@@ -5,7 +5,7 @@ from typing import Any
 # `toc` không phụ thuộc `ingest`: đọc mục lục chỉ cần vài chục trang (OCR riêng các trang đó), nên người dùng thử được
 # ngay mà không đợi OCR cả tài liệu. Độ lệch + neo cần chữ thân tài liệu nên được tính lại khi có `pages.jsonl` (xem mapping.py).
 STAGES: list[dict[str, Any]] = [
-    {"id": "ingest", "title": "Đọc nội dung", "deps": [], "llm": False, "outputs": ["pages.jsonl"]},
+    {"id": "ingest", "title": "Đọc nội dung", "deps": [], "llm": False, "outputs": ["pages.jsonl", "figures.json", "figures/"]},
     {"id": "toc", "title": "Mục lục", "deps": [], "llm": True, "outputs": ["toc.auto.json", "toc.json"]},
     {"id": "chunks", "title": "Chia đoạn", "deps": ["ingest", "toc"], "llm": False, "outputs": ["chunks.jsonl"]},
     {"id": "index", "title": "Lưu vào kho tri thức", "deps": ["chunks"], "llm": False, "outputs": ["index.json"]},

@@ -20,6 +20,7 @@ class DocumentChunk(BaseModel):
     subtopic: str = ""
     toc_path: list[str] = []
     toc_node_ids: list[str] = []
+    figure_ids: list[str] = []  # ảnh nằm trong khoảng trang của chunk (xem `DocumentFigure`)
     level: int
     pages_hint: list[int]
     boundary: bool
@@ -30,6 +31,19 @@ class DocumentChunk(BaseModel):
     page_printed_end: int
     tokens: int
     chars: int
+
+
+class DocumentFigure(BaseModel):
+    """Một ảnh (hình minh hoạ, sơ đồ, biểu đồ) được trích từ trang của `Document` type "book". Nguồn: bước Đọc nội dung
+    (engine docling) -> `figures.json`. `caption` là chữ chú thích đi kèm trong sách để tìm kiếm, không phải mô tả do AI sinh."""
+
+    figure_id: str
+    document_id: str
+    page: int
+    seq: int
+    bbox: list[float] | None = None  # [trái, trên, phải, dưới] trên trang PDF
+    image_file: File
+    caption: str = ""
 
 
 class Document(BaseModel):
@@ -50,6 +64,7 @@ class Document(BaseModel):
     ingested_file: File | None = None  # chỉ có khi type == "book" và đã qua bước ingest
     pdf_pages: int | None = None  # chỉ có khi type == "book"
     chunks: list[DocumentChunk] | None = None  # chỉ có khi type == "book"
+    figures: list[DocumentFigure] | None = None  # chỉ có khi type == "book"
 
     @model_validator(mode="after")
     def validate_type(self):
@@ -58,6 +73,8 @@ class Document(BaseModel):
                 raise ValueError('pdf_pages chỉ áp dụng cho Document type="book"')
             if self.chunks is not None:
                 raise ValueError('chunks chỉ áp dụng cho Document type="book"')
+            if self.figures is not None:
+                raise ValueError('figures chỉ áp dụng cho Document type="book"')
             if self.ingested_file is not None:
                 raise ValueError('ingested_file chỉ áp dụng cho Document type="book"')
         return self

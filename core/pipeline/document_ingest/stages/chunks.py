@@ -142,8 +142,9 @@ def _pack(region: list[dict], cfg: ChunkingConfig) -> list[list[dict]]:
 
 
 def build_chunks(nodes: list[dict], units: list[tuple[int, int, str]], cfg: ChunkingConfig, *, document_id: str, document_title: str,
-                 printed_offset: int) -> tuple[list[dict], int]:
-    """`nodes`: từ `toc_nodes`. `units`: (trang, dòng, chữ) thân sách theo thứ tự đọc. Trả (chunks, số dòng ngoài mục)."""
+                 printed_offset: int, figures: list[dict] | None = None) -> tuple[list[dict], int]:
+    """`nodes`: từ `toc_nodes`. `units`: (trang, dòng, chữ) thân sách theo thứ tự đọc. `figures`: từ `figures.json`.
+    Trả (chunks, số dòng ngoài mục)."""
     by_id = {n["id"]: n for n in nodes}
     regions, outside = _items(nodes, units, cfg.boundary_level)
     chunks: list[dict] = []
@@ -169,6 +170,8 @@ def build_chunks(nodes: list[dict], units: list[tuple[int, int, str]], cfg: Chun
                 "context_text": f"{crumb}\n{text}" if crumb else text,
                 "part": pick(lambda n: n["kind"] == "part"), "section": pick(lambda n: n["kind"] == "section"),
                 "topic": pick(lambda n: n["level"] == 2), "subtopic": pick(lambda n: n["level"] == 3),
+                # ảnh theo khoảng trang: chunk trải nhiều trang thì nhận ảnh của mọi trang đó (có thể trùng giữa các chunk)
+                "figure_ids": [f["figure_id"] for f in figures or [] if pa <= f["page"] <= pb],
                 "toc_path": path, "toc_node_ids": members, "level": first["level"],
                 "pages_hint": first["page_hint"],
                 # ranh giới chỉ chính xác tới trang khi mục chưa neo được dòng và chunk bắt đầu ở trang của mục đó
@@ -218,7 +221,9 @@ def run(ctx: StageContext) -> dict:
     units = [(r["page"], i, ln) for r in rows if r["page"] not in skip for i, ln in enumerate(r["text"].split("\n"))]
     ctx.progress(1, 2, "cắt chunk")
     document_title = ctx.meta().get("title", "")
-    chunks, outside = build_chunks(nodes, units, cfg, document_id=ctx.document_id, document_title=document_title, printed_offset=off)
+    figures = files.read_json("figures.json", []) or []
+    chunks, outside = build_chunks(nodes, units, cfg, document_id=ctx.document_id, document_title=document_title, printed_offset=off,
+                                   figures=figures)
     if not chunks:
         raise StageError("Không tạo được đoạn nào (nội dung sách có thể đang trống).")
     files.write_jsonl("chunks.jsonl", chunks)

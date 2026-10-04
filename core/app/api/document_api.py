@@ -18,6 +18,7 @@ from app.dto.response.document import (
     DocumentOutput,
     DocumentSummary,
     ChunkListOutput,
+    FigureOutput,
 )
 from app.services.document_ingest_pipeline_service import DocumentIngestPipelineService
 from app.services.document_service import DocumentService
@@ -228,6 +229,34 @@ async def list_chunks(
         data=await _call(
             documents.list_chunks, document_id, q, node, only_review, page, page_size
         )
+    )
+
+
+# ------------------------------------------------------------------ hình ảnh trong sách
+@router.get(
+    "/documents/{document_id}/figures",
+    response_model=ApiResponse[list[FigureOutput]],
+    operation_id="listTocFigures",
+)
+async def list_figures(
+    document_id: str, documents: Documents
+) -> ApiResponse[list[FigureOutput]]:
+    rows = await _call(documents.list_figures, document_id)
+    return ApiResponse(data=[FigureOutput.model_validate(r) for r in rows])
+
+
+@router.get(
+    "/documents/{document_id}/figures/{figure_id}/image",
+    operation_id="getTocFigureImage",
+)
+async def get_figure_image(
+    document_id: str, figure_id: str, documents: Documents
+) -> Response:
+    data = await _call(documents.figure_image, document_id, figure_id)
+    return Response(
+        data,
+        media_type="image/png",
+        headers={"Cache-Control": "private, max-age=3600"},
     )
 
 

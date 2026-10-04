@@ -97,6 +97,7 @@ class ChunkOutput(CamelModel):
     subtopic: str = ""
     toc_path: list[str] = []
     toc_node_ids: list[str] = []
+    figure_ids: list[str] = []
     level: int
     pages_hint: list[int]
     boundary: bool
@@ -120,6 +121,17 @@ class SourcePageOutput(CamelModel):
     noise: bool
     noise_reason: str | None = None
     noise_score: float
+
+
+class FigureOutput(CamelModel):
+    """Một ảnh trong sách — nguồn: `pipeline/document_ingest/stages/ingest.py::_figure_rows` (`figures.json`)."""
+
+    figure_id: str
+    document_id: str
+    page: int
+    seq: int
+    bbox: list[float] | None = None
+    caption: str = ""
 
 
 class ChunkListOutput(CamelModel):

@@ -43,7 +43,7 @@ from pipeline.document_ingest.profile import ProfileError, default_profile
 from pipeline.document_ingest.textutil import sha
 
 _PAYLOAD_KEYS = ("chunk_id", "seq", "document_id", "text", "context_text", "part", "section", "topic", "subtopic", "toc_path", "toc_node_ids",
-                 "level", "pages_hint", "boundary", "suspect", "page_start", "page_end", "page_printed_start", "page_printed_end",
+                 "figure_ids", "level", "pages_hint", "boundary", "suspect", "page_start", "page_end", "page_printed_start", "page_printed_end",
                  "tokens", "chars")
 
 _PDF_MAGIC = b"%PDF"
@@ -478,6 +478,17 @@ class DocumentService:
         if body.clear_offset:
             ov.pop("_offset", None)
         self._repo.overrides.write(document_id, "toc", ov)
+
+    def list_figures(self, document_id: str) -> list[dict[str, Any]]:
+        return self._repo.files_for(document_id).read_json("figures.json", []) or []
+
+    def figure_image(self, document_id: str, figure_id: str) -> bytes:
+        files = self._repo.files_for(document_id)
+        fig = next((f for f in files.read_json("figures.json", []) or [] if f["figure_id"] == figure_id), None)
+        data = files.get_bytes(f"figures/{fig['image_file']['file_name']}") if fig else None
+        if data is None:
+            raise NotFoundError(figure_id)
+        return data
 
     def list_chunks(
         self,

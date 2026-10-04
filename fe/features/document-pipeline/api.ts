@@ -3,6 +3,7 @@ import { api } from "@/services/client";
 import type {
   Document,
   DocumentSummary,
+  Figure,
   ChunkList,
   Settings,
   SourcePage,
@@ -76,6 +77,12 @@ export const documentApi = {
         params: { q: p.q || undefined, node: p.node || undefined, onlyReview: p.onlyReview || undefined, page: p.page, pageSize: p.pageSize },
       })
     ),
+  figures: (documentId: string) => unwrap<Figure[]>(api.get(`${base(documentId)}/figures`)),
+  /** Như ảnh trang: cần Authorization nên tải blob rồi dùng object URL. */
+  figureImageUrl: async (documentId: string, figureId: string) => {
+    const blob = (await api.get(`${base(documentId)}/figures/${encodeURIComponent(figureId)}/image`, { responseType: "blob", timeout: 0 })).data as Blob;
+    return URL.createObjectURL(blob);
+  },
   exportChunks: async (documentId: string) =>
     (await api.get(`${base(documentId)}/chunks/export`, { responseType: "blob", timeout: 0 })).data as Blob,
 };

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState, StateBadge } from "@/features/document-pipeline/components/bits";
 import { errorMessage, documentApi } from "@/features/document-pipeline/api";
 import { ChunkBrowser } from "@/features/document-pipeline/components/ChunkBrowser";
+import { FigureBrowser } from "@/features/document-pipeline/components/FigureBrowser";
 import { PagePreview } from "@/features/document-pipeline/components/PagePreview";
 import { hasRunOptions, RunDialog } from "@/features/document-pipeline/components/RunDialog";
 import { SettingsDialog } from "@/features/document-pipeline/components/SettingsDialog";
@@ -193,6 +194,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
               Bạn <span className="text-foreground">không cần chờ</span> bước này xong mới làm bước Mục lục — mục lục chỉ cần đọc vài chục trang đầu sách. Tuy nhiên, hệ thống cần đọc nội dung cả cuốn để đối chiếu số trang, định vị từng mục và chia đoạn. Dùng khung bên phải để kiểm tra từng trang.
             </p>
           )}
+          {step === "ingest" && hasResult && <FigureBrowser documentId={documentId} onPreview={(p) => setPreviewPage(p)} />}
           {step === "toc" &&
             (hasResult && toc.data ? (
               <TocEditor documentId={documentId} doc={toc.data} selectedId={selectedId} onSelect={onSelectEntry} onPreview={(p) => setPreviewPage(p)} />

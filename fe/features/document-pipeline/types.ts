@@ -113,6 +113,16 @@ export interface TocUpdate {
   clearOffset?: boolean;
 }
 
+export interface Figure {
+  figureId: string;
+  documentId: string;
+  page: number;
+  seq: number;
+  /** [trái, trên, phải, dưới] trên trang PDF */
+  bbox?: number[] | null;
+  caption: string;
+}
+
 export interface Chunk {
   chunkId: string;
   seq: number;
@@ -124,6 +134,8 @@ export interface Chunk {
   subtopic: string;
   tocPath: string[];
   tocNodeIds: string[];
+  /** ảnh nằm trong khoảng trang của chunk */
+  figureIds: string[];
   level: number;
   /** khoảng trang PDF theo mục lục của mục chứa chunk */
   pagesHint: [number, number] | null;

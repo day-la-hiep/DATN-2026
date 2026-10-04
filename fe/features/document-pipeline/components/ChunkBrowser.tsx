@@ -134,6 +134,11 @@ function ChunkCard({ c, onPreview, previewPage }: { c: Chunk; onPreview: (p: num
           </span>
         )}
         {c.suspect && <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-600 dark:text-amber-400">mục cần kiểm tra</span>}
+        {c.figureIds?.length > 0 && (
+          <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground" title="Hình ảnh nằm trong khoảng trang của đoạn này">
+            {c.figureIds.length} hình
+          </span>
+        )}
         <span className={cn("tabular-nums", c.reviewReason && /dài|ngắn/.test(c.reviewReason) ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
           ~{Math.round(c.tokens / 1.3)} từ
         </span>
