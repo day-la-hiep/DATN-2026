@@ -28,14 +28,14 @@ function TocNav({
 }) {
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const withChunks = useMemo(() => entries.filter((e) => perNode[e.id]), [entries, perNode]);
-  const hasChild = useMemo(() => new Set(withChunks.map((e) => e.parentId).filter(Boolean) as string[]), [withChunks]);
+  const hasChild = useMemo(() => new Set(withChunks.map((e) => e.parent_id).filter(Boolean) as string[]), [withChunks]);
   const byId = useMemo(() => new Map(withChunks.map((e) => [e.id, e])), [withChunks]);
   // mục hiển thị khi mọi tổ tiên (còn trong cây) đang mở
   const visible = withChunks.filter((e) => {
-    let p = e.parentId ? byId.get(e.parentId) : undefined;
+    let p = e.parent_id ? byId.get(e.parent_id) : undefined;
     while (p) {
       if (!open.has(p.id)) return false;
-      p = p.parentId ? byId.get(p.parentId) : undefined;
+      p = p.parent_id ? byId.get(p.parent_id) : undefined;
     }
     return true;
   });
@@ -112,17 +112,17 @@ function ChunkCard({ c, onPreview, previewPage }: { c: Chunk; onPreview: (p: num
         {crumbs.length === 0 && <span className="italic">(không thuộc mục nào trong mục lục)</span>}
       </div>
       <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-        <span className="rounded bg-muted px-1.5 py-0.5 font-mono">{c.chunkId.split(":").pop()}</span>
-        <PageChip page={c.pageStart} onOpen={onPreview} active={previewPage >= c.pageStart && previewPage <= c.pageEnd} />
-        {c.pageEnd !== c.pageStart && <PageChip page={c.pageEnd} onOpen={onPreview} />}
+        <span className="rounded bg-muted px-1.5 py-0.5 font-mono">{c.chunk_id.split(":").pop()}</span>
+        <PageChip page={c.page_start} onOpen={onPreview} active={previewPage >= c.page_start && previewPage <= c.page_end} />
+        {c.page_end !== c.page_start && <PageChip page={c.page_end} onOpen={onPreview} />}
         <span className="text-muted-foreground" title="Trang in của sách">
-          in {c.pagePrintedStart}
-          {c.pagePrintedEnd !== c.pagePrintedStart && `–${c.pagePrintedEnd}`}
+          in {c.page_printed_start}
+          {c.page_printed_end !== c.page_printed_start && `–${c.page_printed_end}`}
         </span>
-        {c.pagesHint && (
+        {c.pages_hint && (
           <span className="text-muted-foreground" title="Khoảng trang của mục theo mục lục">
-            mục: tr.{c.pagesHint[0]}
-            {c.pagesHint[1] !== c.pagesHint[0] && `–${c.pagesHint[1]}`}
+            mục: tr.{c.pages_hint[0]}
+            {c.pages_hint[1] !== c.pages_hint[0] && `–${c.pages_hint[1]}`}
           </span>
         )}
         {c.boundary && (
@@ -134,12 +134,12 @@ function ChunkCard({ c, onPreview, previewPage }: { c: Chunk; onPreview: (p: num
           </span>
         )}
         {c.suspect && <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-600 dark:text-amber-400">mục cần kiểm tra</span>}
-        {c.figureIds?.length > 0 && (
+        {c.figure_ids?.length > 0 && (
           <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground" title="Hình ảnh nằm trong khoảng trang của đoạn này">
-            {c.figureIds.length} hình
+            {c.figure_ids.length} hình
           </span>
         )}
-        <span className={cn("tabular-nums", c.reviewReason && /dài|ngắn/.test(c.reviewReason) ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
+        <span className={cn("tabular-nums", c.review_reason && /dài|ngắn/.test(c.review_reason) ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
           ~{Math.round(c.tokens / 1.3)} từ
         </span>
       </div>
@@ -171,7 +171,7 @@ export function ChunkBrowser({
   const [only, setOnly] = useState("all");
   const [page, setPage] = usePage(`${q}|${node}|${only}`);
   const list = useData(documentId, "chunks", { q, node, only, page }, () =>
-    documentApi.chunks(documentId, { q, node, onlyReview: only === "review", page, pageSize: PAGE_SIZE })
+    documentApi.chunks(documentId, { q, node, only_review: only === "review", page, pageSize: PAGE_SIZE })
   );
   const data = list.data;
   const counts = data?.counts ?? {};
@@ -194,7 +194,7 @@ export function ChunkBrowser({
       <aside className="space-y-2 rounded-2xl border border-border bg-card p-3 lg:sticky lg:top-6 lg:self-start">
         <p className="px-1 text-[11px] font-medium text-muted-foreground">Theo mục lục</p>
         {toc ? (
-          <TocNav entries={toc.entries} perNode={counts.perNode ?? {}} selected={node} onSelect={setNode} />
+          <TocNav entries={toc.entries} perNode={counts.per_node ?? {}} selected={node} onSelect={setNode} />
         ) : (
           <p className="px-1 text-xs text-muted-foreground">Chưa có mục lục.</p>
         )}
@@ -222,7 +222,7 @@ export function ChunkBrowser({
         ) : (
           <div className="space-y-3">
             {(data?.items ?? []).map((c) => (
-              <ChunkCard key={c.chunkId} c={c} onPreview={onPreview} previewPage={previewPage} />
+              <ChunkCard key={c.chunk_id} c={c} onPreview={onPreview} previewPage={previewPage} />
             ))}
           </div>
         )}

@@ -12,10 +12,10 @@ class User(BaseModel):
     full_name: str
     dob: date
     gender: Gender
-    patient_profiles: list[PatienProfile]
+    patient_profiles: list[PatientProfile]
 
 
-class PatienProfile(BaseModel):
+class PatientProfile(BaseModel):
     id: str
     full_name: str
     dob: date

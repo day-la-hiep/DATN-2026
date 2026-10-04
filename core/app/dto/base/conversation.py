@@ -4,13 +4,14 @@ from datetime import datetime
 from pydantic import BaseModel, model_validator
 
 from app.common.constant import MessageType
+from app.dto.base.file import File
 from app.dto.base.medical import SupportRequest
-from app.dto.base.user import Doctor, PatienProfile
+from app.dto.base.user import Doctor, PatientProfile
 from app.dto.base.video_call import VideoCall
 
 
 class Conversation(BaseModel):
-    patient: PatienProfile
+    patient: PatientProfile
     doctor: Doctor
     message: list[Message]
 
@@ -22,7 +23,7 @@ class Message(BaseModel):
 
 class MessageMetadata(BaseModel):
     message_type: MessageType
-    attached_file: list[DocumentSource]
+    attached_files: list[File]
     support_request: SupportRequest | None
     video_call: VideoCall | None
 
@@ -38,11 +39,3 @@ class MessageMetadata(BaseModel):
                 raise ValueError("video_call is require for VIDEO_CALL")
 
         return self
-
-
-class DocumentSource(BaseModel):
-    file_name: str
-    content_type: str
-    size: int
-    uploaded_time: datetime
-    storage_key: str

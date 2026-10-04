@@ -3,7 +3,9 @@
 mục 4–6.
 """
 
+from typing import Any
 from agent.dto.schemas import TurnAttachment, TurnRequest
+from app.common.keys import snake_keys
 from app.config.settings import settings
 from app.config.constants import (
     AGENT_ACTIVE_TURN_KEY,
@@ -11,13 +13,8 @@ from app.config.constants import (
     AGENT_REQUEST_QUEUE,
 )
 from app.config.ids import new_message_id
-from app.dto.message import (
-    MessageAnswerDto,
-    MessageMetadataDto,
-    MessageOutput,
-    SendMessageInput,
-    SendMessageResult,
-)
+from app.dto.request.message import MessageAnswerDto, SendMessageInput
+from app.dto.response.message import MessageMetadataDto, MessageOutput, SendMessageResult
 from app.infra.rabbitmq_client import RabbitMQClient
 from app.infra.redis_client import RedisClient
 from app.models.message import Message
@@ -47,7 +44,7 @@ class MessageService:
         `features/chat/constants.ts::MODEL_OPTIONS`) — cập nhật LUÔN `Conversation.model`
         thay vì chỉ áp dụng 1 turn: model chọn theo TỪNG conversation (không phải riêng
         từng message), Worker resolve model MỚI NHẤT từ DB mỗi turn
-        (`app/agent/worker.py::_conversation_for`) nên chỉ cần ghi đè cột này là turn kế
+        (`agent/worker.py::_conversation_for`) nên chỉ cần ghi đè cột này là turn kế
         tiếp (kể cả turn NGAY sau đây) tự dùng đúng model. id rỗng hoặc không nằm trong
         `AGENT_MODEL_CHOICES` (FE gửi id cũ/lỗi) -> bỏ qua thay vì lỗi cả lần gửi tin,
         giữ nguyên model hiện tại của hội thoại."""
@@ -121,7 +118,7 @@ class MessageService:
                 corr_id=corr_id,
                 content=content,
                 is_steer=False,
-                attachments=_turn_attachments(metadata),
+                attached_files=_turn_attachments(metadata),
             ),
         )
         return user_message, assistant_message
@@ -152,7 +149,7 @@ class MessageService:
             )
 
         # Có turn đang chạy -> Steer: worker xử lý NGAY SAU khi turn hiện tại xong (hàng
-        # đợi theo `conversation_id`, xem `app/agent/worker.py`) — không còn `pre_step`
+        # đợi theo `conversation_id`, xem `agent/worker.py`) — không còn `pre_step`
         # append giữa chừng như bản Turn/Step/Reasoning cũ, nên `status="done"` ngay,
         # không có trạng thái "pending chờ append" trung gian nữa.
         # Turn ĐANG chạy đã lấy model lúc bắt đầu (`AgentContext.model` set 1 lần khi
@@ -187,7 +184,7 @@ class MessageService:
                 corr_id=body.client_message_id,
                 content=body.content,
                 is_steer=True,
-                attachments=_turn_attachments(metadata),
+                attached_files=_turn_attachments(metadata),
             ),
         )
 
@@ -228,7 +225,7 @@ class MessageService:
                 type="resume",
                 conversation_id=conversation_id,
                 message_id=message.id,
-                # Resume gửi TEXT thuần cho tool `ask_user` (`app/agent/tools.py`) —
+                # Resume gửi TEXT thuần cho tool `ask_user` (`agent/tools/ask_user.py`) —
                 # không còn 1 DTO chờ/resume riêng như bản Turn/Step/Reasoning cũ,
                 # `question_id` chỉ dùng để Core tìm ĐÚNG message đang chờ ở trên, không
                 # cần forward tiếp cho Worker (1 hội thoại chỉ có ĐÚNG 1 câu hỏi đang
@@ -271,34 +268,52 @@ async def flush_pending_turn(conversation_id: str, redis: RedisClient, rabbitmq:
 
 
 def _metadata_from_input(body: SendMessageInput) -> MessageMetadataDto | None:
-    if body.attachments is None and body.selection is None:
+    if body.attached_files is None:
         return None
-    return MessageMetadataDto(
-        attachments=body.attachments, selection_ref=body.selection
-    )
+    return MessageMetadataDto(attached_files=body.attached_files)
 
 
 def _turn_attachments(
     metadata: MessageMetadataDto | None,
 ) -> list[TurnAttachment] | None:
     """Chỉ forward attachment ẢNH cho Worker — `classify_skin_image`
-    (`app/agent/tools/skin_image_classifier.py`) là consumer DUY NHẤT hiện tại của
-    `TurnRequest.attachments`, các loại file khác (nếu FE cho phép sau này) không có ý
+    (`agent/tools/skin_image_classifier.py`) là consumer DUY NHẤT hiện tại của
+    `TurnRequest.attached_files`, các loại file khác (nếu FE cho phép sau này) không có ý
     nghĩa với Agent nên không cần gửi qua RabbitMQ."""
-    if not metadata or not metadata.attachments:
+    if not metadata or not metadata.attached_files:
         return None
-    images = [a for a in metadata.attachments if a.type.startswith("image/")]
+    images = [f for f in metadata.attached_files if (f.content_type or "").startswith("image/")]
     if not images:
         return None
     return [
-        TurnAttachment(name=a.name, type=a.type, object_key=a.id)
-        for a in images
+        TurnAttachment(file_name=f.file_name, content_type=f.content_type or "", storage_key=f.storage_key)
+        for f in images
     ]
+
+
+def _upgrade_legacy_metadata(extra: dict[str, Any]) -> dict[str, Any]:
+    """Đọc metadata ghi theo quy ước cũ sang tên hiện tại, để không phải migrate cột `messages.metadata`:
+    `choice` từng lưu camelCase (`questionId`...), `attachments: [{id, name, size, type, url}]` nay là `attached_files`."""
+    out = dict(extra)
+    if isinstance(out.get("choice"), dict):
+        out["choice"] = snake_keys(out["choice"], deep=True)
+    for step in out.get("reasoning") or []:
+        if isinstance(step, dict) and isinstance(step.get("choice"), dict):
+            step["choice"] = snake_keys(step["choice"], deep=True)
+    if "attachments" not in out or "attached_files" in out:
+        return out
+    out = {k: v for k, v in out.items() if k != "attachments"}
+    out["attached_files"] = [
+        {"file_name": a.get("name", ""), "storage_key": a.get("id", ""), "content_type": a.get("type"),
+         "size": a.get("size"), "url": a.get("url")}
+        for a in extra["attachments"] or []
+    ]
+    return out
 
 
 def _to_output(message: Message) -> MessageOutput:
     metadata = (
-        MessageMetadataDto.model_validate(message.extra)
+        MessageMetadataDto.model_validate(_upgrade_legacy_metadata(message.extra))
         if message.extra
         else None
     )

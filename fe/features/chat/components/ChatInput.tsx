@@ -21,8 +21,7 @@ import {
 import { DEFAULT_INPUT_STATE, useChatStore } from "../store";
 import { ImageThumbnail } from "./ImageThumbnail";
 import { useComposerStore } from "../composerStore";
-import { useSelectionStore } from "../selectionStore";
-import type { FileAttachment, MessageSelectionRef } from "../types";
+import type { FileAttachment } from "../types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -115,16 +114,10 @@ export function ChatInput({
     );
   }, [isSlashCommand, filterQuery]);
 
-  const pendingSelections: MessageSelectionRef[] = useMemo(() => {
-    if (!inputState.pendingSelection) return [];
-    if (Array.isArray(inputState.pendingSelection)) return inputState.pendingSelection;
-    return [inputState.pendingSelection];
-  }, [inputState.pendingSelection]);
-
   const hasPendingUploads = files.some((f) => f.uploaded === false);
 
   const canSend =
-    (value.trim().length > 0 || selectedSkill !== null || pendingSelections.length > 0) &&
+    (value.trim().length > 0 || selectedSkill !== null) &&
     !disabled &&
     !hasPendingUploads;
 
@@ -156,14 +149,12 @@ export function ChatInput({
       : value;
     sendMessage(fullText, {
       attachments: files.length ? files : undefined,
-      selection: pendingSelections.length ? pendingSelections : undefined,
     });
     setSkillMenuOpen(false);
-    useSelectionStore.getState().clearPendingSelections();
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-  }, [canSend, sendMessage, value, selectedSkill, files, pendingSelections]);
+  }, [canSend, sendMessage, value, selectedSkill, files]);
 
   const handleFiles = useCallback(
     (list: FileList | null) => {
@@ -378,35 +369,6 @@ export function ChatInput({
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {/* Pending selection banner */}
-        {pendingSelections.length > 0 && (
-          <div className="mb-2 flex flex-col gap-1.5">
-            {pendingSelections.map((sel, idx) => (
-              <div
-                key={`${sel.source}-${sel.refId}-${idx}`}
-                className="flex items-center justify-between gap-2 rounded-xl border border-brand/30 bg-brand/5 p-2.5 text-xs shadow-xs"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="text-brand font-mono text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-brand/10 shrink-0">
-                    {sel.source === "canvas" ? "CANVAS" : sel.source === "document" ? "TÀI LIỆU" : "TIN NHẮN"}
-                  </span>
-                  <span className="truncate text-foreground font-medium">
-                    “{sel.text}”
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => useSelectionStore.getState().removePendingSelection(idx)}
-                  aria-label="Hủy chọn đoạn"
-                  className="p-1 rounded-md text-muted-foreground hover:bg-brand/10 hover:text-brand cursor-pointer shrink-0"
-                >
-                  <X className="size-3.5" />
-                </button>
-              </div>
-            ))}
           </div>
         )}
 

@@ -20,15 +20,15 @@ có thể trích dẫn/diễn giải trực tiếp cho người dùng thay vì s
     không có rủi ro lần gọi sau trúng nhầm bệnh khác.
 
 `find_disease_id_by_dermo_id` (không phải `@tool`, gọi thẳng từ code) là cầu nối id-based
-với `app/agent/tools/entity_grounding.py`: khi grounding qua DermO tìm được `dermo.id`,
+với `agent/tools/entity_grounding.py`: khi grounding qua DermO tìm được `dermo.id`,
 hàm này tra thẳng `disease_id` KB tương ứng (gắn sẵn lúc ingest bởi
 `data-ingest/01_normalize/scripts/04_link_dermo_ids.py`, KHÔNG phải LLM tự đoán tên bệnh
 rồi semantic search) — dùng để `ground_medical_entities` tự đính kèm `kb_disease_id` cho
 model gọi thẳng `get_disease_guideline_profile`, bỏ qua bước `search_disease_guidelines`
 khi đã chắc chắn đúng bệnh.
 
-Embedding: LOCAL (`app/agent/embeddings.py`, sentence-transformers — KHÔNG cần API
-key, cùng embedding dùng bởi long-term memory `app/agent/memory.py`), 384 chiều —
+Embedding: LOCAL (`agent/embeddings.py`, sentence-transformers — KHÔNG cần API
+key, cùng embedding dùng bởi long-term memory `agent/tools/memory.py`), 384 chiều —
 PHẢI khớp `KB_EMBEDDING_DIM` dùng khi ingest (`data-ingest/01_normalize/scripts/load_knowledge_base.py`)
 và `ensure_kb_collection(dim=...)` (`app/services/knowledge_base_service.py`). Collection Qdrant
 riêng (`settings.QDRANT_KB_COLLECTION`), KHÔNG lẫn với collection memory người dùng.

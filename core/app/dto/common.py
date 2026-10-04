@@ -1,18 +1,10 @@
-"""DTO dùng chung cho nhiều resource (envelope response, phân trang, camelCase...)."""
+"""DTO dùng chung cho nhiều resource (envelope response, file). Mọi request/response dùng snake_case trên wire, đúng
+tên field Python — không dùng alias camelCase."""
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, ConfigDict
-from pydantic.alias_generators import to_camel
+from pydantic import BaseModel
 
 T = TypeVar("T")
-
-
-class CamelModel(BaseModel):
-    """Base DTO: field Python `snake_case`, wire JSON `camelCase` (`api-doc.md` mục 0).
-
-    `populate_by_name=True` để vẫn nhận input bằng tên Python gốc (test, code nội bộ)."""
-
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
 class ApiResponse(BaseModel, Generic[T]):
@@ -27,17 +19,13 @@ class ApiResponse(BaseModel, Generic[T]):
     data: T
 
 
-class PageParams(BaseModel):
-    """Query params phân trang dùng chung."""
+class FileDto(BaseModel):
+    """File trên wire — field khớp `app/dto/base/file.py::File`. `url` là field riêng của API: link presigned để FE xem
+    trước, sinh lúc upload, không lưu trong base."""
 
-    page: int = 1
-    page_size: int = 20
-
-
-class PageResponse(BaseModel, Generic[T]):
-    """Envelope response cho danh sách có phân trang."""
-
-    data: list[T]
-    page: int
-    page_size: int
-    total: int
+    file_name: str
+    storage_key: str
+    content_type: str | None = None
+    size: int | None = None
+    created_at: str | None = None
+    url: str | None = None

@@ -41,4 +41,4 @@ def run(ctx: StageContext) -> dict:
     info = {"collection": vectors.collection, "points": stored, "embedding_model": model, "dimension": dim,
             "indexed_at": datetime.now(UTC).isoformat(timespec="seconds")}
     files.write_json("index.json", info)
-    return {"points": stored, "collection": info["collection"], "embeddingModel": model, "dimension": dim}
+    return {"points": stored, "collection": info["collection"], "embedding_model": model, "dimension": dim}

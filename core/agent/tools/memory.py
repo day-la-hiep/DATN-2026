@@ -4,7 +4,7 @@ wrapper + business logic riêng cho semantic search (khác quyết định cũ, 
 LangGraph không có sẵn).
 
 `InMemoryStore` (LangGraph, hỗ trợ sẵn semantic search khi cấu hình `index`) đủ cho dev —
-giống cách `InMemorySaver` được dùng cho checkpointer (`app/agent/graph.py`). Production
+giống cách `InMemorySaver` được dùng cho checkpointer (`agent/graph/chat_graph.py`). Production
 cần store bền vững hơn 1 tiến trình: `langgraph-checkpoint-postgres` có
 `AsyncPostgresStore` cùng interface, hoặc tự viết 1 adapter theo `BaseStore` để giữ hạ
 tầng Qdrant đã triển khai — chỉ cần đổi `build_memory_store()`, không đụng chỗ khác
@@ -15,7 +15,7 @@ Namespace: `(user_id, "memories")` — 1 user 1 namespace duy nhất, không tá
 1 hội thoại — xem `kien-truc-memory.md` mục 1).
 
 Chỉ chứa phần hạ tầng/store (không phải tool) — tool `save_memory` (agent chủ động ghi)
-nằm ở `app/agent/tools/save_memory.py`, dùng lại `MEMORY_NAMESPACE`/`BaseStore` khai báo
+nằm ở `agent/tools/memory.py`, dùng lại `MEMORY_NAMESPACE`/`BaseStore` khai báo
 ở đây.
 """
 
@@ -33,9 +33,9 @@ MEMORY_NAMESPACE = "memories"
 
 def build_memory_store() -> BaseStore:
     """1 điểm khởi tạo duy nhất cho long-term memory store — đổi backend ở đây khi lên
-    production (xem docstring module). Embedding LOCAL (`app/agent/embeddings.py`,
+    production (xem docstring module). Embedding LOCAL (`agent/embeddings.py`,
     sentence-transformers) — KHÔNG cần API key, tách biệt hoàn toàn với `AGENT_MODEL`
-    (`app/agent/llm.py`, hiện là OpenRouter/Gemma)."""
+    (`agent/llm.py`, hiện là OpenRouter/Gemma)."""
     return InMemoryStore(
         index={
             "dims": EMBEDDING_DIM,
@@ -49,7 +49,7 @@ async def search_memories(
     store: BaseStore, user_id: str, query: str, limit: int = 5
 ) -> list[str]:
     """Semantic search memory liên quan `query` — dùng trong `pre_model_hook`
-    (`app/agent/graph.py`) để tự động nạp context đầu mỗi lần gọi LLM, KHÔNG cần agent tự
+    (`agent/graph/chat_graph.py`) để tự động nạp context đầu mỗi lần gọi LLM, KHÔNG cần agent tự
     gọi tool để nhớ lại (nhớ chủ động, giống hành vi bản Qdrant cũ)."""
     if not query.strip():
         return []

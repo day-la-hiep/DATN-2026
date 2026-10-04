@@ -218,7 +218,7 @@ class TurnState(TypedDict):
   hard-code riêng cho `ask_user`) — bất kỳ tool `requires_wait=True` nào cũng dùng chung field
   này, `tool_name` cho biết tra `ToolSpec` nào để xử lý resume.
 
-## 5. Tổ chức node LangGraph (thực tế trong `app/agent/graph.py`)
+## 5. Tổ chức node LangGraph (thực tế trong `agent/graph/chat_graph.py`)
 
 Graph có **4 node**: `pre_step`, `reasoning`, `tool_wait`, `finalize`. `reasoning` tự lặp và tự
 phân biệt 2 loại Reasoning bằng nội dung message cuối cùng — **không cần 2 node riêng cho "gọi
@@ -282,7 +282,7 @@ START → pre_step ──(outcome=continue)──→ reasoning ──┐
    (không yêu cầu tool) → `finalize` → turn **kết thúc thật sự**.
 2. **Chạm giới hạn an toàn** (`step_count >= MAX_STEPS`): `pre_step` ép `outcome=answer` dù
    model chưa tự chốt, dùng nội dung Reasoning gần nhất làm câu trả lời tạm (tương tự
-   `finalize()` hiện tại trong `app/agent/graph.py`) → turn **kết thúc thật sự**.
+   `finalize()` hiện tại trong `agent/graph/chat_graph.py`) → turn **kết thúc thật sự**.
 3. **Tạm dừng chờ** (Reasoning "gọi tool" gặp tool `requires_wait=True`, mục 3): turn **chưa
    kết thúc** — `interrupt()` (node `tool_wait`), chờ resume tương ứng tool đó — với
    `ask_user` là `POST .../questions/{questionId}/answer` (`api-doc.md` mục 2.2) — để
@@ -312,7 +312,7 @@ rộng duy nhất khi thêm tool mới, tách theo hợp đồng `ToolSpec` (m�
 |---|---|
 | `base.py` | Hợp đồng `ToolSpec`/`ToolWaitRequest`/`ToolResumeResult` — `graph.py` chỉ import từ đây, không biết tool cụ thể nào. |
 | `ask_user.py` | Tool đầu tiên, ví dụ mẫu cho tool `requires_wait=True` (build câu hỏi, xử lý resume thành `AnsweredChoiceDto`). |
-| `__init__.py` | Registry: `TOOL_SPECS` (danh sách đăng ký), `TOOLS_BY_NAME` (tra theo tên, dùng trong `graph.py`), `ALL_TOOLS` (bind vào LLM, `app/agent/llm.py`). |
+| `__init__.py` | Registry: `TOOL_SPECS` (danh sách đăng ký), `TOOLS_BY_NAME` (tra theo tên, dùng trong `graph.py`), `ALL_TOOLS` (bind vào LLM, `agent/llm.py`). |
 
 Thêm 1 tool nghiệp vụ thật (không cần chờ, chỉ chạy lâu): viết module con định nghĩa `ToolSpec`
 với `run()` (`async def run(tool_call) -> str`, cứ `await` bình thường dù chạy lâu), thêm vào
@@ -336,7 +336,7 @@ Sai khác nhỏ khác so với mô tả gốc (mục 3/6), ghi nhận để khô
 | `message_id` (turn) | "Agent Worker sinh" | **Core sinh** lúc publish turn (`MessageService`), Agent Worker chỉ tái dùng — cần thiết để Core set được Redis "active turn" key trước khi Agent Worker chạy |
 
 ✅ Đã khớp mô tả gốc (không còn là "sai khác"): persist khi pause/done relay qua
-`agent_response_queue` để Core ghi DB (`app/agent/response_consumer.py`) — xem
+`agent_response_queue` để Core ghi DB (`agent/handler/response_consumer.py`) — xem
 `async-api-doc.md` đầu file.
 
 Việc còn lại: tool nghiệp vụ thật (ngoài `ask_user`), `sources`, Celery hoá worker — xem

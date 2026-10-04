@@ -15,7 +15,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 # — biến provider-specific không khai báo ở đây (vd `GOOGLE_API_KEY` cho
 # `langchain-google-genai`, đọc trực tiếp qua `os.environ`) sẽ KHÔNG được nạp bằng cách
 # đó. `core/main.py` (`uvicorn.run(..., env_file=".env")`) nạp hộ cho tiến trình Core,
-# nhưng `app/agent/worker.py` (tiến trình riêng, `python -m app.agent.worker`) không có
+# nhưng `agent/worker.py` (tiến trình riêng, `python -m app.agent.worker`) không có
 # cơ chế tương đương — gọi `load_dotenv()` ở đây để cả 2 tiến trình đều nhất quán, không
 # phụ thuộc uvicorn.
 # `_DOTENV_PATH` rỗng = không tìm thấy `.env` -> mọi field fallback về default khai báo
@@ -57,12 +57,12 @@ class Settings(BaseSettings):
     # gửi api-key (Qdrant không bật auth).
     QDRANT_API_KEY: str = ""
     # Long-term memory: hạ tầng cũ (app/kien-truc-memory.md), hiện KHÔNG được dùng nữa —
-    # app/agent/memory.py đã chuyển sang langgraph.store.InMemoryStore. Giữ setting này
+    # agent/tools/memory.py đã chuyển sang langgraph.store.InMemoryStore. Giữ setting này
     # để không phá vỡ .env hiện có, chưa xoá client (app/infra/qdrant_client.py).
     QDRANT_COLLECTION: str = "agent_memories"
     # Knowledge base guideline (BYT 75/2015, WHO, MedlinePlus) — 435 chunk ingest từ
     # data-ingest/01_normalize/output/diseases/ qua data-ingest/01_normalize/scripts/load_knowledge_base.py,
-    # dùng bởi app/agent/tools/knowledge_base_search.py.
+    # dùng bởi agent/tools/knowledge_base_search.py.
     QDRANT_KB_COLLECTION: str = "derma_kb_chunks"
     # Phenotype PrimeKG (tên embed) — `describe_morphology` chuẩn hoá mô tả tự do sang nút
     # phenotype, ingest qua data-ingest/01_normalize/scripts/load_phenotypes.py.
@@ -101,7 +101,7 @@ class Settings(BaseSettings):
     # Cú pháp "provider:model" cho langchain.chat_models.init_chat_model.
     # - "google_genai:..." cần package "langchain[google-genai]" + GOOGLE_API_KEY.
     # - "openai:..." dùng cho OpenRouter (API tương thích OpenAI, xem
-    #   `app/agent/llm.py::get_model` — set thêm base_url=OPENROUTER_BASE_URL,
+    #   `agent/llm.py::get_model` — set thêm base_url=OPENROUTER_BASE_URL,
     #   api_key=OPENROUTER_API_KEY) — cần package "langchain-openai" (đã khai trong
     #   pyproject.toml). Model hiện dùng: Gemma 4 26B A4B (MoE, 4B active/26B total)
     #   bản TRẢ PHÍ qua OpenRouter (`google/gemma-4-26b-a4b-it`, KHÔNG có hậu tố
@@ -113,11 +113,11 @@ class Settings(BaseSettings):
     #   super-120b-a12b:free` cũng đã verify hoạt động ổn định nếu muốn phương án free.)
     AGENT_MODEL: str = "openai:google/gemma-4-26b-a4b-it"
     AGENT_TEMPERATURE: float = 0.3
-    # id ngắn hiển thị FE (dropdown chọn model/conversation, `app/dto/conversation.py`) ->
-    # chuỗi "provider:model" thật cho `init_chat_model` (`app/agent/llm.py`). Đổi id
+    # id ngắn hiển thị FE (dropdown chọn model/conversation, `app/dto/request/conversation.py`) ->
+    # chuỗi "provider:model" thật cho `init_chat_model` (`agent/llm.py`). Đổi id
     # (thêm/bớt lựa chọn) KHÔNG cần migration DB — `Conversation.model` chỉ lưu id, map
     # sang chuỗi thật lúc runtime nên id "chết" (model cũ bị gỡ) tự fallback về
-    # `AGENT_MODEL` ở `get_model()` (`app/agent/llm.py`) thay vì crash.
+    # `AGENT_MODEL` ở `get_model()` (`agent/llm.py`) thay vì crash.
     AGENT_MODEL_CHOICES: dict[str, str] = {
         "deepseek-v4-pro": "deepseek:deepseek-v4-pro",
         "deepseek-v4-flash": "deepseek:deepseek-flash",
@@ -133,7 +133,7 @@ class Settings(BaseSettings):
     # treo turn.)
 
     # Chỉ áp dụng khi AGENT_MODEL dùng provider "google_genai" (Gemini "thinking" —
-    # xem `app/agent/llm.py`); OpenRouter/model khác không hỗ trợ tham số này.
+    # xem `agent/llm.py`); OpenRouter/model khác không hỗ trợ tham số này.
     AGENT_THINKING_LEVEL: str = "medium"
 
     # ----- OpenRouter (dùng khi AGENT_MODEL provider = "openai", xem trên) -----
@@ -141,7 +141,7 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
 
     # ----- DeepSeek API trực tiếp (dùng khi AGENT_MODEL provider = "deepseek", vd
-    # "deepseek:deepseek-v4-flash" — xem app/agent/llm.py) -----
+    # "deepseek:deepseek-v4-flash" — xem agent/llm.py) -----
     # Lấy API key tại https://platform.deepseek.com/api_keys. KHÔNG dùng chung
     # OPENROUTER_API_KEY — 2 endpoint khác nhau (api.deepseek.com vs openrouter.ai),
     # key không tương thích chéo.
@@ -175,7 +175,7 @@ class Settings(BaseSettings):
     # xem docs/async-api-doc.md mục 7).
     AGENT_TURN_KEY_TTL: int = 60
 
-    # ----- MinIO (object storage — ảnh đính kèm tin nhắn, app/infra/file_storage.py) ---
+    # ----- MinIO (object storage — ảnh đính kèm tin nhắn, app/services/file_store_service.py) ---
     # S3-compatible: Core (FastAPI) ghi qua `POST /uploads`, Agent Worker đọc lại bằng
     # object key qua network client (KHÔNG cần chung filesystem/host với Core).
     # Máy dev đã có sẵn 1 instance MinIO chạy ngoài docker-compose.yml của repo này
@@ -190,7 +190,7 @@ class Settings(BaseSettings):
     MINIO_DOCUMENTS_BUCKET: str = "derma-documents"
     MINIO_SECURE: bool = False
 
-    # ----- Skin CNN classifier (app/agent/tools/skin_image_classifier.py) -----
+    # ----- Skin CNN classifier (agent/tools/skin_image_classifier.py) -----
     # Checkpoint gốc nằm ở model/ (sibling repo root, xem model/test_cnn.py) — không copy
     # vào core/ để tránh trùng lặp file nặng (44MB), tham chiếu bằng path tương đối.
     SKIN_CNN_CHECKPOINT_PATH: str = str(
@@ -222,7 +222,7 @@ def log_startup_infra() -> None:
     """Log các endpoint infra (Postgres/Redis/RabbitMQ/Qdrant/Neo4j/MinIO) mà process
     này SẼ dùng, kèm nguồn giá trị (`.env` nếu tìm thấy file, ngược lại fallback default
     trong `Settings` — vốn khớp `docker-compose.yml`). Gọi 1 lần lúc khởi động ở cả
-    `core/main.py` (Core) và `app/agent/worker.py` (Agent Worker) — 2 process riêng biệt,
+    `core/main.py` (Core) và `agent/worker.py` (Agent Worker) — 2 process riêng biệt,
     mỗi process cần tự xác nhận đang trỏ đúng infra nào (dev local vs. .env override)."""
     source = (
         f".env ({_DOTENV_PATH})"

@@ -1,6 +1,6 @@
 # pipeline/document_ingest — sách giáo khoa → đoạn nội dung theo mục lục
 
-Cài đặt của `docs/plan-toc-chunk-pipeline.md`: lấy khung **part → section → mục** (kèm số trang) từ **mục lục** của sách,
+Pipeline số hoá sách: lấy khung **part → section → mục** (kèm số trang) từ **mục lục** của sách,
 rồi chunk tự do trong khung đó. Mỗi chunk mang metadata của mục chứa nó.
 
 ```
@@ -38,7 +38,7 @@ nằm ở `app/` theo quy ước của Core:
 | Nghiệp vụ sách trên client generic: CRUD sách, cài đặt, mục lục, chunk, ảnh trang, nhật ký, profile; chunk trong Qdrant (`DocumentService`) | `app/services/document_service.py` |
 | Truy cập dữ liệu sách: `DocumentRepository`, các bước + phụ thuộc, trạng thái, override, nhật ký, xoá sách | `app/repositories/document_repository.py` |
 | Điều khiển pipeline (`DocumentIngestPipelineService`: kiểm tra, chạy đồng bộ / nền, dừng, duyệt, áp lại override) | `app/services/document_ingest_pipeline_service.py` |
-| API / DTO | `app/api/toc_pipeline_api.py`, `app/dto/request/toc_pipeline.py`, `app/dto/response/toc_pipeline.py` |
+| API / DTO | `app/api/document_api.py`, `app/dto/request/document.py`, `app/dto/response/document.py` |
 | **Tạo/giữ/đóng mọi instance** ở trên (`get_document_service()`, `get_document_ingest_pipeline_service()`...) | `app/api/deps.py` |
 | Schema cấu hình sách (`Profile`, Pydantic) | `app/models/document_profile.py` |
 | MinIO giả cho test | `tests/memory_infra.py` |

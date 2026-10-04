@@ -12,8 +12,8 @@ import { PageChip } from "./PagePreview";
 /** Một hình: ảnh tải bằng axios (cần token) rồi hiển thị qua object URL, kèm trang và chú thích của sách. */
 function FigureCard({ documentId, f, onPreview }: { documentId: string; f: Figure; onPreview: (p: number) => void }) {
   const img = useQuery({
-    queryKey: ["toc", documentId, "figimg", f.figureId],
-    queryFn: () => documentApi.figureImageUrl(documentId, f.figureId),
+    queryKey: ["toc", documentId, "figimg", f.figure_id],
+    queryFn: () => documentApi.figureImageUrl(documentId, f.figure_id),
     staleTime: Infinity,
     gcTime: 10 * 60_000,
   });
@@ -31,7 +31,7 @@ function FigureCard({ documentId, f, onPreview }: { documentId: string; f: Figur
         )}
       </div>
       <div className="flex items-center gap-1.5 text-[11px]">
-        <span className="rounded bg-muted px-1.5 py-0.5 font-mono">{f.figureId.split(":").pop()}</span>
+        <span className="rounded bg-muted px-1.5 py-0.5 font-mono">{f.figure_id.split(":").pop()}</span>
         <PageChip page={f.page} onOpen={onPreview} />
       </div>
       <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.caption || "(không có chú thích)"}</p>
@@ -56,7 +56,7 @@ export function FigureBrowser({ documentId, onPreview }: { documentId: string; o
       <h3 className="text-sm font-medium">Hình ảnh trong sách ({items.length})</h3>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((f) => (
-          <FigureCard key={f.figureId} documentId={documentId} f={f} onPreview={onPreview} />
+          <FigureCard key={f.figure_id} documentId={documentId} f={f} onPreview={onPreview} />
         ))}
       </div>
     </section>

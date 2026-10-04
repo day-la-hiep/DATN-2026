@@ -1,9 +1,8 @@
-"""DTO cho resource Conversation (`docs/api-doc.md` mục 1)."""
+"""DTO Input cho resource Conversation (`docs/api-doc.md` mục 1)."""
 
-from pydantic import field_validator
+from pydantic import BaseModel, field_validator
 
 from app.config.settings import settings
-from app.dto.common import CamelModel
 
 
 def _validate_model_id(model: str) -> str:
@@ -13,27 +12,12 @@ def _validate_model_id(model: str) -> str:
     return model
 
 
-class ModelOption(CamelModel):
-    """1 lựa chọn model cho FE hiển thị dropdown (`GET /models`) — `id` là giá trị gửi
-    lên `CreateConversationInput.model`/`UpdateConversationModelInput.model`."""
-
-    id: str
-
-
-class ConversationOutput(CamelModel):
-    id: str
-    title: str
-    model: str
-    created_at: str
-    updated_at: str
-
-
-class CreateConversationInput(CamelModel):
-    """Body cho `POST /conversations` — tạo hội thoại kèm tin nhắn đầu tiên
-    (`docs/api-doc.md` mục 1.2)."""
+class CreateConversationInput(BaseModel):
+    """Body cho `POST /conversations` — tạo hội thoại kèm tin nhắn đầu tiên (`docs/api-doc.md` mục 1.2).
+    `content` cùng nghĩa `Message.content` (base) của tin nhắn đầu tiên."""
 
     user_id: str
-    init_message: str
+    content: str
     title: str | None = None
     # id trong `AGENT_MODEL_CHOICES` (`app/config/settings.py`) — bỏ trống dùng
     # `AGENT_DEFAULT_MODEL_ID`.
@@ -44,7 +28,7 @@ class CreateConversationInput(CamelModel):
     )
 
 
-class UpdateConversationModelInput(CamelModel):
+class UpdateConversationModelInput(BaseModel):
     """Body cho `PATCH /conversations/{id}/model` — đổi model dùng cho các turn KẾ TIẾP
     của hội thoại (turn đang chạy dở không bị ảnh hưởng)."""
 

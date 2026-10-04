@@ -10,20 +10,12 @@ from app.api.deps import get_conversation_service, get_message_service, get_rabb
 from app.config.settings import settings
 from app.config.constants import AGENT_EVENTS_CHANNEL, STREAM_DONE_SENTINEL
 from app.dto.common import ApiResponse
-from app.dto.conversation import (
-    ConversationOutput,
-    CreateConversationInput,
-    ModelOption,
-    UpdateConversationModelInput,
-)
+from app.dto.request.conversation import CreateConversationInput, UpdateConversationModelInput
+from app.dto.request.message import MessageAnswerDto, SendMessageInput
+from app.dto.response.conversation import ConversationOutput, ModelOption
+from app.dto.response.message import MessageOutput, SendMessageResult
 from app.infra.rabbitmq_client import RabbitMQClient
 from app.infra.redis_client import RedisClient
-from app.dto.message import (
-    MessageAnswerDto,
-    MessageOutput,
-    SendMessageInput,
-    SendMessageResult,
-)
 from app.services.conversation_service import (
     ConversationNotFoundError,
     ConversationService,
@@ -66,7 +58,7 @@ async def list_model_options() -> ApiResponse[list[ModelOption]]:
 )
 async def list_conversations(
     service: ConversationServiceDep,
-    user_id: Annotated[str, Query(alias="userId")],
+    user_id: Annotated[str, Query()],
 ) -> ApiResponse[list[ConversationOutput]]:
     """`docs/api-doc.md` mục 1.1. Auth chưa có — `userId` truyền tay (mục 0)."""
     conversations = await service.list_conversations(user_id)
@@ -82,7 +74,7 @@ async def list_conversations(
 async def create_conversation(
     body: CreateConversationInput, service: ConversationServiceDep
 ) -> ApiResponse[ConversationOutput]:
-    """`docs/api-doc.md` mục 1.2 — tạo hội thoại + lưu `initMessage` + publish turn đầu."""
+    """`docs/api-doc.md` mục 1.2 — tạo hội thoại + lưu `content` + publish turn đầu."""
     conversation = await service.create_conversation(body)
     return ApiResponse(data=conversation)
 
@@ -98,7 +90,7 @@ async def update_conversation_model(
     service: ConversationServiceDep,
 ) -> ApiResponse[ConversationOutput]:
     """Đổi model cho hội thoại — chỉ áp dụng cho turn KẾ TIẾP (worker resolve model mới
-    nhất từ DB mỗi turn, `app/agent/worker.py::_conversation_for`), không ảnh hưởng turn
+    nhất từ DB mỗi turn, `agent/worker.py::_conversation_for`), không ảnh hưởng turn
     đang chạy dở."""
     try:
         conversation = await service.update_model(conversation_id, body.model)

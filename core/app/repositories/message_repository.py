@@ -2,7 +2,7 @@
 
 `upsert_assistant`: insert/update 1 row assistant duy nhất cho cả turn — dùng khi turn
 tạm dừng (`status="question"`) và khi kết thúc (`status="done"`,
-`app/agent/response_consumer.py`)."""
+`agent/handler/response_consumer.py`)."""
 from datetime import UTC, datetime
 from typing import Any
 
@@ -39,7 +39,7 @@ class MessageRepository:
         """Tìm assistant message đang `status="question"` có `choice.questionId` khớp
         (dùng cho `POST .../questions/{questionId}/answer`, `docs/api-doc.md` mục 2.2).
         `extra.choice` set trực tiếp — không còn lồng trong `reasoning[]` như bản
-        Turn/Step/Reasoning cũ, vì agent hiện tại (`app/agent/graph.py`) chỉ có ĐÚNG 1
+        Turn/Step/Reasoning cũ, vì agent hiện tại (`agent/graph/chat_graph.py`) chỉ có ĐÚNG 1
         câu hỏi đang chờ tại 1 thời điểm, không phải danh sách Reasoning."""
         stmt = select(Message).where(
             Message.conversation_id == conversation_id,

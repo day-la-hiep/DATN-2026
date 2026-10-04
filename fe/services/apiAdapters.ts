@@ -8,47 +8,72 @@
  */
 import {
   MAX_ATTACHMENTS,
-  MAX_SELECTIONS_TOTAL,
 } from "@/features/chat/constants";
 import type {
   ChatMessage,
   ChatRole,
+  ChatStreamEvent,
   Conversation,
+  FileAttachment,
   MessageChoice,
   MessageStatus,
   ReasoningStep,
   ReasoningStepStatus,
   ReasoningStepType,
-  SelectionSource,
   SendMessageInput,
   SendMessageResult,
 } from "@/features/chat/types";
 
 /* ----------------------------- Wire DTOs ----------------------------- */
+/* Wire dùng snake_case đúng tên field Python của backend; kiểu UI (`features/chat/types.ts`) giữ camelCase —
+ * mọi chuyển đổi nằm ở file này. */
 
 export interface ApiConversation {
   id: string;
   title: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ApiSelectionRef {
-  /** backend `MessageSelectionRefDto.source` hiện chỉ nhận `"message"` — gửi
-   * `"canvas"`/`"document"` sẽ bị 422 (tính năng canvas/document chưa có ở backend). */
-  source: SelectionSource;
-  refId: string;
-  text: string;
-  start?: number | null;
-  end?: number | null;
-}
-
+/** Khớp `FileDto` (`core/app/dto/common.py`) — field theo `File` ở `core/app/dto/base/file.py`. */
 export interface ApiFileAttachment {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
+  file_name: string;
+  storage_key: string;
+  content_type?: string | null;
+  size?: number | null;
+  created_at?: string | null;
   url?: string | null;
+}
+
+/** Wire (`FileDto`) -> kiểu UI `FileAttachment` (UI giữ tên cũ `id/name/type`, chỉ adapter biết tên wire). */
+export function toFileAttachment(f: ApiFileAttachment): FileAttachment {
+  return {
+    id: f.storage_key,
+    name: f.file_name,
+    size: f.size ?? 0,
+    type: f.content_type ?? "",
+    url: f.url ?? undefined,
+    uploaded: true,
+  };
+}
+
+/** Khớp `MessageChoiceDto` (`core/app/dto/response/message.py`). */
+export interface ApiMessageChoice {
+  question_id: string;
+  question: string;
+  options: { id: string; label: string }[];
+  answered?: { option_id: string; label: string; custom?: boolean } | null;
+}
+
+export function toMessageChoice(c: ApiMessageChoice): MessageChoice {
+  return {
+    questionId: c.question_id,
+    question: c.question,
+    options: c.options,
+    answered: c.answered
+      ? { optionId: c.answered.option_id, label: c.answered.label, custom: c.answered.custom }
+      : undefined,
+  };
 }
 
 export interface ApiReasoningStep {
@@ -58,44 +83,42 @@ export interface ApiReasoningStep {
   input?: unknown;
   status?: string;
   type?: string;
-  choice?: MessageChoice | null;
+  choice?: ApiMessageChoice | null;
 }
 
-/** Khớp `MessageMetadataDto` (`core/app/dto/message.py`) — 1 shape dùng chung cho cả
+/** Khớp `MessageMetadataDto` (`core/app/dto/response/message.py`) — 1 shape dùng chung cho cả
  * message user lẫn assistant, field nào không áp dụng thì `undefined`. */
 export interface ApiMessageMetadata {
   reasoning?: ApiReasoningStep[] | null;
-  selectionRef?: ApiSelectionRef[] | null;
-  attachments?: ApiFileAttachment[] | null;
-  choice?: MessageChoice | null;
-  isOptionResponse?: boolean | null;
+  attached_files?: ApiFileAttachment[] | null;
+  choice?: ApiMessageChoice | null;
+  is_option_response?: boolean | null;
 }
 
 export interface ApiChatMessage {
   id: string;
-  conversationId: string;
+  conversation_id: string;
   role: "user" | "assistant";
   content: string;
   status: MessageStatus;
   metadata?: ApiMessageMetadata | null;
-  createdAt: string;
+  created_at: string;
 }
 
-/** Khớp `SendMessageResult` (`core/app/dto/message.py`) — response của
+/** Khớp `SendMessageResult` (`core/app/dto/response/message.py`) — response của
  * `POST /conversations/{id}/messages`. */
 export interface ApiSendMessageResult {
-  userMessage: ApiChatMessage;
-  assistantMessage: ApiChatMessage;
+  user_message: ApiChatMessage;
+  assistant_message: ApiChatMessage;
 }
 
-/** Khớp `SendMessageInput` (`core/app/dto/message.py`) verbatim — không có
- * `metadata`/`answer`, `attachments`/`selection` nằm top-level. */
+/** Khớp `SendMessageInput` (`core/app/dto/request/message.py`) verbatim — không có
+ * `metadata`/`answer`, `attached_files` nằm top-level. */
 export interface ApiSendMessageBody {
-  clientMessageId: string;
+  client_message_id: string;
   content: string;
-  modelId?: string;
-  attachments?: ApiFileAttachment[];
-  selection?: ApiSelectionRef | ApiSelectionRef[];
+  model_id?: string;
+  attached_files?: ApiFileAttachment[];
 }
 
 /* ----------------------------- Mappers ------------------------------ */
@@ -104,8 +127,8 @@ export function toConversation(a: ApiConversation): Conversation {
   return {
     id: a.id,
     title: a.title ?? "",
-    createdAt: a.createdAt,
-    updatedAt: a.updatedAt ?? a.createdAt,
+    createdAt: a.created_at,
+    updatedAt: a.updated_at ?? a.created_at,
   };
 }
 
@@ -121,81 +144,66 @@ export function toChatMessage(a: ApiChatMessage): ChatMessage {
         input: s.input,
         status: (s.status as ReasoningStepStatus) ?? "done",
         type: (s.type as ReasoningStepType) ?? "default",
-        choice: s.choice ?? undefined,
+        choice: s.choice ? toMessageChoice(s.choice) : undefined,
       }))
     : undefined;
 
   return {
     id: a.id,
-    conversationId: a.conversationId,
+    conversationId: a.conversation_id,
     role,
     content: a.content ?? "",
-    createdAt: a.createdAt,
+    createdAt: a.created_at,
     // Giữ nguyên status thật từ backend ("question"/"pending"/"queued"...) — KHÔNG
     // hard-code "done", để UI khôi phục đúng trạng thái khi F5 giữa chừng 1 turn.
     status: a.status,
     reasoning,
-    choice: meta?.choice ?? undefined,
-    isOptionResponse: meta?.isOptionResponse ?? undefined,
-    selectionRef:
-      role === "user" && meta?.selectionRef
-        ? meta.selectionRef.map((r) => ({
-            source: r.source ?? "message",
-            refId: r.refId,
-            text: r.text,
-            start: r.start ?? undefined,
-            end: r.end ?? undefined,
-          }))
-        : undefined,
+    choice: meta?.choice ? toMessageChoice(meta.choice) : undefined,
+    isOptionResponse: meta?.is_option_response ?? undefined,
     attachments:
-      role === "user" && meta?.attachments
-        ? meta.attachments.map((f) => ({
-            id: f.id,
-            name: f.name,
-            size: f.size,
-            type: f.type,
-            url: f.url ?? undefined,
-            uploaded: true,
-          }))
-        : undefined,
+      role === "user" && meta?.attached_files ? meta.attached_files.map(toFileAttachment) : undefined,
   };
 }
 
 export function toSendMessageResult(a: ApiSendMessageResult): SendMessageResult {
   return {
-    userMessage: toChatMessage(a.userMessage),
-    assistantMessage: toChatMessage(a.assistantMessage),
+    userMessage: toChatMessage(a.user_message),
+    assistantMessage: toChatMessage(a.assistant_message),
   };
 }
 
 export function toSendMessageBody(input: SendMessageInput): ApiSendMessageBody {
-  const selection = input.selection
-    ? Array.isArray(input.selection)
-      ? input.selection
-      : [input.selection]
-    : undefined;
-
-  const selectionRef: ApiSelectionRef[] | undefined = selection
-    ?.slice(0, MAX_SELECTIONS_TOTAL)
-    .map((s) => ({
-      source: s.source,
-      refId: s.refId,
-      text: s.text,
-      start: s.start,
-      end: s.end,
-    }));
-
-  const attachments: ApiFileAttachment[] | undefined = input.attachments
+  const attachedFiles: ApiFileAttachment[] | undefined = input.attachments
     ?.slice(0, MAX_ATTACHMENTS)
-    .map((x) => ({ id: x.id, name: x.name, size: x.size, type: x.type }));
+    .map((x) => ({ storage_key: x.id, file_name: x.name, size: x.size, content_type: x.type }));
 
   return {
-    // Backend yêu cầu `clientMessageId` bắt buộc — store hiện chỉ set `corrId`, fallback
+    // Backend yêu cầu `client_message_id` bắt buộc — store hiện chỉ set `corrId`, fallback
     // sang đó để không phải sửa mọi call site.
-    clientMessageId: input.clientMessageId ?? input.corrId,
+    client_message_id: input.clientMessageId ?? input.corrId,
     content: input.content,
-    modelId: input.modelId,
-    attachments,
-    selection: selectionRef,
+    model_id: input.modelId,
+    attached_files: attachedFiles,
   };
+}
+
+/** Khoá envelope snake_case của event SSE -> tên trong kiểu UI `FlatStreamEvent`. */
+const STREAM_EVENT_KEYS: Record<string, string> = {
+  conversation_id: "conversationId",
+  message_id: "messageId",
+  corr_id: "corrId",
+  client_message_id: "clientMessageId",
+  step_id: "stepId",
+  step_type: "stepType",
+  document_id: "documentId",
+};
+
+/** Event SSE từ Core (snake_case, `agent/turn.py`, `agent/middleware/*.py`) -> `ChatStreamEvent` của UI. */
+export function toStreamEvent(raw: Record<string, unknown>): ChatStreamEvent {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (k === "choice" && v && typeof v === "object") out.choice = toMessageChoice(v as ApiMessageChoice);
+    else out[STREAM_EVENT_KEYS[k] ?? k] = v;
+  }
+  return out as unknown as ChatStreamEvent;
 }

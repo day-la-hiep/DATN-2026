@@ -14,7 +14,7 @@ interface Field {
   hint: string;
 }
 
-const FIELDS: Partial<Record<Stage["id"], Field>> = {
+const FIELDS: Partial<Record<Stage["stage_id"], Field>> = {
   ingest: {
     key: "pages",
     label: "Khoảng trang cần đọc (không bắt buộc)",
@@ -30,7 +30,7 @@ const FIELDS: Partial<Record<Stage["id"], Field>> = {
 };
 
 /** Hộp thoại tùy chọn trước khi chạy một bước. Bước không có tùy chọn (chunk) chạy thẳng, không mở hộp này. */
-export function hasRunOptions(id: Stage["id"]): boolean {
+export function hasRunOptions(id: Stage["stage_id"]): boolean {
   return FIELDS[id] !== undefined;
 }
 
@@ -47,9 +47,9 @@ export function RunDialog({
   pending?: boolean;
   onRun: (options: Record<string, unknown>) => void;
 }) {
-  const field = FIELDS[stage.id];
+  const field = FIELDS[stage.stage_id];
   const [value, setValue] = useState(field ? String(stage.options?.[field.key] ?? "") : "");
-  const info = STEP_INFO[stage.id];
+  const info = STEP_INFO[stage.stage_id];
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">

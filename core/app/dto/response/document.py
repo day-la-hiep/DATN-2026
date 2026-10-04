@@ -1,24 +1,16 @@
-"""DTO Output cho pipeline tài liệu — nguồn: entity nghiệp vụ
-`app/dto/base/document.py` (`Document`, `ProcessStage`), dựng bởi
-`app/services/document_service.py`.
-
-Record mục lục/chunk/trang do pipeline ghi ra MinIO ở dạng snake_case (`toc.json`,
-`chunks.jsonl`, `pages.jsonl`) — các model dưới đây khai field bằng tên Python gốc đó rồi dựa
-vào `CamelModel.model_config.alias_generator` để tự xuất camelCase khi serialize, không cần
-đổi key bằng tay ở service."""
+"""DTO Output cho pipeline tài liệu — nguồn: entity nghiệp vụ `app/dto/base/document.py` (`Document`, `ProcessStage`,
+`DocumentChunk`, `DocumentFigure`), dựng bởi `app/services/document_service.py`. Wire dùng snake_case như tên field Python."""
 from typing import Any
 
-from app.dto.common import CamelModel
+from pydantic import BaseModel
+
+from app.dto.common import FileDto
 
 
-class StageProgress(CamelModel):
-    done: int = 0
-    total: int = 0
-    message: str = ""
+class StageOutput(BaseModel):
+    """Field khớp `ProcessStage` (bỏ `document_id`: đã có ở URL)."""
 
-
-class StageOutput(CamelModel):
-    id: str
+    stage_id: str
     title: str
     deps: list[str]
     uses_llm: bool
@@ -26,38 +18,40 @@ class StageOutput(CamelModel):
     started_at: str | None = None
     finished_at: str | None = None
     approved_at: str | None = None
-    progress: StageProgress | None = None
+    progress: dict[str, Any] | None = None  # {done, total, message}
     summary: dict[str, Any] | None = None
     error: str | None = None
     options: dict[str, Any] = {}
     blocked_by: list[str] = []  # bước phụ thuộc chưa approved -> chưa được chạy
 
 
-class DocumentSummary(CamelModel):
+class DocumentSummary(BaseModel):
     id: str
     title: str
     created_at: str | None = None
     states: dict[str, str]
 
 
-class DocumentOutput(CamelModel):
+class DocumentOutput(BaseModel):
     id: str
     title: str
     created_at: str | None = None
-    has_pdf: bool
+    source_file: FileDto | None = None  # None = chưa có PDF gốc
     pdf_pages: int | None = None
     stages: list[StageOutput]
-    running_stage: str | None = None  # tối đa một bước chạy mỗi tài liệu
+    running_stage: str | None = None  # tối đa một bước chạy mỗi tài liệu; tính từ `stages`
 
 
-class TocEntryOutput(CamelModel):
-    """Một mục mục lục — nguồn: `pipeline/document_ingest/mapping.py::build_toc`/`hierarchy.py` (`toc.json["entries"]`)."""
+class TocEntryOutput(BaseModel):
+    """Một mục mục lục — nguồn: `pipeline/document_ingest/mapping.py::build_toc`/`hierarchy.py` (`toc.json["entries"]`).
+    `page_printed`/`page` là tên wire (khớp `DocumentChunk.page_printed_*`, `DocumentFigure.page`); `toc.json` vẫn lưu
+    `printed_page`/`pdf_page` — service đổi tên khi đọc (`DocumentService.get_toc`) để không phải sửa dữ liệu đã có."""
 
     id: str
     level: int
     kind: str
     title: str
-    printed_page: int | None = None
+    page_printed: int | None = None
     toc_page: int | None = None
     suspect: bool = False
     suspect_reason: str | None = None
@@ -65,13 +59,13 @@ class TocEntryOutput(CamelModel):
     added: bool = False
     parent_id: str | None = None
     path: list[str] = []
-    pdf_page: int | None = None
+    page: int | None = None  # trang PDF
     anchor_line: int | None = None
     anchored: bool = False
     out_of_range: bool = False
 
 
-class TocOutput(CamelModel):
+class TocOutput(BaseModel):
     """Mục lục đầy đủ của một tài liệu — nguồn: `toc.json` (`mapping.py::build_toc`)."""
 
     toc_pages: list[int]
@@ -84,7 +78,7 @@ class TocOutput(CamelModel):
     warnings: list[str] = []
 
 
-class ChunkOutput(CamelModel):
+class ChunkOutput(BaseModel):
     """Một chunk — nguồn: `pipeline/document_ingest/stages/chunks.py::build_chunks` (`chunks.jsonl`)."""
 
     chunk_id: str
@@ -111,7 +105,7 @@ class ChunkOutput(CamelModel):
     review_reason: str | None = None
 
 
-class SourcePageOutput(CamelModel):
+class SourcePageOutput(BaseModel):
     """Một trang nguồn — nguồn: `pipeline/document_ingest/stages/ingest.py::_row` (`pages.jsonl`)."""
 
     page: int
@@ -123,7 +117,7 @@ class SourcePageOutput(CamelModel):
     noise_score: float
 
 
-class FigureOutput(CamelModel):
+class FigureOutput(BaseModel):
     """Một ảnh trong sách — nguồn: `pipeline/document_ingest/stages/ingest.py::_figure_rows` (`figures.json`)."""
 
     figure_id: str
@@ -134,7 +128,7 @@ class FigureOutput(CamelModel):
     caption: str = ""
 
 
-class ChunkListOutput(CamelModel):
+class ChunkListOutput(BaseModel):
     items: list[ChunkOutput]
     total: int
     page: int

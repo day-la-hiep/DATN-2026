@@ -9,7 +9,6 @@ import type {
   Conversation,
   FileAttachment,
   MessageChoice,
-  MessageSelectionRef,
   ReasoningStep,
 } from "./types";
 
@@ -28,14 +27,12 @@ export interface ConversationInputState {
   value: string;
   selectedSkill: SkillOption | null;
   files: FileAttachment[];
-  pendingSelection: MessageSelectionRef | MessageSelectionRef[] | null;
 }
 
 export const DEFAULT_INPUT_STATE: ConversationInputState = {
   value: "",
   selectedSkill: null,
   files: [],
-  pendingSelection: null,
 };
 
 interface ChatState {
@@ -44,7 +41,7 @@ interface ChatState {
   messagesByConversation: Record<string, ChatMessage[]>;
   /** số luồng AI đang chạy theo từng hội thoại -> cho phép gửi song song */
   activeStreams: Record<string, number>;
-  /** Quản lý trạng thái khung nhập (draft text, skill, files, pendingSelection) theo từng conversationId */
+  /** Quản lý trạng thái khung nhập (draft text, skill, files) theo từng conversationId */
   inputsByConversation: Record<string, ConversationInputState>;
   connected: boolean;
   loadingConversations: boolean;
@@ -68,7 +65,6 @@ interface ChatState {
     content: string,
     options?: {
       attachments?: FileAttachment[];
-      selection?: MessageSelectionRef | MessageSelectionRef[];
     }
   ) => void;
   /** Lưu bản chỉnh sửa văn bản soạn sẵn (canvas) vào message + database */
@@ -534,9 +530,9 @@ export const useChatStore = create<ChatState>((set, get) => {
           try {
             const conversation = await chatService.createConversation({
               userId: "user-1",
-              // Không seed initMessage ở đây — sendMessage bên dưới sẽ gửi tin
+              // Không seed content ở đây — sendMessage bên dưới sẽ gửi tin
               // đầu tiên (tránh trùng lặp user message ở turn đầu).
-              initMessage: "",
+              content: "",
               title: trimmed.slice(0, MAX_SAVED_TITLE_LENGTH),
             });
             set((s) => ({
@@ -566,7 +562,6 @@ export const useChatStore = create<ChatState>((set, get) => {
       const attachments = options?.attachments?.length
         ? options.attachments
         : undefined;
-      const selection = options?.selection;
 
       // Reset input state cho conversation này sau khi bấm gửi
       get().setInputState(activeId, DEFAULT_INPUT_STATE);
@@ -578,7 +573,6 @@ export const useChatStore = create<ChatState>((set, get) => {
         role: "user",
         content: trimmed,
         attachments,
-        selectionRef: selection,
         createdAt: nowIso,
         status: "done",
       };
@@ -644,7 +638,6 @@ export const useChatStore = create<ChatState>((set, get) => {
           content: trimmed,
           modelId: selectedModelId,
           attachments,
-          selection,
         })
       ).then((result) => {
         // Backend thật trả về id thật của cả user message lẫn assistant row

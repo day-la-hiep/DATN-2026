@@ -1,8 +1,8 @@
 """Embedding LOCAL (sentence-transformers, chạy CPU, không gọi API ngoài) — dùng chung
-cho long-term memory (`app/agent/memory.py`) và KB semantic search
-(`app/agent/tools/knowledge_base_search.py`). Thay cho `GoogleGenerativeAIEmbeddings`
+cho long-term memory (`agent/tools/memory.py`) và KB semantic search
+(`agent/tools/knowledge_base_search.py`). Thay cho `GoogleGenerativeAIEmbeddings`
 trước đây (bắt buộc `GOOGLE_API_KEY`) — cùng lúc `AGENT_MODEL` chuyển sang OpenRouter/
-Gemma (`app/agent/llm.py`), project không còn phụ thuộc Google ở bất kỳ đâu.
+Gemma (`agent/llm.py`), project không còn phụ thuộc Google ở bất kỳ đâu.
 
 Model đa ngôn ngữ (hỗ trợ tiếng Việt) — cùng lựa chọn với prototype cũ
 (`knowledge_base/src/semantic.py`). Tải về ~470MB lần chạy đầu tiên (cache tại

@@ -86,11 +86,10 @@ function CreateDocumentDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
-  const [documentId, setDocumentId] = useState("");
   const [engine, setEngine] = useState("pdftotext");
 
   const create = useMutation({
-    mutationFn: () => documentApi.createDocument({ file: file as File, title, documentId: documentId || undefined, engine }),
+    mutationFn: () => documentApi.createDocument({ file: file as File, title, engine }),
     onSuccess: (b) => {
       qc.invalidateQueries({ queryKey: qk.documents });
       toast.success(`Đã tạo sách “${b.title}”.`);
@@ -137,26 +136,13 @@ function CreateDocumentDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             <span className="text-xs font-medium text-foreground">Tên sách</span>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-9 rounded-xl text-sm" />
           </label>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block space-y-1">
-              <span className="text-xs font-medium text-foreground">
-                Mã nhận diện <span className="font-normal text-muted-foreground">(không bắt buộc)</span>
-              </span>
-              <Input
-                value={documentId}
-                onChange={(e) => setDocumentId(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
-                placeholder="tự tạo từ tên sách"
-                className="h-9 rounded-xl font-mono text-xs"
-              />
-            </label>
-            <label className="block space-y-1">
-              <span className="text-xs font-medium text-foreground">Cách đọc PDF</span>
-              <select value={engine} onChange={(e) => setEngine(e.target.value)} className={selectBox}>
-                <option value="pdftotext">Văn bản có sẵn (nhanh)</option>
-                <option value="docling">Nhận dạng chữ từ ảnh (chậm)</option>
-              </select>
-            </label>
-          </div>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-foreground">Cách đọc PDF</span>
+            <select value={engine} onChange={(e) => setEngine(e.target.value)} className={selectBox}>
+              <option value="pdftotext">Văn bản có sẵn (nhanh)</option>
+              <option value="docling">Nhận dạng chữ từ ảnh (chậm)</option>
+            </select>
+          </label>
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             Chọn “nhận dạng chữ từ ảnh” khi PDF là bản scan hoặc chữ bị vỡ, sai dấu. Có thể đổi lại trong Cài đặt.
           </p>

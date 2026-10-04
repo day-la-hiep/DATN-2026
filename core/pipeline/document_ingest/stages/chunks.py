@@ -230,14 +230,13 @@ def run(ctx: StageContext) -> dict:
     review = _review(chunks, cfg)
     files.write_json("review/chunks.json", review)
     toks = sorted(c["tokens"] for c in chunks)
-    # khoá camelCase ngay từ đây — summary đi thẳng ra API/FE, không qua bước đổi tên nào nữa
     summary: dict[str, Any] = {
         "chunks": len(chunks), "tokens": {"min": toks[0], "median": toks[len(toks) // 2], "max": toks[-1]},
-        "tocEntriesUsed": len(nodes), "tocEntriesTotal": len(doc["entries"]), "offset": off,
-        "boundaryChunks": sum(1 for c in chunks if c["boundary"]), "suspectChunks": sum(1 for c in chunks if c["suspect"]),
-        "tooShort": sum(1 for c in chunks if c["tokens"] < cfg.min_tokens),
-        "tooLong": sum(1 for c in chunks if c["tokens"] > cfg.max_tokens * 1.1),
-        "outsideTocLines": outside,
+        "toc_entries_used": len(nodes), "toc_entries_total": len(doc["entries"]), "offset": off,
+        "boundary_chunks": sum(1 for c in chunks if c["boundary"]), "suspect_chunks": sum(1 for c in chunks if c["suspect"]),
+        "too_short": sum(1 for c in chunks if c["tokens"] < cfg.min_tokens),
+        "too_long": sum(1 for c in chunks if c["tokens"] > cfg.max_tokens * 1.1),
+        "outside_toc_lines": outside,
     }
     warnings = []
     if len(nodes) < len(doc["entries"]):

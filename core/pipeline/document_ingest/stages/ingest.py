@@ -175,12 +175,12 @@ def _run_pdftotext(ctx: StageContext) -> dict:
 
 
 def _summary(engine: str, rows: list[dict], first: int, last: int) -> dict:
-    """Khoá camelCase ngay từ đây — summary đi thẳng ra API/FE, không qua bước đổi tên nào nữa."""
+    """Summary đi thẳng ra API/FE (snake_case)."""
     return {
-        "engine": engine, "pages": len(rows), "pageRange": [first, last],
-        "pagesSkipped": sum(1 for r in rows if r["noise"]),
-        "pagesEmpty": sum(1 for r in rows if not r["text"].strip()),
-        "pagesHighNoise": sum(1 for r in rows if r["noise_score"] > 0.05),
+        "engine": engine, "pages": len(rows), "page_range": [first, last],
+        "pages_skipped": sum(1 for r in rows if r["noise"]),
+        "pages_empty": sum(1 for r in rows if not r["text"].strip()),
+        "pages_high_noise": sum(1 for r in rows if r["noise_score"] > 0.05),
     }
 
 

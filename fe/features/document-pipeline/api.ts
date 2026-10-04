@@ -36,11 +36,10 @@ const base = (documentId: string) => `${root}/documents/${encodeURIComponent(doc
 export const documentApi = {
   listDocuments: () => unwrap<DocumentSummary[]>(api.get(`${root}/documents`)),
 
-  createDocument: (form: { file: File; title: string; documentId?: string; engine?: string }) => {
+  createDocument: (form: { file: File; title: string; engine?: string }) => {
     const fd = new FormData();
     fd.append("file", form.file);
     fd.append("title", form.title);
-    if (form.documentId) fd.append("documentId", form.documentId);
     if (form.engine) fd.append("engine", form.engine);
     // PDF vài trăm MB: bỏ timeout mặc định; để axios tự đặt boundary multipart
     return unwrap<Document>(api.post(`${root}/documents`, fd, { timeout: 0, headers: { "Content-Type": undefined } }));
@@ -71,10 +70,10 @@ export const documentApi = {
   toc: (documentId: string) => unwrap<TocDoc>(api.get(`${base(documentId)}/toc`)),
   updateToc: (documentId: string, body: TocUpdate) => unwrap<Document>(api.patch(`${base(documentId)}/toc`, body)),
 
-  chunks: (documentId: string, p: { q?: string; node?: string; onlyReview?: boolean; page: number; pageSize: number }) =>
+  chunks: (documentId: string, p: { q?: string; node?: string; only_review?: boolean; page: number; pageSize: number }) =>
     unwrap<ChunkList>(
       api.get(`${base(documentId)}/chunks`, {
-        params: { q: p.q || undefined, node: p.node || undefined, onlyReview: p.onlyReview || undefined, page: p.page, pageSize: p.pageSize },
+        params: { q: p.q || undefined, node: p.node || undefined, only_review: p.only_review || undefined, page: p.page, page_size: p.pageSize },
       })
     ),
   figures: (documentId: string) => unwrap<Figure[]>(api.get(`${base(documentId)}/figures`)),

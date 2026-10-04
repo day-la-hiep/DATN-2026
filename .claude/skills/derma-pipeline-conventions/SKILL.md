@@ -49,7 +49,7 @@ and they are NOT the same class even when field sets overlap:
 |---|---|---|
 | Business entity (source of truth) | `Document` (holds `source_file`/`ingested_file: File` + `chunks`), `DocumentChunk`, `ProcessStage`, `ProcessStageOverride`; `File` (shared, MinIO object: `file_name`, `storage_key`, `content_type`, `size`, `created_at`) | `app/dto/base/document.py`, `app/dto/base/file.py` |
 | ORM / Postgres schema | `Document`, `DocumentStage`, `DocumentOverride` | `app/models/document.py` |
-| API wire contract (camelCase) | `DocumentOutput`, `DocumentSummary`, `StageOutput`, `ChunkListOutput` (response) / `DocumentSettings`, `TocUpdate`, `RunStageInput` (request) | `app/dto/response/document.py`, `app/dto/request/document.py` |
+| API wire contract (snake_case, same-meaning fields named as in `dto/base`) | `DocumentOutput`, `DocumentSummary`, `StageOutput`, `ChunkListOutput` (response) / `DocumentSettings`, `TocUpdate`, `RunStageInput` (request) | `app/dto/response/document.py`, `app/dto/request/document.py` |
 
 `DocumentService` builds the `dto/base` entity from the ORM row first (`_document()`,
 `_process_stages()`), then maps entity → wire DTO (`_stage_output()`) before returning from an

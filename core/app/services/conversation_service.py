@@ -2,7 +2,8 @@
 
 from app.config.settings import settings
 from app.config.ids import new_conversation_id
-from app.dto.conversation import ConversationOutput, CreateConversationInput
+from app.dto.request.conversation import CreateConversationInput
+from app.dto.response.conversation import ConversationOutput
 from app.models.conversation import Conversation
 from app.repositories.conversation_repository import ConversationRepository
 from app.services.message_service import MessageService
@@ -30,11 +31,11 @@ class ConversationService:
     async def create_conversation(
         self, body: CreateConversationInput
     ) -> ConversationOutput:
-        """Tạo hội thoại + lưu `initMessage` (nếu có) + publish turn đầu tiên — quyết định
+        """Tạo hội thoại + lưu `content` (nếu có) + publish turn đầu tiên — quyết định
         thiết kế ở `docs/api-doc.md` mục 1.2 (FE chỉ cần 1 request).
 
-        Chỉ mở turn khi `init_message` thực sự có nội dung: FE (`store.ts`) luôn tạo
-        conversation với `initMessage=""` rồi gọi `POST .../messages` riêng cho tin đầu
+        Chỉ mở turn khi `content` thực sự có nội dung: FE (`store.ts`) luôn tạo
+        conversation với `content=""` rồi gọi `POST .../messages` riêng cho tin đầu
         tiên (tránh trùng lặp) — mở turn với content rỗng vừa vô nghĩa vừa khiến LLM
         (Gemini) từ chối request, để lại Redis "active_turn" key treo vĩnh viễn vì turn
         không bao giờ hoàn tất."""
@@ -46,9 +47,9 @@ class ConversationService:
         )
         await self._conversations.create(conversation)
 
-        if body.init_message.strip():
+        if body.content.strip():
             await self._messages.start_new_turn(
-                conversation_id=conversation.id, content=body.init_message
+                conversation_id=conversation.id, content=body.content
             )
         return _to_output(conversation)
 

@@ -8,6 +8,6 @@ Quy ước:
     sinh đúng OpenAPI schema cho Swagger UI (`/docs`).
   - DTO KHÔNG import SQLAlchemy model. Chiều chuyển đổi luôn là
     schema (ORM, `app/models/`) -> DTO (response), do route/service đảm nhiệm.
-  - Mỗi resource 1 file, vd `app/dto/health.py`; DTO dùng chung (envelope, phân trang...)
+  - Mỗi resource 1 file, vd `app/dto/response/health.py`; DTO dùng chung (envelope, phân trang...)
     đặt trong `app/dto/common.py`.
 """

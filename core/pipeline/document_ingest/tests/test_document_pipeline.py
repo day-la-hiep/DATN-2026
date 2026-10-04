@@ -182,7 +182,7 @@ class TocStageTest(Base):
             LLMClient("fake", cache_dir=Path(self.tmp.name) / "_spy", fn=spy),
         )
         self.assertEqual(
-            (out["tocPages"], out["pagesSource"], out["entries"]),
+            (out["toc_pages"], out["pages_source"], out["entries"]),
             ("2-3", "user", 7),
         )
         self.assertTrue(all("tìm" not in c for c in calls))
@@ -190,7 +190,7 @@ class TocStageTest(Base):
     def test_llm_finds_toc_pages_and_builds_tree(self) -> None:
         out = self.run_toc()
         self.assertEqual(
-            (out["tocPages"], out["pagesSource"]), ("2-3", "llm")
+            (out["toc_pages"], out["pages_source"]), ("2-3", "llm")
         )
         e = {x["title"]: x for x in self.files.read_json("toc.json")["entries"]}
         self.assertEqual(
@@ -398,7 +398,7 @@ class ChunksTest(Base):
     ) -> None:
         self.run_toc({"pages": "2-3"})
         out = self.runner.run_stage("tbook", "chunks", {}, force=True)
-        self.assertEqual(out["outsideTocLines"], 1)  # trang bìa
+        self.assertEqual(out["outside_toc_lines"], 1)  # trang bìa
         self.assertTrue(any("trước mục đầu tiên" in w for w in out["warnings"]))
 
     def test_unanchored_entry_is_marked_boundary_and_queued_for_review(
@@ -406,7 +406,7 @@ class ChunksTest(Base):
     ) -> None:
         self.run_toc({"pages": "2-3"})  # Pustular chưa sửa: nghi ngờ + chưa neo
         out = self.runner.run_stage("tbook", "chunks", {}, force=True)
-        self.assertGreaterEqual(out["boundaryChunks"], 1)
+        self.assertGreaterEqual(out["boundary_chunks"], 1)
         review = self.files.read_json("review/chunks.json")
         self.assertTrue(
             any(

@@ -64,23 +64,6 @@ export interface ComposedDocument {
   isCanvas?: boolean;
 }
 
-/** Nguồn của một đoạn trích dẫn kèm tin nhắn ("quote-then-ask") */
-export type SelectionSource = "message" | "canvas" | "document";
-
-/** Tham chiếu đoạn được bôi đen khi người dùng hỏi về đoạn đó */
-export interface MessageSelectionRef {
-  source: SelectionSource;
-  /** messageId | canvasId | documentId — tuỳ `source` */
-  refId: string;
-  /** phiên bản (chỉ với canvas/document) */
-  versionNo?: number;
-  /** nội dung đoạn được trích */
-  text: string;
-  /** offset ký tự (tuỳ chọn) */
-  start?: number;
-  end?: number;
-}
-
 export interface ChatMessage {
   id: string;
   conversationId: string;
@@ -88,8 +71,6 @@ export interface ChatMessage {
   content: string;
   /** Chuỗi các bước lý luận của AI, hiển thị theo danh sách */
   reasoning?: ReasoningStep[];
-  /** đoạn tin nhắn được bôi đen mà tin này tham chiếu (hỗ trợ chọn 1 hoặc nhiều đoạn) */
-  selectionRef?: MessageSelectionRef | MessageSelectionRef[];
   /** văn bản soạn sẵn kèm tin assistant, có thể chỉnh sửa (canvas) */
   document?: ComposedDocument;
   /** tệp đính kèm (chủ yếu cho tin nhắn của user) */
@@ -267,7 +248,8 @@ export interface MessageAnswer {
 
 export interface CreateConversationInput {
   userId: string;
-  initMessage: string;
+  /** tin nhắn đầu tiên — cùng tên `Message.content` ở base */
+  content: string;
   title?: string;
 }
 
@@ -279,7 +261,6 @@ export interface SendMessageInput {
   content: string;
   modelId?: string;
   attachments?: FileAttachment[];
-  selection?: MessageSelectionRef | MessageSelectionRef[];
 }
 
 /** Input trả lời 1 câu hỏi agent đang chờ — đi qua endpoint riêng
