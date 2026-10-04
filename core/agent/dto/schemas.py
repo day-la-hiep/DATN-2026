@@ -1,7 +1,7 @@
 """Message contract Core (FastAPI) ⇄ Agent Worker qua RabbitMQ (2 queue,
 `app/config/constants.py`).
 
-`TurnRequest`: Core -> Worker (`agent_request_queue`) — mở turn mới/Steer (`type="turn"`)
+`TurnRequest`: Core -> Worker (`agent_request_queue`) — mở turn mới (`type="turn"`)
 hoặc resume câu hỏi `ask_user` đang chờ (`type="resume"`, xem `agent/tools/ask_user.py`).
 
 `AgentResponseMessage`: Worker -> Core (`agent_response_queue`) — Core là writer duy
@@ -27,8 +27,7 @@ class TurnRequest(BaseModel):
     conversation_id: str
     message_id: str  # id assistant message của turn (ổn định qua mọi resume)
     corr_id: str | None = None
-    content: str | None = None  # bắt buộc khi type="turn" (turn mới hoặc Steer)
-    is_steer: bool = False
+    content: str | None = None  # bắt buộc khi type="turn"
     answer: str | None = None  # bắt buộc khi type="resume" — câu trả lời cho `ask_user`
     attached_files: list[TurnAttachment] | None = None
 

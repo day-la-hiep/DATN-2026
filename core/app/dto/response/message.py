@@ -119,11 +119,10 @@ class SendMessageResult(BaseModel):
     """Response cho `POST /conversations/{id}/messages` (`api-doc.md` mục 2.1).
 
     Trả về CẢ 2 row Core vừa persist:
-      - `user_message`: tin nhắn user (`status="done"` với turn mới, `"pending"` với Steer).
+      - `user_message`: tin nhắn user (`status="done"`).
       - `assistant_message`: row assistant Core tạo sẵn cho turn (`status="queued"`,
         `content=""`) — FE gắn `id` này vào bubble assistant rồi lắng nghe SSE theo đó,
-        không cần chờ event `message.started` để biết id. Với Steer, đây là row assistant
-        của turn ĐANG chạy (không tạo mới).
+        không cần chờ event `message.started` để biết id.
     """
 
     user_message: MessageOutput

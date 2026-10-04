@@ -205,19 +205,7 @@ async def _drive(req: TurnRequest, input_: object) -> None:
 
 
 async def handle_turn(req: TurnRequest) -> None:
-    """Turn mới hoặc Steer (`req.is_steer`)."""
-    channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
-    if req.is_steer:
-        await emit(
-            channel,
-            {
-                "type": "message.steered",
-                "corr_id": req.corr_id,
-                "conversation_id": req.conversation_id,
-                "message_id": req.message_id,
-                "content": req.content,
-            },
-        )
+    """Turn mới."""
     await _drive(
         req, {"messages": [HumanMessage(content=_human_message_content(req))]}
     )

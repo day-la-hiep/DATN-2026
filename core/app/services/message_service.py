@@ -1,4 +1,4 @@
-"""Business logic cho Message — gửi tin nhắn (turn mới/Steer), trả lời câu hỏi
+"""Business logic cho Message — gửi tin nhắn (mở turn mới), trả lời câu hỏi
 (`tool_ask`), liệt kê tin nhắn. Xem `docs/api-doc.md` mục 2, `docs/async-api-doc.md`
 mục 4–6.
 """
@@ -29,6 +29,10 @@ from app.services.file_store_service import FileStoreService
 
 class MessageNotFoundError(Exception):
     """Không tìm thấy assistant message đang chờ đúng `question_id` (mục 2.2)."""
+
+
+class TurnInProgressError(Exception):
+    """Hội thoại đang có turn chạy (hoặc chờ trả lời `ask_user`) — đã bỏ Steer nên không nhận tin mới lúc này."""
 
 
 class AttachmentNotFoundError(Exception):
@@ -181,7 +185,6 @@ class MessageService:
                 message_id=assistant_message.id,
                 corr_id=corr_id,
                 content=content,
-                is_steer=False,
                 attached_files=_turn_attachments(attached_files or []),
             ),
         )
@@ -190,75 +193,25 @@ class MessageService:
     async def send_message(
         self, conversation_id: str, body: SendMessageInput
     ) -> SendMessageResult:
-        """`POST /conversations/{id}/messages` (mục 2.1) — turn mới hoặc Steer tuỳ có
-        turn đang chạy hay không (Redis `AGENT_ACTIVE_TURN_KEY`)."""
+        """`POST /conversations/{id}/messages` (mục 2.1) — luôn mở turn mới. Đã bỏ Steer: còn turn
+        đang chạy hoặc đang chờ trả lời `ask_user` (Redis `AGENT_ACTIVE_TURN_KEY`) thì từ chối."""
         active_turn_id = await self._redis.get(
             AGENT_ACTIVE_TURN_KEY.format(conversation_id=conversation_id)
         )
+        if active_turn_id is not None:
+            raise TurnInProgressError(active_turn_id)
 
         files = await self._resolve_attachments(body)
-
-        if active_turn_id is None:
-            # Không có turn nào đang chạy -> đây là tin nhắn mở đầu turn mới.
-            user_message, assistant_message = await self.start_new_turn(
-                conversation_id=conversation_id,
-                content=body.content,
-                attached_files=files,
-                corr_id=body.client_message_id,
-                model_id=body.model_id,
-            )
-            return SendMessageResult(
-                user_message=self._to_output(user_message, files),
-                assistant_message=self._to_output(assistant_message),
-            )
-
-        # Có turn đang chạy -> Steer: worker xử lý NGAY SAU khi turn hiện tại xong (hàng
-        # đợi theo `conversation_id`, xem `agent/worker.py`) — không còn `pre_step`
-        # append giữa chừng như bản Turn/Step/Reasoning cũ, nên `status="done"` ngay,
-        # không có trạng thái "pending chờ append" trung gian nữa.
-        # Turn ĐANG chạy đã lấy model lúc bắt đầu (`AgentContext.model` set 1 lần khi
-        # `worker.py::_drive` bắt đầu turn) nên đổi ở đây không ảnh hưởng turn đó — có
-        # hiệu lực từ chính turn Steer này trở đi (worker resolve model MỚI NHẤT từ DB
-        # mỗi lần `_drive`, kể cả cho Steer).
-        await self._apply_model_choice(conversation_id, body.model_id)
-        user_message = await self._create_user_message(conversation_id, body.content, files)
-
-        # HOÃN publish (giống turn mới), KHÔNG publish thẳng: worker.py xử lý tuần tự
-        # theo `conversation_id` (1 lock/hội thoại) — turn ĐANG chạy sẽ tự đóng SSE hiện
-        # tại (`STREAM_DONE_SENTINEL`) trước khi Steer này tới lượt xử lý, nên KHÔNG thể
-        # giả định SSE cũ vẫn còn mở lúc Steer thực sự chạy. Client cần mở lại
-        # `GET .../stream` (đúng cơ chế `flush_pending_turn` đã có cho turn mới) để nhận
-        # event của Steer.
-        await self._defer_turn(
-            conversation_id,
-            TurnRequest(
-                type="turn",
-                conversation_id=conversation_id,
-                message_id=active_turn_id,
-                corr_id=body.client_message_id,
-                content=body.content,
-                is_steer=True,
-                attached_files=_turn_attachments(files),
-            ),
-        )
-
-        assistant_message = await self._messages.get(active_turn_id)
-        assistant_output = (
-            self._to_output(assistant_message)
-            if assistant_message is not None
-            else MessageOutput(
-                id=active_turn_id,
-                conversation_id=conversation_id,
-                sender=MessageSender.AI,
-                content="",
-                status="streaming",
-                metadata=None,
-                created_at=user_message.created_at.isoformat(),
-            )
+        user_message, assistant_message = await self.start_new_turn(
+            conversation_id=conversation_id,
+            content=body.content,
+            attached_files=files,
+            corr_id=body.client_message_id,
+            model_id=body.model_id,
         )
         return SendMessageResult(
             user_message=self._to_output(user_message, files),
-            assistant_message=assistant_output,
+            assistant_message=self._to_output(assistant_message),
         )
 
     async def answer_question(

@@ -99,15 +99,6 @@ function normalizeStreamEvent(rawEvent: ChatStreamEvent): import("./types").Flat
         messageId,
       };
     }
-    if (status === "message.steered") {
-      return {
-        type: "message.steered",
-        corrId: clientMessageId,
-        conversationId,
-        messageId,
-        content: meta.content,
-      };
-    }
     if (status === "message.delta") {
       return {
         type: "message.delta",
@@ -558,6 +549,8 @@ export const useChatStore = create<ChatState>((set, get) => {
 
       const { activeId, activeStreams, selectedModelId } = get();
       if (!activeId) return;
+      // Không có Steer: đang có turn chạy thì không gửi tin mới (backend cũng trả 409).
+      if ((activeStreams[activeId] ?? 0) > 0) return;
 
       const attachments = options?.attachments?.length
         ? options.attachments
@@ -588,28 +581,11 @@ export const useChatStore = create<ChatState>((set, get) => {
 
       set((state) => {
         const currentList = state.messagesByConversation[activeId] ?? [];
-        const isStreaming = (activeStreams[activeId] ?? 0) > 0;
-        const nextList = [...currentList];
-
-        if (isStreaming) {
-          // If streaming, find the active assistant message and insert steer userMessage BEFORE it
-          const asstIdx = nextList.findIndex(
-            (m) => m.role === "assistant" && m.status !== "done"
-          );
-          if (asstIdx !== -1) {
-            nextList.splice(asstIdx, 0, userMessage);
-          } else {
-            nextList.push(userMessage);
-          }
-        } else {
-          // New turn: append userMessage and assistantMessage
-          nextList.push(userMessage, assistantMessage);
-        }
 
         return {
           messagesByConversation: {
             ...state.messagesByConversation,
-            [activeId]: nextList,
+            [activeId]: [...currentList, userMessage, assistantMessage],
           },
           activeStreams: {
             ...state.activeStreams,
@@ -627,8 +603,6 @@ export const useChatStore = create<ChatState>((set, get) => {
           }),
         };
       });
-
-      const isSteer = (activeStreams[activeId] ?? 0) > 0;
 
       Promise.resolve(
         chatService.sendMessage({
@@ -651,7 +625,7 @@ export const useChatStore = create<ChatState>((set, get) => {
             if (m.id === userMessage.id) {
               return { ...m, id: result.userMessage.id, status: result.userMessage.status };
             }
-            if (!isSteer && m.id === assistantMessage.id) {
+            if (m.id === assistantMessage.id) {
               return { ...m, id: result.assistantMessage.id, status: result.assistantMessage.status };
             }
             return m;

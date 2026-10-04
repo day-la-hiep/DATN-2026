@@ -98,7 +98,8 @@ export interface ApiMessageMetadata {
 export interface ApiChatMessage {
   id: string;
   conversation_id: string;
-  role: "user" | "assistant";
+  /** `MessageSender` (`core/app/common/constant.py`) */
+  sender: "patient" | "ai" | "doctor";
   content: string;
   status: MessageStatus;
   metadata?: ApiMessageMetadata | null;
@@ -133,7 +134,8 @@ export function toConversation(a: ApiConversation): Conversation {
 }
 
 export function toChatMessage(a: ApiChatMessage): ChatMessage {
-  const role: ChatRole = a.role === "user" ? "user" : "assistant";
+  // UI chưa có giao diện riêng cho tin bác sĩ (luồng tư vấn làm sau) — tạm hiển thị như tin trả lời
+  const role: ChatRole = a.sender === "patient" ? "user" : "assistant";
   const meta = a.metadata ?? undefined;
 
   const reasoning: ReasoningStep[] | undefined = meta?.reasoning

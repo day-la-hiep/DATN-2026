@@ -90,7 +90,6 @@ export interface Conversation {
 
 export type MessageStatusType =
   | "message.started"
-  | "message.steered"
   | "message.delta"
   | "message.done";
 
@@ -126,13 +125,6 @@ export interface ConversationStreamEvent {
 }
 
 export type FlatStreamEvent =
-  | {
-      type: "message.steered";
-      corrId: string;
-      conversationId: string;
-      messageId: string;
-      content: string;
-    }
   | {
       type: "message.started";
       corrId: string;

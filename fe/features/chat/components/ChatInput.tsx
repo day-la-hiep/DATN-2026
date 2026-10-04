@@ -119,6 +119,7 @@ export function ChatInput({
   const canSend =
     (value.trim().length > 0 || selectedSkill !== null) &&
     !disabled &&
+    !streaming &&
     !hasPendingUploads;
 
   const resize = useCallback(() => {

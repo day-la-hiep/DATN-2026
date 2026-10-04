@@ -25,6 +25,7 @@ from app.services.message_service import (
     AttachmentNotFoundError,
     MessageNotFoundError,
     MessageService,
+    TurnInProgressError,
     flush_pending_turn,
 )
 
@@ -130,8 +131,8 @@ async def list_messages(
 async def send_message(
     conversation_id: str, body: SendMessageInput, service: MessageServiceDep
 ) -> ApiResponse[SendMessageResult]:
-    """`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới HOẶC Steer (không dùng để
-    trả lời câu hỏi agent đang chờ, xem `answer_question` bên dưới).
+    """`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới (không dùng để trả lời câu hỏi
+    agent đang chờ, xem `answer_question` bên dưới). Còn turn đang chạy -> 409.
 
     Trả về `{ userMessage, assistantMessage }`: Core tạo sẵn row assistant
     (`status="queued"`) và trả `id` để FE lắng nghe SSE theo đó. Turn CHƯA được đẩy cho
@@ -142,6 +143,11 @@ async def send_message(
     except AttachmentNotFoundError as exc:
         raise HTTPException(
             status_code=400, detail=f"Tệp đính kèm chưa được tải lên: {exc}"
+        ) from exc
+    except TurnInProgressError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Trợ lý đang trả lời hoặc đang chờ bạn trả lời câu hỏi, vui lòng đợi.",
         ) from exc
     return ApiResponse(data=result)
 

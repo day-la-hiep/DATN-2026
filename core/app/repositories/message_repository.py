@@ -3,7 +3,6 @@
 `upsert_assistant`: insert/update 1 row assistant duy nhất cho cả turn — dùng khi turn
 tạm dừng (`status="question"`) và khi kết thúc (`status="done"`,
 `agent/handler/response_consumer.py`)."""
-from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -73,11 +72,7 @@ class MessageRepository:
         """Insert nếu chưa có, update nếu đã có — cùng 1 row cho cả turn.
 
         Với luồng hiện tại Core đã tạo sẵn row assistant (`status="queued"`) lúc
-        `POST .../messages` nên đây gần như luôn là UPDATE. Khi turn kết thúc/tạm dừng
-        (`done`/`question`) thì **dời `created_at` = now()** để row assistant luôn sắp SAU
-        mọi tin Steer user (vốn được tạo GIỮA turn, sau row assistant) — giữ đúng thứ tự
-        `Initial User → Steer → Assistant` ở `GET .../messages` (`docs/async-api-doc.md`
-        mục 5).
+        `POST .../messages` nên đây gần như luôn là UPDATE.
         """
         message = await self.get(message_id)
         if message is None:
@@ -94,7 +89,5 @@ class MessageRepository:
             message.content = content
             message.status = status
             message.extra = extra
-        if status in ("done", "question"):
-            message.created_at = datetime.now(UTC)
         await self._db.flush()
         return message
