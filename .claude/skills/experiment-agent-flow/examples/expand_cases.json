@@ -1,0 +1,5 @@
+[
+  {"id": "symptom-only", "question": "Da mặt tôi bị đỏ và ngứa khoảng một tuần nay, không sốt, không dùng thuốc gì, chưa rõ là bệnh gì.", "forbid_tools": ["ask_user"]},
+  {"id": "differential", "question": "Tôi bị viêm da cơ địa ở khuỷu tay, nhưng tổn thương có vẻ khác thường. Có bệnh nào dễ nhầm với nó không?", "forbid_tools": ["ask_user"]},
+  {"id": "definition", "question": "Bệnh vảy nến là gì?", "forbid_tools": ["ask_user", "expand_entity_context"]}
+]
