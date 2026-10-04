@@ -3,61 +3,61 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { errorMessage, tocApi } from "./api";
-import type { Book, StepId } from "./types";
+import { errorMessage, documentApi } from "./api";
+import type { Document, StepId } from "./types";
 
 export const qk = {
-  books: ["toc", "books"] as const,
-  book: (id: string) => ["toc", "book", id] as const,
+  documents: ["toc", "documents"] as const,
+  document: (id: string) => ["toc", "document", id] as const,
   data: (id: string, kind: string, params?: unknown) => ["toc", id, "data", kind, params] as const,
   dataAll: (id: string) => ["toc", id, "data"] as const,
 };
 
 const POLL_MS = 1500;
 
-export function useBooks() {
+export function useDocuments() {
   return useQuery({
-    queryKey: qk.books,
-    queryFn: tocApi.listBooks,
+    queryKey: qk.documents,
+    queryFn: documentApi.listDocuments,
     refetchInterval: (q) => (q.state.data?.some((b) => Object.values(b.states).includes("running")) ? POLL_MS : false),
   });
 }
 
 /** Trạng thái sách; poll nhanh khi có bước đang chạy để thấy tiến độ và tự cập nhật khi xong. */
-export function useBook(bookId: string) {
+export function useDocument(documentId: string) {
   return useQuery({
-    queryKey: qk.book(bookId),
-    queryFn: () => tocApi.getBook(bookId),
+    queryKey: qk.document(documentId),
+    queryFn: () => documentApi.getDocument(documentId),
     refetchInterval: (q) => (q.state.data?.runningStage ? POLL_MS : false),
   });
 }
 
 /** Dữ liệu phân trang/đọc theo bộ lọc; giữ dữ liệu cũ khi đổi tham số để danh sách không nhấp nháy. */
-export function useData<T>(bookId: string, kind: string, params: unknown, fn: () => Promise<T>, enabled = true) {
-  return useQuery({ queryKey: qk.data(bookId, kind, params), queryFn: fn, placeholderData: keepPreviousData, enabled });
+export function useData<T>(documentId: string, kind: string, params: unknown, fn: () => Promise<T>, enabled = true) {
+  return useQuery({ queryKey: qk.data(documentId, kind, params), queryFn: fn, placeholderData: keepPreviousData, enabled });
 }
 
 /** Sau mọi thay đổi dữ liệu: làm mới trạng thái sách + mọi dữ liệu của sách đó (mục lục, chunk). */
-export function useRefreshBook(bookId: string) {
+export function useRefreshDocument(documentId: string) {
   const qc = useQueryClient();
-  return (book?: Book) => {
-    if (book) qc.setQueryData(qk.book(bookId), book);
-    else qc.invalidateQueries({ queryKey: qk.book(bookId) });
-    qc.invalidateQueries({ queryKey: qk.dataAll(bookId) });
-    qc.invalidateQueries({ queryKey: qk.books });
+  return (document?: Document) => {
+    if (document) qc.setQueryData(qk.document(documentId), document);
+    else qc.invalidateQueries({ queryKey: qk.document(documentId) });
+    qc.invalidateQueries({ queryKey: qk.dataAll(documentId) });
+    qc.invalidateQueries({ queryKey: qk.documents });
   };
 }
 
-export function useStageActions(bookId: string) {
-  const refresh = useRefreshBook(bookId);
+export function useStageActions(documentId: string) {
+  const refresh = useRefreshDocument(documentId);
   const onError = (e: unknown) => toast.error(errorMessage(e));
   const run = useMutation({
-    mutationFn: (v: { stage: StepId; options?: Record<string, unknown> }) => tocApi.runStage(bookId, v.stage, v.options ?? {}),
+    mutationFn: (v: { stage: StepId; options?: Record<string, unknown> }) => documentApi.runStage(documentId, v.stage, v.options ?? {}),
     onSuccess: (b) => refresh(b),
     onError,
   });
   const cancel = useMutation({
-    mutationFn: (stage: StepId) => tocApi.cancelStage(bookId, stage),
+    mutationFn: (stage: StepId) => documentApi.cancelStage(documentId, stage),
     onSuccess: (b) => {
       refresh(b);
       toast.message("Đã gửi yêu cầu dừng.");
@@ -65,7 +65,7 @@ export function useStageActions(bookId: string) {
     onError,
   });
   const approve = useMutation({
-    mutationFn: (stage: StepId) => tocApi.approveStage(bookId, stage),
+    mutationFn: (stage: StepId) => documentApi.approveStage(documentId, stage),
     onSuccess: (b) => {
       refresh(b);
       toast.success("Đã xác nhận bước.");
@@ -73,7 +73,7 @@ export function useStageActions(bookId: string) {
     onError,
   });
   const reapply = useMutation({
-    mutationFn: (stage: StepId) => tocApi.reapplyStage(bookId, stage),
+    mutationFn: (stage: StepId) => documentApi.reapplyStage(documentId, stage),
     onSuccess: (b) => {
       refresh(b);
       toast.success("Đã đối chiếu lại số trang.");

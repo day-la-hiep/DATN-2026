@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Chips, Pager, SearchBox, SectionCard, selectCls } from "./bits";
-import { errorMessage, tocApi } from "../api";
+import { errorMessage, documentApi } from "../api";
 import { LEVEL_TONE, LEVELS } from "../constants";
-import { usePage, useRefreshBook } from "../hooks";
+import { usePage, useRefreshDocument } from "../hooks";
 import type { TocDoc, TocEntry, TocUpdate } from "../types";
 import { PageChip } from "./PagePreview";
 
@@ -224,32 +224,32 @@ function OffsetCard({
 }
 
 export function TocEditor({
-  bookId,
+  documentId,
   doc,
   selectedId,
   onSelect,
   onPreview,
 }: {
-  bookId: string;
+  documentId: string;
   doc: TocDoc;
   selectedId: string | null;
   onSelect: (e: TocEntry) => void;
   onPreview: (page: number) => void;
 }) {
-  const refresh = useRefreshBook(bookId);
+  const refresh = useRefreshDocument(documentId);
   const [filter, setFilter] = useState("");
   const [q, setQ] = useState("");
   const [add, setAdd] = useState<{ open: boolean; entry: TocEntry | null }>({ open: false, entry: null });
   const [page, setPage] = usePage(`${filter}|${q}`);
 
   const update = useMutation({
-    mutationFn: (body: TocUpdate) => tocApi.updateToc(bookId, body),
+    mutationFn: (body: TocUpdate) => documentApi.updateToc(documentId, body),
     onSuccess: (b) => refresh(b),
     onError: (e) => toast.error(errorMessage(e)),
   });
   const recompute = useMutation({
     // áp lại override rỗng = chỉ tính lại độ lệch + neo từ dữ liệu trang hiện có
-    mutationFn: () => tocApi.reapplyStage(bookId, "toc"),
+    mutationFn: () => documentApi.reapplyStage(documentId, "toc"),
     onSuccess: (b) => {
       refresh(b);
       toast.success("Đã đối chiếu lại số trang.");

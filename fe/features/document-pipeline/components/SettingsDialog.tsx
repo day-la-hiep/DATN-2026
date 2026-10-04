@@ -9,8 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { errorMessage, tocApi } from "../api";
-import { useRefreshBook } from "../hooks";
+import { errorMessage, documentApi } from "../api";
+import { useRefreshDocument } from "../hooks";
 import type { Settings } from "../types";
 
 const selectBox =
@@ -38,15 +38,15 @@ function Toggle({ label, hint, checked, onChange }: { label: string; hint?: stri
   );
 }
 
-function Form({ bookId, initial, onClose }: { bookId: string; initial: Settings; onClose: () => void }) {
-  const refresh = useRefreshBook(bookId);
+function Form({ documentId, initial, onClose }: { documentId: string; initial: Settings; onClose: () => void }) {
+  const refresh = useRefreshDocument(documentId);
   const [s, setS] = useState<Settings>(initial);
   const [noise, setNoise] = useState(initial.noisePages.join(", "));
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setS((p) => ({ ...p, [k]: v }));
   const num = (k: "maxTokens" | "minTokens", v: string) => set(k, v === "" ? 0 : parseInt(v.replace(/\D/g, ""), 10) || 0);
 
   const save = useMutation({
-    mutationFn: () => tocApi.saveSettings(bookId, { ...s, noisePages: noise.split(",").map((x) => x.trim()).filter(Boolean) }),
+    mutationFn: () => documentApi.saveSettings(documentId, { ...s, noisePages: noise.split(",").map((x) => x.trim()).filter(Boolean) }),
     onSuccess: () => {
       refresh();
       toast.success("Đã lưu cài đặt.");
@@ -123,8 +123,8 @@ function Form({ bookId, initial, onClose }: { bookId: string; initial: Settings;
   );
 }
 
-export function SettingsDialog({ bookId, open, onOpenChange }: { bookId: string; open: boolean; onOpenChange: (o: boolean) => void }) {
-  const q = useQuery({ queryKey: ["toc", bookId, "settings"], queryFn: () => tocApi.getSettings(bookId), enabled: open, staleTime: 0, gcTime: 0 });
+export function SettingsDialog({ documentId, open, onOpenChange }: { documentId: string; open: boolean; onOpenChange: (o: boolean) => void }) {
+  const q = useQuery({ queryKey: ["toc", documentId, "settings"], queryFn: () => documentApi.getSettings(documentId), enabled: open, staleTime: 0, gcTime: 0 });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
@@ -137,7 +137,7 @@ export function SettingsDialog({ bookId, open, onOpenChange }: { bookId: string;
         {q.isLoading || !q.data ? (
           <p className="py-8 text-center text-xs text-muted-foreground">{q.isError ? errorMessage(q.error) : "Đang tải..."}</p>
         ) : (
-          <Form bookId={bookId} initial={q.data} onClose={() => onOpenChange(false)} />
+          <Form documentId={documentId} initial={q.data} onClose={() => onOpenChange(false)} />
         )}
       </DialogContent>
     </Dialog>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AdminShell } from "@/features/toc-pipeline/components/AdminShell";
+import { AdminShell } from "@/features/document-pipeline/components/AdminShell";
 
 export const metadata: Metadata = {
   title: "Quản trị tài liệu | Derma AI",

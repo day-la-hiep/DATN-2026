@@ -2,24 +2,24 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { errorMessage, tocApi } from "../api";
+import { errorMessage, documentApi } from "../api";
 import { STEP_INFO } from "../constants";
 import type { StepId } from "../types";
 
 export function StageLogDialog({
-  bookId,
+  documentId,
   stage,
   running,
   onClose,
 }: {
-  bookId: string;
+  documentId: string;
   stage: StepId | null;
   running: boolean;
   onClose: () => void;
 }) {
   const q = useQuery({
-    queryKey: ["toc", bookId, "log", stage],
-    queryFn: () => tocApi.stageLog(bookId, stage as StepId),
+    queryKey: ["toc", documentId, "log", stage],
+    queryFn: () => documentApi.stageLog(documentId, stage as StepId),
     enabled: stage !== null,
     refetchInterval: running ? 2000 : false,
   });

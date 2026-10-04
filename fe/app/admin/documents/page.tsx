@@ -11,17 +11,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatBytes } from "@/lib/utils";
-import { ConfirmDialog } from "@/features/toc-pipeline/components/ConfirmDialog";
-import { EmptyState, StateBadge } from "@/features/toc-pipeline/components/bits";
-import { errorMessage, tocApi } from "@/features/toc-pipeline/api";
-import { STEP_INFO, STEP_ORDER } from "@/features/toc-pipeline/constants";
-import { qk, useBooks } from "@/features/toc-pipeline/hooks";
-import type { BookSummary, StageState } from "@/features/toc-pipeline/types";
+import { ConfirmDialog } from "@/features/document-pipeline/components/ConfirmDialog";
+import { EmptyState, StateBadge } from "@/features/document-pipeline/components/bits";
+import { errorMessage, documentApi } from "@/features/document-pipeline/api";
+import { STEP_INFO, STEP_ORDER } from "@/features/document-pipeline/constants";
+import { qk, useDocuments } from "@/features/document-pipeline/hooks";
+import type { DocumentSummary, StageState } from "@/features/document-pipeline/types";
 
 const selectBox =
   "h-9 w-full cursor-pointer rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-function overall(states: BookSummary["states"]): StageState {
+function overall(states: DocumentSummary["states"]): StageState {
   const list = STEP_ORDER.map((s) => states[s] ?? "not_started");
   if (list.includes("running")) return "running";
   if (list.includes("failed")) return "failed";
@@ -39,20 +39,20 @@ const BAR: Partial<Record<StageState, string>> = {
   stale: "bg-orange-400",
 };
 
-function BookCard({ book, onDelete }: { book: BookSummary; onDelete: () => void }) {
-  const state = overall(book.states);
-  const done = STEP_ORDER.filter((s) => book.states[s] === "approved").length;
+function DocumentCard({ document, onDelete }: { document: DocumentSummary; onDelete: () => void }) {
+  const state = overall(document.states);
+  const done = STEP_ORDER.filter((s) => document.states[s] === "approved").length;
   return (
     <div className="group relative flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 transition-colors hover:border-brand/40">
-      <Link href={`/admin/toc/${encodeURIComponent(book.id)}`} className="absolute inset-0 rounded-2xl" aria-label={`Mở ${book.title}`} />
+      <Link href={`/admin/documents/${encodeURIComponent(document.id)}`} className="absolute inset-0 rounded-2xl" aria-label={`Mở ${document.title}`} />
       <div className="flex items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
           <BookOpen className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-semibold tracking-tight text-foreground">{book.title}</h2>
+          <h2 className="truncate text-sm font-semibold tracking-tight text-foreground">{document.title}</h2>
           <p className="truncate font-mono text-[11px] text-muted-foreground">
-            {book.id}
+            {document.id}
           </p>
         </div>
         <Button variant="ghost" size="icon-xs" className="relative z-10 text-muted-foreground hover:text-destructive" onClick={onDelete} aria-label="Xóa sách">
@@ -64,8 +64,8 @@ function BookCard({ book, onDelete }: { book: BookSummary; onDelete: () => void 
           {STEP_ORDER.map((s) => (
             <span
               key={s}
-              title={`${STEP_INFO[s].label}: ${book.states[s] ?? "not_started"}`}
-              className={cn("h-1.5 flex-1 rounded-full bg-muted", BAR[book.states[s] ?? "not_started"])}
+              title={`${STEP_INFO[s].label}: ${document.states[s] ?? "not_started"}`}
+              className={cn("h-1.5 flex-1 rounded-full bg-muted", BAR[document.states[s] ?? "not_started"])}
             />
           ))}
         </div>
@@ -80,22 +80,22 @@ function BookCard({ book, onDelete }: { book: BookSummary; onDelete: () => void 
   );
 }
 
-function CreateBookDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+function CreateDocumentDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const qc = useQueryClient();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
-  const [bookId, setBookId] = useState("");
+  const [documentId, setDocumentId] = useState("");
   const [engine, setEngine] = useState("pdftotext");
 
   const create = useMutation({
-    mutationFn: () => tocApi.createBook({ file: file as File, title, bookId: bookId || undefined, engine }),
+    mutationFn: () => documentApi.createDocument({ file: file as File, title, documentId: documentId || undefined, engine }),
     onSuccess: (b) => {
-      qc.invalidateQueries({ queryKey: qk.books });
+      qc.invalidateQueries({ queryKey: qk.documents });
       toast.success(`Đã tạo sách “${b.title}”.`);
       onOpenChange(false);
-      router.push(`/admin/toc/${encodeURIComponent(b.id)}`);
+      router.push(`/admin/documents/${encodeURIComponent(b.id)}`);
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
@@ -143,8 +143,8 @@ function CreateBookDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
                 Mã nhận diện <span className="font-normal text-muted-foreground">(không bắt buộc)</span>
               </span>
               <Input
-                value={bookId}
-                onChange={(e) => setBookId(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
+                value={documentId}
+                onChange={(e) => setDocumentId(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                 placeholder="tự tạo từ tên sách"
                 className="h-9 rounded-xl font-mono text-xs"
               />
@@ -175,16 +175,16 @@ function CreateBookDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   );
 }
 
-export default function TocBooksPage() {
-  const books = useBooks();
+export default function TocDocumentsPage() {
+  const books = useDocuments();
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
-  const [deleting, setDeleting] = useState<BookSummary | null>(null);
+  const [deleting, setDeleting] = useState<DocumentSummary | null>(null);
 
   const remove = useMutation({
-    mutationFn: (id: string) => tocApi.deleteBook(id),
+    mutationFn: (id: string) => documentApi.deleteDocument(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.books });
+      qc.invalidateQueries({ queryKey: qk.documents });
       toast.success("Đã xóa sách.");
       setDeleting(null);
     },
@@ -222,14 +222,14 @@ export default function TocBooksPage() {
       ) : books.data && books.data.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {books.data.map((b) => (
-            <BookCard key={b.id} book={b} onDelete={() => setDeleting(b)} />
+            <DocumentCard key={b.id} document={b} onDelete={() => setDeleting(b)} />
           ))}
         </div>
       ) : (
         <EmptyState title="Chưa có sách nào" hint="Thêm sách bằng file PDF để bắt đầu." action={actions} />
       )}
 
-      <CreateBookDialog key={`c-${creating}`} open={creating} onOpenChange={setCreating} />
+      <CreateDocumentDialog key={`c-${creating}`} open={creating} onOpenChange={setCreating} />
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(o) => !o && setDeleting(null)}

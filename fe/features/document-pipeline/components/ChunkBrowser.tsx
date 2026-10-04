@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Chips, EmptyState, Pager, SearchBox } from "./bits";
-import { errorMessage, tocApi } from "../api";
+import { errorMessage, documentApi } from "../api";
 import { LEVEL_TONE } from "../constants";
 import { useData, usePage } from "../hooks";
 import type { Chunk, TocDoc, TocEntry } from "../types";
@@ -151,12 +151,12 @@ function ChunkCard({ c, onPreview, previewPage }: { c: Chunk; onPreview: (p: num
 }
 
 export function ChunkBrowser({
-  bookId,
+  documentId,
   toc,
   previewPage,
   onPreview,
 }: {
-  bookId: string;
+  documentId: string;
   toc?: TocDoc;
   previewPage: number;
   onPreview: (p: number) => void;
@@ -165,18 +165,18 @@ export function ChunkBrowser({
   const [node, setNode] = useState("");
   const [only, setOnly] = useState("all");
   const [page, setPage] = usePage(`${q}|${node}|${only}`);
-  const list = useData(bookId, "chunks", { q, node, only, page }, () =>
-    tocApi.chunks(bookId, { q, node, onlyReview: only === "review", page, pageSize: PAGE_SIZE })
+  const list = useData(documentId, "chunks", { q, node, only, page }, () =>
+    documentApi.chunks(documentId, { q, node, onlyReview: only === "review", page, pageSize: PAGE_SIZE })
   );
   const data = list.data;
   const counts = data?.counts ?? {};
 
   const download = async () => {
     try {
-      const url = URL.createObjectURL(await tocApi.exportChunks(bookId));
+      const url = URL.createObjectURL(await documentApi.exportChunks(documentId));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${bookId}-chunks.jsonl`;
+      a.download = `${documentId}-chunks.jsonl`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {

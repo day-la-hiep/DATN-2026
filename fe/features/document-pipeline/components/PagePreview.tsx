@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { errorMessage, tocApi } from "../api";
+import { errorMessage, documentApi } from "../api";
 
 type View = "image" | "text";
 
@@ -16,14 +16,14 @@ type View = "image" | "text";
  * (vd "Rosacea · trang in 8 → PDF 49 · đã neo dòng 0"); `highlightLine` tô dòng neo ở chế độ chữ.
  */
 export function PagePreview({
-  bookId,
+  documentId,
   page,
   total,
   caption,
   highlightLine,
   onPage,
 }: {
-  bookId: string;
+  documentId: string;
   page: number;
   total?: number | null;
   caption?: React.ReactNode;
@@ -35,15 +35,15 @@ export function PagePreview({
   const clamp = (p: number) => Math.max(1, total ? Math.min(total, p) : p);
 
   const image = useQuery({
-    queryKey: ["toc", bookId, "pageimg", page],
-    queryFn: () => tocApi.pageImageUrl(bookId, page),
+    queryKey: ["toc", documentId, "pageimg", page],
+    queryFn: () => documentApi.pageImageUrl(documentId, page),
     enabled: view === "image",
     staleTime: Infinity,
     gcTime: 10 * 60_000,
   });
   const text = useQuery({
-    queryKey: ["toc", bookId, "pagetext", page],
-    queryFn: () => tocApi.page(bookId, page),
+    queryKey: ["toc", documentId, "pagetext", page],
+    queryFn: () => documentApi.page(documentId, page),
     staleTime: 60_000,
   });
 

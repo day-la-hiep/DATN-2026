@@ -8,12 +8,12 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV: { href: string; label: string; hint: string; icon: LucideIcon }[] = [
-  { href: "/admin/toc", label: "Số hóa sách giáo khoa", hint: "Chuẩn bị tri thức cho trợ lý AI", icon: ListTree },
+  { href: "/admin/documents", label: "Số hóa sách giáo khoa", hint: "Chuẩn bị tri thức cho trợ lý AI", icon: ListTree },
 ];
 
 function Brand() {
   return (
-    <Link href="/admin/toc" className="flex items-center gap-2.5">
+    <Link href="/admin/documents" className="flex items-center gap-2.5">
       <span className="flex size-8 items-center justify-center rounded-xl bg-brand/10 text-brand">
         <Workflow className="size-4" />
       </span>

@@ -1,6 +1,6 @@
 /**
- * Kiểu dữ liệu của luồng chunk theo mục lục — khớp DTO `core/app/dto/toc_pipeline.py` và record do
- * `core/toc_pipeline` định nghĩa (đã đổi key sang camelCase ở service).
+ * Kiểu dữ liệu của luồng chunk theo mục lục — khớp DTO `core/app/dto/request/toc_pipeline.py + core/app/dto/response/toc_pipeline.py` và record do
+ * `core/pipeline/document_ingest` định nghĩa (đã đổi key sang camelCase ở service).
  */
 export type StageState =
   | "not_started"
@@ -35,7 +35,7 @@ export interface Stage {
   blockedBy: StepId[];
 }
 
-export interface Book {
+export interface Document {
   id: string;
   title: string;
   createdAt?: string | null;
@@ -45,7 +45,7 @@ export interface Book {
   runningStage?: StepId | null;
 }
 
-export interface BookSummary {
+export interface DocumentSummary {
   id: string;
   title: string;
   createdAt?: string | null;

@@ -6,18 +6,18 @@ import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { EmptyState, StateBadge } from "@/features/toc-pipeline/components/bits";
-import { errorMessage, tocApi } from "@/features/toc-pipeline/api";
-import { ChunkBrowser } from "@/features/toc-pipeline/components/ChunkBrowser";
-import { PagePreview } from "@/features/toc-pipeline/components/PagePreview";
-import { hasRunOptions, RunDialog } from "@/features/toc-pipeline/components/RunDialog";
-import { SettingsDialog } from "@/features/toc-pipeline/components/SettingsDialog";
-import { StageLogDialog } from "@/features/toc-pipeline/components/StageLogDialog";
-import { StagePanel } from "@/features/toc-pipeline/components/StagePanel";
-import { TocEditor } from "@/features/toc-pipeline/components/TocEditor";
-import { STEP_INFO, STEP_ORDER } from "@/features/toc-pipeline/constants";
-import { useBook, useData, useStageActions } from "@/features/toc-pipeline/hooks";
-import type { Book, Stage, StepId, TocEntry } from "@/features/toc-pipeline/types";
+import { EmptyState, StateBadge } from "@/features/document-pipeline/components/bits";
+import { errorMessage, documentApi } from "@/features/document-pipeline/api";
+import { ChunkBrowser } from "@/features/document-pipeline/components/ChunkBrowser";
+import { PagePreview } from "@/features/document-pipeline/components/PagePreview";
+import { hasRunOptions, RunDialog } from "@/features/document-pipeline/components/RunDialog";
+import { SettingsDialog } from "@/features/document-pipeline/components/SettingsDialog";
+import { StageLogDialog } from "@/features/document-pipeline/components/StageLogDialog";
+import { StagePanel } from "@/features/document-pipeline/components/StagePanel";
+import { TocEditor } from "@/features/document-pipeline/components/TocEditor";
+import { STEP_INFO, STEP_ORDER } from "@/features/document-pipeline/constants";
+import { useDocument, useData, useStageActions } from "@/features/document-pipeline/hooks";
+import type { Document, Stage, StepId, TocEntry } from "@/features/document-pipeline/types";
 
 const HAS_RESULT = ["pending_review", "approved", "stale"];
 
@@ -32,11 +32,11 @@ function stepLine(stage: Stage): string {
   return `${s.points ?? "?"} đoạn đã lưu`;
 }
 
-function Stepper({ book, step, onPick }: { book: Book; step: StepId; onPick: (s: StepId) => void }) {
+function Stepper({ doc, step, onPick }: { doc: Document; step: StepId; onPick: (s: StepId) => void }) {
   return (
     <ol className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4" aria-label="Các bước xử lý">
       {STEP_ORDER.map((id, i) => {
-        const stage = book.stages.find((s) => s.id === id) as Stage;
+        const stage = doc.stages.find((s) => s.id === id) as Stage;
         const Icon = STEP_INFO[id].icon;
         const active = id === step;
         return (
@@ -78,15 +78,15 @@ function Stepper({ book, step, onPick }: { book: Book; step: StepId; onPick: (s:
   );
 }
 
-function defaultStep(book: Book): StepId {
-  if (book.runningStage) return book.runningStage;
-  return STEP_ORDER.find((id) => book.stages.find((s) => s.id === id)?.state !== "approved") ?? "chunks";
+function defaultStep(doc: Document): StepId {
+  if (doc.runningStage) return doc.runningStage;
+  return STEP_ORDER.find((id) => doc.stages.find((s) => s.id === id)?.state !== "approved") ?? "chunks";
 }
 
-export default function TocBookPage({ params }: { params: Promise<{ bookId: string }> }) {
-  const { bookId } = use(params);
-  const book = useBook(bookId);
-  const { run, cancel, approve } = useStageActions(bookId);
+export default function TocDocumentPage({ params }: { params: Promise<{ documentId: string }> }) {
+  const { documentId } = use(params);
+  const documentQuery = useDocument(documentId);
+  const { run, cancel, approve } = useStageActions(documentId);
   const [picked, setPicked] = useState<StepId | null>(null);
   const [previewPage, setPreviewPage] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -94,19 +94,19 @@ export default function TocBookPage({ params }: { params: Promise<{ bookId: stri
   const [logStage, setLogStage] = useState<StepId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const data = book.data;
+  const data = documentQuery.data;
   const tocStage = data?.stages.find((s) => s.id === "toc");
   const tocReady = Boolean(tocStage && HAS_RESULT.includes(tocStage.state));
-  const toc = useData(bookId, "toc", {}, () => tocApi.toc(bookId), tocReady);
+  const toc = useData(documentId, "toc", {}, () => documentApi.toc(documentId), tocReady);
 
-  if (book.isError) {
+  if (documentQuery.isError) {
     return (
       <EmptyState
         title="Không mở được sách"
-        hint={errorMessage(book.error)}
+        hint={errorMessage(documentQuery.error)}
         action={
           <Button variant="outline" asChild>
-            <Link href="/admin/toc">Về danh sách</Link>
+            <Link href="/admin/documents">Về danh sách</Link>
           </Button>
         }
       />
@@ -151,14 +151,14 @@ export default function TocBookPage({ params }: { params: Promise<{ bookId: stri
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        <Link href="/admin/toc" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+        <Link href="/admin/documents" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-3.5" /> Tất cả sách
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate font-serif text-2xl font-bold tracking-tight text-foreground">{data.title}</h1>
             <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
-              <span>{bookId}</span>
+              <span>{documentId}</span>
               {data.pdfPages != null && <span>{data.pdfPages} trang</span>}
               {runningName && (
                 <span className="inline-flex items-center gap-1 text-brand">
@@ -173,7 +173,7 @@ export default function TocBookPage({ params }: { params: Promise<{ bookId: stri
         </div>
       </div>
 
-      <Stepper book={data} step={step} onPick={pick} />
+      <Stepper doc={data} step={step} onPick={pick} />
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="min-w-0 space-y-4">
@@ -195,7 +195,7 @@ export default function TocBookPage({ params }: { params: Promise<{ bookId: stri
           )}
           {step === "toc" &&
             (hasResult && toc.data ? (
-              <TocEditor bookId={bookId} doc={toc.data} selectedId={selectedId} onSelect={onSelectEntry} onPreview={(p) => setPreviewPage(p)} />
+              <TocEditor documentId={documentId} doc={toc.data} selectedId={selectedId} onSelect={onSelectEntry} onPreview={(p) => setPreviewPage(p)} />
             ) : (
               !["running"].includes(stage.state) && (
                 <EmptyState
@@ -218,7 +218,7 @@ export default function TocBookPage({ params }: { params: Promise<{ bookId: stri
           )}
           {step === "chunks" &&
             (hasResult ? (
-              <ChunkBrowser bookId={bookId} toc={toc.data} previewPage={page} onPreview={(p) => setPreviewPage(p)} />
+              <ChunkBrowser documentId={documentId} toc={toc.data} previewPage={page} onPreview={(p) => setPreviewPage(p)} />
             ) : (
               stage.state !== "running" && (
                 <EmptyState title="Chưa có đoạn nội dung" hint="Làm bước này sau khi đã xác nhận Đọc nội dung và Mục lục. Nếu sau đó chỉnh sửa mục lục, chỉ cần làm lại bước Chia đoạn." />
@@ -229,7 +229,7 @@ export default function TocBookPage({ params }: { params: Promise<{ bookId: stri
         {data.hasPdf && (
           <div className="h-[32rem] xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
             <PagePreview
-              bookId={bookId}
+              documentId={documentId}
               page={page}
               total={data.pdfPages}
               caption={caption}
@@ -251,8 +251,8 @@ export default function TocBookPage({ params }: { params: Promise<{ bookId: stri
           run.mutate({ stage: step, options });
         }}
       />
-      <StageLogDialog bookId={bookId} stage={logStage} running={data.runningStage === logStage} onClose={() => setLogStage(null)} />
-      <SettingsDialog bookId={bookId} open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <StageLogDialog documentId={documentId} stage={logStage} running={data.runningStage === logStage} onClose={() => setLogStage(null)} />
+      <SettingsDialog documentId={documentId} open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }
