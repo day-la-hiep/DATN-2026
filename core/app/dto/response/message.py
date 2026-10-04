@@ -1,14 +1,14 @@
 """DTO Output cho resource Message — cũng là shape của cột `messages.metadata` (JSONB).
 
 Field cùng nghĩa với `app/dto/base/conversation.py::Message`/`MessageMetadata` dùng cùng tên (`content`, `metadata`,
-`message_type`, `attached_files`, `support_request`, `video_call`). Phần còn lại là dữ liệu riêng của luồng chat
+`message_type`, `attached_files`, `consultation_session`, `video_call`). Phần còn lại là dữ liệu riêng của luồng chat
 (`reasoning`, `choice`, `sources`...), base không có. Nguồn chuẩn field phía FE: `fe/services/apiAdapters.ts`."""
 from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from app.common.constant import MessageType
+from app.common.constant import ConsultationStatus, MessageType
 from app.dto.common import FileDto
 
 
@@ -59,12 +59,23 @@ class ChatSourceDto(BaseModel):
     content: str
 
 
-class SupportRequestDto(BaseModel):
-    """Field khớp `app/dto/base/medical.py::SupportRequest`."""
+class DoctorDto(BaseModel):
+    """`app/dto/base/user.py::Doctor` rút gọn — chỉ phần cần hiển thị trong luồng chat."""
 
+    id: str
+    full_name: str
+    description: str = ""
+
+
+class ConsultationSessionDto(BaseModel):
+    """Field khớp `app/dto/base/conversation.py::ConsultationSession`."""
+
+    doctor: DoctorDto | None = None
+    status: ConsultationStatus = ConsultationStatus.PENDING
     reason: str
-    status: Literal["open", "resolved"] = "open"
-    created_at: datetime | None = None
+    requested_at: datetime | None = None
+    started_at: datetime | None = None
+    resolved_at: datetime | None = None
 
 
 class VideoCallDto(BaseModel):
@@ -83,7 +94,7 @@ class MessageMetadataDto(BaseModel):
     # --- cùng tên với base `MessageMetadata` ---
     message_type: MessageType | None = None
     attached_files: list[FileDto] | None = None  # tệp user upload kèm tin nhắn
-    support_request: SupportRequestDto | None = None
+    consultation_session: ConsultationSessionDto | None = None  # tin mốc CONSULTATION_*
     video_call: VideoCallDto | None = None
     # --- riêng của luồng chat ---
     reasoning: list[ReasoningStepDto] | None = None  # chỉ tin assistant
