@@ -3,27 +3,36 @@
 mục 4–6.
 """
 
-from typing import Any
+from fastapi import UploadFile
+
 from agent.dto.schemas import TurnAttachment, TurnRequest
-from app.common.keys import snake_keys
+from app.common.constant import MessageSender, MessageType
 from app.config.settings import settings
 from app.config.constants import (
     AGENT_ACTIVE_TURN_KEY,
     AGENT_PENDING_TURN_KEY,
     AGENT_REQUEST_QUEUE,
 )
-from app.config.ids import new_message_id
+from app.dto.common import FileDto
 from app.dto.request.message import MessageAnswerDto, SendMessageInput
 from app.dto.response.message import MessageMetadataDto, MessageOutput, SendMessageResult
 from app.infra.rabbitmq_client import RabbitMQClient
 from app.infra.redis_client import RedisClient
+from app.models.file import File
 from app.models.message import Message
+from app.models.video_call import VideoCall
 from app.repositories.conversation_repository import ConversationRepository
+from app.repositories.file_repository import FileRepository
 from app.repositories.message_repository import MessageRepository
+from app.services.file_store_service import FileStoreService
 
 
 class MessageNotFoundError(Exception):
-    """Không tìm thấy assistant message đang chờ đúng `questionId` (mục 2.2)."""
+    """Không tìm thấy assistant message đang chờ đúng `question_id` (mục 2.2)."""
+
+
+class AttachmentNotFoundError(Exception):
+    """Tệp đính kèm gửi kèm tin nhắn chưa được upload qua `POST /uploads` (không có trong `files`)."""
 
 
 class MessageService:
@@ -31,11 +40,72 @@ class MessageService:
         self,
         message_repository: MessageRepository,
         conversation_repository: ConversationRepository,
+        file_repository: FileRepository,
+        file_store: FileStoreService,
         redis: RedisClient,
     ) -> None:
         self._messages = message_repository
         self._conversations = conversation_repository
+        self._files = file_repository
+        self._file_store = file_store  # bucket ảnh đính kèm
         self._redis = redis
+
+    async def upload_attachment(self, upload: UploadFile) -> FileDto:
+        """`POST /uploads`: lưu file lên MinIO + ghi một dòng `files`. FE gửi lại `storage_key` trong
+        `SendMessageInput.attached_files`; Core tra dòng `files` theo khoá đó khi tạo tin nhắn."""
+        stored = await self._file_store.save_upload(upload)
+        row = await self._files.create(
+            File(file_name=stored["name"], storage_key=stored["id"], content_type=stored["type"], size=stored["size"])
+        )
+        return self._file_dto(row)
+
+    def _file_dto(self, f: File) -> FileDto:
+        return FileDto(file_name=f.file_name, storage_key=f.storage_key, content_type=f.content_type, size=f.size,
+                       created_at=f.created_at.isoformat(), url=self._file_store.presigned_url(f.storage_key))
+
+    async def _resolve_attachments(self, body: SendMessageInput) -> list[File]:
+        keys = [f.storage_key for f in body.attached_files or []]
+        if not keys:
+            return []
+        found = await self._files.by_storage_keys(keys)
+        missing = [k for k in keys if k not in found]
+        if missing:
+            raise AttachmentNotFoundError(", ".join(missing))
+        return [found[k] for k in keys]
+
+    async def _create_user_message(self, conversation_id: str, content: str, files: list[File]) -> Message:
+        message = Message(
+            conversation_id=conversation_id,
+            sender=MessageSender.PATIENT.value,
+            message_type=(MessageType.ATTACHED if files else MessageType.TEXT).value,
+            content=content,
+            status="done",
+        )
+        await self._messages.create(message)
+        if files:
+            await self._files.attach_to_message(message.id, files)
+        return message
+
+    def _to_output(
+        self, message: Message, files: list[File] | None = None, video_call: VideoCall | None = None
+    ) -> MessageOutput:
+        # `message_type` là cột riêng (để lọc), `attached_files` ở `message_files`, `video_call` ở `video_calls`; trên wire
+        # cả ba nằm trong `metadata` như base `MessageMetadata`
+        metadata = MessageMetadataDto.model_validate(
+            {**(message.extra or {}), "message_type": message.message_type,
+             "attached_files": [self._file_dto(f).model_dump() for f in files] if files else None,
+             "video_call": {"room_id": video_call.room_id, "status": video_call.status,
+                            "started_at": video_call.started_at, "ended_at": video_call.ended_at} if video_call else None}
+        )
+        return MessageOutput(
+            id=message.id,
+            conversation_id=message.conversation_id,
+            sender=MessageSender(message.sender),
+            content=message.content,
+            status=message.status,  # type: ignore[arg-type]
+            metadata=metadata,
+            created_at=message.created_at.isoformat(),
+        )
 
     async def _apply_model_choice(
         self, conversation_id: str, model_id: str | None
@@ -56,14 +126,19 @@ class MessageService:
 
     async def list_messages(self, conversation_id: str) -> list[MessageOutput]:
         messages = await self._messages.list_by_conversation(conversation_id)
-        return [_to_output(m) for m in messages]
+        files = await self._files.for_messages([m.id for m in messages])
+        calls = await self._messages.video_calls(messages)
+        return [
+            self._to_output(m, files.get(m.id), calls.get(m.video_call_id) if m.video_call_id else None)
+            for m in messages
+        ]
 
     async def start_new_turn(
         self,
         *,
         conversation_id: str,
         content: str,
-        metadata: MessageMetadataDto | None = None,
+        attached_files: list[File] | None = None,
         corr_id: str | None = None,
         model_id: str | None = None,
     ) -> tuple[Message, Message]:
@@ -82,22 +157,11 @@ class MessageService:
         """
         await self._apply_model_choice(conversation_id, model_id)
 
-        user_message = Message(
-            id=new_message_id(),
-            conversation_id=conversation_id,
-            role="user",
-            content=content,
-            status="done",
-            extra=metadata.model_dump(mode="json", exclude_none=True)
-            if metadata is not None
-            else None,
-        )
-        await self._messages.create(user_message)
+        user_message = await self._create_user_message(conversation_id, content, attached_files or [])
 
         assistant_message = Message(
-            id=new_message_id(),
             conversation_id=conversation_id,
-            role="assistant",
+            sender=MessageSender.AI.value,
             content="",
             status="queued",
             extra={"reasoning": []},
@@ -118,7 +182,7 @@ class MessageService:
                 corr_id=corr_id,
                 content=content,
                 is_steer=False,
-                attached_files=_turn_attachments(metadata),
+                attached_files=_turn_attachments(attached_files or []),
             ),
         )
         return user_message, assistant_message
@@ -132,20 +196,20 @@ class MessageService:
             AGENT_ACTIVE_TURN_KEY.format(conversation_id=conversation_id)
         )
 
-        metadata = _metadata_from_input(body)
+        files = await self._resolve_attachments(body)
 
         if active_turn_id is None:
             # Không có turn nào đang chạy -> đây là tin nhắn mở đầu turn mới.
             user_message, assistant_message = await self.start_new_turn(
                 conversation_id=conversation_id,
                 content=body.content,
-                metadata=metadata,
+                attached_files=files,
                 corr_id=body.client_message_id,
                 model_id=body.model_id,
             )
             return SendMessageResult(
-                user_message=_to_output(user_message),
-                assistant_message=_to_output(assistant_message),
+                user_message=self._to_output(user_message, files),
+                assistant_message=self._to_output(assistant_message),
             )
 
         # Có turn đang chạy -> Steer: worker xử lý NGAY SAU khi turn hiện tại xong (hàng
@@ -157,17 +221,7 @@ class MessageService:
         # hiệu lực từ chính turn Steer này trở đi (worker resolve model MỚI NHẤT từ DB
         # mỗi lần `_drive`, kể cả cho Steer).
         await self._apply_model_choice(conversation_id, body.model_id)
-        user_message = Message(
-            id=new_message_id(),
-            conversation_id=conversation_id,
-            role="user",
-            content=body.content,
-            status="done",
-            extra=metadata.model_dump(mode="json", exclude_none=True)
-            if metadata is not None
-            else None,
-        )
-        await self._messages.create(user_message)
+        user_message = await self._create_user_message(conversation_id, body.content, files)
 
         # HOÃN publish (giống turn mới), KHÔNG publish thẳng: worker.py xử lý tuần tự
         # theo `conversation_id` (1 lock/hội thoại) — turn ĐANG chạy sẽ tự đóng SSE hiện
@@ -184,18 +238,18 @@ class MessageService:
                 corr_id=body.client_message_id,
                 content=body.content,
                 is_steer=True,
-                attached_files=_turn_attachments(metadata),
+                attached_files=_turn_attachments(files),
             ),
         )
 
         assistant_message = await self._messages.get(active_turn_id)
         assistant_output = (
-            _to_output(assistant_message)
+            self._to_output(assistant_message)
             if assistant_message is not None
             else MessageOutput(
                 id=active_turn_id,
                 conversation_id=conversation_id,
-                role="assistant",
+                sender=MessageSender.AI,
                 content="",
                 status="streaming",
                 metadata=None,
@@ -203,14 +257,14 @@ class MessageService:
             )
         )
         return SendMessageResult(
-            user_message=_to_output(user_message),
+            user_message=self._to_output(user_message, files),
             assistant_message=assistant_output,
         )
 
     async def answer_question(
         self, conversation_id: str, question_id: str, body: MessageAnswerDto
     ) -> MessageOutput:
-        """`POST /conversations/{id}/questions/{questionId}/answer` (mục 2.2) — hoãn
+        """`POST /conversations/{id}/questions/{question_id}/answer` (mục 2.2) — hoãn
         "resume request" vào Redis `agent:pending_turn:*` (giống turn mới), KHÔNG tạo
         `messages` row mới (mục 4). Worker resume khi client mở lại SSE."""
         message = await self._messages.find_pending_by_question_id(
@@ -233,7 +287,7 @@ class MessageService:
                 answer=body.label or body.option_id,
             ),
         )
-        return _to_output(message)
+        return self._to_output(message)
 
     async def _defer_turn(self, conversation_id: str, req: TurnRequest) -> None:
         """Lưu `TurnRequest` chờ flush (handler SSE publish sau khi subscribe)."""
@@ -267,62 +321,15 @@ async def flush_pending_turn(conversation_id: str, redis: RedisClient, rabbitmq:
         raise
 
 
-def _metadata_from_input(body: SendMessageInput) -> MessageMetadataDto | None:
-    if body.attached_files is None:
-        return None
-    return MessageMetadataDto(attached_files=body.attached_files)
-
-
-def _turn_attachments(
-    metadata: MessageMetadataDto | None,
-) -> list[TurnAttachment] | None:
+def _turn_attachments(files: list[File]) -> list[TurnAttachment] | None:
     """Chỉ forward attachment ẢNH cho Worker — `classify_skin_image`
     (`agent/tools/skin_image_classifier.py`) là consumer DUY NHẤT hiện tại của
     `TurnRequest.attached_files`, các loại file khác (nếu FE cho phép sau này) không có ý
     nghĩa với Agent nên không cần gửi qua RabbitMQ."""
-    if not metadata or not metadata.attached_files:
-        return None
-    images = [f for f in metadata.attached_files if (f.content_type or "").startswith("image/")]
+    images = [f for f in files if (f.content_type or "").startswith("image/")]
     if not images:
         return None
     return [
         TurnAttachment(file_name=f.file_name, content_type=f.content_type or "", storage_key=f.storage_key)
         for f in images
     ]
-
-
-def _upgrade_legacy_metadata(extra: dict[str, Any]) -> dict[str, Any]:
-    """Đọc metadata ghi theo quy ước cũ sang tên hiện tại, để không phải migrate cột `messages.metadata`:
-    `choice` từng lưu camelCase (`questionId`...), `attachments: [{id, name, size, type, url}]` nay là `attached_files`."""
-    out = dict(extra)
-    if isinstance(out.get("choice"), dict):
-        out["choice"] = snake_keys(out["choice"], deep=True)
-    for step in out.get("reasoning") or []:
-        if isinstance(step, dict) and isinstance(step.get("choice"), dict):
-            step["choice"] = snake_keys(step["choice"], deep=True)
-    if "attachments" not in out or "attached_files" in out:
-        return out
-    out = {k: v for k, v in out.items() if k != "attachments"}
-    out["attached_files"] = [
-        {"file_name": a.get("name", ""), "storage_key": a.get("id", ""), "content_type": a.get("type"),
-         "size": a.get("size"), "url": a.get("url")}
-        for a in extra["attachments"] or []
-    ]
-    return out
-
-
-def _to_output(message: Message) -> MessageOutput:
-    metadata = (
-        MessageMetadataDto.model_validate(_upgrade_legacy_metadata(message.extra))
-        if message.extra
-        else None
-    )
-    return MessageOutput(
-        id=message.id,
-        conversation_id=message.conversation_id,
-        role=message.role,  # type: ignore[arg-type]
-        content=message.content,
-        status=message.status,  # type: ignore[arg-type]
-        metadata=metadata,
-        created_at=message.created_at.isoformat(),
-    )

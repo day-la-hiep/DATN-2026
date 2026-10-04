@@ -9,6 +9,7 @@ import re
 import shutil
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
 from qdrant_client import QdrantClient
@@ -27,11 +28,12 @@ from pipeline.document_ingest.stages import StageError
 from pipeline.document_ingest.stages import toc as T
 from pipeline.document_ingest.stages.chunks import build_chunks, est_tokens, toc_nodes
 from pipeline.document_ingest.tests.memory_infra import MemoryMinio
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app.models.base import Base as BaseModel
 from app.models.document import Document, DocumentOverride, DocumentStage
+from app.models.file import File
 
 TOC_ROWS = [
     "| PART I GENERAL DERMATOLOGY | |",
@@ -140,7 +142,9 @@ class Base(unittest.TestCase):
         self.qdrant = QdrantVectorClient("http://unused", sync_client=QdrantClient(":memory:"))
         # Postgres thay bằng SQLite file tạm (chỉ các bảng sách; thread nền của test API cũng dùng được)
         engine = create_engine(f"sqlite:///{root / 'documents.db'}")
-        BaseModel.metadata.create_all(engine, tables=[Document.__table__, DocumentStage.__table__, DocumentOverride.__table__])  # type: ignore[list-item]
+        # PK do DB sinh (`server_default gen_random_uuid()`): Postgres có sẵn, SQLite cần đăng ký hàm tương đương
+        event.listen(engine, "connect", lambda conn, _: conn.create_function("gen_random_uuid", 0, lambda: str(uuid.uuid4())))
+        BaseModel.metadata.create_all(engine, tables=[File.__table__, Document.__table__, DocumentStage.__table__, DocumentOverride.__table__])  # type: ignore[list-item]
         self.addCleanup(engine.dispose)
         self.repo = DocumentRepository(FileStoreService(self.minio, "books-test"), sessionmaker(bind=engine, expire_on_commit=False))  # type: ignore[arg-type]
         self.vectors = DocumentService(self.repo, self.qdrant, "document_chunks_test")  # type: ignore[arg-type]

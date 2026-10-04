@@ -19,7 +19,7 @@ class SendMessageInput(BaseModel):
 
 
 class MessageAnswerDto(BaseModel):
-    """Body cho `POST .../questions/{questionId}/answer` (`api-doc.md` mục 2.2)."""
+    """Body cho `POST .../questions/{question_id}/answer` (`api-doc.md` mục 2.2)."""
 
     question_id: str
     option_id: str

@@ -22,6 +22,7 @@ from app.exception.errors import NotFoundError
 from app.models.document import Document, DocumentOverride, DocumentStage
 from app.models.document_profile import Profile
 from app.models.document_stage import STAGE_IDS, downstream
+from app.models.file import File
 from app.repositories.document_override_repository import DocumentOverrideRepository
 from app.services.file_store_service import FileStoreService
 
@@ -51,6 +52,14 @@ def _iso(dt: datetime | None) -> str | None:
 
 def _dt(value: Any) -> datetime | None:
     return datetime.fromisoformat(value) if isinstance(value, str) else value
+
+
+def _file_dict(row: File | None) -> dict[str, Any] | None:
+    """Field của `File` (base) — service dựng entity từ dict này."""
+    if row is None:
+        return None
+    return {"file_name": row.file_name, "storage_key": row.storage_key, "content_type": row.content_type,
+            "size": row.size, "created_at": _iso(row.created_at)}
 
 
 def _stage_dict(row: DocumentStage) -> dict[str, Any]:
@@ -107,8 +116,7 @@ class DocumentRepository:
                 "id": b.id,
                 "title": b.title,
                 "created_at": _iso(b.created_at),
-                "pdf_name": b.pdf_name,
-                "pdf_bytes": b.pdf_bytes,
+                "source_file": _file_dict(s.get(File, b.source_file_id) if b.source_file_id else None),
                 "pdf_pages": b.pdf_pages,
             }
 
@@ -123,12 +131,15 @@ class DocumentRepository:
                 r.stage_id: _stage_dict(r)
                 for r in s.scalars(select(DocumentStage).where(DocumentStage.document_id == document_id))
             }
+            source_file = _file_dict(s.get(File, b.source_file_id) if b.source_file_id else None)
+            ingested_file = _file_dict(s.get(File, b.ingested_file_id) if b.ingested_file_id else None)
         return {
             "id": b.id,
             "title": b.title,
+            "type": b.type,
             "created_at": _iso(b.created_at),
-            "pdf_name": b.pdf_name,
-            "pdf_bytes": b.pdf_bytes,
+            "source_file": source_file,
+            "ingested_file": ingested_file,
             "pdf_pages": b.pdf_pages,
             "stages": {sid: stage_rows.get(sid, {"state": "not_started"}) for sid in STAGE_IDS},
         }
@@ -159,9 +170,11 @@ class DocumentRepository:
         profile: Profile,
         files: dict[str, Path],
         document_id: str | None = None,
+        source_file_name: str = "",
     ) -> str:
         """Tạo record tài liệu (+ một dòng `not_started` cho mỗi bước) và ghi `files` (tên trong thư mục tài liệu -> đường dẫn
-        local) lên MinIO như MỘT thao tác: lỗi ở đâu thì rollback DB và xoá các file đã ghi. Trả về id do DB sinh
+        local) lên MinIO như MỘT thao tác: lỗi ở đâu thì rollback DB và xoá các file đã ghi. `source.pdf` (nếu có) được ghi
+        thêm một dòng `files` làm `source_file`, tên hiển thị là `source_file_name`. Trả về id do DB sinh
         (`document_id` chỉ dùng cho dữ liệu test cố định)."""
         uploaded: list[str] = []
         fs: FileStoreService | None = None
@@ -179,6 +192,12 @@ class DocumentRepository:
                 for name, path in files.items():
                     fs.put_file(name, path)
                     uploaded.append(name)
+                if "source.pdf" in files:
+                    src = File(file_name=source_file_name or "source.pdf", storage_key=fs.key("source.pdf"),
+                               content_type="application/pdf", size=files["source.pdf"].stat().st_size)
+                    s.add(src)
+                    s.flush()
+                    row.source_file_id = src.id
         except BaseException:
             if fs is not None:
                 for name in uploaded:
@@ -190,9 +209,13 @@ class DocumentRepository:
         """Xoá bản ghi (bước + override xoá theo) và mọi file của tài liệu. Bản sao PDF tạm và điểm Qdrant do
         `DocumentService.delete_document` xoá."""
         with self._tx() as s:
+            b = s.get(Document, document_id)
+            file_ids = [i for i in (b.source_file_id, b.ingested_file_id) if i] if b else []
             s.execute(delete(DocumentOverride).where(DocumentOverride.document_id == document_id))
             s.execute(delete(DocumentStage).where(DocumentStage.document_id == document_id))
             s.execute(delete(Document).where(Document.id == document_id))
+            if file_ids:
+                s.execute(delete(File).where(File.id.in_(file_ids)))
         self.files_for(document_id).delete_prefix()
 
     # ---- trạng thái các bước ----
@@ -203,6 +226,21 @@ class DocumentRepository:
                 for r in s.scalars(select(DocumentStage).where(DocumentStage.document_id == document_id))
             }
         return {"stages": {sid: rows.get(sid, {"state": "not_started"}) for sid in STAGE_IDS}}
+
+    def set_ingested_file(self, document_id: str, name: str, content_type: str) -> None:
+        """Ghi/ cập nhật dòng `files` cho kết quả bước ingest (`pages.jsonl`) và gắn vào `documents.ingested_file_id`."""
+        fs = self.files_for(document_id)
+        key, size = fs.key(name), fs.size(name)
+        with self._tx() as s:
+            b = self._row(s, document_id, lock=True)
+            row = s.scalar(select(File).where(File.storage_key == key))
+            if row is None:
+                row = File(file_name=name, storage_key=key, content_type=content_type, size=size)
+                s.add(row)
+                s.flush()
+            else:
+                row.size = size
+            b.ingested_file_id = row.id
 
     def update_stage(self, document_id: str, stage_id: str, **fields: Any) -> dict[str, Any]:
         unknown = set(fields) - _STAGE_FIELDS

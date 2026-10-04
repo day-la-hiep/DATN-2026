@@ -19,8 +19,10 @@ from app.infra.redis_client import RedisClient
 from app.services.conversation_service import (
     ConversationNotFoundError,
     ConversationService,
+    PatientProfileNotFoundError,
 )
 from app.services.message_service import (
+    AttachmentNotFoundError,
     MessageNotFoundError,
     MessageService,
     flush_pending_turn,
@@ -75,7 +77,12 @@ async def create_conversation(
     body: CreateConversationInput, service: ConversationServiceDep
 ) -> ApiResponse[ConversationOutput]:
     """`docs/api-doc.md` mục 1.2 — tạo hội thoại + lưu `content` + publish turn đầu."""
-    conversation = await service.create_conversation(body)
+    try:
+        conversation = await service.create_conversation(body)
+    except PatientProfileNotFoundError as exc:
+        raise HTTPException(
+            status_code=400, detail="Tài khoản chưa có hồ sơ bệnh nhân."
+        ) from exc
     return ApiResponse(data=conversation)
 
 
@@ -130,7 +137,12 @@ async def send_message(
     (`status="queued"`) và trả `id` để FE lắng nghe SSE theo đó. Turn CHƯA được đẩy cho
     Worker — chỉ chạy khi client mở `GET .../stream` (`docs/async-api-doc.md` mục 1).
     """
-    result = await service.send_message(conversation_id, body)
+    try:
+        result = await service.send_message(conversation_id, body)
+    except AttachmentNotFoundError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"Tệp đính kèm chưa được tải lên: {exc}"
+        ) from exc
     return ApiResponse(data=result)
 
 

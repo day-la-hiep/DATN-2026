@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.message import Message
+from app.models.video_call import VideoCall
 
 
 class MessageRepository:
@@ -20,6 +21,13 @@ class MessageRepository:
         self._db.add(message)
         await self._db.flush()
         return message
+
+    async def video_calls(self, messages: list[Message]) -> dict[str, VideoCall]:
+        """Cuộc gọi video của các tin `video_call` trong 1 truy vấn (theo `video_call_id`)."""
+        ids = [m.video_call_id for m in messages if m.video_call_id]
+        if not ids:
+            return {}
+        return {v.id: v for v in await self._db.scalars(select(VideoCall).where(VideoCall.id.in_(ids)))}
 
     async def get(self, message_id: str) -> Message | None:
         return await self._db.get(Message, message_id)
@@ -36,20 +44,20 @@ class MessageRepository:
     async def find_pending_by_question_id(
         self, conversation_id: str, question_id: str
     ) -> Message | None:
-        """Tìm assistant message đang `status="question"` có `choice.questionId` khớp
-        (dùng cho `POST .../questions/{questionId}/answer`, `docs/api-doc.md` mục 2.2).
+        """Tìm tin AI đang `status="question"` có `choice.question_id` khớp
+        (dùng cho `POST .../questions/{question_id}/answer`, `docs/api-doc.md` mục 2.2).
         `extra.choice` set trực tiếp — không còn lồng trong `reasoning[]` như bản
         Turn/Step/Reasoning cũ, vì agent hiện tại (`agent/graph/chat_graph.py`) chỉ có ĐÚNG 1
         câu hỏi đang chờ tại 1 thời điểm, không phải danh sách Reasoning."""
         stmt = select(Message).where(
             Message.conversation_id == conversation_id,
-            Message.role == "assistant",
+            Message.sender == "ai",
             Message.status == "question",
         )
         result = await self._db.execute(stmt)
         for message in result.scalars().all():
             choice = (message.extra or {}).get("choice") or {}
-            if choice.get("questionId") == question_id:
+            if choice.get("question_id") == question_id:
                 return message
         return None
 
@@ -76,7 +84,7 @@ class MessageRepository:
             message = Message(
                 id=message_id,
                 conversation_id=conversation_id,
-                role="assistant",
+                sender="ai",
                 content=content,
                 status=status,
                 extra=extra,

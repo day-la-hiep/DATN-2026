@@ -35,11 +35,13 @@ async def _conversation_for(conversation_id: str) -> tuple[str, str]:
     conversation đã chọn) -> trả rỗng, `AgentContext.model` rỗng -> middleware
     `select_model` tự fallback `settings.AGENT_MODEL`."""
     async with get_postgres_client().session_factory() as db:
-        conversation = await ConversationRepository(db).get(conversation_id)
-    if conversation is None:
-        return "", ""
+        repo = ConversationRepository(db)
+        conversation = await repo.get(conversation_id)
+        if conversation is None:
+            return "", ""
+        user_id = await repo.owner_user_id(conversation) or ""
     model = settings.AGENT_MODEL_CHOICES.get(conversation.model, "")
-    return conversation.user_id, model
+    return user_id, model
 
 
 async def _build_context(req: TurnRequest) -> AgentContext:
@@ -127,8 +129,8 @@ async def _finish_with_question(
 ) -> None:
     """Turn tạm dừng ở tool `ask_user` — payload `interrupt.value` là `{"question": ...,
     "options": [...]}` do tool tự truyền, `interrupt.id` (LangGraph tự sinh, ổn định cho
-    ĐÚNG lần dừng này) dùng làm `questionId` cho FE (`POST
-    .../questions/{questionId}/answer`, `docs/api-doc.md` mục 2.2)."""
+    ĐÚNG lần dừng này) dùng làm `question_id` cho FE (`POST
+    .../questions/{question_id}/answer`, `docs/api-doc.md` mục 2.2)."""
     raw: Any = interrupt.value
     payload: dict[str, Any] = (
         cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}

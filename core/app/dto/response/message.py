@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from app.common.constant import ConsultationStatus, MessageType
+from app.common.constant import ConsultationStatus, MessageSender, MessageType
 from app.dto.common import FileDto
 
 
@@ -104,11 +104,11 @@ class MessageMetadataDto(BaseModel):
 
 
 class MessageOutput(BaseModel):
-    """`content`, `metadata` khớp base `Message`; còn lại lấy từ cột bảng `messages`."""
+    """`sender`, `content`, `metadata` khớp base `Message`; còn lại lấy từ cột bảng `messages`."""
 
     id: str
     conversation_id: str
-    role: Literal["user", "assistant"]
+    sender: MessageSender
     content: str
     status: Literal["pending", "queued", "streaming", "done", "question"]
     metadata: MessageMetadataDto | None = None

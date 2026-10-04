@@ -7,11 +7,10 @@ File lớn (PDF, `pages.jsonl`, mục lục, chunk, ảnh trang, nhật ký) v�
 `document/<document_id>/`; bảng chỉ giữ dữ liệu nhỏ hay bị sửa đồng thời (Core + thread xử lý) và cần
 truy vấn. JSON dùng JSONB trên Postgres, JSON thường ở SQLite (test)."""
 
-import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -27,10 +26,13 @@ def _now() -> datetime:
 class Document(Base):
     __tablename__ = "documents"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, server_default=text("gen_random_uuid()"))  # DB sinh
     title: Mapped[str] = mapped_column(String(255))
-    pdf_name: Mapped[str] = mapped_column(String(255), default="")
-    pdf_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # `Document.type` (base): "book" | "image" | "video" | "other" — hiện chỉ "book" đi qua pipeline
+    type: Mapped[str] = mapped_column(String(16), default="book", server_default="book")
+    # `Document.source_file` / `ingested_file` (base) — file gốc (`source.pdf`) và kết quả bước ingest (`pages.jsonl`)
+    source_file_id: Mapped[str | None] = mapped_column(ForeignKey("files.id", ondelete="SET NULL"), nullable=True)
+    ingested_file_id: Mapped[str | None] = mapped_column(ForeignKey("files.id", ondelete="SET NULL"), nullable=True)
     pdf_pages: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # cấu hình xử lý của tài liệu (`app/models/document_profile.py::Profile`, dạng JSON; repository đọc/ghi qua Pydantic)
     profile: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)

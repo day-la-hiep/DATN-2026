@@ -22,7 +22,6 @@ from pydantic import ValidationError
 from qdrant_client.models import PointStruct
 
 from app.dto.base.document import Document, NewDocument, ProcessStage
-from app.common.keys import snake_keys
 from app.dto.base.file import File
 from app.dto.common import FileDto
 from app.dto.request.document import DocumentSettings, TocUpdate
@@ -158,39 +157,18 @@ class DocumentService:
                     error="Tiến trình xử lý đã dừng bất thường (xem nhật ký).",
                 )
 
-    def _document(self, document_id: str, detail: dict[str, Any], *, has_pdf: bool, has_pages: bool) -> Document:
-        """`Document` nghiệp vụ của tài liệu — dựng từ `detail` (`DocumentRepository.get_detail`) và các file trong MinIO."""
-        files = self._repo.files_for(document_id)
-        created_at = detail.get("created_at")
-        source_file = (
-            File(
-                file_name=detail.get("pdf_name", ""),
-                storage_key=files.key("source.pdf"),
-                content_type="application/pdf",
-                size=detail.get("pdf_bytes"),
-                created_at=created_at,
-            )
-            if has_pdf
-            else None
-        )
-        ingested_file = (
-            File(
-                file_name="pages.jsonl",
-                storage_key=files.key("pages.jsonl"),
-                content_type="application/x-ndjson",
-                created_at=created_at,
-            )
-            if has_pages
-            else None
-        )
+    def _document(self, document_id: str, detail: dict[str, Any]) -> Document:
+        """`Document` nghiệp vụ của tài liệu — dựng từ `detail` (`DocumentRepository.get_detail`, gồm cả 2 dòng `files`)."""
+        source = detail.get("source_file")
+        ingested = detail.get("ingested_file")
         return Document(
             id=document_id,
             title=detail.get("title", document_id),
-            type="book",
-            created_at=created_at,
-            source_file=source_file,
-            ingested_file=ingested_file,
-            pdf_pages=self.pdf_pages(document_id) if has_pdf else None,
+            type=detail.get("type", "book"),
+            created_at=detail.get("created_at"),
+            source_file=File(**source) if source else None,
+            ingested_file=File(**ingested) if ingested else None,
+            pdf_pages=self.pdf_pages(document_id) if source else None,
         )
 
     def _process_stages(self, document_id: str, detail: dict[str, Any]) -> list[ProcessStage]:
@@ -233,7 +211,7 @@ class DocumentService:
             finished_at=stage.finished_at,
             approved_at=stage.approved_at,
             progress=stage.progress,
-            summary=snake_keys(stage.summary) if stage.summary else None,
+            summary=stage.summary or None,
             error=stage.error,
             options=stage.options,
             blocked_by=stage.blocked_by,
@@ -276,13 +254,7 @@ class DocumentService:
         detail = self._repo.get_detail(document_id)
         if not detail:
             raise NotFoundError(document_id)
-        files = self._repo.files_for(document_id)
-        document = self._document(
-            document_id,
-            detail,
-            has_pdf=files.exists("source.pdf"),
-            has_pages=files.exists("pages.jsonl"),
-        )
+        document = self._document(document_id, detail)
         stages = self._stage_outputs(document_id, detail)
         return DocumentOutput(
             id=document.id,
@@ -312,14 +284,16 @@ class DocumentService:
         tmp_dir = Path(tempfile.mkdtemp(prefix="toc_upload_"))
         try:
             tmp = tmp_dir / "source.pdf"
-            size = await self._save_upload(upload, head, tmp)
+            await self._save_upload(upload, head, tmp)  # chỉ kiểm tra giới hạn; kích thước ghi vào `files` khi tạo
             pages = await asyncio.to_thread(self._count_pages, tmp)
             did = await asyncio.to_thread(
                 self._repo.create,
                 draft.title,
-                {"pdf_name": upload.filename or "", "pdf_bytes": size, "pdf_pages": pages},
+                {"pdf_pages": pages},
                 default_profile("", draft.engine),
                 {"source.pdf": tmp},
+                None,
+                upload.filename or "",
             )
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)

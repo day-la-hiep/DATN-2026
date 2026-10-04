@@ -180,6 +180,8 @@ class DocumentIngestPipelineService:
             error=None,
             progress={"done": 1, "total": 1, "message": "xong"},
         )
+        if stage_id == "ingest":  # kết quả bước ingest là `Document.ingested_file` -> ghi thành dòng `files`
+            self._repo.set_ingested_file(document_id, "pages.jsonl", "application/x-ndjson")
         ctx.log(f"xong: {summary}")
         return summary
 
