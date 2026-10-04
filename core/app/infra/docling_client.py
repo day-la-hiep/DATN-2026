@@ -1,15 +1,28 @@
 """Docling dùng chung: class `DoclingClient` = converter (layout + OCR, cache theo cấu hình) + capability chuyển PDF thành các khối chữ theo
 thứ tự đọc. Dùng khi lớp text ẩn của PDF hỏng: Docling OCR lại từ ảnh trang. Import Docling/torch rất chậm nên nằm trong hàm. Chạy ĐỒNG BỘ.
 Instance do `app/api/deps.py` tạo."""
+import io
 from pathlib import Path
 from typing import Any
 
-# nhãn Docling -> nhãn của pipeline (nhãn khác, vd ảnh, bị bỏ)
+# nhãn Docling -> nhãn của pipeline (nhãn khác bị bỏ). `picture` thành "figure": ảnh được lưu riêng, không vào chữ thân
 _LABELS = {
     "section_header": "heading", "title": "heading", "text": "text", "paragraph": "text", "list_item": "list",
     "caption": "caption", "footnote": "text", "formula": "text", "code": "text", "table": "table",
-    "document_index": "toc", "page_header": "page_header", "page_footer": "page_footer",
+    "document_index": "toc", "page_header": "page_header", "page_footer": "page_footer", "picture": "figure",
 }
+
+
+def _figure_block(doc: Any, item: Any) -> list[dict[str, Any]]:
+    """Một hình minh hoạ -> khối "figure". Hình Docling không xuất được ảnh (None) thì bỏ, không có gì để lưu."""
+    img = item.get_image(doc)
+    if img is None:
+        return []
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    box = item.prov[0].bbox
+    return [{"page": item.prov[0].page_no, "label": "figure", "text": " ".join((item.caption_text(doc) or "").split()),
+             "bbox": [box.l, box.t, box.r, box.b], "image_png": buf.getvalue()}]
 
 
 class DoclingClient:
@@ -30,12 +43,14 @@ class DoclingClient:
                 ocr_opts.force_full_page_ocr = force_ocr  # không tin lớp text ẩn của PDF
                 opts.ocr_options = ocr_opts
             opts.do_table_structure = tables
+            opts.generate_picture_images = True  # cần để lấy được ảnh của hình minh hoạ
             self._converters[key] = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)})
         return self._converters[key]
 
     def convert_pages(self, pdf: Path, first: int, last: int, *, ocr: bool = True, force_ocr: bool = True,
                           tables: bool = True) -> list[dict[str, Any]]:
-        """Chuyển trang [first, last] (đánh số từ 1). Mỗi khối: {page, label, text}; bảng/mục lục là Markdown."""
+        """Chuyển trang [first, last] (đánh số từ 1). Mỗi khối: {page, label, text}; bảng/mục lục là Markdown.
+        Ảnh (label "figure") thêm `bbox` và `image_png` (bytes PNG) — bước ingest ghi bytes ra MinIO trước khi lưu part."""
         doc = self.converter(ocr, force_ocr, tables).convert(str(pdf), page_range=(first, last)).document
         blocks: list[dict[str, Any]] = []
         for item, _lvl in doc.iterate_items():
@@ -43,6 +58,9 @@ class DoclingClient:
                 continue
             label = _LABELS.get(str(item.label).split(".")[-1].lower())
             if label is None:
+                continue
+            if label == "figure":
+                blocks.extend(_figure_block(doc, item))
                 continue
             if label in {"table", "toc"}:
                 try:

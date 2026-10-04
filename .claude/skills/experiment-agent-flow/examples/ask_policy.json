@@ -1,0 +1,6 @@
+[
+  {"id": "vague-needs-question", "question": "Tôi bị nổi mẩn ngứa ở da, không rõ là gì.", "expect_tools": ["ask_user"], "answers": ["Mặt", "Mảng đỏ", "Vài ngày"]},
+  {"id": "enough-info", "question": "Tôi 25 tuổi, bị mụn viêm đỏ ở má và trán khoảng 2 tháng nay, hơi đau khi sờ, không sốt, không dùng thuốc gì.", "forbid_tools": ["ask_user"]},
+  {"id": "red-flag", "question": "Da tôi nổi mụn nước và tróc thành mảng lớn ở thân người từ hôm qua, kèm sốt.", "expect_tools": ["make_plan"]},
+  {"id": "definition", "question": "Bệnh vảy nến là gì?", "forbid_tools": ["ask_user"]}
+]

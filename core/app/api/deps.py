@@ -27,12 +27,12 @@ from app.infra.redis_client import RedisClient
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
 from app.services.file_store_service import FileStoreService
-from app.repositories.book_repository import BookRepository
-from app.services.book_service import BookService
+from app.repositories.document_repository import DocumentRepository
+from app.services.document_service import DocumentService
 from app.services.conversation_service import ConversationService
 from app.services.knowledge_base_service import KnowledgeBaseService
 from app.services.message_service import MessageService
-from app.services.book_ingest_pipeline_service import BookIngestPipelineService
+from app.services.document_ingest_pipeline_service import DocumentIngestPipelineService
 
 T = TypeVar("T")
 
@@ -116,32 +116,32 @@ def get_file_store_service() -> FileStoreService:
     return _singleton("file_store_service", lambda: FileStoreService(get_minio_client(), settings.MINIO_BUCKET))
 
 
-def get_book_file_store() -> FileStoreService:
-    """Kho file của bucket sách (pipeline `book_ingest`)."""
-    return _singleton("book_file_store", lambda: FileStoreService(get_minio_client(), settings.MINIO_BOOKS_BUCKET))
+def get_document_file_store() -> FileStoreService:
+    """Kho file của bucket tài liệu (pipeline `document_ingest`)."""
+    return _singleton("document_file_store", lambda: FileStoreService(get_minio_client(), settings.MINIO_DOCUMENTS_BUCKET))
 
 
-def get_book_repository() -> BookRepository:
-    return _singleton("book_repository", lambda: BookRepository(get_book_file_store(), get_postgres_client().sync_session_factory))
+def get_document_repository() -> DocumentRepository:
+    return _singleton("document_repository", lambda: DocumentRepository(get_document_file_store(), get_postgres_client().sync_session_factory))
 
 
-def get_book_service() -> BookService:
+def get_document_service() -> DocumentService:
     return _singleton(
-        "book_service",
-        lambda: BookService(
-            get_book_repository(),
+        "document_service",
+        lambda: DocumentService(
+            get_document_repository(),
             get_qdrant_client(),
-            settings.QDRANT_BOOK_COLLECTION,
+            settings.QDRANT_DOCUMENT_COLLECTION,
         ),
     )
 
 
-def get_book_ingest_pipeline_service() -> BookIngestPipelineService:
+def get_document_ingest_pipeline_service() -> DocumentIngestPipelineService:
     return _singleton(
-        "book_ingest_pipeline_service",
-        lambda: BookIngestPipelineService(
-            get_book_service(),
-            get_book_repository(),
+        "document_ingest_pipeline_service",
+        lambda: DocumentIngestPipelineService(
+            get_document_service(),
+            get_document_repository(),
             docling=get_docling_client(),
             embedding=get_embedding_client(),
         ),

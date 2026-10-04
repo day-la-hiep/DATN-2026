@@ -10,7 +10,7 @@ from agent.handler.response_consumer import start_consuming
 from app.api.conversation_api import router as conversation_router
 from app.api.deps import close_clients, get_file_store_service, get_postgres_client, get_rabbitmq_client
 from app.api.health import router as health_router
-from app.api.toc_pipeline_api import router as toc_pipeline_router
+from app.api.document_api import router as document_router
 from app.api.upload_api import router as upload_router
 from app.config.auth import require_app_token
 from app.config.settings import log_startup_infra, settings
@@ -80,7 +80,7 @@ app.include_router(
     dependencies=[Depends(require_app_token)],
 )
 app.include_router(
-    toc_pipeline_router,
+    document_router,
     prefix=settings.API_V1_PREFIX,
     dependencies=[Depends(require_app_token)],
 )

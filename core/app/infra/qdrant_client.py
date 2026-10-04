@@ -1,6 +1,6 @@
 """Qdrant dùng chung: class `QdrantVectorClient` = kết nối (async cho Core/Agent, đồng bộ cho pipeline chạy ở thread nền) + capability generic
 (đảm bảo/xoá collection, upsert, search, retrieve, scroll, lọc theo payload). Tên collection và payload cụ thể của từng loại dữ liệu
-nằm ở service (`KnowledgeBaseService`, `BookService`). Instance do `app/api/deps.py` tạo và đóng."""
+nằm ở service (`KnowledgeBaseService`, `DocumentService`). Instance do `app/api/deps.py` tạo và đóng."""
 import threading
 from typing import Any
 

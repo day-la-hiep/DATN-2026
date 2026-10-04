@@ -23,6 +23,7 @@ Chạy:
   cd core && python data-ingest/01_normalize/scripts/load_dermo.py [--reset]
 `--reset`: xoá sạch `:DermoTerm` (và mọi cạnh) trước khi nạp lại.
 """
+
 import argparse
 import json
 import re
@@ -35,15 +36,21 @@ from neo4j import GraphDatabase
 CORE_DIR = Path(__file__).resolve().parents[3]  # core/ — để import `app.*`
 sys.path.insert(0, str(CORE_DIR))
 
-from app.core.config import settings  # noqa: E402
+from app.config.settings import settings  # noqa: E402
 
-KG_JSON = Path(__file__).resolve().parents[1] / "output" / "kg" / "dermo" / "dermo_kg.json"
+KG_JSON = (
+    Path(__file__).resolve().parents[1]
+    / "output"
+    / "kg"
+    / "dermo"
+    / "dermo_kg.json"
+)
 
 BATCH_SIZE = 1000
 
 
 def to_rel_type(name: str) -> str:
-    """"has_symptom" -> "HAS_SYMPTOM"."""
+    """ "has_symptom" -> "HAS_SYMPTOM"."""
     return re.sub(r"[^a-zA-Z0-9]+", "_", name).strip("_").upper()
 
 
@@ -114,7 +121,9 @@ def load_relationships(driver, terms: list[dict]) -> None:
     for t in terms:
         for rel in t["relationships"]:
             rel_type = to_rel_type(rel["type"])
-            by_type.setdefault(rel_type, []).append({"id": t["id"], "target_id": rel["target"]})
+            by_type.setdefault(rel_type, []).append(
+                {"id": t["id"], "target_id": rel["target"]}
+            )
 
     with driver.session() as session:
         for rel_type, rows in by_type.items():
@@ -135,7 +144,9 @@ def load_relationships(driver, terms: list[dict]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--reset", action="store_true", help="Xoá dữ liệu cũ trước khi nạp")
+    parser.add_argument(
+        "--reset", action="store_true", help="Xoá dữ liệu cũ trước khi nạp"
+    )
     args = parser.parse_args()
 
     if not KG_JSON.exists():

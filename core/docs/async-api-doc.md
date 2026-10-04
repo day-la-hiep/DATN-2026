@@ -35,7 +35,7 @@ trong `app/agent/worker.py`.
 
 - `Content-Type: text/event-stream`.
 - Core: `psubscribe`/`subscribe` kênh Redis `agent:events:{conversationId}`
-  (`app/core/constants.py:AGENT_EVENTS_CHANNEL`), forward **nguyên văn** từng message nhận
+  (`app/config/constants.py:AGENT_EVENTS_CHANNEL`), forward **nguyên văn** từng message nhận
   được ra client dạng `data: <json>\n\n` — không transform, không buffer chờ đủ turn.
 - Đóng connection khi nhận sentinel `STREAM_DONE_SENTINEL` (`[DONE]`) trên kênh Redis, tương
   ứng lúc Agent Worker publish xong `message.done` **hoặc** turn tạm dừng chờ trả lời (mục 3)

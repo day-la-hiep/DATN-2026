@@ -321,31 +321,26 @@ def _to_point(chunk: dict[str, Any], vector: list[float]):
 async def ingest_to_qdrant(chunks: list[dict], reset: bool) -> None:
     # Import muộn để --dry-run chạy được khi chưa cài/không có Qdrant.
     from agent.tools.knowledge_base_search import KB_EMBEDDING_DIM, get_kb_embeddings
-    from app.infra.qdrant_client import (
-        delete_kb_collection,
-        ensure_kb_collection,
-        existing_kb_point_ids,
-        upsert_kb_chunks,
-    )
+    from app.api.deps import get_knowledge_base_service
 
     if reset:
         print("Xoá collection Qdrant cũ...")
-        await delete_kb_collection()
+        await get_knowledge_base_service().delete_kb_collection()
 
-    await ensure_kb_collection(dim=KB_EMBEDDING_DIM)
+    await get_knowledge_base_service().ensure_kb_collection(dim=KB_EMBEDDING_DIM)
     embeddings = get_kb_embeddings()
 
     done = 0
     for start in range(0, len(chunks), _BATCH_SIZE):
         batch = chunks[start : start + _BATCH_SIZE]
         ids = [_point_id(c) for c in batch]
-        already = await existing_kb_point_ids(ids)
+        already = await get_knowledge_base_service().existing_kb_point_ids(ids)
         pending = [c for c, pid in zip(batch, ids) if pid not in already]
         done += len(batch) - len(pending)
 
         if pending:
             vectors = await embeddings.aembed_documents([c["text"] for c in pending])
-            await upsert_kb_chunks([_to_point(c, v) for c, v in zip(pending, vectors)])
+            await get_knowledge_base_service().upsert_kb_chunks([_to_point(c, v) for c, v in zip(pending, vectors)])
             done += len(pending)
 
         print(f"  Đã ingest {done}/{len(chunks)} chunk...")

@@ -67,9 +67,9 @@ class Settings(BaseSettings):
     # Phenotype PrimeKG (tên embed) — `describe_morphology` chuẩn hoá mô tả tự do sang nút
     # phenotype, ingest qua data-ingest/01_normalize/scripts/load_phenotypes.py.
     QDRANT_PHENOTYPE_COLLECTION: str = "derma_phenotypes"
-    # Chunk sách giáo khoa (pipeline/book_ingest, bước "Lưu vào kho tri thức"): mỗi point = 1 chunk đã gắn phần/chương/mục/trang,
-    # payload có `book_id` để xoá/lọc theo sách. Cùng embedding local như KB guideline (384 chiều, cosine).
-    QDRANT_BOOK_COLLECTION: str = "derma_book_chunks"
+    # Chunk tài liệu (pipeline/document_ingest, bước "Lưu vào kho tri thức"): mỗi point = 1 chunk đã gắn phần/chương/mục/trang,
+    # payload có `document_id` để xoá/lọc theo tài liệu. Cùng embedding local như KB guideline (384 chiều, cosine).
+    QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks"
 
     # ----- Neo4j (knowledge graph da liễu — PrimeKG, xem
     # app/agent/knowledge_graph.py + data/PrimeKG/load_to_neo4j.py) -----
@@ -185,9 +185,9 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str = "minio"
     MINIO_SECRET_KEY: str = "minio123"
     MINIO_BUCKET: str = "derma-attachments"
-    # Bucket riêng cho sách giáo khoa của pipeline/book_ingest: PDF, ảnh trang, mọi JSON/JSONL kết quả, trạng thái, nhật ký
-    # (prefix `toc/<book_id>/`). Toàn bộ do backend đọc/ghi — FE không truy cập MinIO trực tiếp.
-    MINIO_BOOKS_BUCKET: str = "derma-books"
+    # Bucket riêng cho tài liệu của pipeline/document_ingest: PDF, ảnh trang, mọi JSON/JSONL kết quả, trạng thái, nhật ký
+    # (prefix `document/<document_id>/`). Toàn bộ do backend đọc/ghi — FE không truy cập MinIO trực tiếp.
+    MINIO_DOCUMENTS_BUCKET: str = "derma-documents"
     MINIO_SECURE: bool = False
 
     # ----- Skin CNN classifier (app/agent/tools/skin_image_classifier.py) -----
