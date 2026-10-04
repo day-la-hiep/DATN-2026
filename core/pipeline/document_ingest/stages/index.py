@@ -12,15 +12,15 @@ BATCH = 64
 
 
 def run(ctx: StageContext) -> dict:
-    store, vectors = ctx.store, ctx.require_vectors()
-    chunks = store.files.read_jsonl("chunks.jsonl")
+    files, vectors = ctx.files, ctx.require_vectors()
+    chunks = files.read_jsonl("chunks.jsonl")
     if not chunks:
         raise StageError("Chưa có đoạn nội dung nào — hãy làm bước Chia đoạn trước.")
-    meta = store.meta()
+    document_id = ctx.document_id
     extra: dict[str, Any] = {
-        "book_title": meta.get("title", store.book_id),
-        "source_bucket": store.files.bucket,
-        "source_pdf": store.files.key("source.pdf"),
+        "document_title": ctx.meta().get("title", document_id),
+        "source_bucket": files.bucket,
+        "source_pdf": files.key("source.pdf"),
     }
     ctx.progress(0, len(chunks), "chuẩn bị kho tri thức")
     embeddings: list[list[float]] = []
@@ -31,14 +31,14 @@ def run(ctx: StageContext) -> dict:
         embeddings += vecs
         ctx.progress(i + len(part), len(chunks) * 2, "tạo vector cho đoạn nội dung")
     vectors.ensure_collection(dim)
-    vectors.delete_chunks(store.book_id)  # bỏ các đoạn cũ của sách (đã đổi hoặc không còn)
+    vectors.delete_chunks(document_id)  # bỏ các đoạn cũ của tài liệu (đã đổi hoặc không còn)
     for i in range(0, len(chunks), BATCH):
-        vectors.upsert_chunks(store.book_id, chunks[i : i + BATCH], embeddings[i : i + BATCH], extra)
+        vectors.upsert_chunks(document_id, chunks[i : i + BATCH], embeddings[i : i + BATCH], extra)
         ctx.progress(len(chunks) + min(i + BATCH, len(chunks)), len(chunks) * 2, "lưu vào Qdrant")
-    stored = vectors.count_chunks(store.book_id)
+    stored = vectors.count_chunks(document_id)
     if stored != len(chunks):
         raise StageError(f"Số đoạn đã lưu ({stored}) khác số đoạn cần lưu ({len(chunks)}).")
     info = {"collection": vectors.collection, "points": stored, "embedding_model": model, "dimension": dim,
             "indexed_at": datetime.now(UTC).isoformat(timespec="seconds")}
-    store.files.write_json("index.json", info)
-    return {"points": stored, "collection": info["collection"], "embedding_model": model, "dimension": dim}
+    files.write_json("index.json", info)
+    return {"points": stored, "collection": info["collection"], "embeddingModel": model, "dimension": dim}

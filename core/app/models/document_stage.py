@@ -1,9 +1,9 @@
-"""Các bước của pipeline `book_ingest`: thứ tự, phụ thuộc, đầu ra. Hằng nghiệp vụ, dùng chung cho repository, runner và API."""
+"""Các bước của pipeline `document_ingest`: thứ tự, phụ thuộc, đầu ra. Hằng nghiệp vụ, dùng chung cho repository, runner và API."""
 from typing import Any
 
 # Thứ tự bước + phụ thuộc. Một bước chỉ chạy được khi mọi bước phụ thuộc đã `approved`.
 # `toc` không phụ thuộc `ingest`: đọc mục lục chỉ cần vài chục trang (OCR riêng các trang đó), nên người dùng thử được
-# ngay mà không đợi OCR cả sách. Độ lệch + neo cần chữ thân sách nên được tính lại khi có `pages.jsonl` (xem mapping.py).
+# ngay mà không đợi OCR cả tài liệu. Độ lệch + neo cần chữ thân tài liệu nên được tính lại khi có `pages.jsonl` (xem mapping.py).
 STAGES: list[dict[str, Any]] = [
     {"id": "ingest", "title": "Đọc nội dung", "deps": [], "llm": False, "outputs": ["pages.jsonl"]},
     {"id": "toc", "title": "Mục lục", "deps": [], "llm": True, "outputs": ["toc.auto.json", "toc.json"]},

@@ -10,6 +10,7 @@ khớp chính xác 1 DermO term. Payload `primekg_id` khớp thuộc tính `id` 
 Chạy:
   cd core && uv run python data-ingest/01_normalize/scripts/load_phenotypes.py [--reset]
 """
+
 import argparse
 import asyncio
 import sys
@@ -23,12 +24,8 @@ CORE_DIR = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(CORE_DIR))
 
 from agent.embeddings import EMBEDDING_DIM, LocalEmbeddings  # noqa: E402
-from app.core.config import settings  # noqa: E402
-from app.infra.qdrant_client import (  # noqa: E402
-    delete_phenotype_collection,
-    ensure_phenotype_collection,
-    upsert_phenotypes,
-)
+from app.config.settings import settings  # noqa: E402
+from app.api.deps import get_knowledge_base_service
 
 _QUERY = """
 MATCH (p:Entity {type: 'effect/phenotype'})
@@ -57,8 +54,8 @@ async def main(reset: bool) -> None:
     phenotypes = _fetch()
     print(f"Phenotype nối bệnh: {len(phenotypes)}")
     if reset:
-        await delete_phenotype_collection()
-    await ensure_phenotype_collection(EMBEDDING_DIM)
+        await get_knowledge_base_service().delete_phenotype_collection()
+    await get_knowledge_base_service().ensure_phenotype_collection(EMBEDDING_DIM)
     texts = [
         p["name"] + (". " + "; ".join(p["synonyms"]) if p["synonyms"] else "")
         for p in phenotypes
@@ -66,15 +63,23 @@ async def main(reset: bool) -> None:
     vectors = LocalEmbeddings().embed_documents(texts)
     points = [
         PointStruct(
-            id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"primekg-phenotype:{p['id']}")),
+            id=str(
+                uuid.uuid5(uuid.NAMESPACE_URL, f"primekg-phenotype:{p['id']}")
+            ),
             vector=v,
-            payload={"primekg_id": p["id"], "name": p["name"], "synonyms": p["synonyms"]},
+            payload={
+                "primekg_id": p["id"],
+                "name": p["name"],
+                "synonyms": p["synonyms"],
+            },
         )
         for p, v in zip(phenotypes, vectors)
     ]
     for i in range(0, len(points), 200):
-        await upsert_phenotypes(points[i : i + 200])
-    print(f"Đã nạp {len(points)} phenotype vào '{settings.QDRANT_PHENOTYPE_COLLECTION}'.")
+        await get_knowledge_base_service().upsert_phenotypes(points[i : i + 200])
+    print(
+        f"Đã nạp {len(points)} phenotype vào '{settings.QDRANT_PHENOTYPE_COLLECTION}'."
+    )
 
 
 if __name__ == "__main__":

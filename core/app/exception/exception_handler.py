@@ -1,10 +1,10 @@
 """Đăng ký handler lỗi cho FastAPI. Body giữ dạng `{"detail": "..."}` như `HTTPException` để FE
-đọc một kiểu duy nhất (`fe/features/toc-pipeline/api.ts`)."""
+đọc một kiểu duy nhất (`fe/features/document-pipeline/api.ts`)."""
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.exception.errors import AppError, NotFoundError
-from pipeline.book_ingest.profile import ProfileError
+from pipeline.document_ingest.profile import ProfileError
 
 
 def _json(status_code: int, detail: str) -> JSONResponse:

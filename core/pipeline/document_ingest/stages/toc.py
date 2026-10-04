@@ -8,7 +8,7 @@
    người duyệt sửa hay có dữ liệu trang mới.
 
 Ra: `toc.auto.json` (kết quả máy, giữ nguyên) và `toc.json` (đã áp override + độ lệch + neo).
-Override của người duyệt (bảng `book_overrides`, stage `toc`):
+Override của người duyệt (bảng `document_overrides`, stage `toc`):
   { "<id>": {"title": ..., "level": ..., "printed_page": ...},
     "_deleted": ["<id>", ...],
     "_added": [{"id": "x1", "title": ..., "level": ..., "printed_page": ..., "after": "<id>"|null}],
@@ -49,7 +49,7 @@ Trả về DUY NHẤT JSON hợp lệ: {"entries": [{"level": 1, "title": "...",
 
 # ---------------------------------------------------------------- đọc chữ các trang
 def _total_pages(ctx: StageContext) -> int:
-    rows = ctx.store.files.read_jsonl("pages.jsonl")
+    rows = ctx.files.read_jsonl("pages.jsonl")
     if rows:
         return max(r["page"] for r in rows)
     try:
@@ -72,7 +72,7 @@ def _pdftotext_pages(ctx: StageContext, first: int, last: int) -> dict[int, str]
 def _digests(ctx: StageContext) -> list[dict[str, Any]]:
     total = _total_pages(ctx)
     wanted = sorted(set(range(1, min(total, DIGEST_HEAD_PAGES) + 1)) | set(range(max(1, total - DIGEST_TAIL_PAGES + 1), total + 1)))
-    rows = {r["page"]: r["text"] for r in ctx.store.files.read_jsonl("pages.jsonl")}
+    rows = {r["page"]: r["text"] for r in ctx.files.read_jsonl("pages.jsonl")}
     if not rows:
         rows = _pdftotext_pages(ctx, 1, total)  # chưa ingest: lớp text ẩn của PDF (có thể kém) đủ để nhận ra trang mục lục
     return [{"page": n, "chars": len(rows.get(n, "")), "head": " ".join(rows.get(n, "").split())[:220]} for n in wanted]
@@ -81,7 +81,7 @@ def _digests(ctx: StageContext) -> list[dict[str, Any]]:
 def page_texts(ctx: StageContext, pages: list[int]) -> dict[int, str]:
     """Chữ các trang mục lục: dùng pages.jsonl nếu đã ingest; chưa thì OCR riêng các trang này bằng Docling (engine docling)
     hoặc lớp text của PDF (engine pdftotext)."""
-    have = {r["page"]: r["text"] for r in ctx.store.files.read_jsonl("pages.jsonl")}
+    have = {r["page"]: r["text"] for r in ctx.files.read_jsonl("pages.jsonl")}
     if all(p in have for p in pages):
         return {p: have[p] for p in pages}
     if ctx.profile.extraction.engine == "docling":
@@ -235,20 +235,21 @@ def run(ctx: StageContext) -> dict:
     flagged = flag_suspects(entries)
     if flagged:
         warnings.append(f"{flagged} mục có số trang không tăng dần theo thứ tự mục lục (thường do đọc sai chữ số) — vui lòng kiểm tra các mục được tô vàng.")
-    ctx.store.files.write_json("toc.auto.json", {"toc_pages": pages, "pages_source": source, "entries": entries,
+    ctx.files.write_json("toc.auto.json", {"toc_pages": pages, "pages_source": source, "entries": entries,
                                            "meta": {"warnings": warnings, "reason": reason}})
     return reapply(ctx)
 
 
 def reapply(ctx: StageContext) -> dict:
     """Áp override + tính lại độ lệch/neo (không LLM). Gọi sau mỗi lần người duyệt sửa."""
-    has_text = ctx.store.files.exists("source.pdf") or ctx.store.files.exists("pages.jsonl")
+    has_text = ctx.files.exists("source.pdf") or ctx.files.exists("pages.jsonl")
     refresh_toc(ctx, _total_pages(ctx) if has_text else 0)
-    doc = ctx.store.files.read_json("toc.json")
+    doc = ctx.files.read_json("toc.json")
     ents = doc["entries"]
     by_level = Counter(e["level"] for e in ents)
+    # khoá camelCase ngay từ đây — summary đi thẳng ra API/FE, không qua bước đổi tên nào nữa
     summary: dict[str, Any] = {
-        "toc_pages": f"{doc['toc_pages'][0]}-{doc['toc_pages'][-1]}", "pages_source": doc["pages_source"], "entries": len(ents),
+        "tocPages": f"{doc['toc_pages'][0]}-{doc['toc_pages'][-1]}", "pagesSource": doc["pages_source"], "entries": len(ents),
         "parts": by_level.get(0, 0), "sections": by_level.get(1, 0), "topics": by_level.get(2, 0) + by_level.get(3, 0),
         "suspect": sum(1 for e in ents if e.get("suspect")), "offset": doc["offset"], "anchored": doc["anchored"],
     }

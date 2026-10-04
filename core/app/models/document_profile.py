@@ -1,4 +1,4 @@
-"""Cấu hình của một cuốn sách giáo khoa (cột `books.profile`), dùng bởi pipeline `book_ingest`: cách đọc PDF, dùng AI hay không,
+"""Cấu hình của một tài liệu (cột `documents.profile`), dùng bởi pipeline `document_ingest`: cách đọc PDF, dùng AI hay không,
 cách chia đoạn. Schema Pydantic (không phải bảng ORM) nên KHÔNG import vào `app/models/__init__.py` (nơi đó chỉ để `Base.metadata`
 nhận bảng cho Alembic)."""
 from typing import Literal
@@ -37,8 +37,7 @@ class ChunkingConfig(_Model):
 
 
 class Profile(_Model):
-    book_id: str
-    title: str = ""
+    document_id: str
     language: str = "en"
     extraction: ExtractionConfig = ExtractionConfig()
     llm: LLMConfig = LLMConfig()

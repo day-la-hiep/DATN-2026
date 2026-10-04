@@ -10,23 +10,23 @@ from typing import TYPE_CHECKING, Any, Protocol
 from app.infra.docling_client import DoclingClient
 from app.infra.embedding_client import EmbeddingClient
 from app.infra.llm_client import LLMClient
-from app.models.book_profile import Profile
+from app.models.document_profile import Profile
 
 from .. import mapping
 
 if TYPE_CHECKING:  # chỉ để khai báo kiểu; bước không gọi gì của app ngoài các client được truyền vào
-    from app.repositories.book_repository import BookRecord
+    from app.services.file_store_service import FileStoreService
 
 
 class ChunkIndex(Protocol):
-    """Kho vector chunk của sách (cài đặt: `BookService`)."""
+    """Kho vector chunk của tài liệu (cài đặt: `DocumentService`)."""
 
     collection: str
 
     def ensure_collection(self, dim: int) -> None: ...
-    def delete_chunks(self, book_id: str) -> None: ...
-    def count_chunks(self, book_id: str) -> int: ...
-    def upsert_chunks(self, book_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any]) -> None: ...
+    def delete_chunks(self, document_id: str) -> None: ...
+    def count_chunks(self, document_id: str) -> int: ...
+    def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any]) -> None: ...
 
 
 class StageCancelled(Exception):
@@ -39,9 +39,18 @@ class StageError(RuntimeError):
 
 @dataclass
 class StageContext:
-    store: "BookRecord"
+    """Mọi thứ một bước cần, scope sẵn theo `document_id` — KHÔNG phải repository object, chỉ là dữ liệu + vài
+    callable đã bind `document_id`/`stage_id` (do `DocumentIngestPipelineService.make_ctx` dựng từ
+    `DocumentRepository` stateless). Stage code không gọi gì của `app.repositories` ngoài qua các field này."""
+
+    document_id: str
+    files: "FileStoreService"  # đã scope về document/<document_id>/ (DocumentRepository.files_for)
     profile: Profile
     stage_id: str
+    meta: Callable[[], dict[str, Any]]  # DocumentRepository.meta(document_id)
+    overrides: Callable[[str], dict[str, Any]]  # DocumentOverrideRepository.get(document_id, <stage_id của override cần đọc>)
+    _append_log: Callable[[str, str], None]  # DocumentRepository.append_log(document_id, stage_id, message)
+    _update_stage: Callable[..., dict[str, Any]]  # DocumentRepository.update_stage(document_id, stage_id, **fields)
     llm: LLMClient | None = None
     # Các client do runner truyền vào (instance do `app/api/deps.py` quản lý); bước nào cần mới dùng.
     docling: DoclingClient | None = None
@@ -56,21 +65,21 @@ class StageContext:
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
     def log(self, message: str) -> None:
-        self.store.append_log(self.stage_id, message)
+        self._append_log(self.stage_id, message)
 
     def check_cancel(self) -> None:
         if self.cancel.is_set():
             raise StageCancelled()
 
     def progress(self, done: int, total: int, message: str = "") -> None:
-        """Ghi tiến độ vào `book_stages` (giới hạn ~2 lần/giây để khỏi ghi DB dồn dập)."""
+        """Ghi tiến độ vào `document_stages` (giới hạn ~2 lần/giây để khỏi ghi DB dồn dập)."""
         self.check_cancel()
         with self._lock:
             now = time.monotonic()
             if done < total and now - self._last_write < 0.5:
                 return
             self._last_write = now
-        self.store.update_stage(self.stage_id, progress={"done": done, "total": total, "message": message})
+        self._update_stage(self.stage_id, progress={"done": done, "total": total, "message": message})
 
     def require_llm(self) -> LLMClient:
         if self.llm is None:
@@ -89,7 +98,7 @@ class StageContext:
 
     def local_pdf(self) -> Path:
         if self.pdf is None:
-            raise StageError("Không tìm thấy file PDF của sách.")
+            raise StageError("Không tìm thấy file PDF của tài liệu.")
         return self.pdf()
 
     def require_vectors(self) -> ChunkIndex:
@@ -100,8 +109,7 @@ class StageContext:
 
 def refresh_toc(ctx: StageContext, total_pages: int) -> None:
     """Đọc kết quả AI + override + chữ các trang, tính lại cây/độ lệch/neo và ghi `toc.json` (dùng bởi bước Mục lục và Chia đoạn)."""
-    store = ctx.store
-    auto = store.files.read_json("toc.auto.json", None)
+    auto = ctx.files.read_json("toc.auto.json", None)
     if auto is None:
         raise StageError("Chưa đọc mục lục — hãy làm bước Mục lục trước.")
-    store.files.write_json("toc.json", mapping.build_toc(auto, store.overrides("toc"), store.files.read_jsonl("pages.jsonl"), total_pages))
+    ctx.files.write_json("toc.json", mapping.build_toc(auto, ctx.overrides("toc"), ctx.files.read_jsonl("pages.jsonl"), total_pages))

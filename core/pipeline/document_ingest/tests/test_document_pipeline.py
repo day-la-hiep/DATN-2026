@@ -1,7 +1,7 @@
 """Test luồng mục lục: LLM đọc mục lục -> độ lệch + neo (luật) -> chunk theo khung mục lục.
 
 LLM giả + sách tổng hợp (không cần PDF/mạng). Chạy từ `core/`:
-    python -m unittest pipeline.book_ingest.tests.test_toc_pipeline -v"""
+    python -m unittest pipeline.document_ingest.tests.test_document_pipeline -v"""
 
 import hashlib
 import json
@@ -14,24 +14,24 @@ from pathlib import Path
 from qdrant_client import QdrantClient
 
 from app.infra.qdrant_client import QdrantVectorClient
-from app.services.book_service import BookService
+from app.services.document_service import DocumentService
 from app.infra.llm_client import LLMClient, LLMError
 from app.exception.errors import PipelineError
-from app.services.book_service import temp_root
-from app.repositories.book_repository import BookRepository
+from app.services.document_service import temp_root
+from app.repositories.document_repository import DocumentRepository
 from app.services.file_store_service import FileStoreService
-from app.services.book_ingest_pipeline_service import BookIngestPipelineService
+from app.services.document_ingest_pipeline_service import DocumentIngestPipelineService
 
-from pipeline.book_ingest.profile import default_profile
-from pipeline.book_ingest.stages import StageError
-from pipeline.book_ingest.stages import toc as T
-from pipeline.book_ingest.stages.chunks import build_chunks, est_tokens, toc_nodes
-from pipeline.book_ingest.tests.memory_infra import MemoryMinio
+from pipeline.document_ingest.profile import default_profile
+from pipeline.document_ingest.stages import StageError
+from pipeline.document_ingest.stages import toc as T
+from pipeline.document_ingest.stages.chunks import build_chunks, est_tokens, toc_nodes
+from pipeline.document_ingest.tests.memory_infra import MemoryMinio
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.models.base import Base as BaseModel
-from app.models.book import Book, BookOverride, BookStage
+from app.models.document import Document, DocumentOverride, DocumentStage
 
 TOC_ROWS = [
     "| PART I GENERAL DERMATOLOGY | |",
@@ -139,17 +139,17 @@ class Base(unittest.TestCase):
         self.minio = MemoryMinio()
         self.qdrant = QdrantVectorClient("http://unused", sync_client=QdrantClient(":memory:"))
         # Postgres thay bằng SQLite file tạm (chỉ các bảng sách; thread nền của test API cũng dùng được)
-        engine = create_engine(f"sqlite:///{root / 'books.db'}")
-        BaseModel.metadata.create_all(engine, tables=[Book.__table__, BookStage.__table__, BookOverride.__table__])  # type: ignore[list-item]
+        engine = create_engine(f"sqlite:///{root / 'documents.db'}")
+        BaseModel.metadata.create_all(engine, tables=[Document.__table__, DocumentStage.__table__, DocumentOverride.__table__])  # type: ignore[list-item]
         self.addCleanup(engine.dispose)
-        self.repo = BookRepository(FileStoreService(self.minio, "books-test"), sessionmaker(bind=engine, expire_on_commit=False))  # type: ignore[arg-type]
-        self.vectors = BookService(self.repo, self.qdrant, "book_chunks_test")  # type: ignore[arg-type]
-        self.runner = BookIngestPipelineService(self.vectors, self.repo, embedding=FakeEmbedding())  # type: ignore[arg-type]
+        self.repo = DocumentRepository(FileStoreService(self.minio, "books-test"), sessionmaker(bind=engine, expire_on_commit=False))  # type: ignore[arg-type]
+        self.vectors = DocumentService(self.repo, self.qdrant, "document_chunks_test")  # type: ignore[arg-type]
+        self.runner = DocumentIngestPipelineService(self.vectors, self.repo, embedding=FakeEmbedding())  # type: ignore[arg-type]
         self.addCleanup(lambda: shutil.rmtree(temp_root() / "tbook", ignore_errors=True))
-        self.store = self.repo.book("tbook")
-        self.store.create("Test")
-        BookService.save_profile(self.store, default_profile("tbook", "Test"))
-        self.store.files.write_jsonl("pages.jsonl", _pages())
+        self.document_id = "tbook"
+        self.files = self.repo.files_for("tbook")
+        self.repo.create("Test", {}, default_profile("tbook"), {}, document_id="tbook")
+        self.files.write_jsonl("pages.jsonl", _pages())
         self.llm = LLMClient("fake", cache_dir=root / "_cache", fn=toc_llm)
 
     def run_toc(
@@ -162,10 +162,10 @@ class Base(unittest.TestCase):
     def fix_pustular(self) -> None:
         pid = next(
             x["id"]
-            for x in self.store.files.read_json("toc.json")["entries"]
+            for x in self.files.read_json("toc.json")["entries"]
             if x["title"] == "Pustular Psoriasis"
         )
-        self.store.update_overrides("toc", {pid: {"printed_page": 7}})
+        self.repo.overrides.update("tbook", "toc", {pid: {"printed_page": 7}})
         self.runner.reapply("tbook", "toc")
 
 
@@ -182,7 +182,7 @@ class TocStageTest(Base):
             LLMClient("fake", cache_dir=Path(self.tmp.name) / "_spy", fn=spy),
         )
         self.assertEqual(
-            (out["toc_pages"], out["pages_source"], out["entries"]),
+            (out["tocPages"], out["pagesSource"], out["entries"]),
             ("2-3", "user", 7),
         )
         self.assertTrue(all("tìm" not in c for c in calls))
@@ -190,9 +190,9 @@ class TocStageTest(Base):
     def test_llm_finds_toc_pages_and_builds_tree(self) -> None:
         out = self.run_toc()
         self.assertEqual(
-            (out["toc_pages"], out["pages_source"]), ("2-3", "llm")
+            (out["tocPages"], out["pagesSource"]), ("2-3", "llm")
         )
-        e = {x["title"]: x for x in self.store.files.read_json("toc.json")["entries"]}
+        e = {x["title"]: x for x in self.files.read_json("toc.json")["entries"]}
         self.assertEqual(
             (out["parts"], out["sections"], out["topics"]), (1, 2, 4)
         )
@@ -212,16 +212,16 @@ class TocStageTest(Base):
         out = self.run_toc({"pages": "2-3"})
         bad = next(
             x
-            for x in self.store.files.read_json("toc.json")["entries"]
+            for x in self.files.read_json("toc.json")["entries"]
             if x["title"] == "Pustular Psoriasis"
         )
         self.assertTrue(bad["suspect"])
         self.assertEqual(out["suspect"], 1)
-        self.store.update_overrides("toc", {bad["id"]: {"printed_page": 7}})
+        self.repo.overrides.update(self.document_id, "toc", {bad["id"]: {"printed_page": 7}})
         self.assertEqual(self.runner.reapply("tbook", "toc")["suspect"], 0)
         fixed = next(
             x
-            for x in self.store.files.read_json("toc.json")["entries"]
+            for x in self.files.read_json("toc.json")["entries"]
             if x["id"] == bad["id"]
         )
         self.assertEqual(
@@ -233,19 +233,19 @@ class TocStageTest(Base):
         out = self.run_toc({"pages": "2-3"})
         self.assertEqual(out["offset"], 3)
         self.assertEqual(
-            self.store.files.read_json("toc.json")["offset_info"]["source"], "auto"
+            self.files.read_json("toc.json")["offset_info"]["source"], "auto"
         )
         self.assertGreaterEqual(out["anchored"], 5)
-        self.store.update_overrides("toc", {"_offset": 4})
+        self.repo.overrides.update(self.document_id, "toc", {"_offset": 4})
         self.runner.reapply("tbook", "toc")
-        doc = self.store.files.read_json("toc.json")
+        doc = self.files.read_json("toc.json")
         self.assertEqual(
             (doc["offset"], doc["offset_info"]["source"]), (4, "user")
         )
 
     def test_part_and_section_without_page_are_anchored_by_title(self) -> None:
         self.run_toc({"pages": "2-3"})
-        e = {x["title"]: x for x in self.store.files.read_json("toc.json")["entries"]}
+        e = {x["title"]: x for x in self.files.read_json("toc.json")["entries"]}
         sec = e[
             "SECTION 2 PSORIASIS"
         ]  # có số trang 5 nên neo bằng số trang; part không có số trang
@@ -259,14 +259,14 @@ class TocStageTest(Base):
         pages[9]["text"] = (
             "PUSTULAR PSORIASIS ICD-10: L40.1 • A rare and severe form of psoriasis with sterile pustules on the palms and soles.\nbody"
         )
-        self.store.files.write_jsonl(
+        self.files.write_jsonl(
             "pages.jsonl", pages
         )  # trang 10 (PDF) = tiêu đề viết HOA dính liền đoạn văn
         self.run_toc({"pages": "2-3"})
         self.fix_pustular()
         e = next(
             x
-            for x in self.store.files.read_json("toc.json")["entries"]
+            for x in self.files.read_json("toc.json")["entries"]
             if x["title"] == "Pustular Psoriasis"
         )
         self.assertEqual(
@@ -275,20 +275,20 @@ class TocStageTest(Base):
         pages[9]["text"] = (
             "Pustular psoriasis is a rare and severe form of psoriasis with sterile pustules on the palms and soles of patients.\nbody"
         )
-        self.store.files.write_jsonl(
+        self.files.write_jsonl(
             "pages.jsonl", pages
         )  # câu văn thường mở đầu bằng tên bệnh: KHÔNG phải tiêu đề
         self.runner.reapply("tbook", "toc")
         e = next(
             x
-            for x in self.store.files.read_json("toc.json")["entries"]
+            for x in self.files.read_json("toc.json")["entries"]
             if x["title"] == "Pustular Psoriasis"
         )
         self.assertFalse(e["anchored"])
 
     def test_no_pages_yet_means_no_offset_not_a_guess(self) -> None:
-        self.store.files.delete("pages.jsonl")
-        self.store.files.write_jsonl(
+        self.files.delete("pages.jsonl")
+        self.files.write_jsonl(
             "pages.jsonl", [r for r in _pages() if r["page"] <= 3]
         )  # chỉ có trang mục lục
         out = self.run_toc({"pages": "2-3"})
@@ -297,9 +297,9 @@ class TocStageTest(Base):
 
     def test_delete_and_add_entries(self) -> None:
         self.run_toc({"pages": "2-3"})
-        ents = self.store.files.read_json("toc.json")["entries"]
+        ents = self.files.read_json("toc.json")["entries"]
         vulgaris = next(x for x in ents if x["title"] == "Psoriasis Vulgaris")
-        self.store.update_overrides(
+        self.repo.overrides.update(self.document_id, 
             "toc",
             {
                 "_deleted": [ents[0]["id"]],
@@ -316,7 +316,7 @@ class TocStageTest(Base):
         )
         self.runner.reapply("tbook", "toc")
         titles = [
-            x["title"] for x in self.store.files.read_json("toc.json")["entries"]
+            x["title"] for x in self.files.read_json("toc.json")["entries"]
         ]
         self.assertNotIn("PART I GENERAL DERMATOLOGY", titles)
         self.assertEqual(
@@ -335,7 +335,7 @@ class TocStageTest(Base):
 
         pages = _pages()
         pages[1]["text"] += "\n" + "x" * 9000  # ép đọc từng trang
-        self.store.files.write_jsonl("pages.jsonl", pages)
+        self.files.write_jsonl("pages.jsonl", pages)
         out = self.run_toc(
             {"pages": "2-3"},
             LLMClient("fake", cache_dir=Path(self.tmp.name) / "_fl", fn=flaky),
@@ -357,7 +357,7 @@ class ChunksTest(Base):
         self.fix_pustular()
         out = self.runner.run_stage("tbook", "chunks", {}, force=True)
         self.assertEqual(out["offset"], 3)
-        return self.store.files.read_jsonl("chunks.jsonl")
+        return self.files.read_jsonl("chunks.jsonl")
 
     def test_chunks_carry_part_section_topic_and_pages(self) -> None:
         chunks = self.chunks()
@@ -398,7 +398,7 @@ class ChunksTest(Base):
     ) -> None:
         self.run_toc({"pages": "2-3"})
         out = self.runner.run_stage("tbook", "chunks", {}, force=True)
-        self.assertEqual(out["outside_toc_lines"], 1)  # trang bìa
+        self.assertEqual(out["outsideTocLines"], 1)  # trang bìa
         self.assertTrue(any("trước mục đầu tiên" in w for w in out["warnings"]))
 
     def test_unanchored_entry_is_marked_boundary_and_queued_for_review(
@@ -406,8 +406,8 @@ class ChunksTest(Base):
     ) -> None:
         self.run_toc({"pages": "2-3"})  # Pustular chưa sửa: nghi ngờ + chưa neo
         out = self.runner.run_stage("tbook", "chunks", {}, force=True)
-        self.assertGreaterEqual(out["boundary_chunks"], 1)
-        review = self.store.files.read_json("review/chunks.json")
+        self.assertGreaterEqual(out["boundaryChunks"], 1)
+        review = self.files.read_json("review/chunks.json")
         self.assertTrue(
             any(
                 "vị trí bắt đầu" in r["reason"] or "cần kiểm tra" in r["reason"]
@@ -416,9 +416,9 @@ class ChunksTest(Base):
         )
 
     def test_max_tokens_splits_inside_an_entry_only(self) -> None:
-        prof = default_profile("tbook", "Test")
+        prof = default_profile("tbook")
         prof.chunking.max_tokens = 50
-        BookService.save_profile(self.store, prof)
+        DocumentService.save_profile(self.repo, self.document_id, prof)
         long = [
             {
                 **r,
@@ -429,7 +429,7 @@ class ChunksTest(Base):
             }
             for r in _pages()
         ]
-        self.store.files.write_jsonl("pages.jsonl", long)
+        self.files.write_jsonl("pages.jsonl", long)
         chunks = self.chunks()
         self.assertTrue(all(c["tokens"] <= 60 for c in chunks))
         pust = [c for c in chunks if c["topic"] == "Pustular Psoriasis"]
@@ -441,12 +441,12 @@ class ChunksTest(Base):
     ) -> None:
         self.run_toc({"pages": "2-3"})
         self.fix_pustular()
-        doc = self.store.files.read_json("toc.json")
-        prof = default_profile("tbook", "Test")
+        doc = self.files.read_json("toc.json")
+        prof = default_profile("tbook")
         prof.chunking.boundary_level = 1  # chỉ part/section là ranh giới: các mục bệnh trong cùng section được gom
         units = [
             (r["page"], i, ln)
-            for r in self.store.files.read_jsonl("pages.jsonl")
+            for r in self.files.read_jsonl("pages.jsonl")
             if r["page"] > 3
             for i, ln in enumerate(r["text"].split("\n"))
         ]
@@ -454,8 +454,8 @@ class ChunksTest(Base):
             toc_nodes(doc, 11),
             units,
             prof.chunking,
-            book_id="tbook",
-            book_title="Test",
+            document_id="tbook",
+            document_title="Test",
             printed_offset=3,
         )
         merged = next(c for c in chunks if c["section"] == "SECTION 1 ECZEMA")
@@ -473,7 +473,7 @@ class ChunksTest(Base):
 
     def test_missing_offset_stops_with_a_clear_error(self) -> None:
         self.run_toc({"pages": "2-3"})
-        self.store.update_overrides(
+        self.repo.overrides.update(self.document_id, 
             "toc", {"_offset": 200}
         )  # mọi mục rơi ra ngoài file
         self.runner.reapply("tbook", "toc")
@@ -489,9 +489,9 @@ class RunnerGateTest(Base):
         with self.assertRaises(PipelineError):
             self.runner.run_stage("tbook", "chunks", {})
         self.assertEqual(
-            BookService.blocking_deps(self.store, "chunks"), ["ingest", "toc"]
+            DocumentService.blocking_deps(self.repo, self.document_id, "chunks"), ["ingest", "toc"]
         )
-        self.assertEqual(BookService.blocking_deps(self.store, "toc"), [])
+        self.assertEqual(DocumentService.blocking_deps(self.repo, self.document_id, "toc"), [])
 
     def test_rerunning_toc_makes_chunks_stale(self) -> None:
         self.run_toc({"pages": "2-3"})
@@ -499,7 +499,7 @@ class RunnerGateTest(Base):
         self.runner.run_stage("tbook", "chunks", {}, force=True)
         self.run_toc({"pages": "2-3"})
         self.assertEqual(
-            self.store.status()["stages"]["chunks"]["state"], "stale"
+            self.repo.status(self.document_id)["stages"]["chunks"]["state"], "stale"
         )
 
 

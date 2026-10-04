@@ -8,11 +8,11 @@ chạy dev; xem `../../docs/kien-truc-he-thong.md` cho bức tranh toàn hệ th
 
 | Thư mục | Vai trò | KHÔNG được làm |
 |---|---|---|
-| `app/core/` | Cấu hình (`config.py`), hằng số queue/channel (`constants.py`) | Không chứa logic nghiệp vụ |
-| `app/db/` | Engine/session SQLAlchemy (`session.py`), `DeclarativeBase` (`base.py`) | Không import FastAPI/route |
-| `app/models/` | ORM model (SQLAlchemy) — ánh xạ bảng DB | Không được lộ ra ngoài API (xem mục 3) |
+| `app/config/` | Cấu hình (`settings.py` — nơi DUY NHẤT đọc env, kể cả tuỳ chọn DB), hằng số (`constants.py`: queue/channel, naming convention DB) | Không chứa logic nghiệp vụ |
+| `app/models/` | ORM model (SQLAlchemy) — ánh xạ bảng DB; `base.py` = `DeclarativeBase` | Không được lộ ra ngoài API (xem mục 3) |
+| `app/api/deps.py` | **Vòng đời instance**: tạo lười + giữ 1 instance mỗi process cho từng client/service dùng chung (`get_*`), đóng ở `close_clients()`; provider theo request (`get_db`, service dựng trên session) | Không chứa logic nghiệp vụ |
 | `app/dto/` | Pydantic model — hợp đồng request/response của API | Không import ORM model |
-| `app/infra/` | Client hạ tầng dùng chung: `redis_client.py`, `rabbitmq_client.py` | Không chứa logic nghiệp vụ cụ thể 1 resource |
+| `app/infra/` | Mỗi dịch vụ ngoài một **class client** (`PostgresClient`, `RedisClient`, `RabbitMQClient`, `QdrantVectorClient`, `MinioClient`, `LLMClient`, `DoclingClient`, `EmbeddingClient`): kết nối + capability GENERIC của dịch vụ đó (publish/get/set, put/get object, upsert/search...) | Không chứa nghiệp vụ cụ thể 1 resource, không tự tạo singleton ở mức module |
 | `app/agent/` | LangGraph reasoning loop + LLM (`llm.py`, `graph.py`) + worker tiến trình riêng (`worker.py`) | Không import FastAPI (worker chạy độc lập với Core) |
 | `app/api/` | FastAPI router — nhận request, gọi service/repository, trả DTO | Không viết SQL/logic nghiệp vụ trực tiếp trong route (khi có `app/services/`) |
 
@@ -53,7 +53,7 @@ thay vì dùng `response_model` — xem `app/api/health.py`.
 
 ## 3. Async — mọi I/O phải `async def`
 
-- DB: luôn dùng `AsyncSession` qua dependency `get_db` (`app/db/session.py`), không tạo
+- DB: luôn dùng `AsyncSession` qua dependency `get_db` (`app/api/deps.py`), không tạo
   session mới bằng tay trong route — **ngoại lệ duy nhất**: `/health/ready` tự mở session
   ngắn hạn để tự kiểm tra kết nối DB (đây là health-check hạ tầng, không phải truy vấn
   domain, nên không cần vòng đời request-scoped qua DI — xem mục 4 để hiểu vì sao domain
@@ -66,7 +66,7 @@ thay vì dùng `response_model` — xem `app/api/health.py`.
 ## 4. Dependency Injection (FastAPI `Depends`)
 
 **Có** — bắt buộc dùng `Depends` cho mọi resource route cần, ngay cả khi hiện tại chỉ có
-`get_db` (`app/db/session.py`) là dependency thật sự tồn tại và **chưa route nào dùng tới**
+`get_db` (`app/api/deps.py`) là dependency thật sự tồn tại và **chưa route nào dùng tới**
 (vì chưa có domain route). Lý do cần quy ước này từ bây giờ:
 
 - **Session DB phải request-scoped.** `get_db()` mở 1 `AsyncSession` mới, tự đóng khi request
@@ -101,17 +101,17 @@ thay vì dùng `response_model` — xem `app/api/health.py`.
   thẳng. Chỉ cần thêm 1 hàm `get_redis_client()`/`get_rabbitmq_client()` mỏng (trả về
   singleton có sẵn) nếu 1 route cụ thể cần mock nó trong test qua `dependency_overrides` —
   không làm sẵn khi chưa có nhu cầu thật (tránh over-engineering).
-- **Settings** (`app/core/config.py`): `settings` cũng là singleton (`@lru_cache`), import
-  thẳng `from app.core.config import settings`, không cần `Depends` (cấu hình không đổi theo
+- **Settings** (`app/config/settings.py`): `settings` cũng là singleton (`@lru_cache`), import
+  thẳng `from app.config.settings import settings`, không cần `Depends` (cấu hình không đổi theo
   từng request).
 
 ## 5. Cấu hình — không `os.getenv` rải rác
 
-Mọi biến môi trường khai báo tập trung trong `app/core/config.py` (`Settings`, đọc từ `.env`
-qua `pydantic-settings`). Nơi khác luôn `from app.core.config import settings`, không gọi
+Mọi biến môi trường khai báo tập trung trong `app/config/settings.py` (`Settings`, đọc từ `.env`
+qua `pydantic-settings`). Nơi khác luôn `from app.config.settings import settings`, không gọi
 `os.getenv` trực tiếp (trừ chính `config.py`).
 
-Tên queue (RabbitMQ) / channel (Redis) là hằng số trong `app/core/constants.py`, không hard
+Tên queue (RabbitMQ) / channel (Redis) là hằng số trong `app/config/constants.py`, không hard
 code string queue name rải rác trong code.
 
 ## 6. Type checking — Pyright basic
@@ -131,9 +131,11 @@ uv run pyright app main.py
 ## 7. Quy trình thêm thành phần mới
 
 ### Model SQLAlchemy mới
-1. Tạo file trong `app/models/`, kế thừa `Base` (`app/db/base.py`).
-2. Import trong `app/models/__init__.py` — bắt buộc, nếu không `Base.metadata.create_all`
-   (dev) và Alembic (prod, sau này) sẽ không thấy bảng.
+1. Tạo file trong `app/models/`, kế thừa `Base` (`app/models/base.py`).
+2. Import trong `app/models/__init__.py` — bắt buộc, nếu không Alembic không thấy bảng.
+3. Sinh migration: `uv run alembic revision --autogenerate -m "mô tả"`, đọc lại file trong
+   `migrations/versions/` (autogenerate không bắt được mọi thứ, vd đổi tên cột) rồi
+   `uv run alembic upgrade head`.
 
 ### DTO mới
 1. Tạo file `app/dto/<resource>.py`, ví dụ `app/dto/conversation.py`.
@@ -149,13 +151,13 @@ uv run pyright app main.py
    thẳng session/service vào thân hàm route.
 
 ### Kênh Redis Pub/Sub mới
-1. Thêm tên channel vào `app/core/constants.py` (format string nếu có tham số, vd
+1. Thêm tên channel vào `app/config/constants.py` (format string nếu có tham số, vd
    `"agent:events:{conversation_id}"`).
 2. Publish: `from app.infra.redis_client import publish`.
 3. Subscribe: `async for msg in subscribe(channel)` hoặc `psubscribe(pattern)`.
 
 ### Queue RabbitMQ mới
-1. Thêm tên queue vào `app/core/constants.py`.
+1. Thêm tên queue vào `app/config/constants.py`.
 2. Publish: `await rabbitmq_client.publish(queue, body_bytes)`.
 3. Consume: `await rabbitmq_client.consume(queue, handler)` với
    `handler: Callable[[AbstractIncomingMessage], Awaitable[None]]`, tự
@@ -174,8 +176,8 @@ uv run pyright app main.py
 - File/module: `snake_case.py`.
 - Class (DTO, model, service...): `PascalCase`.
 - Hằng số (queue/channel name, default value): `UPPER_SNAKE_CASE`, khai báo ở
-  `app/core/constants.py` hoặc đầu file liên quan.
-- Biến môi trường: `UPPER_SNAKE_CASE`, khai báo trong `Settings` (`app/core/config.py`).
+  `app/config/constants.py` hoặc đầu file liên quan.
+- Biến môi trường: `UPPER_SNAKE_CASE`, khai báo trong `Settings` (`app/config/settings.py`).
 - DTO: `<Resource>Input` / `<Resource>Output` (không dùng hậu tố `DTO`/`Dto`).
 - Provider DI: `get_<thứ cần lấy>` (vd `get_db`, `get_conversation_service`).
 

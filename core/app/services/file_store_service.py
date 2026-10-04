@@ -3,7 +3,7 @@
 
 - Thao tác ĐỒNG BỘ theo tên tương đối với tiền tố (bytes / text / JSON / JSONL, liệt kê, xoá, bản sao tạm trên đĩa) — dùng trong thread
   nền của pipeline sách. Caller async bọc qua `asyncio.to_thread`.
-- `scoped(prefix)` trả về một view con (vd `toc/<book_id>/`) dùng chung client + bucket.
+- `scoped(prefix)` trả về một view con (vd `document/<document_id>/`) dùng chung client + bucket.
 - Upload ảnh đính kèm tin nhắn (`save_upload` / `get_object_bytes`, async) cho `app/api/upload_api.py` và
   `agent/tools/skin_image_classifier.py` — Agent Worker đọc lại qua object key, không cần chung filesystem với Core.
 Instance do `app/api/deps.py` tạo (bucket ảnh đính kèm, bucket sách)."""

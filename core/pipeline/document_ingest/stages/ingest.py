@@ -44,30 +44,30 @@ def _row(n: int, header: str, printed: int | None, text: str, noise_set: set[int
 def _run_docling(ctx: StageContext) -> dict:
     from pypdf import PdfReader
 
-    store, ext = ctx.store, ctx.profile.extraction
+    files, ext = ctx.files, ctx.profile.extraction
     pdf = ctx.local_pdf()
     total = len(PdfReader(str(pdf)).pages)
     first, last = _page_range(ctx.options.get("pages"), total)
     key = f"force_ocr={ext.docling_force_ocr};tables={ext.docling_tables}"
-    if store.files.get_text("docling_parts/key.txt") not in (None, key):
-        store.files.delete_prefix("docling_parts/")  # cấu hình đổi: kết quả cũ không dùng lại được
-    store.files.put_text("docling_parts/key.txt", key)
+    if files.get_text("docling_parts/key.txt") not in (None, key):
+        files.delete_prefix("docling_parts/")  # cấu hình đổi: kết quả cũ không dùng lại được
+    files.put_text("docling_parts/key.txt", key)
 
     step = ext.docling_chunk_pages
     spans = [(a, min(a + step - 1, last)) for a in range(first, last + 1, step)]
     for i, (a, b) in enumerate(spans, 1):
         part = f"docling_parts/part_{a:05d}_{b:05d}.json"
         ctx.progress(i - 1, len(spans), f"Nhận dạng chữ: trang {a}-{b}")
-        if store.files.exists(part):  # đã đọc ở lần chạy trước (dừng/làm lại không mất)
+        if files.exists(part):  # đã đọc ở lần chạy trước (dừng/làm lại không mất)
             continue
         blocks = ctx.require_docling().convert_pages(pdf, a, b, force_ocr=ext.docling_force_ocr, tables=ext.docling_tables)
-        store.files.write_json(part, blocks)
+        files.write_json(part, blocks)
         ctx.log(f"trang {a}-{b}: {len(blocks)} khối")
     ctx.progress(len(spans), len(spans), "dựng pages.jsonl")
 
     by_page: dict[int, list[dict]] = {}
-    for name in sorted(n for n in store.files.list_names("docling_parts/part_") if n.endswith(".json")):
-        for blk in store.files.read_json(name, []):
+    for name in sorted(n for n in files.list_names("docling_parts/part_") if n.endswith(".json")):
+        for blk in files.read_json(name, []):
             if first <= blk["page"] <= last:
                 by_page.setdefault(blk["page"], []).append(blk)
 
@@ -80,12 +80,12 @@ def _run_docling(ctx: StageContext) -> dict:
         # bảng/mục lục là Markdown nhiều dòng: gộp một dòng để chỉ số dòng ổn định
         lines = [("• " if b["label"] == "list" else "") + " ".join(b["text"].split()) for b in blocks if b["label"] in _BODY_LABELS]
         rows.append(_row(n, header, printed, "\n".join(lines), noise_set, ext.page_offset))
-    store.files.write_jsonl("pages.jsonl", rows)
+    files.write_jsonl("pages.jsonl", rows)
     return _summary("docling", rows, first, last)
 
 
 def _run_pdftotext(ctx: StageContext) -> dict:
-    store, ext = ctx.store, ctx.profile.extraction
+    files, ext = ctx.files, ctx.profile.extraction
     cmd = ["pdftotext"] + (["-layout"] if ext.layout else []) + [str(ctx.local_pdf()), "-"]
     ctx.log("chạy: " + " ".join(cmd))
     try:
@@ -132,20 +132,21 @@ def _run_pdftotext(ctx: StageContext) -> dict:
         while lines and not lines[0].strip():
             lines = lines[1:]
         rows.append(_row(n, header, printed, "\n".join(lines).rstrip(), noise_set, ext.page_offset))
-    store.files.write_jsonl("pages.jsonl", rows)
+    files.write_jsonl("pages.jsonl", rows)
     return _summary("pdftotext", rows, 1, total)
 
 
 def _summary(engine: str, rows: list[dict], first: int, last: int) -> dict:
+    """Khoá camelCase ngay từ đây — summary đi thẳng ra API/FE, không qua bước đổi tên nào nữa."""
     return {
-        "engine": engine, "pages": len(rows), "page_range": [first, last],
-        "pages_skipped": sum(1 for r in rows if r["noise"]),
-        "pages_empty": sum(1 for r in rows if not r["text"].strip()),
-        "pages_high_noise": sum(1 for r in rows if r["noise_score"] > 0.05),
+        "engine": engine, "pages": len(rows), "pageRange": [first, last],
+        "pagesSkipped": sum(1 for r in rows if r["noise"]),
+        "pagesEmpty": sum(1 for r in rows if not r["text"].strip()),
+        "pagesHighNoise": sum(1 for r in rows if r["noise_score"] > 0.05),
     }
 
 
 def run(ctx: StageContext) -> dict:
-    if not ctx.store.files.exists("source.pdf"):
+    if not ctx.files.exists("source.pdf"):
         raise StageError("Không tìm thấy file PDF của sách.")
     return _run_docling(ctx) if ctx.profile.extraction.engine == "docling" else _run_pdftotext(ctx)

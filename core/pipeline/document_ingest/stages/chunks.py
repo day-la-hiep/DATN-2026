@@ -15,7 +15,7 @@ from bisect import bisect_right
 from typing import Any
 
 from .. import hierarchy, mapping
-from app.models.book_profile import ChunkingConfig
+from app.models.document_profile import ChunkingConfig
 from . import StageContext, StageError, refresh_toc
 
 _SENT = re.compile(r"(?<=[.!?])\s+")
@@ -141,7 +141,7 @@ def _pack(region: list[dict], cfg: ChunkingConfig) -> list[list[dict]]:
     return [g for g in groups if g]
 
 
-def build_chunks(nodes: list[dict], units: list[tuple[int, int, str]], cfg: ChunkingConfig, *, book_id: str, book_title: str,
+def build_chunks(nodes: list[dict], units: list[tuple[int, int, str]], cfg: ChunkingConfig, *, document_id: str, document_title: str,
                  printed_offset: int) -> tuple[list[dict], int]:
     """`nodes`: từ `toc_nodes`. `units`: (trang, dòng, chữ) thân sách theo thứ tự đọc. Trả (chunks, số dòng ngoài mục)."""
     by_id = {n["id"]: n for n in nodes}
@@ -162,10 +162,10 @@ def build_chunks(nodes: list[dict], units: list[tuple[int, int, str]], cfg: Chun
             text = "\n".join(it["text"] for it in group)
             pages = [it["page"] for it in group]
             pa, pb = min(pages), max(pages)
-            crumb = " > ".join([book_title, *path] if cfg.breadcrumb and book_title else path)
+            crumb = " > ".join([document_title, *path] if cfg.breadcrumb and document_title else path)
             seq = len(chunks) + 1
             chunks.append({
-                "chunk_id": f"{book_id}:c{seq:05d}", "seq": seq, "book_id": book_id, "text": text,
+                "chunk_id": f"{document_id}:c{seq:05d}", "seq": seq, "document_id": document_id, "text": text,
                 "context_text": f"{crumb}\n{text}" if crumb else text,
                 "part": pick(lambda n: n["kind"] == "part"), "section": pick(lambda n: n["kind"] == "section"),
                 "topic": pick(lambda n: n["level"] == 2), "subtopic": pick(lambda n: n["level"] == 3),
@@ -198,16 +198,16 @@ def _review(chunks: list[dict], cfg: ChunkingConfig) -> list[dict]:
 
 
 def run(ctx: StageContext) -> dict:
-    store, cfg = ctx.store, ctx.profile.chunking
-    rows = [r for r in store.files.iter_jsonl("pages.jsonl") if not r.get("noise")]
+    files, cfg = ctx.files, ctx.profile.chunking
+    rows = [r for r in files.iter_jsonl("pages.jsonl") if not r.get("noise")]
     if not rows:
         raise StageError("Chưa đọc nội dung sách — hãy làm bước Đọc nội dung trước.")
-    if not store.files.exists("toc.auto.json"):
+    if not files.exists("toc.auto.json"):
         raise StageError("Chưa có mục lục — hãy làm bước Mục lục trước.")
     ctx.progress(0, 2, "tính lại độ lệch + neo")
     max_page = max(r["page"] for r in rows)
     refresh_toc(ctx, max_page)  # dữ liệu trang có thể mới hơn lần duyệt mục lục
-    doc = store.files.read_json("toc.json")
+    doc = files.read_json("toc.json")
     off = doc["offset"]
     if off is None:
         raise StageError("Chưa xác định được độ chênh lệch số trang — hãy nhập tay ở bước Mục lục rồi làm lại.")
@@ -217,20 +217,22 @@ def run(ctx: StageContext) -> dict:
         raise StageError("Không mục nào của mục lục nằm trong các trang đã đọc — hãy kiểm tra độ chênh lệch số trang.")
     units = [(r["page"], i, ln) for r in rows if r["page"] not in skip for i, ln in enumerate(r["text"].split("\n"))]
     ctx.progress(1, 2, "cắt chunk")
-    chunks, outside = build_chunks(nodes, units, cfg, book_id=store.book_id, book_title=ctx.profile.title, printed_offset=off)
+    document_title = ctx.meta().get("title", "")
+    chunks, outside = build_chunks(nodes, units, cfg, document_id=ctx.document_id, document_title=document_title, printed_offset=off)
     if not chunks:
         raise StageError("Không tạo được đoạn nào (nội dung sách có thể đang trống).")
-    store.files.write_jsonl("chunks.jsonl", chunks)
+    files.write_jsonl("chunks.jsonl", chunks)
     review = _review(chunks, cfg)
-    store.files.write_json("review/chunks.json", review)
+    files.write_json("review/chunks.json", review)
     toks = sorted(c["tokens"] for c in chunks)
+    # khoá camelCase ngay từ đây — summary đi thẳng ra API/FE, không qua bước đổi tên nào nữa
     summary: dict[str, Any] = {
         "chunks": len(chunks), "tokens": {"min": toks[0], "median": toks[len(toks) // 2], "max": toks[-1]},
-        "toc_entries_used": len(nodes), "toc_entries_total": len(doc["entries"]), "offset": off,
-        "boundary_chunks": sum(1 for c in chunks if c["boundary"]), "suspect_chunks": sum(1 for c in chunks if c["suspect"]),
-        "too_short": sum(1 for c in chunks if c["tokens"] < cfg.min_tokens),
-        "too_long": sum(1 for c in chunks if c["tokens"] > cfg.max_tokens * 1.1),
-        "outside_toc_lines": outside,
+        "tocEntriesUsed": len(nodes), "tocEntriesTotal": len(doc["entries"]), "offset": off,
+        "boundaryChunks": sum(1 for c in chunks if c["boundary"]), "suspectChunks": sum(1 for c in chunks if c["suspect"]),
+        "tooShort": sum(1 for c in chunks if c["tokens"] < cfg.min_tokens),
+        "tooLong": sum(1 for c in chunks if c["tokens"] > cfg.max_tokens * 1.1),
+        "outsideTocLines": outside,
     }
     warnings = []
     if len(nodes) < len(doc["entries"]):

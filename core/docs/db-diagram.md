@@ -100,7 +100,7 @@ class MessageMetadataDto(BaseModel):
 
 ### ⚠️ SQLAlchemy: không đặt tên attribute Python là `metadata`
 
-`Base.metadata` (từ `DeclarativeBase`, `app/db/base.py`) là tên **reserved** của SQLAlchemy —
+`Base.metadata` (từ `DeclarativeBase`, `app/models/base.py`) là tên **reserved** của SQLAlchemy —
 đặt attribute model là `metadata` sẽ đè lên `MetaData` của class, lỗi ngay lúc định nghĩa
 model. Dùng tên khác cho attribute Python, map sang cột DB tên `metadata` qua `mapped_column`:
 

@@ -20,6 +20,7 @@ Chạy:
 `--reset`: xoá sạch `:Entity` (và mọi label con, mọi cạnh) trước khi nạp lại — dùng khi
 cần load lại từ đầu (dữ liệu processed đổi, hoặc Neo4j volume mới tinh nghi có rác).
 """
+
 import argparse
 import csv
 import re
@@ -32,7 +33,7 @@ from neo4j import GraphDatabase
 CORE_DIR = Path(__file__).resolve().parents[3]  # core/ — để import `app.*`
 sys.path.insert(0, str(CORE_DIR))
 
-from app.core.config import settings  # noqa: E402
+from app.config.settings import settings  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "output" / "kg" / "primekg"
 NODES_CSV = DATA_DIR / "derma_nodes.csv"
@@ -42,13 +43,13 @@ BATCH_SIZE = 5000
 
 
 def to_label(type_str: str) -> str:
-    """"gene/protein" -> "GeneProtein", "effect/phenotype" -> "EffectPhenotype"."""
+    """ "gene/protein" -> "GeneProtein", "effect/phenotype" -> "EffectPhenotype"."""
     parts = re.split(r"[^a-zA-Z0-9]+", type_str)
     return "".join(p.capitalize() for p in parts if p)
 
 
 def to_rel_type(relation: str) -> str:
-    """"disease_phenotype_positive" -> "DISEASE_PHENOTYPE_POSITIVE"."""
+    """ "disease_phenotype_positive" -> "DISEASE_PHENOTYPE_POSITIVE"."""
     return re.sub(r"[^a-zA-Z0-9]+", "_", relation).strip("_").upper()
 
 
@@ -74,7 +75,9 @@ def load_nodes(driver, rows: list[dict]) -> None:
         by_type.setdefault(row["type"], []).append(row)
 
     with driver.session() as session:
-        session.run("CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE")
+        session.run(
+            "CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (n:Entity) REQUIRE n.id IS UNIQUE"
+        )
 
         for type_str, type_rows in by_type.items():
             # Label ghép thẳng vào chuỗi Cypher (không qua tham số) — an toàn vì
@@ -89,7 +92,12 @@ def load_nodes(driver, rows: list[dict]) -> None:
             total = 0
             for batch in batched(type_rows, BATCH_SIZE):
                 payload = [
-                    {"id": r["id"], "name": r["name"], "type": r["type"], "source": r["source"]}
+                    {
+                        "id": r["id"],
+                        "name": r["name"],
+                        "type": r["type"],
+                        "source": r["source"],
+                    }
                     for r in batch
                 ]
                 session.run(query, batch=payload)
@@ -114,7 +122,11 @@ def load_edges(driver, rows: list[dict]) -> None:
             total = 0
             for batch in batched(rel_rows, BATCH_SIZE):
                 payload = [
-                    {"x_id": r["x_id"], "y_id": r["y_id"], "display_relation": r["display_relation"]}
+                    {
+                        "x_id": r["x_id"],
+                        "y_id": r["y_id"],
+                        "display_relation": r["display_relation"],
+                    }
                     for r in batch
                 ]
                 session.run(query, batch=payload)
@@ -124,7 +136,9 @@ def load_edges(driver, rows: list[dict]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--reset", action="store_true", help="Xoá dữ liệu cũ trước khi nạp")
+    parser.add_argument(
+        "--reset", action="store_true", help="Xoá dữ liệu cũ trước khi nạp"
+    )
     args = parser.parse_args()
 
     print(f"Kết nối Neo4j: {settings.NEO4J_URL}")
