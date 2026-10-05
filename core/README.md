@@ -23,8 +23,8 @@ core/
 │   │   ├── redis_client.py    → redis client + publish/subscribe/psubscribe/get/set/delete
 │   │   └── rabbitmq_client.py → RabbitMQClient (connect/publish/consume)
 │   ├── models/                → SQLAlchemy ORM: User, Conversation, Message
-│   ├── dto/                   → Pydantic DTO — hợp đồng request/response API (camelCase)
-│   │   ├── common.py          → CamelModel, ApiResponse[T] / PageResponse[T]
+│   ├── dto/                   → Pydantic DTO — hợp đồng request/response API (snake_case)
+│   │   ├── common.py          → ApiResponse[T], FileDto
 │   │   ├── conversation.py    → ConversationOutput, CreateConversationInput
 │   │   ├── message.py         → MessageOutput, SendMessageInput, MessageMetadataDto, ...
 │   │   └── health.py          → DTO cho /health, /health/ready

@@ -76,15 +76,15 @@ mới làm được). Qdrant là kho dữ liệu **hoàn toàn tách biệt** kh
 | File | Vai trò |
 |---|---|
 | `app/infra/qdrant_client.py` | Client wrapper thuần: `ensure_collection`/`upsert_memory`/`search_memories`. Dùng `query_points()` (không phải `.search()` — đã deprecate ở `qdrant-client>=1.10`). |
-| `app/agent/memory.py` | Business logic: `distill_and_store()`, `retrieve_context()`, `_reasoning_transcript()`. |
-| `app/agent/worker.py` | Nối vào luồng turn: `_load_memory_context()` (gọi trong `_initial_state()`), lệnh gọi `distill_and_store()` sau khi turn `status="done"`, `main()` gọi `ensure_collection()` lúc khởi động. |
+| `agent/tools/memory.py` | Business logic: `distill_and_store()`, `retrieve_context()`, `_reasoning_transcript()`. |
+| `agent/worker.py` | Nối vào luồng turn: `_load_memory_context()` (gọi trong `_initial_state()`), lệnh gọi `distill_and_store()` sau khi turn `status="done"`, `main()` gọi `ensure_collection()` lúc khởi động. |
 
 ## 5. Model embedding
 
 `models/gemini-embedding-001` (Google, cùng provider với `AGENT_MODEL`, dùng chung
 `GOOGLE_API_KEY` — không cần thêm provider mới). Mặc định trả vector 3072 chiều nhưng hỗ trợ
 Matryoshka truncation qua tham số `output_dimensionality` — dự án giới hạn về **768** chiều
-(`app/agent/memory.py::_EMBEDDING_DIM`, PHẢI khớp `app/infra/qdrant_client.py::EMBEDDING_DIM`)
+(`agent/tools/memory.py::_EMBEDDING_DIM`, PHẢI khớp `app/infra/qdrant_client.py::EMBEDDING_DIM`)
 để vector gọn hơn, đủ tốt cho tập dữ liệu memory nhỏ.
 
 **Lưu ý lịch sử**: model cũ `models/text-embedding-004` (nhắc tới trong 1 số hướng dẫn cũ) đã

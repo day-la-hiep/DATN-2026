@@ -62,7 +62,7 @@ async def inject_long_term_memory(
 ) -> ModelResponse:
     """Semantic search long-term memory liên quan tin nhắn user gần nhất rồi chèn vào
     `system_message` TRƯỚC mỗi lần gọi LLM — nhớ chủ động, không cần agent tự hỏi lại
-    (`app/agent/memory.py::search_memories`)."""
+    (`agent/tools/memory.py::search_memories`)."""
     messages = request.state["messages"]
     query = next(
         (
@@ -149,8 +149,8 @@ async def emit_reasoning_step(
         {
             "type": "message.thinking",
             "content": content,
-            "conversationId": ctx.conversation_id,
-            "messageId": ctx.message_id,
+            "conversation_id": ctx.conversation_id,
+            "message_id": ctx.message_id,
         },
     )
     return response
@@ -189,8 +189,8 @@ async def critic_review(
             {
                 "type": "message.thinking",
                 "content": "Đang kiểm duyệt câu trả lời trước khi gửi",
-                "conversationId": ctx.conversation_id,
-                "messageId": ctx.message_id,
+                "conversation_id": ctx.conversation_id,
+                "message_id": ctx.message_id,
             },
         )
 
@@ -211,8 +211,8 @@ async def critic_review(
                 "content": "Đạt yêu cầu."
                 if verdict.approved
                 else f"Cần viết lại: {verdict.feedback}",
-                "conversationId": ctx.conversation_id,
-                "messageId": ctx.message_id,
+                "conversation_id": ctx.conversation_id,
+                "message_id": ctx.message_id,
             },
         )
 

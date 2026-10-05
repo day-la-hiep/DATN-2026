@@ -12,12 +12,13 @@ import type { Stage } from "../types";
 const SUMMARY_LABELS: Record<string, string> = {
   engine: "Cách đọc",
   pages: "Số trang",
-  pageRange: "Khoảng trang",
-  pagesSkipped: "Trang không dùng",
-  pagesEmpty: "Trang trống",
-  pagesHighNoise: "Trang nghi lỗi chữ",
-  tocPages: "Trang mục lục",
-  pagesSource: "Nguồn trang mục lục",
+  page_range: "Khoảng trang",
+  pages_skipped: "Trang không dùng",
+  pages_empty: "Trang trống",
+  pages_high_noise: "Trang nghi lỗi chữ",
+  figures: "Số hình ảnh",
+  toc_pages: "Trang mục lục",
+  pages_source: "Nguồn trang mục lục",
   entries: "Số mục",
   parts: "Số phần",
   sections: "Số chương",
@@ -27,16 +28,16 @@ const SUMMARY_LABELS: Record<string, string> = {
   anchored: "Mục đã định vị",
   chunks: "Số đoạn",
   tokens: "Độ dài đoạn (ngắn / giữa / dài)",
-  tocEntriesUsed: "Mục có nội dung",
-  tocEntriesTotal: "Tổng số mục",
-  boundaryChunks: "Đoạn có vị trí chưa chắc",
-  suspectChunks: "Đoạn thuộc mục cần kiểm tra",
-  tooShort: "Đoạn quá ngắn",
-  tooLong: "Đoạn quá dài",
-  outsideTocLines: "Dòng chữ ngoài mục lục",
+  toc_entries_used: "Mục có nội dung",
+  toc_entries_total: "Tổng số mục",
+  boundary_chunks: "Đoạn có vị trí chưa chắc",
+  suspect_chunks: "Đoạn thuộc mục cần kiểm tra",
+  too_short: "Đoạn quá ngắn",
+  too_long: "Đoạn quá dài",
+  outside_toc_lines: "Dòng chữ ngoài mục lục",
   points: "Số đoạn đã lưu",
   collection: "Kho lưu trữ",
-  embeddingModel: "Mô hình tạo vector",
+  embedding_model: "Mô hình tạo vector",
   dimension: "Số chiều vector",
 };
 
@@ -49,8 +50,8 @@ function readableSummary(summary: Record<string, unknown>): Record<string, unkno
     if (k === "tokens" && v && typeof v === "object") {
       const t = v as { min?: number; median?: number; max?: number };
       val = `${t.min} / ${t.median} / ${t.max}`;
-    } else if (k === "pageRange" && Array.isArray(v)) val = v.join("–");
-    else if (k === "pagesSource") val = v === "user" ? "bạn nhập" : "AI tìm";
+    } else if (k === "page_range" && Array.isArray(v)) val = v.join("–");
+    else if (k === "pages_source") val = v === "user" ? "bạn nhập" : "AI tìm";
     else if (k === "engine") val = v === "docling" ? "nhận dạng từ ảnh" : "văn bản có sẵn";
     out[SUMMARY_LABELS[k] ?? k] = val;
   }
@@ -84,7 +85,7 @@ export function StagePanel({
   onNext?: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const info = STEP_INFO[stage.id];
+  const info = STEP_INFO[stage.stage_id];
   const running = stage.state === "running";
   const pct = stage.progress && stage.progress.total > 0 ? Math.round((stage.progress.done / stage.progress.total) * 100) : 0;
   const canApprove = stage.state === "pending_review";
@@ -103,10 +104,10 @@ export function StagePanel({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 className="text-sm font-semibold tracking-tight text-foreground">{info.label}</h2>
         <StateBadge state={stage.state} />
-        {stage.usesLlm && (
+        {stage.uses_llm && (
           <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">LLM</span>
         )}
-        {stage.finishedAt && !running && <span className="text-[11px] text-muted-foreground">{fmt(stage.finishedAt)}</span>}
+        {stage.finished_at && !running && <span className="text-[11px] text-muted-foreground">{fmt(stage.finished_at)}</span>}
       </div>
       <p className="mt-1.5 max-w-3xl text-xs leading-relaxed text-muted-foreground">{info.desc}</p>
 
@@ -140,9 +141,9 @@ export function StagePanel({
           </p>
         )}
         {canApprove && <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-400">Cần bạn xác nhận: {info.review}</p>}
-        {stage.blockedBy.length > 0 && fresh && (
+        {stage.blocked_by.length > 0 && fresh && (
           <p className="text-xs text-muted-foreground">
-            Cần xác nhận trước: {stage.blockedBy.map((b) => STEP_INFO[b].label).join(", ")}.
+            Cần xác nhận trước: {stage.blocked_by.map((b) => STEP_INFO[b].label).join(", ")}.
           </p>
         )}
         {warnings.length > 0 && (
@@ -180,7 +181,7 @@ export function StagePanel({
               variant={fresh || stage.state === "failed" ? "default" : "outline"}
               size="sm"
               onClick={onRun}
-              disabled={busy || anotherRunning || stage.blockedBy.length > 0}
+              disabled={busy || anotherRunning || stage.blocked_by.length > 0}
             >
               {fresh || stage.state === "failed" || stage.state === "cancelled" ? <Play /> : <RotateCcw />}
               {fresh ? "Bắt đầu" : "Làm lại"}
@@ -196,7 +197,7 @@ export function StagePanel({
               Sang bước tiếp theo →
             </Button>
           )}
-          {(stage.startedAt || running) && (
+          {(stage.started_at || running) && (
             <Button variant="ghost" size="sm" onClick={onLog}>
               <ScrollText /> Nhật ký
             </Button>

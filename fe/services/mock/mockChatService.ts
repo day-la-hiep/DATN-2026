@@ -510,7 +510,6 @@ export const mockChatService: ChatService = {
       conversationId,
       role: "user",
       content,
-      selectionRef: input.selection,
       createdAt: now(),
       status: "done",
     };

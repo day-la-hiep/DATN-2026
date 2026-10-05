@@ -1,0 +1,271 @@
+// Derma Hospital — schema PostgreSQL hiện tại
+// Nguồn: core/app/models/*.py, khớp migration head 2d3a7e56a8b9 (2026-10-05).
+// Xem trên https://dbdiagram.io (dán nội dung file này).
+// id dạng chuỗi do DB sinh (gen_random_uuid()); dữ liệu cũ có thể còn id dạng `conv-<uuid>`, `msg-<uuid>`.
+
+Project derma_hospital {
+  database_type: 'PostgreSQL'
+  Note: 'File lớn (PDF, ảnh, pages.jsonl, chunk...) nằm ở MinIO; bảng `files` chỉ giữ metadata + storage_key. Vector nằm ở Qdrant, KG ở Neo4j.'
+}
+
+// ===================== Người dùng =====================
+
+TableGroup nguoi_dung {
+  users
+  patient_profiles
+  doctors
+  admins
+}
+
+Table users {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  username varchar(64) [unique, not null]
+  full_name varchar(255) [not null]
+  dob date [not null]
+  gender varchar(16) [not null, note: 'male | female']
+  password_hash varchar(255) [null, note: 'null: tài khoản mẫu chưa đặt mật khẩu']
+  created_at timestamptz [not null]
+  Note: 'Tài khoản. Đã có cột mật khẩu nhưng chưa có API đăng ký / đăng nhập.'
+}
+
+Table patient_profiles {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  user_id varchar(64) [not null, ref: > users.id]
+  full_name varchar(255) [not null]
+  dob date [not null]
+  gender varchar(16) [not null, note: 'male | female']
+  created_at timestamptz [not null]
+  Indexes {
+    user_id
+  }
+  Note: 'Một tài khoản có nhiều hồ sơ bệnh nhân (bản thân, người nhà). ON DELETE CASCADE theo users.'
+}
+
+Table doctors {
+  user_id varchar(64) [pk, ref: - users.id]
+  description text [not null, note: 'giới thiệu chuyên môn']
+  Note: 'Vai trò bác sĩ (1-1 với users). ON DELETE CASCADE.'
+}
+
+Table admins {
+  user_id varchar(64) [pk, ref: - users.id]
+  Note: 'Vai trò quản trị (1-1 với users). ON DELETE CASCADE.'
+}
+
+// ===================== Hội thoại & tư vấn =====================
+
+TableGroup hoi_thoai {
+  conversations
+  messages
+  message_files
+  consultation_sessions
+  video_calls
+}
+
+Table conversations {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  patient_profile_id varchar(64) [not null, ref: > patient_profiles.id]
+  title varchar(255) [not null, default: '']
+  model varchar(32) [not null, note: 'id ngắn trong AGENT_MODEL_CHOICES, không phải chuỗi provider:model']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  Note: 'Một hội thoại thuộc một hồ sơ bệnh nhân; chủ tài khoản = patient_profiles.user_id.'
+}
+
+Table messages {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  conversation_id varchar(64) [not null, ref: > conversations.id]
+  sender varchar(20) [not null, note: 'patient | ai | doctor']
+  message_type varchar(32) [not null, default: 'text', note: 'text | attached | video_call | consultation_requested | consultation_accepted | consultation_resolved']
+  video_call_id varchar(64) [null, note: 'chỉ với message_type = video_call']
+  consultation_session_id varchar(64) [null, note: 'chỉ với 3 tin mốc consultation_*']
+  content text [not null, default: '']
+  status varchar(20) [not null, note: 'queued | done | question (còn khai báo pending | streaming)']
+  metadata jsonb [null, note: 'ORM attribute `extra`. Tin AI: reasoning[], choice, sources[]. Tin user: attached_files, is_option_response']
+  created_at timestamptz [not null]
+  Indexes {
+    consultation_session_id
+  }
+}
+
+Table message_files {
+  message_id varchar(64) [pk, ref: > messages.id]
+  file_id varchar(64) [pk, ref: > files.id]
+  Note: 'Ảnh / tệp đính kèm của tin nhắn (n-n). ON DELETE CASCADE cả hai phía.'
+}
+
+Table consultation_sessions {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  conversation_id varchar(64) [not null, ref: > conversations.id]
+  doctor_id varchar(64) [null, ref: > doctors.user_id, note: 'null khi chưa có bác sĩ nhận']
+  status varchar(16) [not null, default: 'pending', note: 'pending | active | resolved']
+  reason text [not null]
+  requested_at timestamptz [not null]
+  started_at timestamptz [null]
+  resolved_at timestamptz [null]
+  Indexes {
+    conversation_id
+    conversation_id [unique, name: 'uq_consultation_sessions_open_per_conversation', note: "partial: WHERE status <> 'resolved' — tối đa 1 phiên mở / hội thoại"]
+  }
+  Note: '''
+  Phiên tư vấn bác sĩ trong một hội thoại (mới có schema, chưa có API).
+  CHECK doctor_when_not_pending: status = 'pending' OR doctor_id IS NOT NULL
+  CHECK resolved_at_when_resolved: status <> 'resolved' OR resolved_at IS NOT NULL
+  conversation_id ON DELETE CASCADE, doctor_id ON DELETE SET NULL.
+  '''
+}
+
+Table video_calls {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  room_id varchar(128) [unique, not null]
+  status varchar(16) [not null, default: 'pending', note: 'pending | ongoing | ended']
+  started_at timestamptz [null]
+  ended_at timestamptz [null]
+  created_at timestamptz [not null]
+  Note: 'Cuộc gọi video, gắn vào luồng chat qua messages.video_call_id (mới có schema).'
+}
+
+// ===================== Bệnh án =====================
+
+TableGroup benh_an {
+  medical_records
+  patient_images
+}
+
+Table medical_records {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  patient_profile_id varchar(64) [not null, ref: > patient_profiles.id]
+  doctor_id varchar(64) [null, ref: > doctors.user_id, note: 'bác sĩ ghi bệnh án']
+  diagnosis text [not null]
+  notes text [not null, default: '']
+  is_reference_case boolean [not null, default: false, note: 'ca bệnh tham khảo — dùng cho KB / tra ca tương tự']
+  created_at timestamptz [not null]
+  Indexes {
+    patient_profile_id
+  }
+  Note: 'Một hồ sơ bệnh nhân có nhiều bệnh án (mới có schema, chưa có API). patient_profile_id ON DELETE CASCADE; doctor_id ON DELETE SET NULL.'
+}
+
+Table patient_images {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  medical_record_id varchar(64) [not null, ref: > medical_records.id]
+  file_id varchar(64) [not null, ref: > files.id, note: 'có thể dùng lại file bệnh nhân đã gửi trong chat']
+  body_site varchar(128) [not null, default: '', note: 'vị trí trên cơ thể']
+  description text [not null, default: '']
+  confirmed_label varchar(128) [null, note: 'nhãn bác sĩ xác nhận — dữ liệu huấn luyện CNN']
+  captured_at timestamptz [null]
+  Indexes {
+    medical_record_id
+  }
+  Note: 'Ảnh bệnh do bác sĩ gắn vào bệnh án. ON DELETE CASCADE theo medical_records và files.'
+}
+
+// ===================== Clinical fact & báo cáo tiền tư vấn =====================
+
+TableGroup lam_sang {
+  clinical_fact_templates
+  clinical_facts
+  clinical_provenances
+  pre_consultation_reports
+}
+
+Table clinical_fact_templates {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  fact_type varchar(32) [not null, note: 'symptom | lesion | history | medication | allergy | image_finding | other']
+  label varchar(255) [unique, not null]
+  description text [not null, default: '']
+  ontology_id varchar(128) [null, note: 'id DermO / PrimeKG — dùng vẽ KG liên quan bệnh nhân']
+  Note: 'Danh mục mẫu dữ kiện lâm sàng chuẩn. Mọi clinical_facts phải tạo từ một mẫu (mới có schema).'
+}
+
+Table clinical_facts {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  patient_profile_id varchar(64) [not null, ref: > patient_profiles.id]
+  template_id varchar(64) [not null, ref: > clinical_fact_templates.id, note: 'ON DELETE RESTRICT; loại / nhãn / ontology lấy từ mẫu']
+  detail text [not null, default: '', note: 'giá trị cụ thể của bệnh nhân: vị trí, thời gian, mức độ...']
+  status varchar(16) [not null, default: 'active', note: 'active | superseded']
+  superseded_by_id varchar(64) [null, ref: > clinical_facts.id, note: 'fact mới thay thế; ON DELETE SET NULL']
+  created_at timestamptz [not null]
+  Indexes {
+    patient_profile_id
+    template_id
+  }
+  Note: 'Dữ kiện lâm sàng của hồ sơ bệnh nhân (mới có schema); hội thoại nguồn truy qua clinical_provenances → messages. Không sửa đè: đính chính thì tạo fact mới. ON DELETE CASCADE theo patient_profiles.'
+}
+
+Table clinical_provenances {
+  fact_id varchar(64) [pk, ref: > clinical_facts.id]
+  message_id varchar(64) [pk, ref: > messages.id]
+  Note: 'Nguồn gốc (`ClinicalProvenance`) của fact: tin nhắn gốc làm bằng chứng (n-n). ON DELETE CASCADE cả hai phía.'
+}
+
+Table pre_consultation_reports {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  consultation_session_id varchar(64) [unique, not null, ref: - consultation_sessions.id]
+  summary text [not null]
+  created_at timestamptz [not null]
+  Note: 'Báo cáo AI tóm tắt cho bác sĩ, 1 báo cáo / phiên tư vấn (mới có schema; tạm chỉ có summary). ON DELETE CASCADE.'
+}
+
+// ===================== File =====================
+
+Table files {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  file_name varchar(255) [not null, note: 'tên hiển thị']
+  storage_key varchar(512) [unique, not null, note: 'key object trong MinIO']
+  content_type varchar(128) [null]
+  size bigint [null, note: 'bytes']
+  created_at timestamptz [not null]
+  Note: 'Metadata file trong MinIO; dùng chung cho ảnh đính kèm tin nhắn và file của tài liệu.'
+}
+
+// ===================== Tài liệu (pipeline số hoá sách) =====================
+
+TableGroup tai_lieu {
+  documents
+  document_stages
+  document_overrides
+}
+
+Table documents {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  title varchar(255) [not null]
+  type varchar(16) [not null, default: 'book', note: 'book | image | video | other — hiện chỉ book đi qua pipeline']
+  source_file_id varchar(64) [null, ref: > files.id, note: 'source.pdf']
+  ingested_file_id varchar(64) [null, ref: > files.id, note: 'pages.jsonl (kết quả bước ingest)']
+  pdf_pages int [null]
+  profile jsonb [null, note: 'cấu hình xử lý (app/models/document_profile.py::Profile)']
+  uploaded_by_id varchar(64) [null, ref: > doctors.user_id, note: 'bác sĩ tải lên (chỉ bác sĩ được tải); ON DELETE SET NULL']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  Note: 'File của tài liệu nằm ở MinIO dưới document/<id>/. source_file_id, ingested_file_id ON DELETE SET NULL.'
+}
+
+Table document_stages {
+  id varchar(64) [pk, default: `gen_random_uuid()`]
+  document_id varchar(64) [not null, ref: > documents.id]
+  stage_id varchar(32) [not null, note: 'ingest | toc | chunks | index']
+  state varchar(32) [not null, default: 'not_started', note: 'not_started | running | pending_review | approved | failed | cancelled | stale']
+  options jsonb [null, note: 'tham số lần chạy']
+  progress jsonb [null]
+  summary jsonb [null, note: 'tóm tắt kết quả hiển thị cho người duyệt']
+  error text [null]
+  started_at timestamptz [null]
+  finished_at timestamptz [null]
+  approved_at timestamptz [null]
+  Indexes {
+    (document_id, stage_id) [unique]
+  }
+  Note: 'Trạng thái từng bước của một tài liệu (4 dòng / tài liệu) — entity `Document.stages`. ON DELETE CASCADE.'
+}
+
+Table document_overrides {
+  document_stage_id varchar(64) [pk, ref: - document_stages.id]
+  data jsonb [not null, default: `'{}'`, note: 'sửa tay của người duyệt, ví dụ toc: {<id>: {...}, _deleted, _added, _offset}']
+  updated_at timestamptz [not null]
+  Note: 'Sửa tay tách khỏi kết quả máy để chạy lại bước không mất — entity `DocumentStage.overrides` (hiện tối đa 1 dòng / bước). ON DELETE CASCADE theo document_stages; tài liệu suy ra từ bước.'
+}
+
+// Hai FK của messages ghi riêng để thể hiện ON DELETE SET NULL
+Ref: messages.video_call_id > video_calls.id [delete: set null]
+Ref: messages.consultation_session_id > consultation_sessions.id [delete: set null]

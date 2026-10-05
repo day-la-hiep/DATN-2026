@@ -14,7 +14,7 @@ from app.config.settings import settings
 from app.infra.qdrant_client import QdrantVectorClient, eq_filter
 
 EMBEDDING_DIM = 768  # models/gemini-embedding-001 (Google), truncated qua
-# output_dimensionality — PHẢI khớp agent/memory.py::_EMBEDDING_DIM
+# output_dimensionality — PHẢI khớp agent/embeddings.py (EMBEDDING_DIM)
 
 
 class KnowledgeBaseService:

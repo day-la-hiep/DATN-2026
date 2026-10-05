@@ -3,9 +3,9 @@
 Dùng THẲNG `langgraph.types.interrupt()` — cơ chế human-in-the-loop CÓ SẴN của
 LangGraph — ngay trong thân hàm tool: gọi `interrupt(payload)` tạm dừng graph tại đây,
 LangGraph tự checkpoint + trả lại đúng giá trị này khi resume qua
-`Command(resume=answer)` (`app/agent/graph.py::resume_turn`). Không cần tự dựng khái
+`Command(resume=answer)` (`agent/graph/chat_graph.py::resume_turn`). Không cần tự dựng khái
 niệm "tool chờ"/node chờ riêng như bản trước — `ToolNode` (dùng bên trong
-`create_react_agent`, `app/agent/graph.py`) coi tool này như mọi tool khác, chỉ khác ở
+`create_react_agent`, `agent/graph/chat_graph.py`) coi tool này như mọi tool khác, chỉ khác ở
 chỗ nó không `return` ngay lần đầu.
 """
 

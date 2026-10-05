@@ -1,17 +1,16 @@
 """DTO Input cho pipeline tài liệu."""
 from typing import Any, Literal
 
-from pydantic import Field
-
-from app.dto.common import CamelModel
+from pydantic import BaseModel, Field
 
 
-class RunStageInput(CamelModel):
+
+class RunStageInput(BaseModel):
     options: dict[str, Any] = {}
     force: bool = False  # bỏ qua kiểm tra bước phụ thuộc đã duyệt
 
 
-class DocumentSettings(CamelModel):
+class DocumentSettings(BaseModel):
     """Phần cấu hình của tài liệu sửa được trên giao diện (ghi vào `documents.profile`)."""
 
     title: str = Field(min_length=1)
@@ -27,24 +26,24 @@ class DocumentSettings(CamelModel):
     breadcrumb: bool = True
 
 
-class TocItem(CamelModel):
+class TocItem(BaseModel):
     """Sửa một mục của mục lục. Trường để trống = không đổi; `clear_page` = đặt số trang về rỗng."""
 
     id: str
     title: str | None = None
     level: int | None = Field(default=None, ge=0, le=3)
-    printed_page: int | None = Field(default=None, ge=0)
+    page_printed: int | None = Field(default=None, ge=0)  # override lưu dưới khoá `printed_page` (khớp `toc.json`)
     clear_page: bool = False
 
 
-class TocNew(CamelModel):
+class TocNew(BaseModel):
     title: str = Field(min_length=1)
     level: int = Field(default=2, ge=0, le=3)
-    printed_page: int | None = Field(default=None, ge=0)
+    page_printed: int | None = Field(default=None, ge=0)
     after_id: str | None = None  # chèn sau mục này; trống = cuối danh sách
 
 
-class TocUpdate(CamelModel):
+class TocUpdate(BaseModel):
     items: list[TocItem] = []
     revert: list[str] = []  # bỏ mọi sửa tay của các mục này
     deleted: list[str] = []

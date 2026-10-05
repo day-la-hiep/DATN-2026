@@ -5,9 +5,11 @@ import {
   toConversation,
   toSendMessageBody,
   toSendMessageResult,
+  toStreamEvent,
   type ApiChatMessage,
   type ApiConversation,
   type ApiFileAttachment,
+  toFileAttachment,
   type ApiSendMessageResult,
 } from "./apiAdapters";
 import type {
@@ -22,10 +24,11 @@ import type {
 /**
  * Service kết nối backend API theo contract core/app/api/conversation_api.py:
  * - GET /conversations
- * - POST /conversations (CreateConversationInput: userId, initMessage, title)
+ * Wire snake_case; chuyển đổi sang kiểu UI ở `services/apiAdapters.ts`.
+ * - POST /conversations (CreateConversationInput: user_id, content, title)
  * - GET /conversations/{conversation_id}/messages
- * - POST /conversations/{conversation_id}/messages (SendMessageInput: clientMessageId, content, modelId, attachments, selection)
- * - POST /conversations/{conversation_id}/questions/{questionId}/answer (MessageAnswerDto: questionId, optionId, label, custom)
+ * - POST /conversations/{conversation_id}/messages (SendMessageInput: client_message_id, content, model_id, attached_files)
+ * - POST /conversations/{conversation_id}/questions/{question_id}/answer (MessageAnswerDto: question_id, option_id, label, custom)
  * - GET /conversations/{conversation_id}/stream (SSE response stream text/event-stream)
  */
 
@@ -44,12 +47,12 @@ const impl = {
   },
 
   async getConversations() {
-    // Backend yêu cầu query param `userId` bắt buộc (chưa có auth thật — xem
+    // Backend yêu cầu query param `user_id` bắt buộc (chưa có auth thật — xem
     // `core/docs/api-doc.md` mục 0/1.1); FE cũng hard-code "user-1" ở mọi chỗ khác
     // (`createConversation` bên dưới, `store.ts`), giữ nhất quán.
     const { data } = await api.get<{ data: ApiConversation[] }>(
       endpoints.conversations,
-      { params: { userId: "user-1" } }
+      { params: { user_id: "user-1" } }
     );
     return data.data.map(toConversation);
   },
@@ -64,16 +67,16 @@ const impl = {
   async createConversation(input?: Partial<CreateConversationInput> | string) {
     const payload: CreateConversationInput =
       typeof input === "string"
-        ? { userId: "user-1", initMessage: "", title: input }
+        ? { userId: "user-1", content: "", title: input }
         : {
             userId: input?.userId ?? "user-1",
-            initMessage: input?.initMessage ?? "",
+            content: input?.content ?? "",
             title: input?.title ?? "",
           };
 
     const { data } = await api.post<{ data: ApiConversation }>(
       endpoints.conversations,
-      payload
+      { user_id: payload.userId, content: payload.content, title: payload.title }
     );
     return toConversation(data.data);
   },
@@ -87,7 +90,7 @@ const impl = {
     content: string;
     isCanvas?: boolean;
   }) {
-    await api.put(endpoints.document(messageId), { content, isCanvas });
+    await api.put(endpoints.document(messageId), { content, is_canvas: isCanvas });
   },
 
   onEvent(listener: (event: ChatStreamEvent) => void) {
@@ -146,7 +149,7 @@ const impl = {
           const data = line.slice(5).trim();
           if (!data || data === "[DONE]") continue;
           try {
-            const event = JSON.parse(data) as ChatStreamEvent;
+            const event = toStreamEvent(JSON.parse(data) as Record<string, unknown>);
             impl.listeners.forEach((listener) => listener(event));
           } catch {
             // bỏ qua frame không phải JSON
@@ -179,8 +182,8 @@ const impl = {
     await api.post(
       endpoints.answerQuestion(input.conversationId, input.questionId),
       {
-        questionId: input.questionId,
-        optionId: input.optionId,
+        question_id: input.questionId,
+        option_id: input.optionId,
         label: input.label,
         custom: input.custom,
       }
@@ -208,14 +211,7 @@ const impl = {
       form,
       { headers: { "Content-Type": undefined } }
     );
-    return {
-      id: data.id,
-      name: data.name,
-      size: data.size,
-      type: data.type,
-      url: data.url ?? undefined,
-      uploaded: true,
-    };
+    return toFileAttachment(data);
   },
 };
 

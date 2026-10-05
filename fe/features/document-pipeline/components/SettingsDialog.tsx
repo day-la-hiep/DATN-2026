@@ -41,12 +41,12 @@ function Toggle({ label, hint, checked, onChange }: { label: string; hint?: stri
 function Form({ documentId, initial, onClose }: { documentId: string; initial: Settings; onClose: () => void }) {
   const refresh = useRefreshDocument(documentId);
   const [s, setS] = useState<Settings>(initial);
-  const [noise, setNoise] = useState(initial.noisePages.join(", "));
+  const [noise, setNoise] = useState(initial.noise_pages.join(", "));
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setS((p) => ({ ...p, [k]: v }));
-  const num = (k: "maxTokens" | "minTokens", v: string) => set(k, v === "" ? 0 : parseInt(v.replace(/\D/g, ""), 10) || 0);
+  const num = (k: "max_tokens" | "min_tokens", v: string) => set(k, v === "" ? 0 : parseInt(v.replace(/\D/g, ""), 10) || 0);
 
   const save = useMutation({
-    mutationFn: () => documentApi.saveSettings(documentId, { ...s, noisePages: noise.split(",").map((x) => x.trim()).filter(Boolean) }),
+    mutationFn: () => documentApi.saveSettings(documentId, { ...s, noise_pages: noise.split(",").map((x) => x.trim()).filter(Boolean) }),
     onSuccess: () => {
       refresh();
       toast.success("Đã lưu cài đặt.");
@@ -71,8 +71,8 @@ function Form({ documentId, initial, onClose }: { documentId: string; initial: S
           </Field>
           {s.engine === "docling" && (
             <>
-              <Toggle label="Luôn đọc lại từ ảnh" hint="Bỏ qua văn bản ẩn sẵn có trong PDF (thường bị lỗi ở sách scan)." checked={s.doclingForceOcr} onChange={(v) => set("doclingForceOcr", v)} />
-              <Toggle label="Nhận biết bảng" hint="Giữ đúng cột/hàng của bảng, kể cả mục lục dạng bảng; chậm hơn." checked={s.doclingTables} onChange={(v) => set("doclingTables", v)} />
+              <Toggle label="Luôn đọc lại từ ảnh" hint="Bỏ qua văn bản ẩn sẵn có trong PDF (thường bị lỗi ở sách scan)." checked={s.docling_force_ocr} onChange={(v) => set("docling_force_ocr", v)} />
+              <Toggle label="Nhận biết bảng" hint="Giữ đúng cột/hàng của bảng, kể cả mục lục dạng bảng; chậm hơn." checked={s.docling_tables} onChange={(v) => set("docling_tables", v)} />
             </>
           )}
           <Field label="Trang không dùng" hint="Các trang không đưa vào nội dung, cách nhau dấu phẩy, vd 1-30, 937-968 (chỉ mục cuối sách).">
@@ -81,23 +81,23 @@ function Form({ documentId, initial, onClose }: { documentId: string; initial: S
         </div>
         <div className="space-y-3 rounded-xl border border-border p-3">
           <p className="text-xs font-semibold text-foreground">Đọc mục lục bằng AI</p>
-          <Toggle label="Dùng AI đọc mục lục" hint="Nếu tắt, hệ thống không thể tự đọc mục lục." checked={s.llmEnabled} onChange={(v) => set("llmEnabled", v)} />
+          <Toggle label="Dùng AI đọc mục lục" hint="Nếu tắt, hệ thống không thể tự đọc mục lục." checked={s.llm_enabled} onChange={(v) => set("llm_enabled", v)} />
           <Field label="Mô hình AI (nâng cao)" hint="Để trống để dùng mô hình mặc định của hệ thống.">
-            <Input value={s.llmModel} onChange={(e) => set("llmModel", e.target.value)} className="h-9 rounded-xl font-mono text-sm" placeholder="vd deepseek-v4-flash" />
+            <Input value={s.llm_model} onChange={(e) => set("llm_model", e.target.value)} className="h-9 rounded-xl font-mono text-sm" placeholder="vd deepseek-v4-flash" />
           </Field>
         </div>
         <div className="space-y-3 rounded-xl border border-border p-3">
           <p className="text-xs font-semibold text-foreground">Chia đoạn</p>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Độ dài tối đa mỗi đoạn" hint="Đơn vị ước lượng; 400 tương đương khoảng 300 từ.">
-              <Input value={String(s.maxTokens)} onChange={(e) => num("maxTokens", e.target.value)} inputMode="numeric" className="h-9 rounded-xl font-mono text-sm" />
+              <Input value={String(s.max_tokens)} onChange={(e) => num("max_tokens", e.target.value)} inputMode="numeric" className="h-9 rounded-xl font-mono text-sm" />
             </Field>
             <Field label="Độ dài tối thiểu mỗi đoạn" hint="Đoạn ngắn hơn sẽ được đánh dấu “cần xem”.">
-              <Input value={String(s.minTokens)} onChange={(e) => num("minTokens", e.target.value)} inputMode="numeric" className="h-9 rounded-xl font-mono text-sm" />
+              <Input value={String(s.min_tokens)} onChange={(e) => num("min_tokens", e.target.value)} inputMode="numeric" className="h-9 rounded-xl font-mono text-sm" />
             </Field>
           </div>
           <Field label="Không gộp đoạn qua ranh giới" hint="Một đoạn không bao giờ chứa nội dung của hai mục khác nhau ở cấp này trở lên.">
-            <select value={s.boundaryLevel} onChange={(e) => set("boundaryLevel", parseInt(e.target.value, 10))} className={selectBox}>
+            <select value={s.boundary_level} onChange={(e) => set("boundary_level", parseInt(e.target.value, 10))} className={selectBox}>
               <option value={3}>Mọi mục trong mục lục (khuyến nghị)</option>
               <option value={2}>Phần, chương và bài/bệnh (không tách mục nhỏ)</option>
               <option value={1}>Chỉ phần và chương (gộp các bài/bệnh trong cùng chương)</option>
@@ -113,7 +113,7 @@ function Form({ documentId, initial, onClose }: { documentId: string; initial: S
         </Button>
         <Button
           onClick={() => save.mutate()}
-          disabled={save.isPending || !s.title.trim() || s.maxTokens < 50 || s.maxTokens > 4000 || s.minTokens > 1000}
+          disabled={save.isPending || !s.title.trim() || s.max_tokens < 50 || s.max_tokens > 4000 || s.min_tokens > 1000}
           className={cn(save.isPending && "opacity-80")}
         >
           {save.isPending && <Loader2 className="animate-spin" />} Lưu

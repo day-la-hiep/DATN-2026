@@ -1,6 +1,6 @@
 /**
- * Kiểu dữ liệu của luồng chunk theo mục lục — khớp DTO `core/app/dto/request/toc_pipeline.py + core/app/dto/response/toc_pipeline.py` và record do
- * `core/pipeline/document_ingest` định nghĩa (đã đổi key sang camelCase ở service).
+ * Kiểu dữ liệu của pipeline tài liệu — khớp DTO `core/app/dto/request/document.py` + `core/app/dto/response/document.py`.
+ * Wire dùng snake_case (đúng tên field Python, field cùng nghĩa theo `core/app/dto/base/`).
  */
 export type StageState =
   | "not_started"
@@ -19,50 +19,61 @@ export interface Progress {
 }
 
 export interface Stage {
-  id: StepId;
+  stage_id: StepId;
   title: string;
   deps: StepId[];
-  usesLlm: boolean;
+  uses_llm: boolean;
   state: StageState;
-  startedAt?: string | null;
-  finishedAt?: string | null;
-  approvedAt?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  approved_at?: string | null;
   progress?: Progress | null;
   summary?: Record<string, unknown> | null;
   error?: string | null;
   options: Record<string, unknown>;
   /** bước phụ thuộc chưa được duyệt -> chưa chạy được */
-  blockedBy: StepId[];
+  blocked_by: StepId[];
+}
+
+/** Khớp `FileDto` (`core/app/dto/common.py`), field theo `File` ở base. */
+export interface FileRef {
+  file_name: string;
+  storage_key: string;
+  content_type?: string | null;
+  size?: number | null;
+  created_at?: string | null;
+  url?: string | null;
 }
 
 export interface Document {
   id: string;
   title: string;
-  createdAt?: string | null;
-  hasPdf: boolean;
-  pdfPages?: number | null;
+  created_at?: string | null;
+  /** file PDF gốc (khớp `File` ở base); null = chưa có */
+  source_file?: FileRef | null;
+  pdf_pages?: number | null;
   stages: Stage[];
-  runningStage?: StepId | null;
+  running_stage?: StepId | null;
 }
 
 export interface DocumentSummary {
   id: string;
   title: string;
-  createdAt?: string | null;
+  created_at?: string | null;
   states: Record<StepId, StageState>;
 }
 
 export interface Settings {
   title: string;
   engine: "pdftotext" | "docling";
-  doclingForceOcr: boolean;
-  doclingTables: boolean;
-  noisePages: string[];
-  llmEnabled: boolean;
-  llmModel: string;
-  maxTokens: number;
-  minTokens: number;
-  boundaryLevel: number;
+  docling_force_ocr: boolean;
+  docling_tables: boolean;
+  noise_pages: string[];
+  llm_enabled: boolean;
+  llm_model: string;
+  max_tokens: number;
+  min_tokens: number;
+  boundary_level: number;
   breadcrumb: boolean;
 }
 
@@ -73,49 +84,49 @@ export interface TocEntry {
   kind: "part" | "section" | "topic" | "sub";
   title: string;
   /** số trang IN của sách theo mục lục; null = không có (part/section thường không có số trang) */
-  printedPage?: number | null;
-  tocPage?: number | null;
+  page_printed?: number | null;
+  toc_page?: number | null;
   suspect?: boolean;
-  suspectReason?: string;
+  suspect_reason?: string;
   edited?: boolean;
   added?: boolean;
-  parentId?: string | null;
+  parent_id?: string | null;
   path: string[];
   /** trang PDF sau khi quy đổi bằng độ lệch */
-  pdfPage?: number | null;
-  anchorLine?: number | null;
+  page?: number | null;
+  anchor_line?: number | null;
   /** true = tìm thấy dòng tiêu đề của mục ở trang đó; false = chỉ biết trang theo mục lục */
   anchored?: boolean;
   /** trang quy đổi vượt quá số trang của bản PDF (bản trích): không thành chunk */
-  outOfRange?: boolean;
+  out_of_range?: boolean;
 }
 
 export interface TocDoc {
-  tocPages: number[];
-  pagesSource: "user" | "llm" | string;
+  toc_pages: number[];
+  pages_source: "user" | "llm" | string;
   entries: TocEntry[];
   /** trang PDF = trang in + offset; null = chưa xác định */
   offset?: number | null;
-  offsetInfo: { source?: "user" | "auto"; matched?: number; votes?: Record<string, number>; support?: number };
-  totalPages: number;
+  offset_info: { source?: "user" | "auto"; matched?: number; votes?: Record<string, number>; support?: number };
+  total_pages: number;
   anchored: number;
   warnings: string[];
 }
 
 export interface TocUpdate {
-  items?: { id: string; title?: string; level?: number; printedPage?: number; clearPage?: boolean }[];
+  items?: { id: string; title?: string; level?: number; page_printed?: number; clear_page?: boolean }[];
   revert?: string[];
   deleted?: string[];
   restored?: string[];
-  added?: { title: string; level?: number; printedPage?: number; afterId?: string }[];
-  removedAdded?: string[];
+  added?: { title: string; level?: number; page_printed?: number; after_id?: string }[];
+  removed_added?: string[];
   offset?: number;
-  clearOffset?: boolean;
+  clear_offset?: boolean;
 }
 
 export interface Figure {
-  figureId: string;
-  documentId: string;
+  figure_id: string;
+  document_id: string;
   page: number;
   seq: number;
   /** [trái, trên, phải, dưới] trên trang PDF */
@@ -124,47 +135,47 @@ export interface Figure {
 }
 
 export interface Chunk {
-  chunkId: string;
+  chunk_id: string;
   seq: number;
   text: string;
-  contextText: string;
+  context_text: string;
   part: string;
   section: string;
   topic: string;
   subtopic: string;
-  tocPath: string[];
-  tocNodeIds: string[];
+  toc_path: string[];
+  toc_node_ids: string[];
   /** ảnh nằm trong khoảng trang của chunk */
-  figureIds: string[];
+  figure_ids: string[];
   level: number;
   /** khoảng trang PDF theo mục lục của mục chứa chunk */
-  pagesHint: [number, number] | null;
+  pages_hint: [number, number] | null;
   /** mục chưa neo được dòng: ranh giới chỉ chính xác tới cấp trang */
   boundary: boolean;
   suspect: boolean;
-  pageStart: number;
-  pageEnd: number;
-  pagePrintedStart: number;
-  pagePrintedEnd: number;
+  page_start: number;
+  page_end: number;
+  page_printed_start: number;
+  page_printed_end: number;
   tokens: number;
   chars: number;
-  reviewReason?: string | null;
+  review_reason?: string | null;
 }
 
 export interface ChunkList {
   items: Chunk[];
   total: number;
   page: number;
-  pageSize: number;
-  counts: { all?: number; review?: number; tokens?: number; perNode?: Record<string, number> };
+  page_size: number;
+  counts: { all?: number; review?: number; tokens?: number; per_node?: Record<string, number> };
 }
 
 export interface SourcePage {
   page: number;
-  pagePrinted: number;
+  page_printed: number;
   header: string;
   text: string;
   noise: boolean;
-  noiseReason?: string | null;
-  noiseScore: number;
+  noise_reason?: string | null;
+  noise_score: number;
 }

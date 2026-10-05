@@ -9,7 +9,6 @@ import type {
   Conversation,
   FileAttachment,
   MessageChoice,
-  MessageSelectionRef,
   ReasoningStep,
 } from "./types";
 
@@ -28,14 +27,12 @@ export interface ConversationInputState {
   value: string;
   selectedSkill: SkillOption | null;
   files: FileAttachment[];
-  pendingSelection: MessageSelectionRef | MessageSelectionRef[] | null;
 }
 
 export const DEFAULT_INPUT_STATE: ConversationInputState = {
   value: "",
   selectedSkill: null,
   files: [],
-  pendingSelection: null,
 };
 
 interface ChatState {
@@ -44,7 +41,7 @@ interface ChatState {
   messagesByConversation: Record<string, ChatMessage[]>;
   /** số luồng AI đang chạy theo từng hội thoại -> cho phép gửi song song */
   activeStreams: Record<string, number>;
-  /** Quản lý trạng thái khung nhập (draft text, skill, files, pendingSelection) theo từng conversationId */
+  /** Quản lý trạng thái khung nhập (draft text, skill, files) theo từng conversationId */
   inputsByConversation: Record<string, ConversationInputState>;
   connected: boolean;
   loadingConversations: boolean;
@@ -68,7 +65,6 @@ interface ChatState {
     content: string,
     options?: {
       attachments?: FileAttachment[];
-      selection?: MessageSelectionRef | MessageSelectionRef[];
     }
   ) => void;
   /** Lưu bản chỉnh sửa văn bản soạn sẵn (canvas) vào message + database */
@@ -101,15 +97,6 @@ function normalizeStreamEvent(rawEvent: ChatStreamEvent): import("./types").Flat
         clientMessageId,
         conversationId,
         messageId,
-      };
-    }
-    if (status === "message.steered") {
-      return {
-        type: "message.steered",
-        corrId: clientMessageId,
-        conversationId,
-        messageId,
-        content: meta.content,
       };
     }
     if (status === "message.delta") {
@@ -534,9 +521,9 @@ export const useChatStore = create<ChatState>((set, get) => {
           try {
             const conversation = await chatService.createConversation({
               userId: "user-1",
-              // Không seed initMessage ở đây — sendMessage bên dưới sẽ gửi tin
+              // Không seed content ở đây — sendMessage bên dưới sẽ gửi tin
               // đầu tiên (tránh trùng lặp user message ở turn đầu).
-              initMessage: "",
+              content: "",
               title: trimmed.slice(0, MAX_SAVED_TITLE_LENGTH),
             });
             set((s) => ({
@@ -562,11 +549,12 @@ export const useChatStore = create<ChatState>((set, get) => {
 
       const { activeId, activeStreams, selectedModelId } = get();
       if (!activeId) return;
+      // Không có Steer: đang có turn chạy thì không gửi tin mới (backend cũng trả 409).
+      if ((activeStreams[activeId] ?? 0) > 0) return;
 
       const attachments = options?.attachments?.length
         ? options.attachments
         : undefined;
-      const selection = options?.selection;
 
       // Reset input state cho conversation này sau khi bấm gửi
       get().setInputState(activeId, DEFAULT_INPUT_STATE);
@@ -578,7 +566,6 @@ export const useChatStore = create<ChatState>((set, get) => {
         role: "user",
         content: trimmed,
         attachments,
-        selectionRef: selection,
         createdAt: nowIso,
         status: "done",
       };
@@ -594,28 +581,11 @@ export const useChatStore = create<ChatState>((set, get) => {
 
       set((state) => {
         const currentList = state.messagesByConversation[activeId] ?? [];
-        const isStreaming = (activeStreams[activeId] ?? 0) > 0;
-        const nextList = [...currentList];
-
-        if (isStreaming) {
-          // If streaming, find the active assistant message and insert steer userMessage BEFORE it
-          const asstIdx = nextList.findIndex(
-            (m) => m.role === "assistant" && m.status !== "done"
-          );
-          if (asstIdx !== -1) {
-            nextList.splice(asstIdx, 0, userMessage);
-          } else {
-            nextList.push(userMessage);
-          }
-        } else {
-          // New turn: append userMessage and assistantMessage
-          nextList.push(userMessage, assistantMessage);
-        }
 
         return {
           messagesByConversation: {
             ...state.messagesByConversation,
-            [activeId]: nextList,
+            [activeId]: [...currentList, userMessage, assistantMessage],
           },
           activeStreams: {
             ...state.activeStreams,
@@ -634,8 +604,6 @@ export const useChatStore = create<ChatState>((set, get) => {
         };
       });
 
-      const isSteer = (activeStreams[activeId] ?? 0) > 0;
-
       Promise.resolve(
         chatService.sendMessage({
           conversationId: activeId,
@@ -644,7 +612,6 @@ export const useChatStore = create<ChatState>((set, get) => {
           content: trimmed,
           modelId: selectedModelId,
           attachments,
-          selection,
         })
       ).then((result) => {
         // Backend thật trả về id thật của cả user message lẫn assistant row
@@ -658,7 +625,7 @@ export const useChatStore = create<ChatState>((set, get) => {
             if (m.id === userMessage.id) {
               return { ...m, id: result.userMessage.id, status: result.userMessage.status };
             }
-            if (!isSteer && m.id === assistantMessage.id) {
+            if (m.id === assistantMessage.id) {
               return { ...m, id: result.assistantMessage.id, status: result.assistantMessage.status };
             }
             return m;

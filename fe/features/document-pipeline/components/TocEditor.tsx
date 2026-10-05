@@ -74,7 +74,7 @@ function TitleCell({ entry, onSave }: { entry: TocEntry; onSave: (title: string)
 }
 
 function PageCell({ entry, onSave }: { entry: TocEntry; onSave: (page: number | null) => void }) {
-  const orig = entry.printedPage == null ? "" : String(entry.printedPage);
+  const orig = entry.page_printed == null ? "" : String(entry.page_printed);
   const [v, setV] = useState(orig);
   const commit = () => {
     if (v !== orig) onSave(v.trim() === "" ? null : parseInt(v, 10));
@@ -102,7 +102,7 @@ function AddDialog({
   open: boolean;
   after: TocEntry | null;
   onOpenChange: (o: boolean) => void;
-  onAdd: (e: { title: string; level: number; printedPage?: number; afterId?: string }) => void;
+  onAdd: (e: { title: string; level: number; page_printed?: number; after_id?: string }) => void;
 }) {
   const [title, setTitle] = useState("");
   const [level, setLevel] = useState(2);
@@ -145,7 +145,7 @@ function AddDialog({
           <Button
             disabled={!title.trim()}
             onClick={() => {
-              onAdd({ title: title.trim(), level, printedPage: page ? parseInt(page, 10) : undefined, afterId: after?.id });
+              onAdd({ title: title.trim(), level, page_printed: page ? parseInt(page, 10) : undefined, after_id: after?.id });
               setTitle("");
               setPage("");
               onOpenChange(false);
@@ -171,9 +171,9 @@ function OffsetCard({
   onRefresh: () => void;
 }) {
   const [v, setV] = useState(doc.offset == null ? "" : String(doc.offset));
-  const info = doc.offsetInfo ?? {};
+  const info = doc.offset_info ?? {};
   const votes = Object.entries(info.votes ?? {});
-  const total = doc.entries.filter((e) => !e.outOfRange && e.pdfPage != null).length;
+  const total = doc.entries.filter((e) => !e.out_of_range && e.page != null).length;
   return (
     <SectionCard
       title="Đối chiếu số trang"
@@ -259,7 +259,7 @@ export function TocEditor({
   const pending = update.isPending || recompute.isPending;
 
   const all = doc.entries;
-  const unanchored = (e: TocEntry) => !e.anchored && e.pdfPage != null && !e.outOfRange;
+  const unanchored = (e: TocEntry) => !e.anchored && e.page != null && !e.out_of_range;
   const shown = all.filter((e) => {
     if (filter === "suspect" && !e.suspect) return false;
     if (filter === "unanchored" && !unanchored(e)) return false;
@@ -278,18 +278,18 @@ export function TocEditor({
       ))}
 
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
-        <span className="text-muted-foreground">Trang mục lục ({doc.pagesSource === "user" ? "bạn nhập" : "AI tìm"}):</span>
-        {doc.tocPages.slice(0, 24).map((p) => (
+        <span className="text-muted-foreground">Trang mục lục ({doc.pages_source === "user" ? "bạn nhập" : "AI tìm"}):</span>
+        {doc.toc_pages.slice(0, 24).map((p) => (
           <PageChip key={p} page={p} onOpen={onPreview} />
         ))}
-        {doc.tocPages.length > 24 && <span className="text-muted-foreground">… {doc.tocPages.length} trang</span>}
+        {doc.toc_pages.length > 24 && <span className="text-muted-foreground">… {doc.toc_pages.length} trang</span>}
       </div>
 
       <OffsetCard
-        key={`${doc.offset}|${doc.offsetInfo?.source}`}
+        key={`${doc.offset}|${doc.offset_info?.source}`}
         doc={doc}
         pending={pending}
-        onSave={(o) => update.mutate(o == null ? { clearOffset: true } : { offset: o })}
+        onSave={(o) => update.mutate(o == null ? { clear_offset: true } : { offset: o })}
         onRefresh={() => recompute.mutate()}
       />
 
@@ -353,23 +353,23 @@ export function TocEditor({
                 </td>
                 <td className="max-w-md px-2 py-1.5">
                   <TitleCell key={e.title} entry={e} onSave={(title) => update.mutate({ items: [{ id: e.id, title }] })} />
-                  {e.suspect && <p className="mt-0.5 truncate pl-0.5 text-[10px] text-amber-600 dark:text-amber-400" style={{ paddingLeft: `${e.level * 14}px` }}>{e.suspectReason}</p>}
+                  {e.suspect && <p className="mt-0.5 truncate pl-0.5 text-[10px] text-amber-600 dark:text-amber-400" style={{ paddingLeft: `${e.level * 14}px` }}>{e.suspect_reason}</p>}
                 </td>
                 <td className="px-2 py-1.5 text-right">
                   <PageCell
-                    key={String(e.printedPage)}
+                    key={String(e.page_printed)}
                     entry={e}
-                    onSave={(p) => update.mutate({ items: [{ id: e.id, ...(p == null ? { clearPage: true } : { printedPage: p }) }] })}
+                    onSave={(p) => update.mutate({ items: [{ id: e.id, ...(p == null ? { clear_page: true } : { page_printed: p }) }] })}
                   />
                 </td>
                 <td className="px-2 py-1.5 text-xs">
-                  {e.outOfRange ? (
-                    <span className="text-[11px] text-muted-foreground" title={`Tương ứng trang ${e.pdfPage}, vượt quá số trang của file PDF này`}>
+                  {e.out_of_range ? (
+                    <span className="text-[11px] text-muted-foreground" title={`Tương ứng trang ${e.page}, vượt quá số trang của file PDF này`}>
                       ngoài file này
                     </span>
-                  ) : e.pdfPage != null ? (
+                  ) : e.page != null ? (
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                      <PageChip page={e.pdfPage} onOpen={onPreview} active={selectedId === e.id} />
+                      <PageChip page={e.page} onOpen={onPreview} active={selectedId === e.id} />
                       <span
                         className={cn("text-[10px]", e.anchored ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}
                         title={e.anchored ? "Đã tìm thấy đúng dòng tiêu đề của mục ở trang này" : "Chỉ biết số trang theo mục lục, chưa tìm thấy dòng tiêu đề (vị trí bắt đầu mục chỉ chính xác đến trang)"}
@@ -395,7 +395,7 @@ export function TocEditor({
                       variant="ghost"
                       size="icon-xs"
                       disabled={pending}
-                      onClick={() => update.mutate(e.added ? { removedAdded: [e.id] } : { deleted: [e.id] })}
+                      onClick={() => update.mutate(e.added ? { removed_added: [e.id] } : { deleted: [e.id] })}
                       title="Xóa mục"
                       aria-label="Xóa mục"
                     >

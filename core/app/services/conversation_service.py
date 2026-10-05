@@ -1,10 +1,11 @@
 """Business logic cho Conversation (`docs/api-doc.md` mục 1)."""
 
 from app.config.settings import settings
-from app.config.ids import new_conversation_id
-from app.dto.conversation import ConversationOutput, CreateConversationInput
+from app.dto.request.conversation import CreateConversationInput
+from app.dto.response.conversation import ConversationOutput
 from app.models.conversation import Conversation
 from app.repositories.conversation_repository import ConversationRepository
+from app.repositories.patient_profile_repository import PatientProfileRepository
 from app.services.message_service import MessageService
 
 
@@ -12,13 +13,19 @@ class ConversationNotFoundError(Exception):
     pass
 
 
+class PatientProfileNotFoundError(Exception):
+    """Tài khoản chưa có hồ sơ bệnh nhân nào — hội thoại bắt buộc gắn hồ sơ (`Conversation.patient`)."""
+
+
 class ConversationService:
     def __init__(
         self,
         conversation_repository: ConversationRepository,
+        patient_profile_repository: PatientProfileRepository,
         message_service: MessageService,
     ) -> None:
         self._conversations = conversation_repository
+        self._patient_profiles = patient_profile_repository
         self._messages = message_service
 
     async def list_conversations(
@@ -30,25 +37,28 @@ class ConversationService:
     async def create_conversation(
         self, body: CreateConversationInput
     ) -> ConversationOutput:
-        """Tạo hội thoại + lưu `initMessage` (nếu có) + publish turn đầu tiên — quyết định
+        """Tạo hội thoại + lưu `content` (nếu có) + publish turn đầu tiên — quyết định
         thiết kế ở `docs/api-doc.md` mục 1.2 (FE chỉ cần 1 request).
 
-        Chỉ mở turn khi `init_message` thực sự có nội dung: FE (`store.ts`) luôn tạo
-        conversation với `initMessage=""` rồi gọi `POST .../messages` riêng cho tin đầu
+        Chỉ mở turn khi `content` thực sự có nội dung: FE (`store.ts`) luôn tạo
+        conversation với `content=""` rồi gọi `POST .../messages` riêng cho tin đầu
         tiên (tránh trùng lặp) — mở turn với content rỗng vừa vô nghĩa vừa khiến LLM
         (Gemini) từ chối request, để lại Redis "active_turn" key treo vĩnh viễn vì turn
         không bao giờ hoàn tất."""
+        # API chưa cho chọn hồ sơ -> dùng hồ sơ mặc định (tạo sớm nhất) của tài khoản
+        profile = await self._patient_profiles.first_for_user(body.user_id)
+        if profile is None:
+            raise PatientProfileNotFoundError(body.user_id)
         conversation = Conversation(
-            id=new_conversation_id(),
-            user_id=body.user_id,
+            patient_profile_id=profile.id,
             title=body.title or "",
             model=body.model or settings.AGENT_DEFAULT_MODEL_ID,
         )
         await self._conversations.create(conversation)
 
-        if body.init_message.strip():
+        if body.content.strip():
             await self._messages.start_new_turn(
-                conversation_id=conversation.id, content=body.init_message
+                conversation_id=conversation.id, content=body.content
             )
         return _to_output(conversation)
 

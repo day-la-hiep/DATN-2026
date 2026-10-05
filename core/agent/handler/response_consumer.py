@@ -24,10 +24,10 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
             return
 
         # `Message.extra` cho row assistant CHỈ gồm 2 field này (`reasoning`/`choice`,
-        # xem `MessageMetadataDto` — `attachments`/`selection_ref`/`is_option_response`
+        # xem `MessageMetadataDto` — `attached_files`/`is_option_response`
         # chỉ áp dụng cho tin nhắn user) — REPLACE toàn bộ `extra` bằng state MỚI NHẤT
         # thay vì merge với giá trị cũ trong DB (`MessageRepository.upsert_assistant`),
-        # an toàn vì `AgentContext.reasoning_steps` (`app/agent/worker.py`) đã là danh
+        # an toàn vì `AgentContext.reasoning_steps` (`agent/worker.py`) đã là danh
         # sách ĐẦY ĐỦ tích luỹ từ đầu turn tới thời điểm này, không phải delta.
         extra: dict[str, Any] = {}
         if msg.reasoning:

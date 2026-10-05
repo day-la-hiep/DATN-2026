@@ -1,11 +1,9 @@
 "use client";
 
-import { useRef } from "react";
 import { FileText, Sparkles } from "lucide-react";
 import type { ChatMessage } from "../types";
 import { ImageThumbnail } from "./ImageThumbnail";
 import { MarkdownMessage } from "./MarkdownMessage";
-import { SelectionAsk } from "./SelectionAsk";
 
 interface QAPair {
   question: string;
@@ -41,7 +39,6 @@ function parseQAPairs(content: string): QAPair[] {
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
   const streaming = message.status === "streaming";
-  const contentRef = useRef<HTMLDivElement>(null);
 
   if (isUser) {
     const isChoiceAnswerMessage =
@@ -54,7 +51,6 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
       return (
         <div id={`msg-${message.id}`} className="flex w-full justify-end py-1">
           <div
-            ref={contentRef}
             className="w-auto max-w-[90%] sm:max-w-[80%] rounded-2xl rounded-tr-xs bg-brand text-brand-foreground p-4 shadow-sm shadow-brand/20"
           >
             <div className="flex flex-col gap-2">
@@ -87,42 +83,10 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         id={`msg-${message.id}`}
         className="flex w-full justify-end py-1"
       >
-        <SelectionAsk
-          messageId={message.id}
-          containerRef={contentRef}
-          className="flex justify-end max-w-[90%] sm:max-w-[75%]"
-        >
+        <div className="relative flex justify-end max-w-[90%] sm:max-w-[75%]">
           <div
-            ref={contentRef}
             className="w-full rounded-2xl rounded-tr-xs bg-brand text-brand-foreground px-4 py-3 sm:px-5 sm:py-3.5 shadow-sm shadow-brand/20 leading-relaxed"
           >
-            {/* Trích dẫn selection */}
-            {(() => {
-              const refs = Array.isArray(message.selectionRef)
-                ? message.selectionRef
-                : message.selectionRef
-                ? [message.selectionRef]
-                : [];
-              if (refs.length === 0) return null;
-              return (
-                <div className="mb-2.5 flex flex-col gap-1.5">
-                  {refs.map((ref, idx) => (
-                    <div
-                      key={`${ref.source}-${ref.refId}-${idx}`}
-                      className="rounded-xl border-l-2 border-brand-foreground/60 bg-brand-foreground/10 p-2.5 text-brand-foreground text-xs"
-                    >
-                      <span className="block text-[10px] font-mono uppercase tracking-wider text-brand-foreground/80 font-semibold">
-                        Trích dẫn {refs.length > 1 ? `#${idx + 1}` : ""}:
-                      </span>
-                      <p className="mt-0.5 whitespace-pre-wrap text-brand-foreground/95 line-clamp-3">
-                        “{ref.text}”
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-
             {/* File đính kèm */}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mb-2.5 flex flex-wrap gap-2">
@@ -152,7 +116,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
 
             <p className="whitespace-pre-wrap text-sm sm:text-base font-normal text-brand-foreground">{message.content}</p>
           </div>
-        </SelectionAsk>
+        </div>
       </div>
     );
   }
@@ -163,12 +127,8 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
       id={`msg-${message.id}`}
       className="flex w-full justify-start py-1 text-foreground"
     >
-      <SelectionAsk
-        messageId={message.id}
-        containerRef={contentRef}
-        className="w-full"
-      >
-        <div ref={contentRef} className="w-full text-foreground">
+      <div className="relative w-full">
+        <div className="w-full text-foreground">
           {message.content ? (
             <div className="text-sm sm:text-base leading-relaxed text-foreground">
               <MarkdownMessage content={message.content} />
@@ -183,7 +143,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
             </div>
           )}
         </div>
-      </SelectionAsk>
+      </div>
     </div>
   );
 }
