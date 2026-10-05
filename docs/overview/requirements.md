@@ -10,6 +10,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | ✅ Xong | chạy được end-to-end (BE + FE) |
 | 🟡 Một phần | có một phần (chỉ BE, chỉ schema DB, hoặc làm đơn giản hơn yêu cầu) |
 | 🔲 Chưa làm | chưa có code |
+| ⏸ Hoãn | ngoài scope hiện tại hoặc chưa chốt luồng |
 
 > Kết quả AI chỉ là gợi ý hỗ trợ, **không phải chẩn đoán y khoa**.
 
@@ -26,11 +27,11 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 
 | Mã | Module | Tác nhân | Trạng thái | Tài liệu |
 |---|---|---|---|---|
-| M1 | Tài khoản & phân quyền | Người dùng | 🔲 | — |
+| M1 | Tài khoản & phân quyền | Người dùng | 🟡 mới có cột mật khẩu | — |
 | M2 | Chatbot tư vấn AI | Bệnh nhân | ✅ phần lõi, 🟡 tra ca bệnh / memory | [chat.md](../module/chat.md) |
-| M3 | Clinical fact & báo cáo tiền tư vấn | Bệnh nhân → Bác sĩ | 🔲 | — |
+| M3 | Clinical fact & báo cáo tiền tư vấn | Bệnh nhân → Bác sĩ | 🟡 mới có schema | — |
 | M4 | Tư vấn trực tiếp với bác sĩ (chat / video) | Bệnh nhân, Bác sĩ | 🟡 mới có schema | — |
-| M5 | Đặt lịch khám | Bệnh nhân, Bác sĩ | 🔲 | — |
+| M5 | Đặt lịch khám | Bệnh nhân, Bác sĩ | ⏸ hoãn (ngoài scope hiện tại) | — |
 | M6 | Hồ sơ bệnh nhân & bệnh án | Bệnh nhân, Bác sĩ | 🟡 mới có schema (hồ sơ, bệnh án, ảnh) | — |
 | M7 | Ca bệnh & ảnh đã xác nhận (dữ liệu CNN) | Bác sĩ | 🟡 mới có cột nhãn ảnh | — |
 | M8 | Knowledge Graph | Bác sĩ, Chatbot | 🟡 agent tra được, chưa trực quan hoá | — |
@@ -42,7 +43,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 
 | Mã | Chức năng | Trạng thái | Hiện trạng / việc cần làm |
 |---|---|---|---|
-| M1.1 | Đăng ký tài khoản | 🔲 | `users` chưa có cột mật khẩu; user chỉ tạo qua `make init-db` |
+| M1.1 | Đăng ký tài khoản | 🟡 | đã có `users.password_hash` (`User.password_hash`); chưa có API, user chỉ tạo qua `make init-db` (chưa đặt mật khẩu) |
 | M1.2 | Đăng nhập / đăng xuất | 🔲 | hiện chỉ có app token chung (`APP_ACCESS_TOKEN`, `fe/app/access-gate.tsx`), không phải đăng nhập theo user |
 | M1.3 | Quản lý tài khoản cá nhân (xem / sửa thông tin) | 🔲 | — |
 | M1.4 | Phân quyền theo vai trò (bệnh nhân / bác sĩ / admin) | 🔲 | đã có bảng `doctors`, `admins` để gắn vai trò; API đang nhận `user_id` từ client |
@@ -61,15 +62,15 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | M2.8 | Tra cứu **ca bệnh liên quan** | 🔲 | chưa có kho ca bệnh, phụ thuộc M7 |
 | M2.9 | Chọn model LLM cho hội thoại | ✅ | `/models`, `PATCH /conversations/{id}/model` |
 | M2.10 | Ghi nhớ thông tin bệnh nhân giữa các hội thoại | 🟡 | `save_memory` + `inject_long_term_memory` chạy được nhưng store in-memory, mất khi restart Worker |
-| M2.11 | Trích dẫn nguồn (sources) cho câu trả lời | 🟡 | nguồn nằm trong kết quả tool ở reasoning, chưa trả `sources` có cấu trúc cho FE |
+| M2.11 | Trích dẫn nguồn (sources) cho câu trả lời | 🟡 | đã có entity `Source` + `MessageMetadata.sources` (lưu trong `messages.metadata`); agent chưa sinh, `ChatSourceDto` trên wire chưa khớp `Source` |
 
 ### M3 — Clinical fact & báo cáo tiền tư vấn
 
 | Mã | Chức năng | Trạng thái | Hiện trạng / việc cần làm |
 |---|---|---|---|
-| M3.1 | Trích **clinical fact** có cấu trúc từ hội thoại (triệu chứng, thời gian, vị trí, tiền sử, thuốc, dị ứng...) | 🔲 | hiện chỉ có `save_memory` dạng văn bản tự do; cần entity + bảng riêng |
-| M3.2 | Mỗi clinical fact liên kết tới **tin nhắn nguồn** | 🔲 | cần lưu `message_id` nguồn để bác sĩ truy xuất bằng chứng |
-| M3.3 | Sinh **báo cáo tổng hợp** trước khi bác sĩ tư vấn | 🔲 | kích hoạt khi bệnh nhân yêu cầu tư vấn (M4.1) |
+| M3.1 | Trích **clinical fact** có cấu trúc từ hội thoại (triệu chứng, thời gian, vị trí, tiền sử, thuốc, dị ứng...) | 🟡 | đã có schema: `PatientProfile.clinical_facts` → bảng `clinical_facts` (`template_id` trỏ `clinical_fact_templates` giữ loại / nhãn / `ontology_id`; fact giữ chi tiết, trạng thái thay thế). Chưa có bước trích xuất |
+| M3.2 | Mỗi clinical fact liên kết tới **tin nhắn nguồn** | 🟡 | đã có schema: `ClinicalFact.provenances[].message` (`ClinicalProvenance`) → bảng `clinical_provenances` |
+| M3.3 | Sinh **báo cáo tổng hợp** trước khi bác sĩ tư vấn | 🟡 | đã có schema: `ConsultationSession.report` → bảng `pre_consultation_reports`. Chưa có bước sinh báo cáo; kích hoạt khi bệnh nhân yêu cầu tư vấn (M4.1) |
 | M3.4 | Bác sĩ xem clinical fact, nguồn lập luận từ KB, mở tin nhắn nguồn | 🔲 | màn hình phía bác sĩ |
 
 ### M4 — Tư vấn trực tiếp với bác sĩ
@@ -87,9 +88,9 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 
 | Mã | Chức năng | Trạng thái | Hiện trạng / việc cần làm |
 |---|---|---|---|
-| M5.1 | Bác sĩ khai báo lịch làm việc / khung giờ trống | 🔲 | chưa có entity |
-| M5.2 | Bệnh nhân đặt lịch khám | 🔲 | — |
-| M5.3 | Xem / huỷ / đổi lịch (cả hai phía) | 🔲 | — |
+| M5.1 | Bác sĩ khai báo lịch làm việc / khung giờ trống | ⏸ | hoãn: ngoài scope đồ án hiện tại, chưa có entity |
+| M5.2 | Bệnh nhân đặt lịch khám | ⏸ | hoãn |
+| M5.3 | Xem / huỷ / đổi lịch (cả hai phía) | ⏸ | hoãn |
 
 ### M6 — Hồ sơ bệnh nhân & bệnh án
 
@@ -105,7 +106,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 
 | Mã | Chức năng | Trạng thái | Hiện trạng / việc cần làm |
 |---|---|---|---|
-| M7.1 | Bác sĩ lưu ca bệnh (chẩn đoán đã xác nhận + ảnh + mô tả) | 🔲 | — |
+| M7.1 | Bác sĩ lưu ca bệnh (chẩn đoán đã xác nhận + ảnh + mô tả) | 🟡 | đã có schema: cờ `medical_records.is_reference_case` trên bệnh án; chưa có API / UI |
 | M7.2 | Xác nhận / gán nhãn ảnh để làm dữ liệu huấn luyện CNN | 🟡 | đã có cột `patient_images.confirmed_label`; nhãn nên khớp 22 lớp hiện tại của CNN. Chưa có API / UI |
 | M7.3 | Ca bệnh đã xác nhận được nạp vào KB để chatbot tra (cho M2.8) | 🔲 | — |
 
@@ -124,8 +125,8 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | M9.1 | Tải lên giáo trình PDF, số hoá theo mục lục, nạp Qdrant | ✅ | `/admin/documents`, 4 bước `ingest → toc → chunks → index`, có người duyệt |
 | M9.2 | Tải lên guideline / tài liệu y khoa dạng khác | 🟡 | guideline hiện nạp bằng script (`data_ingest/`); pipeline chỉ nhận `type="book"` |
 | M9.3 | Chatbot tra cứu tài liệu đã nạp | 🔲 | chưa có tool đọc collection `derma_document_chunks` |
-| M9.4 | Phối hợp chatbot để làm giàu KB (gợi ý / bổ sung tri thức) | 🔲 | cần định nghĩa rõ luồng trước khi làm |
-| M9.5 | Quyền tải tài liệu dành cho bác sĩ | 🔲 | hiện khu admin chỉ dùng app token, phụ thuộc M1.4 |
+| M9.4 | Phối hợp chatbot để làm giàu KB (gợi ý / bổ sung tri thức) | ⏸ | chưa chốt luồng — đề xuất ở [docs/pending/kb-enrichment.md](../pending/kb-enrichment.md) |
+| M9.5 | Quyền tải tài liệu dành cho bác sĩ | 🟡 | đã có `documents.uploaded_by_id` → `doctors` (`Document.uploaded_by: Doctor`); khu admin vẫn chỉ dùng app token, phụ thuộc M1.4 |
 
 ## 4. Gợi ý thứ tự làm và chia việc
 
@@ -138,10 +139,11 @@ Các module có phụ thuộc, nên làm theo thứ tự sau để mỗi bước
 | 3 | **M3.1–M3.3** (clinical fact + báo cáo) | đầu vào cho màn bác sĩ và trực quan hoá KG |
 | 4 | **M4.1–M4.4, M4.6** (tư vấn qua chat), **M3.4** (màn bác sĩ xem báo cáo) | luồng chính bệnh nhân ↔ bác sĩ |
 | 5 | **M6.2–M6.5** (bệnh án), **M7** (ca bệnh), **M2.8** | cần bác sĩ đã dùng được hệ thống |
-| 6 | **M8.3** (trực quan hoá KG), **M5** (đặt lịch), **M4.5** (video call), **M9.4** | tính năng mở rộng |
+| 6 | **M8.3** (trực quan hoá KG), **M4.5** (video call), **M9.4** | tính năng mở rộng |
+| — | **M5** (đặt lịch) | hoãn, ngoài scope đồ án hiện tại |
 
 Có thể giao song song theo 3 nhánh ít đụng nhau:
-- **Nhánh nền tảng (BE + FE)**: M1, M6, M5.
+- **Nhánh nền tảng (BE + FE)**: M1, M6.
 - **Nhánh AI / agent**: M2.8, M2.10, M2.11, M3.1–M3.3, M9.3, M9.4.
 - **Nhánh tư vấn bác sĩ (BE + FE)**: M4, M3.4, M7, M8.3.
 

@@ -1,4 +1,4 @@
-"""DTO Output cho pipeline tài liệu — nguồn: entity nghiệp vụ `app/dto/base/document.py` (`Document`, `ProcessStage`,
+"""DTO Output cho pipeline tài liệu — nguồn: entity nghiệp vụ `app/dto/base/document.py` (`Document`, `DocumentStage`,
 `DocumentChunk`, `DocumentFigure`), dựng bởi `app/services/document_service.py`. Wire dùng snake_case như tên field Python."""
 from typing import Any
 
@@ -8,7 +8,7 @@ from app.dto.common import FileDto
 
 
 class StageOutput(BaseModel):
-    """Field khớp `ProcessStage` (bỏ `document_id`: đã có ở URL)."""
+    """Field khớp `DocumentStage` (bỏ `document_id`: đã có ở URL)."""
 
     stage_id: str
     title: str

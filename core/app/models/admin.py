@@ -1,4 +1,4 @@
-"""Admin — đánh dấu tài khoản quản trị (`app/dto/base/user.py::Admin`). Chưa có field riêng; PK = FK tới `users.id` (1-1)."""
+"""Admin — đánh dấu tài khoản quản trị (`app/dto/base/identity.py::Admin`). Chưa có field riêng; PK = FK tới `users.id` (1-1)."""
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 

@@ -24,6 +24,16 @@ class MessageSender(str, Enum):
     DOCTOR = "doctor"
 
 
+class ClinicalFactType(str, Enum):
+    SYMPTOM = "symptom"  # triệu chứng cơ năng: ngứa, đau, rát...
+    LESION = "lesion"  # tổn thương da: hình thái, vị trí, kích thước
+    HISTORY = "history"  # tiền sử bản thân / gia đình, diễn tiến bệnh
+    MEDICATION = "medication"  # thuốc đang / đã dùng
+    ALLERGY = "allergy"
+    IMAGE_FINDING = "image_finding"  # kết quả phân loại ảnh (CNN) — chỉ là giả thuyết
+    OTHER = "other"
+
+
 class ConsultationStatus(str, Enum):
     PENDING = "pending"  # chờ bác sĩ nhận
     ACTIVE = "active"  # bác sĩ đang trao đổi

@@ -1,4 +1,4 @@
-"""PatientProfile — hồ sơ bệnh nhân (`app/dto/base/user.py::PatientProfile`). Tách bảng vì một tài khoản quản lý được nhiều hồ
+"""PatientProfile — hồ sơ bệnh nhân (`app/dto/base/identity.py::PatientProfile`). Tách bảng vì một tài khoản quản lý được nhiều hồ
 sơ (bản thân, người thân) — `User.patient_profiles` là danh sách."""
 from datetime import UTC, date, datetime
 

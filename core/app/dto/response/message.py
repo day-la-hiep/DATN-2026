@@ -60,7 +60,7 @@ class ChatSourceDto(BaseModel):
 
 
 class DoctorDto(BaseModel):
-    """`app/dto/base/user.py::Doctor` rút gọn — chỉ phần cần hiển thị trong luồng chat."""
+    """`app/dto/base/identity.py::Doctor` rút gọn — chỉ phần cần hiển thị trong luồng chat."""
 
     id: str
     full_name: str
@@ -68,7 +68,7 @@ class DoctorDto(BaseModel):
 
 
 class ConsultationSessionDto(BaseModel):
-    """Field khớp `app/dto/base/conversation.py::ConsultationSession`."""
+    """Field khớp `app/dto/base/consultation.py::ConsultationSession`."""
 
     doctor: DoctorDto | None = None
     status: ConsultationStatus = ConsultationStatus.PENDING
@@ -79,7 +79,7 @@ class ConsultationSessionDto(BaseModel):
 
 
 class VideoCallDto(BaseModel):
-    """Field khớp `app/dto/base/video_call.py::VideoCall`."""
+    """Field khớp `app/dto/base/consultation.py::VideoCall`."""
 
     room_id: str
     status: Literal["pending", "ongoing", "ended"]

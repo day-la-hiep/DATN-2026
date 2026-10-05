@@ -1,6 +1,6 @@
 ---
 name: derma-pipeline-conventions
-description: Conventions for the Derma document-ingest pipeline (`core/pipeline/document_ingest/` — PDF document → table-of-contents-anchored chunks → Qdrant, admin UI at /admin/documents) — the 4-stage model (ingest/toc/chunks/index), the StageContext contract, the `app/dto/base/document.py` business entities (`Document`/`DocumentChunk`/`ProcessStage`/`ProcessStageOverride`), where transformation logic vs infra clients vs persistence go, and how to add or modify a stage. Use whenever the user asks to add/modify a pipeline stage, touches `pipeline/document_ingest/`, `app/services/document_*.py`, `app/repositories/document_repository.py`, asks about document/book/TOC/chunk ingestion, or asks where document-ingest code should live — even if they don't say "pipeline" or "convention".
+description: Conventions for the Derma document-ingest pipeline (`core/pipeline/document_ingest/` — PDF document → table-of-contents-anchored chunks → Qdrant, admin UI at /admin/documents) — the 4-stage model (ingest/toc/chunks/index), the StageContext contract, the `app/dto/base/document.py` business entities (`Document`/`DocumentChunk`/`DocumentStage`/`DocumentStageOverride`), where transformation logic vs infra clients vs persistence go, and how to add or modify a stage. Use whenever the user asks to add/modify a pipeline stage, touches `pipeline/document_ingest/`, `app/services/document_*.py`, `app/repositories/document_repository.py`, asks about document/book/TOC/chunk ingestion, or asks where document-ingest code should live — even if they don't say "pipeline" or "convention".
 ---
 
 # Derma document-ingest pipeline (`pipeline/document_ingest/`) — conventions
@@ -47,7 +47,7 @@ and they are NOT the same class even when field sets overlap:
 
 | Layer | Classes | Lives in |
 |---|---|---|
-| Business entity (source of truth) | `Document` (holds `source_file`/`ingested_file: File` + `chunks`), `DocumentChunk`, `ProcessStage`, `ProcessStageOverride`; `File` (shared, MinIO object: `file_name`, `storage_key`, `content_type`, `size`, `created_at`) | `app/dto/base/document.py`, `app/dto/base/file.py` |
+| Business entity (source of truth) | `Document` (holds `source_file`/`ingested_file: File` + `chunks`), `DocumentChunk`, `DocumentStage`, `DocumentStageOverride`; `File` (shared, MinIO object: `file_name`, `storage_key`, `content_type`, `size`, `created_at`) | `app/dto/base/document.py`, `app/dto/base/shared.py` |
 | ORM / Postgres schema | `Document`, `DocumentStage`, `DocumentOverride` | `app/models/document.py` |
 | API wire contract (snake_case, same-meaning fields named as in `dto/base`) | `DocumentOutput`, `DocumentSummary`, `StageOutput`, `ChunkListOutput` (response) / `DocumentSettings`, `TocUpdate`, `RunStageInput` (request) | `app/dto/response/document.py`, `app/dto/request/document.py` |
 
@@ -117,7 +117,7 @@ from the stage id.
 it via `ctx.profile.<section>.<field>` in the stage; surface it in the settings UI
 (`derma-fe-conventions`'s `features/document-pipeline/components/SettingsDialog.tsx` + `types.ts`).
 
-**Add/change a `dto/base` field** (`Document`/`DocumentChunk`/`ProcessStage`/`ProcessStageOverride`)
+**Add/change a `dto/base` field** (`Document`/`DocumentChunk`/`DocumentStage`/`DocumentStageOverride`)
 — propose it and get user approval FIRST (`derma-core-conventions`'s `dto/base` gate), then update:
 the entity in `app/dto/base/document.py` → the ORM model in `app/models/document.py` (new Alembic
 migration) → `DocumentService`'s entity builders (`_document()`/`_process_stages()`) → the wire DTO

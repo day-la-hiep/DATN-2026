@@ -12,3 +12,5 @@ from app.models.doctor import Doctor  # noqa: F401  # pyright: ignore[reportUnus
 from app.models.admin import Admin  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.models.patient_profile import PatientProfile  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.models.consultation_session import ConsultationSession  # noqa: F401  # pyright: ignore[reportUnusedImport]
+from app.models.medical_record import MedicalRecord, PatientImage  # noqa: F401  # pyright: ignore[reportUnusedImport]
+from app.models.clinical import ClinicalFact, ClinicalProvenance, ClinicalFactTemplate, PreConsultationReport  # noqa: F401  # pyright: ignore[reportUnusedImport]

@@ -63,7 +63,7 @@ def _file_dict(row: File | None) -> dict[str, Any] | None:
 
 
 def _stage_dict(row: DocumentStage) -> dict[str, Any]:
-    out: dict[str, Any] = {"state": row.state}
+    out: dict[str, Any] = {"id": row.id, "state": row.state}
     for k in ("options", "progress", "summary", "error"):
         if getattr(row, k) is not None:
             out[k] = getattr(row, k)
@@ -211,7 +211,8 @@ class DocumentRepository:
         with self._tx() as s:
             b = s.get(Document, document_id)
             file_ids = [i for i in (b.source_file_id, b.ingested_file_id) if i] if b else []
-            s.execute(delete(DocumentOverride).where(DocumentOverride.document_id == document_id))
+            stage_ids = select(DocumentStage.id).where(DocumentStage.document_id == document_id)
+            s.execute(delete(DocumentOverride).where(DocumentOverride.document_stage_id.in_(stage_ids)))
             s.execute(delete(DocumentStage).where(DocumentStage.document_id == document_id))
             s.execute(delete(Document).where(Document.id == document_id))
             if file_ids:

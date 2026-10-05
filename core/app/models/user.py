@@ -1,4 +1,4 @@
-"""User — field chung của mọi tài khoản (`app/dto/base/user.py::User`, `docs/db-diagram.md` mục 1). Bác sĩ/admin là bảng con
+"""User — field chung của mọi tài khoản (`app/dto/base/identity.py::User`, `docs/db-diagram.md` mục 1). Bác sĩ/admin là bảng con
 `doctors`/`admins` có PK = FK tới `users.id`, theo đúng kế thừa `Doctor(User)`/`Admin(User)` của base."""
 from datetime import UTC, date, datetime
 
@@ -17,6 +17,8 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(255))
     dob: Mapped[date] = mapped_column(Date)
     gender: Mapped[str] = mapped_column(String(16))  # `Gender`
+    # nullable: tài khoản mẫu tạo trước khi có đăng nhập chưa có mật khẩu
+    password_hash: Mapped[str | None] = mapped_column(String(255), default=None)
     # default (Python-side, không phải server_default) để có giá trị ngay sau
     # flush() mà không cần round-trip RETURNING.
     created_at: Mapped[datetime] = mapped_column(

@@ -1,3 +1,6 @@
+"""Shared kernel: entity dùng chung nhiều bounded context."""
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 

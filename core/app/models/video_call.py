@@ -1,4 +1,4 @@
-"""VideoCall — cuộc gọi video (`app/dto/base/video_call.py::VideoCall`). Tách bảng (không chỉ nằm trong `messages.metadata`)
+"""VideoCall — cuộc gọi video (`app/dto/base/consultation.py::VideoCall`). Tách bảng (không chỉ nằm trong `messages.metadata`)
 vì cuộc gọi có vòng đời pending -> ongoing -> ended được cập nhật sau khi tin nhắn đã tạo. Tin `message_type="video_call"`
 trỏ tới đây qua `messages.video_call_id`."""
 from datetime import UTC, datetime

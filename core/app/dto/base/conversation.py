@@ -1,12 +1,27 @@
+"""Bounded context Hội thoại: cuộc chat, tin nhắn (AI / bệnh nhân / bác sĩ), bước lập luận, nguồn trích dẫn."""
 from __future__ import annotations
-from datetime import datetime
+
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, model_validator
 
 from app.common.constant import ConsultationStatus, MessageSender, MessageType
-from app.dto.base.file import File
-from app.dto.base.user import Doctor, PatientProfile
-from app.dto.base.video_call import VideoCall
+
+if TYPE_CHECKING:
+    from app.dto.base.consultation import ConsultationSession, VideoCall
+    from app.dto.base.identity import PatientProfile
+    from app.dto.base.shared import File
+
+
+class Conversation(BaseModel):
+    """Cuộc chat của bệnh nhân. `message` là một luồng chung cho cả AI lẫn bác sĩ (phân biệt bằng `Message.sender`);
+    bác sĩ chỉ tham gia trong khoảng của một `ConsultationSession`, người dùng vẫn chat AI tiếp song song."""
+
+    title: str = ""
+    patient: PatientProfile
+    message: list[Message]
+    consultation_sessions: list[ConsultationSession] = []
+
 
 # loại tin mốc phiên tư vấn -> trạng thái phiên tại mốc đó và người được phép tạo tin
 _CONSULTATION_EVENTS: dict[MessageType, tuple[ConsultationStatus, MessageSender]] = {
@@ -14,37 +29,6 @@ _CONSULTATION_EVENTS: dict[MessageType, tuple[ConsultationStatus, MessageSender]
     MessageType.CONSULTATION_ACCEPTED: (ConsultationStatus.ACTIVE, MessageSender.DOCTOR),
     MessageType.CONSULTATION_RESOLVED: (ConsultationStatus.RESOLVED, MessageSender.DOCTOR),
 }
-
-
-class Conversation(BaseModel):
-    """Cuộc chat của bệnh nhân. `message` là một luồng chung cho cả AI lẫn bác sĩ (phân biệt bằng `Message.sender`);
-    bác sĩ chỉ tham gia trong khoảng của một `ConsultationSession`, người dùng vẫn chat AI tiếp song song."""
-
-    patient: PatientProfile
-    message: list[Message]
-    consultation_sessions: list[ConsultationSession] = []
-
-
-class ConsultationSession(BaseModel):
-    """Mốc đánh dấu một lần bệnh nhân nhờ bác sĩ hỗ trợ — không chứa tin nhắn. Tin trao đổi nằm trong
-    `Conversation.message`; ba mốc yêu cầu/nhận/đóng hiện thành tin `CONSULTATION_*` trong luồng đó.
-
-    Bác sĩ xem được luồng chat từ đầu tới tin `CONSULTATION_RESOLVED` của phiên (phiên còn mở: tới hiện tại)."""
-
-    doctor: Doctor | None = None  # None khi chưa có bác sĩ nhận
-    status: ConsultationStatus = ConsultationStatus.PENDING
-    reason: str
-    requested_at: datetime | None = None
-    started_at: datetime | None = None
-    resolved_at: datetime | None = None
-
-    @model_validator(mode="after")
-    def validate_status(self):
-        if self.status != ConsultationStatus.PENDING and self.doctor is None:
-            raise ValueError("doctor is required when status is active or resolved")
-        if self.status == ConsultationStatus.RESOLVED and self.resolved_at is None:
-            raise ValueError("resolved_at is required when status is resolved")
-        return self
 
 
 class Message(BaseModel):
@@ -65,6 +49,10 @@ class MessageMetadata(BaseModel):
     attached_files: list[File]
     consultation_session: ConsultationSession | None  # bắt buộc với tin mốc CONSULTATION_*
     video_call: VideoCall | None
+    # --- chỉ tin của AI ---
+    reasoning: list[ReasoningStep] = []
+    choice: MessageChoice | None = None  # câu hỏi lại (`ask_user`) đang chờ / đã được trả lời
+    sources: list[Source] = []
 
     @model_validator(mode="after")
     def validate_metadata(self):
@@ -81,3 +69,43 @@ class MessageMetadata(BaseModel):
                 raise ValueError("video_call is required for VIDEO_CALL")
 
         return self
+
+
+class ChoiceOption(BaseModel):
+    id: str
+    label: str
+
+
+class AnsweredChoice(BaseModel):
+    option_id: str
+    label: str
+    custom: bool = False  # người dùng tự nhập thay vì chọn phương án có sẵn
+
+
+class MessageChoice(BaseModel):
+    question_id: str
+    question: str
+    options: list[ChoiceOption]
+    answered: AnsweredChoice | None = None
+
+
+class ReasoningStep(BaseModel):
+    """Một bước lập luận của AI trong một lượt trả lời: tự suy nghĩ, gọi tool, hoặc hỏi lại người dùng."""
+
+    id: str
+    title: str
+    content: str
+    input: Any | None = None  # tham số tool, với bước gọi tool
+    status: Literal["processing", "done"]
+    type: Literal["default", "tool_call", "tool_ask", "thinking"] = "default"
+    choice: MessageChoice | None = None  # với bước `tool_ask`
+
+
+class Source(BaseModel):
+    """Một nguồn tri thức AI dùng làm căn cứ. `reference` là khoá trong kho tương ứng (id chunk Qdrant, id nút Neo4j, URL)."""
+
+    kind: Literal["guideline", "document", "kg", "web"]
+    title: str
+    reference: str
+    url: str | None = None
+    content: str = ""  # đoạn trích

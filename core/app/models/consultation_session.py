@@ -1,4 +1,4 @@
-"""ConsultationSession — mốc một lần bệnh nhân nhờ bác sĩ hỗ trợ (`app/dto/base/conversation.py::ConsultationSession`).
+"""ConsultationSession — mốc một lần bệnh nhân nhờ bác sĩ hỗ trợ (`app/dto/base/consultation.py::ConsultationSession`).
 Không chứa tin nhắn: tin trao đổi nằm trong `messages` của hội thoại (`sender="doctor"`); 3 mốc yêu cầu/nhận/đóng là tin
 `message_type="consultation_*"` trỏ về phiên qua `messages.consultation_session_id`."""
 from datetime import UTC, datetime

@@ -1,212 +1,154 @@
-# Derma Hospital — AI Chat tư vấn da liễu
+# Derma Hospital
 
-Ứng dụng chat tư vấn da liễu dùng AI Agent (LangGraph): người dùng trò chuyện (kèm ảnh da) với
-trợ lý AI, trợ lý suy luận nhiều bước, tra cứu guideline y khoa và knowledge graph, hỏi lại khi
-thiếu thông tin, stream câu trả lời theo thời gian thực và nhớ thông tin người dùng qua các lần
-tư vấn (long-term memory).
+Đồ án tốt nghiệp: hệ thống hỗ trợ tư vấn da liễu bằng AI, gồm 2 module:
 
-> Kết quả của AI **không phải chẩn đoán y khoa**. Dữ liệu guideline đang ở trạng thái chờ bác sĩ
-> duyệt (`needs_clinical_review` / `needs_manual_verification`).
+| Module | Người dùng | Làm gì | Tài liệu |
+|---|---|---|---|
+| **Chat tư vấn da liễu** | bệnh nhân | chat với trợ lý AI (kèm ảnh da). Agent LangGraph suy luận nhiều bước, tra guideline / knowledge graph / phân loại ảnh, hỏi lại khi thiếu thông tin, stream câu trả lời realtime | [docs/module/chat.md](docs/module/chat.md) |
+| **Pipeline số hoá sách giáo khoa** | admin | upload PDF → đọc chữ → AI đọc mục lục (người duyệt) → cắt chunk theo mục lục → nạp Qdrant | [docs/module/book-ingest-pipeline.md](docs/module/book-ingest-pipeline.md) |
 
-- **Deploy production (Docker Compose, kèm nạp dữ liệu): [`DEPLOY.md`](DEPLOY.md).**
-- **Dữ liệu (guideline, knowledge graph) và cách nạp: [`core/data-ingest/README.md`](core/data-ingest/README.md).**
+Tổng quan kiến trúc: [docs/module/overview.md](docs/module/overview.md).
 
-## 1. Kiến trúc tổng quan
+> Kết quả AI chỉ là gợi ý hỗ trợ, **không phải chẩn đoán y khoa**. Guideline đang chờ bác sĩ duyệt.
 
-```
-┌─────────┐   REST + SSE    ┌──────────┐  RabbitMQ   ┌───────────────┐
-│   FE    │ ───────────────▶│   Core   │────────────▶│  Agent Worker │
-│(Next.js)│◀─────────────── │(FastAPI) │◀────────────│  (LangGraph)  │
-└─────────┘   Redis Pub/Sub └────┬─────┘  RabbitMQ    └───────┬───────┘
-                                 │                            │
-                    ┌────────────┴───┐          ┌─────────────┼──────────────┬────────┐
-                    │   PostgreSQL   │          │ Redis  Qdrant│  Neo4j       │ MinIO  │
-                    │ (nguồn sự thật)│          │ pubsub memory│ PrimeKG+DermO│ ảnh    │
-                    └────────────────┘          │ + guideline  │              │        │
-                                                └──────────────┴──────────────┴────────┘
-```
-
-- **`fe/`** — Next.js (App Router), gọi REST + SSE của Core, state chat bằng Zustand.
-- **`core/`** — FastAPI: REST (conversations/messages/questions/uploads) + SSE (`/stream`, forward
-  nguyên văn từ Redis Pub/Sub). Không tự chạy LLM — chỉ publish "turn request" vào RabbitMQ.
-- **Agent Worker** (nằm trong `core/`, tiến trình riêng: `python -m app.agent.worker`) — consume
-  RabbitMQ, chạy LangGraph (state machine Turn/Step/Reasoning), gọi LLM qua **OpenRouter**, publish
-  từng bước suy luận lên Redis theo thời gian thực, publish kết quả cuối vào RabbitMQ để Core ghi Postgres.
-- **PostgreSQL** — `users`/`conversations`/`messages` (chỉ Core ghi).
-- **Redis** — Pub/Sub cho SSE realtime + key đánh dấu "turn đang chạy" theo hội thoại.
-- **RabbitMQ** — `agent_request_queue` (Core → Worker), `agent_response_queue` (Worker → Core).
-- **Qdrant** — 2 collection: long-term memory (`agent_memories`) và guideline da liễu
-  (`derma_kb_chunks`, 435 chunk từ 87 bệnh). Embedding chạy **local** (sentence-transformers).
-- **Neo4j** — knowledge graph: PrimeKG lọc theo da liễu (`:Entity`) và ontology DermO (`:DermoTerm`).
-- **MinIO** — lưu ảnh đính kèm tin nhắn; agent nhận ảnh qua object key.
-
-Tài liệu kiến trúc chi tiết:
-- [`docs/kien-truc-he-thong.md`](docs/kien-truc-he-thong.md) — toàn hệ thống.
-- [`core/app/kien-truc-agent.md`](core/app/kien-truc-agent.md) — vòng lặp Turn/Step/Reasoning, `interrupt()`/resume.
-- [`core/app/kien-truc-memory.md`](core/app/kien-truc-memory.md) — long-term memory.
-- [`core/docs/api-doc.md`](core/docs/api-doc.md) / [`async-api-doc.md`](core/docs/async-api-doc.md) — REST + SSE (event catalog, Steer, ask_user…).
-
-## 2. Tính năng chính
-
-- **Chat streaming thời gian thực**: token LLM được stream thật qua SSE.
-- **Agent dùng công cụ** (`core/app/agent/tools/`):
-
-  | Tool | Việc | Nguồn |
-  |---|---|---|
-  | `search_disease_guidelines`, `get_disease_guideline_profile` | tra guideline BYT 75/2015, WHO, MedlinePlus | Qdrant |
-  | `query_dermatology_kg` | hỏi đáp quan hệ bệnh–triệu chứng–thuốc–gen (sinh Cypher) | Neo4j (PrimeKG) |
-  | `lookup_dermo_term` | chuẩn hoá thuật ngữ da liễu | Neo4j (DermO) |
-  | `ground_medical_entities` | neo thực thể y khoa vào cả hai nguồn trên | Neo4j |
-  | `classify_skin_image` | phân loại ảnh da (CNN 22 lớp) — chỉ là **giả thuyết**, không phải chẩn đoán | MinIO + PyTorch |
-  | `ask_user`, `save_memory` | hỏi lại người dùng; lưu memory | — |
-- **Agent tự hỏi lại khi thiếu thông tin** (`ask_user`): turn tạm dừng (`interrupt()`), chờ người
-  dùng trả lời rồi resume đúng chỗ, không mất ngữ cảnh.
-- **Steer**: gửi thêm tin nhắn "chen ngang" khi agent đang xử lý — nạp vào ngay sau bước suy luận hiện tại.
-- **Đính kèm ảnh**: FE `POST /uploads` → MinIO → agent phân tích.
-- **Long-term memory**: sau mỗi lượt, agent tóm tắt thông tin đáng nhớ (tình trạng da, tiền sử, thuốc,
-  dị ứng…) vào Qdrant và tự tìm lại ở lượt sau, kể cả ở hội thoại khác của cùng user.
-
-## 3. Cấu trúc thư mục
+## 1. Kiến trúc
 
 ```
-.
-├── core/                     Backend: FastAPI (Core) + Agent Worker (LangGraph)
-│   ├── main.py               entrypoint Core (REST + SSE)
-│   ├── app/agent/            LangGraph, LLM, tools/, worker.py, memory.py, embeddings.py
-│   ├── app/api/              REST endpoints (conversation, upload, health)
-│   ├── app/{models,repositories,services,dto,infra,db}/
-│   ├── data-ingest/          Xử lý dữ liệu theo nguồn (input → output) + nạp Qdrant/Neo4j
-│   ├── docs/                 đặc tả API (REST/SSE), DB diagram, quy ước
-│   └── Dockerfile            image dùng chung cho core-api và agent-worker
-├── fe/                       Frontend Next.js (features/chat: store, types, components)
-├── docs/                     tài liệu kiến trúc toàn hệ thống
-├── notebook/                 thử nghiệm; model/model_output/ chứa checkpoint CNN
-├── docker-compose.yml        infra DEV: Postgres, Redis, RabbitMQ, Qdrant, Neo4j, MinIO
-├── docker-compose.prod.yml   stack PROD: infra + core-api + agent-worker + FE
-├── reset-and-gen-data.sh     (prod) xoá và nạp lại dữ liệu Qdrant/Neo4j trong container
-└── DEPLOY.md                 hướng dẫn deploy
+┌──────────────┐  REST + SSE  ┌──────────────────┐  RabbitMQ   ┌───────────────┐
+│ FE (Next.js) │─────────────▶│  Core (FastAPI)  │────────────▶│ Agent Worker  │
+│ /chats       │◀─────────────│  :3050 /api/v1   │◀────────────│ (LangGraph)   │
+│ /admin/...   │              │  + thread nền    │             └───────┬───────┘
+└──────────────┘              │  pipeline sách   │◀── Redis Pub/Sub ───┘
+                              └───┬──────┬───────┘
+        ┌──────────────┬──────────┴┐   ┌─┴─────────┬──────────┐
+        │ PostgreSQL   │  MinIO    │   │ Qdrant    │  Neo4j   │
+        └──────────────┴───────────┘   └───────────┴──────────┘
 ```
 
-## 4. Yêu cầu môi trường
+- **FE** (`fe/`): Next.js App Router. Chat dùng Zustand + SSE; admin dùng TanStack Query và poll trạng thái.
+- **Core** (`core/app/`): REST + SSE gateway, là nơi **duy nhất ghi Postgres**. Không gọi LLM cho chat, chỉ
+  publish turn sang Worker và forward nguyên văn event từ Redis ra SSE. Pipeline sách chạy trong thread nền.
+- **Agent Worker** (`core/agent/`): tiến trình riêng, consume `agent_request_queue`, chạy `create_agent`
+  (LangChain/LangGraph) với tool + middleware, gọi LLM qua OpenRouter, trả kết quả về `agent_response_queue`.
+- **Pipeline** (`core/pipeline/document_ingest/`): chỉ biến đổi dữ liệu (`ingest → toc → chunks → index`).
+- **Hạ tầng**: Postgres (dữ liệu nghiệp vụ), Redis (Pub/Sub + key turn), RabbitMQ (Core ⇄ Worker),
+  Qdrant (guideline, chunk sách), Neo4j (PrimeKG + DermO), MinIO (ảnh đính kèm, file tài liệu).
 
-- Docker + Docker Compose v2 (`docker compose`).
-- Python 3.12+ và [`uv`](https://docs.astral.sh/uv/) (dependency của `core/`).
-- Node.js 20+ và `pnpm` (dependency của `fe/`).
-- API key [OpenRouter](https://openrouter.ai/keys) cho `AGENT_MODEL` (chat).
+## 2. Cấu trúc thư mục
 
-## 5. Chạy dev
+```
+fe/                      Next.js
+  app/                   route: /chats, /admin/documents
+  features/chat/         store Zustand, types, components chat
+  features/document-pipeline/  api, hooks TanStack Query, components admin
+  services/              HTTP client, SSE, adapter wire ↔ UI
+  components/ui/         UI primitive
+core/
+  main.py                entrypoint Core
+  app/                   api → services → repositories → models; dto/{base,request,response}; infra/
+  agent/                 worker.py, turn.py, graph/, tools/, middleware/, prompt/
+  pipeline/document_ingest/   stages/, mapping.py, tests/
+  migrations/            Alembic
+  data_ingest/           dữ liệu guideline / KG và script nạp
+docs/module/             tài liệu từng module
+docker-compose.yml       hạ tầng dev
+docker-compose.prod.yml  stack production (xem DEPLOY.md)
+```
 
-### 5.1. Infra
+## 3. Chạy dev
+
+Yêu cầu: Docker Compose v2, Python 3.12+ và [`uv`](https://docs.astral.sh/uv/), Node.js 20+ và `pnpm`,
+API key OpenRouter.
 
 ```bash
-docker compose up -d
-docker compose ps    # 6 container: postgres, redis, rabbitmq, qdrant, neo4j, minio
+cp core/.env.example core/.env          # điền OPENROUTER_API_KEY (+ TAVILY_API_KEY nếu dùng web search)
+cp fe/.env.local.example fe/.env.local  # NEXT_PUBLIC_USE_MOCK=false để gọi Core thật
+
+make infra       # docker compose up -d: Postgres, Redis, RabbitMQ, Qdrant, Neo4j, MinIO
+make migrate     # alembic upgrade head
+make init-db     # bucket MinIO + dữ liệu mẫu (user-1, bác sĩ, admin) — chạy sau migrate
+make backend     # Core http://localhost:3050 (Swagger: /docs)
+make worker      # Agent Worker — bắt buộc để agent trả lời
+make frontend    # FE http://localhost:3000
 ```
 
-Mọi giá trị trong `docker-compose.yml` ghi thẳng (không đọc `.env`) và khớp default của
-`core/app/config/settings.py`: Postgres `postgres:postgres@localhost:5432/derma_hospital_db`, Neo4j
-`neo4j/derma12345`, MinIO `minio/minio123`, RabbitMQ `guest/guest`. Muốn đổi thì sửa thẳng file này.
-
-### 5.2. Backend (Core)
+**Nạp dữ liệu tra cứu** (Qdrant/Neo4j mới tạo đều trống), chạy trong `core/`:
 
 ```bash
-cd core
-cp .env.example .env      # điền OPENROUTER_API_KEY và APP_ACCESS_TOKEN
-uv sync
-python main.py
-```
-- Tự tạo bảng (`create_all`) lúc khởi động — không cần migration tay.
-- Kiểm tra: http://localhost:3050/health, Swagger UI: http://localhost:3050/docs.
-
-**Seed 1 user demo** (chưa có auth thật — FE hard-code `userId: "user-1"`), chạy SAU khi
-`python main.py` đã chạy ít nhất 1 lần (cần bảng `users`):
-```bash
-docker exec derma-postgres psql -U postgres -d derma_hospital_db -c \
-  "INSERT INTO users (id, name, email, created_at) VALUES ('user-1', 'Demo User', 'demo@local', now()) ON CONFLICT (id) DO NOTHING;"
+uv run python data_ingest/01_normalize/scripts/load_knowledge_base.py   # guideline → Qdrant
+uv run python data_ingest/01_normalize/scripts/load_phenotypes.py       # phenotype → Qdrant
+uv run python data_ingest/01_normalize/scripts/load_primekg.py          # PrimeKG → Neo4j
+uv run python data_ingest/01_normalize/scripts/load_dermo.py            # DermO → Neo4j
 ```
 
-### 5.3. Nạp dữ liệu (guideline + knowledge graph)
+Thêm `--reset` để xoá dữ liệu cũ trước khi nạp. Chi tiết nguồn dữ liệu: [core/data_ingest/README.md](core/data_ingest/README.md).
 
-Qdrant và Neo4j mới tạo đều **trống** — agent sẽ không tra cứu được gì cho đến khi nạp. Dữ liệu sạch
-đã có sẵn trong `core/data-ingest/01_normalize/output/`; chạy từ `core/`:
+Tool `classify_skin_image` cần checkpoint CNN tại `SKIN_CNN_CHECKPOINT_PATH`.
 
-```bash
-python data-ingest/01_normalize/scripts/load_knowledge_base.py   # chunk + embed → Qdrant
-python data-ingest/01_normalize/scripts/load_primekg.py          # → Neo4j (PrimeKG)
-python data-ingest/01_normalize/scripts/load_dermo.py            # → Neo4j (DermO)
-```
-Thêm `--reset` để xoá dữ liệu cũ trước khi nạp. Tạo lại dữ liệu từ nguồn thô (`python data-ingest/run.py …`):
-xem [`core/data-ingest/README.md`](core/data-ingest/README.md).
+### Biến môi trường chính
 
-### 5.4. Agent Worker
-
-Tiến trình riêng, **bắt buộc** để agent trả lời (Core chỉ đẩy request vào queue):
-```bash
-cd core
-python -u -m app.agent.worker
-```
-`-u` để thấy log ngay (Python buffer `print()` khi output không phải terminal).
-
-Tool `classify_skin_image` cần checkpoint CNN tại `SKIN_CNN_CHECKPOINT_PATH` (mặc định
-`<repo>/model/model_output/AdaptiveCNN_SkinDisease_v5_best.pth`; file hiện nằm ở
-`notebook/model/model_output/` — đặt lại đường dẫn trong `core/.env` hoặc chép file về đúng chỗ).
-
-### 5.5. Frontend
-
-```bash
-cd fe
-cp .env.local.example .env.local
-# NEXT_PUBLIC_USE_MOCK=false để dùng backend thật (mặc định true = data giả lập)
-pnpm install
-pnpm dev
-```
-Mở http://localhost:3000.
-
-## 6. Biến môi trường chính
-
-### `core/.env` (mẫu: `core/.env.example`)
-
-| Biến | Ý nghĩa | Ghi chú |
-|---|---|---|
-| `DATABASE_URL`, `REDIS_*`, `RABBITMQ_URL`, `QDRANT_URL`, `NEO4J_*`, `MINIO_*` | kết nối hạ tầng | mặc định khớp `docker-compose.yml` |
-| `QDRANT_COLLECTION` / `QDRANT_KB_COLLECTION` | memory / guideline | `agent_memories` / `derma_kb_chunks` |
-| `AGENT_MODEL` | chat model, cú pháp `"provider:model"` | mặc định `openai:google/gemma-4-26b-a4b-it` (qua OpenRouter) |
-| `OPENROUTER_API_KEY` | key OpenRouter | **bắt buộc**, tự điền |
-| `APP_ACCESS_TOKEN` | token truy cập app | **bắt buộc**, tự điền |
-| `AGENT_TEMPERATURE`, `AGENT_THINKING_LEVEL` | tham số LLM | |
-| `SKIN_CNN_CHECKPOINT_PATH` | checkpoint CNN cho `classify_skin_image` | xem 5.4 |
-
-### `fe/.env.local`
-
-| Biến | Ý nghĩa |
+| Biến | Dùng cho |
 |---|---|
-| `NEXT_PUBLIC_USE_MOCK` | `true` = UI với data giả lập (không cần backend); `false` = gọi Core thật |
-| `NEXT_PUBLIC_API_URL` | URL REST của Core (mặc định `http://localhost:3050/api/v1`) |
-| `NEXT_PUBLIC_ONLYOFFICE_*`, `ONLYOFFICE_JWT_SECRET` | chỉ cho tính năng soạn văn bản (canvas) — không cần cho luồng chat |
+| `DATABASE_URL`, `REDIS_*`, `RABBITMQ_URL`, `QDRANT_URL`, `NEO4J_*`, `MINIO_*` | kết nối hạ tầng, mặc định khớp `docker-compose.yml` |
+| `AGENT_MODEL`, `AGENT_TEMPERATURE`, `OPENROUTER_API_KEY` | model mặc định của agent |
+| `TAVILY_API_KEY` | tool tra web nguồn uy tín |
+| `APP_ACCESS_TOKEN` | token dùng chung cho app (rỗng = tắt); FE nhập ở màn access gate |
+| `NEXT_PUBLIC_USE_MOCK`, `NEXT_PUBLIC_API_URL` | FE dùng mock hay Core thật, URL Core |
 
-## 7. Lưu ý / vấn đề hay gặp
+`.env` không được commit.
 
-- **Container "Up" nhưng backend `Connection refused`**: nếu máy có container Postgres/Redis/RabbitMQ… khác
-  chiếm cùng cổng, container của repo có thể chạy mà KHÔNG publish được cổng ra host. Kiểm tra
-  `docker port derma-postgres` — nếu rỗng, giải phóng cổng rồi `docker compose up -d --force-recreate`
-  (dữ liệu trong volume không mất).
-- **DB không tự tạo khi tái dùng volume Postgres cũ**: `POSTGRES_DB` chỉ có hiệu lực lúc khởi tạo volume
-  LẦN ĐẦU. Nếu volume đã tồn tại, tạo tay:
-  `docker exec derma-postgres psql -U postgres -c "CREATE DATABASE derma_hospital_db;"`.
-- **Agent trả lời nhưng không tra được guideline/KG**: chưa nạp dữ liệu (mục 5.3), hoặc Neo4j/Qdrant chưa sẵn sàng.
-- **Sau khi đổi dữ liệu PrimeKG** phải nạp lại Neo4j: `load_primekg.py --reset`.
-- **Core dùng `--reload`**: nếu có kết nối SSE (`curl -N …/stream`) đang mở, reload treo ở "Waiting for
-  connections to close" — đóng kết nối đó (Ctrl+C).
-- **`GET /conversations` yêu cầu query `userId`** (chưa có auth thật) — FE tự gửi; gọi qua `curl`/Swagger
-  cần thêm `?userId=user-1`.
-- Model LLM trên OpenRouter có thể bị gỡ/đổi tên theo thời gian — nếu gặp 404, kiểm tra lại `AGENT_MODEL`.
+## 4. Kiểm tra
 
-## 8. Tài liệu khác
+```bash
+cd core && .venv/bin/python -m pyright app pipeline     # kiểu Python
+cd core && python -m unittest pipeline.document_ingest.tests.test_document_pipeline \
+  pipeline.document_ingest.tests.test_api pipeline.document_ingest.tests.test_storage_index
+cd fe && pnpm exec tsc --noEmit && pnpm lint
+```
 
-- [`DEPLOY.md`](DEPLOY.md) — deploy production, nạp dữ liệu, xử lý sự cố, vận hành.
-- [`core/data-ingest/README.md`](core/data-ingest/README.md) — pipeline dữ liệu theo nguồn.
-- [`core/README.md`](core/README.md) — chi tiết code backend (một số phần có thể lệch; ưu tiên
-  `docs/kien-truc-he-thong.md` và `core/app/kien-truc-*.md` nếu mâu thuẫn).
-- [`core/docs/quy-uoc.md`](core/docs/quy-uoc.md) — quy ước coding backend.
-- [`core/docs/db-diagram.md`](core/docs/db-diagram.md) — schema DB.
-- [`fe/docs/backend-contract.md`](fe/docs/backend-contract.md) — hợp đồng FE ↔ BE.
+Test pipeline không cần service thật (MinIO giả + SQLite + Qdrant in-memory).
+
+## 5. Quy ước
+
+Chi tiết trong các skill ở `.claude/skills/`; dưới đây là các điểm hay nhầm.
+
+| Khu vực | Skill |
+|---|---|
+| `core/app/`, `core/agent/` (endpoint, DTO, model, service, tool, middleware, prompt) | [derma-core-conventions](.claude/skills/derma-core-conventions/SKILL.md) |
+| `core/pipeline/document_ingest/`, `app/services/document_*.py`, `document_repository.py` | [derma-pipeline-conventions](.claude/skills/derma-pipeline-conventions/SKILL.md) |
+| `fe/` (trang, component, store, hook, SSE event) | [derma-fe-conventions](.claude/skills/derma-fe-conventions/SKILL.md) |
+| Chạy Core / Worker, gửi tin thử, pyright | [run-core](.claude/skills/run-core/SKILL.md) |
+| Chạy FE, chụp màn hình | [run-fe](.claude/skills/run-fe/SKILL.md) |
+| Thử prompt / model / tool của agent | [experiment-agent-flow](.claude/skills/experiment-agent-flow/SKILL.md) |
+
+**Backend**
+- Phân lớp `api` (chỉ map request/response) → `services` (nghiệp vụ) → `repositories` (stateless, nhận id trực
+  tiếp) → `models` (ORM).
+- Entity nghiệp vụ ở `app/dto/base/`, tách khỏi ORM (`app/models/`) và DTO wire (`app/dto/request|response/`).
+  Đổi `dto/base` phải được duyệt trước rồi mới cascade xuống model/repo/service.
+- Wire dùng snake_case, response bọc `{"data": ...}`.
+- Chỉ Core ghi Postgres; Worker trả kết quả qua RabbitMQ.
+- `pipeline/` không import `app.services` / `app.repositories`; stage nhận mọi thứ qua `StageContext`.
+  Lỗi người dùng sửa được dùng `StageError` / `InvalidError` (hiển thị nguyên văn trên UI).
+- Schema đổi qua Alembic (`make migrate-new m="..."`), **đọc lại file sinh ra**, không để autogenerate drop bảng có dữ liệu.
+- Python snake_case; docstring và comment tiếng Việt, giải thích **vì sao**.
+
+**Frontend**
+- `app/` chỉ là route mỏng; logic theo tính năng nằm ở `features/<feature>/`; gọi HTTP ở `services/`.
+- Chat: state trong Zustand store, event SSE được chuẩn hoá trong `store.ts`. Admin: TanStack Query hooks.
+
+## 6. Hạn chế đã biết
+
+- Chưa có auth đa người dùng: chat truyền `user_id` từ client, admin chỉ dùng app token.
+- Checkpointer và long-term memory của agent đang in-memory → mất khi restart Worker, chỉ chạy được 1 Worker.
+- Mỗi hội thoại một turn một lúc (không có Steer); đang chờ trả lời câu hỏi thì không gửi được tin mới.
+- Upload PDF đi qua Core; DB và MinIO không cùng transaction thật; chưa có job dọn object mồ côi.
+- Chunk sách đã nạp Qdrant nhưng agent chat chưa có tool tra collection này.
+- Tư vấn bác sĩ / video call mới có schema DB.
+
+## 7. Tài liệu khác
+
+- [DEPLOY.md](DEPLOY.md) — deploy production bằng Docker Compose (hiện mới mô tả phần chat).
+- [core/app/kien-truc-agent.md](core/app/kien-truc-agent.md), [core/app/kien-truc-memory.md](core/app/kien-truc-memory.md) —
+  thiết kế agent và memory (một phần mô tả thiết kế cũ; khi lệch, ưu tiên `docs/module/`).
+- [core/pipeline/document_ingest/README.md](core/pipeline/document_ingest/README.md) — chi tiết pipeline.

@@ -1,4 +1,4 @@
-.PHONY: infra infra-down backend worker migrate migrate-new frontend
+.PHONY: infra infra-down backend worker migrate migrate-new init-db frontend
 
 infra:
 	docker compose up -d
@@ -17,6 +17,10 @@ migrate:
 
 migrate-new:
 	cd core && uv run alembic revision --autogenerate -m "$(m)"
+
+# bucket MinIO + dữ liệu mẫu (user-1, bác sĩ, admin); chạy sau migrate, chạy lại không tạo trùng
+init-db:
+	cd core && uv run python scripts/init_db.py
 
 frontend:
 	cd fe && pnpm dev

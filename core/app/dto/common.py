@@ -20,7 +20,7 @@ class ApiResponse(BaseModel, Generic[T]):
 
 
 class FileDto(BaseModel):
-    """File trên wire — field khớp `app/dto/base/file.py::File`. `url` là field riêng của API: link presigned để FE xem
+    """File trên wire — field khớp `app/dto/base/shared.py::File`. `url` là field riêng của API: link presigned để FE xem
     trước, sinh lúc upload, không lưu trong base."""
 
     file_name: str

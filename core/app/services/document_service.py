@@ -21,8 +21,8 @@ from fastapi import UploadFile
 from pydantic import ValidationError
 from qdrant_client.models import PointStruct
 
-from app.dto.base.document import Document, NewDocument, ProcessStage
-from app.dto.base.file import File
+from app.dto.base.document import Document, NewDocument, DocumentStage
+from app.dto.base.shared import File
 from app.dto.common import FileDto
 from app.dto.request.document import DocumentSettings, TocUpdate
 from app.dto.response.document import (
@@ -171,16 +171,16 @@ class DocumentService:
             pdf_pages=self.pdf_pages(document_id) if source else None,
         )
 
-    def _process_stages(self, document_id: str, detail: dict[str, Any]) -> list[ProcessStage]:
-        """Trạng thái từng bước xử lý của tài liệu, dạng `ProcessStage` nghiệp vụ."""
+    def _process_stages(self, document_id: str, detail: dict[str, Any]) -> list[DocumentStage]:
+        """Trạng thái từng bước xử lý của tài liệu, dạng `DocumentStage` nghiệp vụ."""
         status = detail["stages"]
         out = []
         for s in STAGES:
             st = status[s["id"]]
             prog = st.get("progress")
             out.append(
-                ProcessStage(
-                    document_id=document_id,
+                DocumentStage(
+                    id=st.get("id") or f"{document_id}/{s['id']}",  # bước chưa có dòng DB (tài liệu cũ) chưa có id thật
                     stage_id=s["id"],
                     title=s["title"],
                     deps=s["deps"],
@@ -199,8 +199,8 @@ class DocumentService:
         return out
 
     @staticmethod
-    def _stage_output(stage: ProcessStage) -> StageOutput:
-        """Map `ProcessStage` nghiệp vụ -> DTO wire cho API admin."""
+    def _stage_output(stage: DocumentStage) -> StageOutput:
+        """Map `DocumentStage` nghiệp vụ -> DTO wire cho API admin."""
         return StageOutput(
             stage_id=stage.stage_id,
             title=stage.title,
