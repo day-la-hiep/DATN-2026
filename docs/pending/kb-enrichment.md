@@ -41,7 +41,7 @@ class KnowledgeSuggestion(BaseModel):
     id: str
     title: str                      # bệnh / chủ đề
     content: str                    # nội dung tri thức đề xuất
-    sources: list[Source] = []      # căn cứ (web, guideline, sách...) — dùng lại `Source` của conversation.py
+    sources: list[Source] = []      # căn cứ (web, guideline, sách...) — dùng lại `Source` của `dto/common/chat.py`
     origin: Literal["chatbot", "doctor", "reference_case"]
     origin_message: Message | None = None        # câu trả lời / tin nhắn sinh ra đề xuất
     origin_record: MedicalRecord | None = None   # ca bệnh tham khảo, nếu có

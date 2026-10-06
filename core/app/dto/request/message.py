@@ -2,7 +2,7 @@
 `MessageMetadata` dùng cùng tên: `content`, `attached_files`."""
 from pydantic import BaseModel
 
-from app.dto.common import FileDto
+from app.dto.common import AnsweredChoice, FileDto
 
 
 class SendMessageInput(BaseModel):
@@ -18,10 +18,8 @@ class SendMessageInput(BaseModel):
     attached_files: list[FileDto] | None = None  # object nhận từ `POST /uploads`
 
 
-class MessageAnswerDto(BaseModel):
-    """Body cho `POST .../questions/{question_id}/answer` (`api-doc.md` mục 2.2)."""
+class MessageAnswerDto(AnsweredChoice):
+    """Body cho `POST .../questions/{question_id}/answer` (`api-doc.md` mục 2.2). Kế thừa `AnsweredChoice` (common) — thêm
+    `question_id` để biết trả lời câu hỏi nào."""
 
     question_id: str
-    option_id: str
-    label: str
-    custom: bool = False

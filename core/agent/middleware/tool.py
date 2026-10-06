@@ -79,7 +79,7 @@ async def emit_tool_result(
             "input": tool_args,
             "content": str(response.content),
             "status": "done",
-            "type": "tool_call",
+            "type": "tool",
         }
         existing_index = next(
             (

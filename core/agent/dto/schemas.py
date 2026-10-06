@@ -37,12 +37,12 @@ class AgentResponseMessage(BaseModel):
     message_id: str
     content: str
     status: Literal["done", "question"]
-    # `MessageChoiceDto.model_dump(mode="json")` — chỉ set khi
+    # `MessageChoice.model_dump(mode="json")` — chỉ set khi
     # status="question" (`app/dto/response/message.py`).
     choice: dict[str, Any] | None = None
     # `AgentContext.reasoning_steps` tích luỹ được tới thời điểm turn kết thúc/tạm dừng
     # (`agent/state/context.py`, `agent/worker.py::_drive`) — mỗi dict khớp field của
-    # `ReasoningStepDto` (`app/dto/response/message.py`). Core persist NGUYÊN list này vào
+    # `Step` (`app/dto/common/chat.py`). Core persist NGUYÊN list này vào
     # `Message.extra.reasoning` (`agent/handler/response_consumer.py`) để `GET
     # .../messages` trả lại được các bước suy luận sau khi reload, không chỉ thấy lúc
     # đang stream qua SSE (Redis Pub/Sub không replay).

@@ -62,7 +62,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | M2.8 | Tra cứu **ca bệnh liên quan** | 🔲 | chưa có kho ca bệnh, phụ thuộc M7 |
 | M2.9 | Chọn model LLM cho hội thoại | ✅ | `/models`, `PATCH /conversations/{id}/model` |
 | M2.10 | Ghi nhớ thông tin bệnh nhân giữa các hội thoại | 🟡 | `save_memory` + `inject_long_term_memory` chạy được nhưng store in-memory, mất khi restart Worker |
-| M2.11 | Trích dẫn nguồn (sources) cho câu trả lời | 🟡 | đã có entity `Source` + `MessageMetadata.sources` (lưu trong `messages.metadata`); agent chưa sinh, `ChatSourceDto` trên wire chưa khớp `Source` |
+| M2.11 | Trích dẫn nguồn (sources) cho câu trả lời | 🟡 | đã có `Source` (`dto/common/chat.py`, lưu trong `messages.metadata` JSON, không có bảng riêng); agent chưa sinh, `ChatSourceDto` trên wire chưa khớp `Source` |
 
 ### M3 — Clinical fact & báo cáo tiền tư vấn
 
@@ -81,7 +81,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | M4.2 | Bác sĩ xem hàng đợi yêu cầu, nhận ca | 🟡 | schema có (`doctor_id`, tin mốc `consultation_accepted`); chưa có API / UI |
 | M4.3 | Bác sĩ và bệnh nhân chat trực tiếp trong cùng hội thoại | 🟡 | `messages.sender` đã có `doctor`; chưa có API gửi tin của bác sĩ, chưa có kênh realtime cho tin người-người |
 | M4.4 | Bác sĩ chưa nhận thì bệnh nhân vẫn hỏi chatbot | 🔲 | cần quy tắc: khi phiên `active` thì agent dừng / chỉ hỗ trợ, khi `pending` thì agent vẫn trả lời |
-| M4.5 | Video call | 🟡 | bảng `video_calls` + tin `message_type="video_call"`; chưa chọn công nghệ (WebRTC / dịch vụ ngoài), chưa có API / UI |
+| M4.5 | Video call | 🟡 | bảng `video_calls` (thuộc `consultation_sessions`, entity `ConsultationSession.video_calls`) + tin `message_type="video_call"`; chưa chọn công nghệ (WebRTC / dịch vụ ngoài), chưa có API / UI |
 | M4.6 | Bác sĩ đóng ca tư vấn | 🟡 | schema có (`resolved`, tin mốc `consultation_resolved`); chưa có API / UI |
 
 ### M5 — Đặt lịch khám

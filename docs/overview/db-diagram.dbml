@@ -1,5 +1,5 @@
 // Derma Hospital — schema PostgreSQL hiện tại
-// Nguồn: core/app/models/*.py, khớp migration head 2d3a7e56a8b9 (2026-10-05).
+// Nguồn: core/app/models/*.py, khớp migration head 3e4b8f67b9ca (2026-10-05).
 // Xem trên https://dbdiagram.io (dán nội dung file này).
 // id dạng chuỗi do DB sinh (gen_random_uuid()); dữ liệu cũ có thể còn id dạng `conv-<uuid>`, `msg-<uuid>`.
 
@@ -117,12 +117,16 @@ Table consultation_sessions {
 
 Table video_calls {
   id varchar(64) [pk, default: `gen_random_uuid()`]
+  consultation_session_id varchar(64) [not null, ref: > consultation_sessions.id, note: 'phiên tư vấn chứa cuộc gọi']
   room_id varchar(128) [unique, not null]
   status varchar(16) [not null, default: 'pending', note: 'pending | ongoing | ended']
   started_at timestamptz [null]
   ended_at timestamptz [null]
   created_at timestamptz [not null]
-  Note: 'Cuộc gọi video, gắn vào luồng chat qua messages.video_call_id (mới có schema).'
+  Indexes {
+    consultation_session_id
+  }
+  Note: 'Cuộc gọi video thuộc một phiên tư vấn (1 phiên nhiều cuộc gọi); hiện thành tin trong luồng chat qua messages.video_call_id (mới có schema). ON DELETE CASCADE theo consultation_sessions.'
 }
 
 // ===================== Bệnh án =====================
