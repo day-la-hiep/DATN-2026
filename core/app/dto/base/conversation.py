@@ -1,7 +1,8 @@
-"""Bounded context Hội thoại: cuộc chat, tin nhắn (AI / bệnh nhân / bác sĩ), bước lập luận, nguồn trích dẫn."""
+"""Bounded context Hội thoại: cuộc chat và tin nhắn (AI / bệnh nhân / bác sĩ). Bước lập luận, câu hỏi lại, nguồn trích dẫn của AI không phải
+entity lưu bảng riêng nên nằm ở `app/dto/common/chat.py`."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, model_validator
 
@@ -49,10 +50,6 @@ class MessageMetadata(BaseModel):
     attached_files: list[File]
     consultation_session: ConsultationSession | None  # bắt buộc với tin mốc CONSULTATION_*
     video_call: VideoCall | None
-    # --- chỉ tin của AI ---
-    reasoning: list[ReasoningStep] = []
-    choice: MessageChoice | None = None  # câu hỏi lại (`ask_user`) đang chờ / đã được trả lời
-    sources: list[Source] = []
 
     @model_validator(mode="after")
     def validate_metadata(self):
@@ -69,43 +66,3 @@ class MessageMetadata(BaseModel):
                 raise ValueError("video_call is required for VIDEO_CALL")
 
         return self
-
-
-class ChoiceOption(BaseModel):
-    id: str
-    label: str
-
-
-class AnsweredChoice(BaseModel):
-    option_id: str
-    label: str
-    custom: bool = False  # người dùng tự nhập thay vì chọn phương án có sẵn
-
-
-class MessageChoice(BaseModel):
-    question_id: str
-    question: str
-    options: list[ChoiceOption]
-    answered: AnsweredChoice | None = None
-
-
-class ReasoningStep(BaseModel):
-    """Một bước lập luận của AI trong một lượt trả lời: tự suy nghĩ, gọi tool, hoặc hỏi lại người dùng."""
-
-    id: str
-    title: str
-    content: str
-    input: Any | None = None  # tham số tool, với bước gọi tool
-    status: Literal["processing", "done"]
-    type: Literal["default", "tool_call", "tool_ask", "thinking"] = "default"
-    choice: MessageChoice | None = None  # với bước `tool_ask`
-
-
-class Source(BaseModel):
-    """Một nguồn tri thức AI dùng làm căn cứ. `reference` là khoá trong kho tương ứng (id chunk Qdrant, id nút Neo4j, URL)."""
-
-    kind: Literal["guideline", "document", "kg", "web"]
-    title: str
-    reference: str
-    url: str | None = None
-    content: str = ""  # đoạn trích

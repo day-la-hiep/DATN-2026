@@ -9,7 +9,7 @@ export type MessageStatus =
 
 export type ReasoningStepStatus = "processing" | "done";
 
-export type ReasoningStepType = "default" | "tool_call" | "tool_ask" | "thinking";
+export type ReasoningStepType = "default" | "tool" | "thinking";
 
 export interface ChoiceOption {
   id: string;
@@ -28,12 +28,12 @@ export interface ReasoningStep {
   id: string;
   /** tiêu đề ngắn gọn của bước, hiển thị khi thu gọn */
   title: string;
-  /** nội dung chi tiết, được stream từng token khi mở rộng (output của tool nếu là tool_call) */
+  /** nội dung chi tiết, được stream từng token khi mở rộng (output của tool nếu type là tool) */
   content: string;
-  /** Tham số đầu vào khi gọi tool (nếu là tool_call) */
+  /** Tham số đầu vào khi gọi tool (nếu type là tool) */
   input?: unknown;
   status: ReasoningStepStatus;
-  /** Loại bước suy luận: default (thông thường) hoặc tool_call */
+  /** Loại bước suy luận: default (thông thường), tool hoặc thinking */
   type?: ReasoningStepType;
   choice?: MessageChoice;
 }

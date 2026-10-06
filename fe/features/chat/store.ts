@@ -197,10 +197,11 @@ export const useChatStore = create<ChatState>((set, get) => {
           title: event.title,
           content: "",
           status: "processing",
-          type: event.stepType ?? "default",
+          // stepType của event SSE còn là `tool_call` / `tool_ask`; ở dạng lưu chỉ còn `tool`
+          type: event.stepType === "tool_call" || event.stepType === "tool_ask" ? "tool" : "default",
           choice: event.choice,
         };
-        const isToolAsk = step.type === "tool_call" || step.type === "tool_ask" || !!event.choice;
+        const isToolAsk = step.type === "tool" || !!event.choice;
 
         patchMessage(event.messageId, (m) => {
           const list = m.reasoning ?? [];
@@ -309,7 +310,7 @@ export const useChatStore = create<ChatState>((set, get) => {
             input: event.input,
             content: event.content,
             status: "done",
-            type: "tool_call",
+            type: "tool",
           };
           const exists = list.some((s) => s.id === stepId);
           return {
@@ -353,7 +354,7 @@ export const useChatStore = create<ChatState>((set, get) => {
             return {
               ...exStep,
               ...incStep,
-              type: incStep.type || exStep.type || (mergedChoice ? "tool_call" : "default"),
+              type: incStep.type || exStep.type || (mergedChoice ? "tool" : "default"),
               choice: mergedChoice,
             };
           });

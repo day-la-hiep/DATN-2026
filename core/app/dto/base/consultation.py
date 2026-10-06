@@ -25,6 +25,7 @@ class ConsultationSession(BaseModel):
     started_at: datetime | None = None
     resolved_at: datetime | None = None
     report: PreConsultationReport | None = None  # sinh khi bệnh nhân gửi yêu cầu, bác sĩ đọc trước khi nhận ca
+    video_calls: list[VideoCall] = []  # các cuộc gọi video bác sĩ và bệnh nhân thực hiện trong phiên này
 
     @model_validator(mode="after")
     def validate_status(self):
@@ -36,6 +37,9 @@ class ConsultationSession(BaseModel):
 
 
 class VideoCall(BaseModel):
+    """Một cuộc gọi video diễn ra trong một phiên tư vấn (`ConsultationSession.video_calls`); tin `VIDEO_CALL` trong luồng
+    chat chỉ trỏ tới cuộc gọi này."""
+
     room_id: str
     status: Literal["pending", "ongoing", "ended"]
     started_at: datetime | None = None

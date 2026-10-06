@@ -2,7 +2,7 @@
 
 - `shared`         — File dùng chung
 - `identity`       — User / Doctor / Admin, PatientProfile
-- `conversation`   — Conversation, Message, bước lập luận, nguồn trích dẫn
+- `conversation`   — Conversation, Message
 - `consultation`   — ConsultationSession, VideoCall, PreConsultationReport
 - `clinical`       — ClinicalFactTemplate, ClinicalFact
 - `medical_record` — MedicalRecord, PatientImage
@@ -12,16 +12,7 @@ Các context tham chiếu vòng nhau (Conversation ↔ ConsultationSession ↔ C
 mọi file chỉ import chéo trong `TYPE_CHECKING` và model được rebuild một lần ở đây, không phụ thuộc thứ tự import."""
 from app.dto.base.clinical import ClinicalFact, ClinicalFactTemplate, ClinicalProvenance
 from app.dto.base.consultation import ConsultationSession, PreConsultationReport, VideoCall
-from app.dto.base.conversation import (
-    AnsweredChoice,
-    ChoiceOption,
-    Conversation,
-    Message,
-    MessageChoice,
-    MessageMetadata,
-    ReasoningStep,
-    Source,
-)
+from app.dto.base.conversation import Conversation, Message, MessageMetadata
 from app.dto.base.document import (
     Document,
     DocumentChunk,
@@ -35,10 +26,10 @@ from app.dto.base.medical_record import MedicalRecord, PatientImage
 from app.dto.base.shared import File
 
 __all__ = [
-    "Admin", "AnsweredChoice", "ChoiceOption", "ClinicalFact", "ClinicalFactTemplate", "ClinicalProvenance", "ConsultationSession",
+    "Admin", "ClinicalFact", "ClinicalFactTemplate", "ClinicalProvenance", "ConsultationSession",
     "Conversation", "Doctor", "Document", "DocumentChunk", "DocumentFigure", "File",
-    "MedicalRecord", "Message", "MessageChoice", "MessageMetadata", "NewDocument", "PatientImage", "PatientProfile",
-    "PreConsultationReport", "DocumentStage", "DocumentStageOverride", "ReasoningStep", "Source", "User", "VideoCall",
+    "MedicalRecord", "Message", "MessageMetadata", "NewDocument", "PatientImage", "PatientProfile",
+    "PreConsultationReport", "DocumentStage", "DocumentStageOverride", "User", "VideoCall",
 ]
 
 _types_namespace = {name: globals()[name] for name in __all__}

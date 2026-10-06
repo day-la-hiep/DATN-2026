@@ -1,6 +1,6 @@
 # Giải thích chi tiết sơ đồ cơ sở dữ liệu
 
-Nguồn: [db-diagram.dbml](db-diagram.dbml) (khớp ORM `core/app/models/*.py`, migration head `2d3a7e56a8b9`).
+Nguồn: [db-diagram.dbml](db-diagram.dbml) (khớp ORM `core/app/models/*.py`, migration head `3e4b8f67b9ca`).
 Entity nghiệp vụ tương ứng nằm ở `core/app/dto/base/` (mỗi bounded context một file).
 
 ## 0. Quy ước chung
@@ -29,7 +29,8 @@ Entity nghiệp vụ tương ứng nằm ở `core/app/dto/base/` (mỗi bounded
 users 1─n patient_profiles 1─n conversations 1─n messages n─n files (message_files)
   │            │                    │               │
   ├─1─1 doctors│                    └─1─n consultation_sessions 1─1 pre_consultation_reports
-  └─1─1 admins │                                      │ (messages.consultation_session_id, messages.video_call_id)
+  └─1─1 admins │                                      ├─1─n video_calls
+               │                                      │ (messages.consultation_session_id, messages.video_call_id)
                ├─1─n medical_records 1─n patient_images ─n─1 files
                └─1─n clinical_facts n─1 clinical_fact_templates
                           └─n─n messages (clinical_provenances)
@@ -150,11 +151,12 @@ Ràng buộc:
 
 ### `video_calls` — cuộc gọi video
 
-Tách bảng riêng (không chỉ nằm trong `messages.metadata`) vì cuộc gọi có vòng đời `pending → ongoing → ended` được cập nhật sau khi tin nhắn đã tạo. Tin `message_type = video_call` trỏ tới đây qua `messages.video_call_id`. Mới có schema.
+Cuộc gọi **thuộc về một phiên tư vấn** (một phiên có nhiều cuộc gọi). Tách bảng riêng (không chỉ nằm trong `messages.metadata`) vì cuộc gọi có vòng đời `pending → ongoing → ended` được cập nhật sau khi tin nhắn đã tạo. Tin `message_type = video_call` trỏ tới đây qua `messages.video_call_id`. Mới có schema.
 
 | Field | Kiểu | Null | Ý nghĩa |
 |---|---|---|---|
 | `id` | varchar(64) PK | không | Mã cuộc gọi. |
+| `consultation_session_id` | varchar(64) FK → `consultation_sessions.id` | không | Phiên tư vấn chứa cuộc gọi. `ON DELETE CASCADE`. Có index. |
 | `room_id` | varchar(128) | không, **unique** | Mã phòng video. |
 | `status` | varchar(16) | không, mặc định `pending` | `pending` \| `ongoing` \| `ended`. |
 | `started_at` | timestamptz | có | Lúc bắt đầu gọi. |
@@ -320,13 +322,13 @@ Chỉnh sửa tay của người duyệt lên kết quả một bước, **tách
 | `users` → `patient_profiles`, `doctors`, `admins` | CASCADE |
 | `patient_profiles` → `medical_records`, `clinical_facts` | CASCADE |
 | `conversations` → `consultation_sessions` | CASCADE |
-| `consultation_sessions` → `pre_consultation_reports` | CASCADE |
+| `consultation_sessions` → `pre_consultation_reports`, `video_calls` | CASCADE |
 | `messages` / `files` → `message_files` | CASCADE |
 | `medical_records` / `files` → `patient_images` | CASCADE |
 | `clinical_facts` / `messages` → `clinical_provenances` | CASCADE |
 | `documents` → `document_stages` → `document_overrides` | CASCADE |
 | `doctors` → `consultation_sessions.doctor_id`, `medical_records.doctor_id`, `documents.uploaded_by_id` | SET NULL (dữ liệu vẫn giữ) |
-| `video_calls` / `consultation_sessions` → `messages` | SET NULL |
+| `video_calls` / `consultation_sessions` → `messages.video_call_id` / `messages.consultation_session_id` | SET NULL |
 | `files` → `documents.source_file_id` / `ingested_file_id` | SET NULL |
 | `clinical_facts` → `clinical_facts.superseded_by_id` | SET NULL |
 | `clinical_fact_templates` → `clinical_facts` | **RESTRICT** (không xoá được mẫu đang được dùng) |

@@ -1,51 +1,15 @@
 """DTO Output cho resource Message — cũng là shape của cột `messages.metadata` (JSONB).
 
-Field cùng nghĩa với `app/dto/base/conversation.py::Message`/`MessageMetadata` dùng cùng tên (`content`, `metadata`,
-`message_type`, `attached_files`, `consultation_session`, `video_call`). Phần còn lại là dữ liệu riêng của luồng chat
-(`reasoning`, `choice`, `sources`...), base không có. Nguồn chuẩn field phía FE: `fe/services/apiAdapters.ts`."""
-from datetime import datetime
-from typing import Any, Literal
+Dùng thẳng `VideoCall` của `app/dto/base/`; bản dẫn xuất / dữ liệu phụ không lưu bảng ở `app/dto/common/` (`FileDto`,
+`ConsultationSessionDto`, `Step`, `MessageChoice`). Chỉ `ChatSourceDto`, `is_option_response` và các cột bảng
+`messages` là riêng của wire. Nguồn chuẩn field phía FE: `fe/services/apiAdapters.ts`."""
+from typing import Literal
 
 from pydantic import BaseModel
 
-from app.common.constant import ConsultationStatus, MessageSender, MessageType
-from app.dto.common import FileDto
-
-
-class ChoiceOptionDto(BaseModel):
-    id: str
-    label: str
-
-
-class AnsweredChoiceDto(BaseModel):
-    option_id: str
-    label: str
-    custom: bool = False
-
-
-class MessageChoiceDto(BaseModel):
-    """Câu hỏi agent đưa ra (`tool_ask`, xem `kien-truc-agent.md` mục 3)."""
-
-    question_id: str
-    question: str
-    options: list[ChoiceOptionDto]
-    answered: AnsweredChoiceDto | None = None
-
-
-class ReasoningStepDto(BaseModel):
-    """1 Reasoning đã hoàn tất — lưu trong `MessageMetadataDto.reasoning` khi
-    `message.done`/`status="question"` (xem `kien-truc-agent.md` mục 1)."""
-
-    id: str
-    title: str
-    content: str
-    input: Any | None = None
-    status: Literal["processing", "done"]
-    # "thinking" khớp `ReasoningStepType` phía FE (`fe/features/chat/types.ts`) — bước
-    # LLM tự suy nghĩ/tổng hợp trước khi quyết định gọi tool hay trả lời, phát trực tiếp
-    # từ `agent/graph/chat_graph.py::_emit_reasoning_step` (KHÔNG có `tool_calls` liên quan).
-    type: Literal["default", "tool_call", "tool_ask", "thinking"] = "default"
-    choice: MessageChoiceDto | None = None
+from app.common.constant import MessageSender, MessageType
+from app.dto.base import VideoCall
+from app.dto.common import ConsultationSessionDto, FileDto, MessageChoice, Step
 
 
 class ChatSourceDto(BaseModel):
@@ -59,34 +23,6 @@ class ChatSourceDto(BaseModel):
     content: str
 
 
-class DoctorDto(BaseModel):
-    """`app/dto/base/identity.py::Doctor` rút gọn — chỉ phần cần hiển thị trong luồng chat."""
-
-    id: str
-    full_name: str
-    description: str = ""
-
-
-class ConsultationSessionDto(BaseModel):
-    """Field khớp `app/dto/base/consultation.py::ConsultationSession`."""
-
-    doctor: DoctorDto | None = None
-    status: ConsultationStatus = ConsultationStatus.PENDING
-    reason: str
-    requested_at: datetime | None = None
-    started_at: datetime | None = None
-    resolved_at: datetime | None = None
-
-
-class VideoCallDto(BaseModel):
-    """Field khớp `app/dto/base/consultation.py::VideoCall`."""
-
-    room_id: str
-    status: Literal["pending", "ongoing", "ended"]
-    started_at: datetime | None = None
-    ended_at: datetime | None = None
-
-
 class MessageMetadataDto(BaseModel):
     """Toàn bộ field optional-theo-loại của 1 message — map 1-1 vào cột `messages.metadata` (JSONB). KHÔNG field nào bắt
     buộc; message text đơn giản thì toàn bộ đều `None` (xem `docs/db-diagram.md` mục 2)."""
@@ -95,10 +31,10 @@ class MessageMetadataDto(BaseModel):
     message_type: MessageType | None = None
     attached_files: list[FileDto] | None = None  # tệp user upload kèm tin nhắn
     consultation_session: ConsultationSessionDto | None = None  # tin mốc CONSULTATION_*
-    video_call: VideoCallDto | None = None
+    video_call: VideoCall | None = None
     # --- riêng của luồng chat ---
-    reasoning: list[ReasoningStepDto] | None = None  # chỉ tin assistant
-    choice: MessageChoiceDto | None = None  # chỉ tin assistant (hỏi lại)
+    reasoning: list[Step] | None = None  # chỉ tin assistant
+    choice: MessageChoice | None = None  # chỉ tin assistant (hỏi lại)
     sources: list[ChatSourceDto] | None = None  # chỉ tin assistant
     is_option_response: bool | None = None  # chỉ tin user (trả lời choice)
 

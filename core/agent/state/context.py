@@ -33,7 +33,7 @@ class AgentContext:
     # middleware `select_model` (`agent/graph/chat_graph.py`) fallback `settings.AGENT_MODEL`.
     model: str = ""
     # Tích luỹ TRỰC TIẾP bởi `emit_reasoning_step`/`emit_tool_result` (`agent/graph/chat_graph.py`)
-    # — mỗi dict khớp field (snake_case) của `ReasoningStepDto` (`app/dto/response/message.py`).
+    # — mỗi dict khớp field (snake_case) của `Step` (`app/dto/common/chat.py`).
     # `worker.py::_drive` giữ CÙNG reference `AgentContext` truyền vào
     # `agent_graph.astream(..., context=context, ...)` nên middleware append vào đây thì
     # đọc lại được NGAY sau khi `astream()` xong (không cần kênh truyền riêng) — forward

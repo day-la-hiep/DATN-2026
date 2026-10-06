@@ -60,7 +60,7 @@ export function formatReasoningSteps(steps: ReasoningStep[]): string {
     .map((step, index) => {
       const num = index + 1;
       const typeBadge =
-        step.type === "tool_call" || step.type === "tool_ask"
+        step.type === "tool"
           ? " [Tool Call]"
           : "";
       let text = `### Bước ${num}: ${step.title}${typeBadge}`;
@@ -97,7 +97,7 @@ export function formatReasoningSteps(steps: ReasoningStep[]): string {
 export function formatSingleStep(step: ReasoningStep, index?: number): string {
   const prefix = typeof index === "number" ? `Bước ${index + 1}: ` : "Bước: ";
   const typeBadge =
-    step.type === "tool_call" || step.type === "tool_ask"
+    step.type === "tool"
       ? " [Tool Call]"
       : "";
   let text = `${prefix}${step.title}${typeBadge}`;
@@ -136,7 +136,7 @@ function StepItem({
   index?: number;
   isLast?: boolean;
 }) {
-  const isToolCall = step.type === "tool_call" || step.type === "tool_ask" || !!step.choice;
+  const isToolCall = step.type === "tool" || !!step.choice;
   const hasChoice = !!step.choice;
   const isAnswered = !!step.choice?.answered;
   const [open, setOpen] = useState(false);

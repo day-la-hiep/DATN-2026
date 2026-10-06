@@ -19,7 +19,7 @@ from agent.handler.publisher import emit, finish_turn
 from app.config.settings import settings
 from app.config.constants import AGENT_EVENTS_CHANNEL
 from app.api.deps import get_postgres_client
-from app.dto.response.message import ChoiceOptionDto, MessageChoiceDto
+from app.dto.common import ChoiceOption, MessageChoice
 from app.repositories.conversation_repository import ConversationRepository
 
 _ERROR_TEXT = (
@@ -135,11 +135,11 @@ async def _finish_with_question(
     payload: dict[str, Any] = (
         cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
     )
-    choice = MessageChoiceDto(
+    choice = MessageChoice(
         question_id=interrupt.id,
         question=str(payload.get("question", "")),
         options=[
-            ChoiceOptionDto(id=f"opt-{i}", label=str(label))
+            ChoiceOption(id=f"opt-{i}", label=str(label))
             for i, label in enumerate(payload.get("options") or [])
         ],
     )
