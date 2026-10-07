@@ -7,7 +7,7 @@ Chạy từ core/:  uv run python .claude/skills/experiment-agent-flow/experimen
   experiment.py "Bệnh chàm là gì?"
   # đổi model / thêm chỉ dẫn vào prompt / giới hạn tool / bỏ middleware
   experiment.py "..." --model deepseek-v4-flash --prompt-append "Luôn hỏi lại trước khi kết luận." \
-      --tools make_plan,ask_user,lookup_dermo_term --skip-middleware inject_long_term_memory
+      --tools record_reasoning,ask_user,hybrid_retrieval --skip-middleware inject_long_term_memory
   # nhiều câu hỏi x nhiều biến thể x lặp lại, lưu trace JSON
   experiment.py --cases examples/cases.json --variants examples/variants.json --repeat 2 --out /tmp/exp
 

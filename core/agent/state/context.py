@@ -1,7 +1,7 @@
 """Context riêng cho từng lần chạy graph (LangGraph 1.x `context_schema`).
 
 Thay cho cách cũ nhét `user_id`/`conversation_id` vào `config["configurable"]` — truyền
-vào lúc gọi graph qua tham số `context=` (`agent/graph/chat_graph.py::run_turn`/`resume_turn`),
+vào lúc gọi graph qua tham số `context=` (`agent/turn.py::_stream_graph`),
 đọc lại trong node/tool bằng cách khai tham số `runtime: Runtime[AgentContext]` (node,
 `pre_model_hook`) hoặc `runtime: ToolRuntime` (tool) — LangGraph tự inject theo TÊN tham
 số `runtime`, không cần truyền tay qua từng hàm.
@@ -19,7 +19,7 @@ class AgentContext:
     user_id: str
     conversation_id: str
     # `message_id` của turn hiện tại — dùng bởi middleware `_emit_llm_steps`
-    # (`agent/graph/chat_graph.py`) để publish event `message.llm_step` đúng `messageId` (khớp
+    # (`agent/graph/pre_diagnosis_graph.py`) để publish event `message.llm_step` đúng `messageId` (khớp
     # schema `base` dict của `worker.py::_drive`, FE cần field này để gắn event vào đúng
     # tin nhắn đang stream). Rỗng an toàn cho code cũ/test không cần stream (context chỉ
     # thiếu field optional này, không crash).
@@ -30,9 +30,9 @@ class AgentContext:
     # Chuỗi "provider:model" (KHÔNG phải id ngắn) của conversation hiện tại — worker đã
     # resolve từ `Conversation.model` qua `AGENT_MODEL_CHOICES` (`app/config/settings.py`)
     # trước khi build context này, xem `agent/worker.py::_conversation_for`. Rỗng ->
-    # middleware `select_model` (`agent/graph/chat_graph.py`) fallback `settings.AGENT_MODEL`.
+    # middleware `select_model` (`agent/graph/pre_diagnosis_graph.py`) fallback `settings.AGENT_MODEL`.
     model: str = ""
-    # Tích luỹ TRỰC TIẾP bởi `emit_reasoning_step`/`emit_tool_result` (`agent/graph/chat_graph.py`)
+    # Tích luỹ TRỰC TIẾP bởi `emit_reasoning_step`/`emit_tool_result` (`agent/middleware/`)
     # — mỗi dict khớp field (snake_case) của `Step` (`app/dto/common/chat.py`).
     # `worker.py::_drive` giữ CÙNG reference `AgentContext` truyền vào
     # `agent_graph.astream(..., context=context, ...)` nên middleware append vào đây thì

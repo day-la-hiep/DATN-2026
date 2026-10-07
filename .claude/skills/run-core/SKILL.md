@@ -61,8 +61,8 @@ terminals, then the Next.js app in `../fe` (`pnpm dev`). Not usable headless.
 
 - `python -m agent.worker` (package `agent`, not `app.agent`) — the old `app.agent.*` paths no
   longer exist after the refactor; any leftover `from app.agent...` import fails.
-- `agent/graph/common.py` is a leaf module on purpose: `chat_graph` imports `middleware/*`,
-  so middleware must never import `chat_graph` (circular `ImportError` at worker start).
+- `agent/graph/common.py` is a leaf module on purpose: `pre_diagnosis_graph` imports `middleware/*`,
+  so middleware must never import `pre_diagnosis_graph` or `chat_graph` (circular `ImportError` at worker start).
 - Worker and API both die at startup with `AMQPConnectionError ... 5672` if RabbitMQ isn't up;
   it's the infra, not the code.
 - `send`/`chat` against an unknown conversation id returns HTTP 500 (not 404).
@@ -72,16 +72,15 @@ terminals, then the Next.js app in `../fe` (`pnpm dev`). Not usable headless.
   "you haven't told me"). Check with `docker exec derma-rabbitmq rabbitmqctl list_queues name consumers`
   (expect `agent_request_queue 1`). A worker restart/auto-reload also wipes all conversation memory.
 - Qdrant in compose has `QDRANT__SERVICE__API_KEY=derma_qdrant_2026`; `.env` needs
-  `QDRANT_API_KEY=derma_qdrant_2026` (read by `app/infra/qdrant_client.py`), else KB tools
-  return `401 Must provide an API key`. The KB collection `derma_kb_chunks` is empty on a fresh
-  Qdrant — `run.py` does NOT load it; run
-  `uv run python data_ingest/01_normalize/scripts/load_knowledge_base.py` (435 chunks, ~1 min,
-  local embeddings). Restart the worker after changing `.env`.
+  `QDRANT_API_KEY=derma_qdrant_2026` (read by `app/infra/qdrant_client.py`), else `hybrid_retrieval`
+  returns a failed-leg note (`401 Must provide an API key`). The book-chunk collection
+  `derma_document_chunks` is empty on a fresh Qdrant — upload and index a book in `/admin/documents`
+  (or the retrieval returns no `book` results). Restart the worker after changing `.env`.
 
 ## Troubleshooting
 
 - `ImportError: cannot import name '_MAX_CRITIC_RETRIES' from partially initialized module
-  'agent.graph.chat_graph'` → a middleware imported from `chat_graph`; import from
+  'agent.graph.pre_diagnosis_graph'` → a middleware imported from `pre_diagnosis_graph`; import from
   `agent.graph.common` instead.
 - `[Errno 98] Address already in use` from `main.py` → an API is already on :3050; reuse it.
 - `chat` hangs then times out → worker not running; check `tail /tmp/worker.log` for

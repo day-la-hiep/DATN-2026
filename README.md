@@ -72,11 +72,9 @@ make worker      # Agent Worker — bắt buộc để agent trả lời
 make frontend    # FE http://localhost:3000
 ```
 
-**Nạp dữ liệu tra cứu** (Qdrant/Neo4j mới tạo đều trống), chạy trong `core/`:
+**Nạp dữ liệu đồ thị tri thức** (Neo4j mới tạo đang trống; chunk sách vào Qdrant qua giao diện `/admin/documents`), chạy trong `core/`:
 
 ```bash
-uv run python data_ingest/01_normalize/scripts/load_knowledge_base.py   # guideline → Qdrant
-uv run python data_ingest/01_normalize/scripts/load_phenotypes.py       # phenotype → Qdrant
 uv run python data_ingest/01_normalize/scripts/load_primekg.py          # PrimeKG → Neo4j
 uv run python data_ingest/01_normalize/scripts/load_dermo.py            # DermO → Neo4j
 ```

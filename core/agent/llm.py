@@ -60,7 +60,7 @@ def _get_model_cached(model: str) -> BaseChatModel:
         # `reasoning`/`extra_body` tắt "thinking mode": model reasoning-hybrid của
         # DeepSeek (R1/V3.x trở lên) mặc định BẬT thinking, xung đột với tool_choice ép
         # cứng mà `with_structured_output(method="function_calling")` dùng (xem
-        # `entity_grounding.py`/`critic_review`, `graph.py`) — lỗi thật đã gặp: "Thinking
+        # `hybrid_retrieval/kg.py`/`critic_review`, `graph.py`) — lỗi thật đã gặp: "Thinking
         # mode does not support this tool_choice" (400). Agent này LUÔN cần tool-calling
         # đáng tin cậy nên phải tắt thinking, đổi lấy mất phần suy luận sâu của DeepSeek.
         return init_chat_model(

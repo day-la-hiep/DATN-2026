@@ -47,19 +47,21 @@ hardcode them. The Core↔Worker contract is `agent/dto/schemas.py` (`TurnReques
 | `app/infra/` | per-service clients: redis, rabbitmq, qdrant, minio, llm, docling, embedding | resource-specific business logic |
 | `app/config/` | `settings.py` (only place for env vars, `AGENT_MODEL_CHOICES`), `constants.py`, `ids.py`, `auth.py` (renamed from `app/core/` — older docs/skills may still say `app/core/config.py`, that path no longer exists) | |
 | `app/exception/` | `exception_handler.py` registered in `main.py`, `errors.py` | |
-| `agent/graph/chat_graph.py` | `ALL_TOOLS`, `build_agent_graph()`, `config_for()` (thread_id = conversation_id) | be imported by middleware |
+| `agent/graph/chat_graph.py` | **chat graph** (outermost): `build_chat_graph()`, `agent_graph`, `config_for()` (thread_id = conversation_id); nodes `triage` → `pre_diagnosis` | be imported by middleware |
+| `agent/graph/triage.py` | `triage` node: intent filter, answers small talk / out-of-scope directly | |
+| `agent/graph/pre_diagnosis_graph.py` | **pre-diagnosis graph** (`create_agent`): `ALL_TOOLS`, `default_middleware()`, `build_pre_diagnosis_graph()` | be imported by middleware |
 | `agent/graph/common.py` | **leaf module**: `emit`, `TOOL_DISPLAY_NAMES`, `CriticState`, constants | import graph/middleware |
-| `agent/middleware/` | `@wrap_model_call` / `@wrap_tool_call` / `@after_model` hooks | import `chat_graph` |
+| `agent/middleware/` | `@wrap_model_call` / `@wrap_tool_call` / `@after_model` hooks (pre-diagnosis graph only) | import `chat_graph` / `pre_diagnosis_graph` |
 | `agent/tools/` | one `@tool` per file (or small family) | import FastAPI |
 | `agent/state/context.py` | `AgentContext` dataclass — per-turn data tools read via `runtime.context` | |
 | `agent/worker.py` | process entry only: consume queue, per-conversation lock, `main` | hold turn logic |
 | `agent/turn.py` | one turn (agent logic): build `AgentContext`, stream graph, finish (done / `ask_user` question / error) | |
 | `agent/handler/` | **backend communication only** (no agent logic): `publisher.py` = `emit` + `finish_turn` (SSE event → `[DONE]` → `agent_response_queue`); `response_consumer.py` = Core-side consumer that persists the assistant row | import graph/tools/middleware |
-| `agent/prompt/` | `orchestrator.py` (SYSTEM_PROMPT), `critic.py` | |
+| `agent/prompt/` | `orchestrator.py` (SYSTEM_PROMPT of the pre-diagnosis graph), `triage.py` (short intent-filter prompt), `critic.py` | |
 | `agent/dto/schemas.py` | RabbitMQ message contract | |
 
-Dependency direction is one-way: `chat_graph → middleware/tools → common/state`. That's why shared
-helpers sit in `common.py`: a middleware importing `chat_graph` (which imports the middleware to
+Dependency direction is one-way: `chat_graph → pre_diagnosis_graph → middleware/tools → common/state`.
+That's why shared helpers sit in `common.py`: a middleware importing `pre_diagnosis_graph` (which imports the middleware to
 assemble the agent) raised `ImportError ... partially initialized module`. If something is needed by
 both sides, move it down into `common.py`, don't import upward.
 
@@ -97,12 +99,12 @@ a model run `uv run alembic revision --autogenerate -m "..."`, read the generate
 
 **Add an agent tool** — new file in `agent/tools/`, `@tool` with a Vietnamese docstring that tells
 the LLM *when* to call it and what each arg means (the docstring is the prompt). Need turn data →
-`runtime: ToolRuntime[AgentContext, Any]`. Then: append to `ALL_TOOLS` in `chat_graph.py`, add a
+`runtime: ToolRuntime[AgentContext, Any]`. Then: append to `ALL_TOOLS` in `pre_diagnosis_graph.py`, add a
 friendly label to `TOOL_DISPLAY_NAMES` in `common.py` (else FE shows the raw function name), and
 mention it in `agent/prompt/orchestrator.py` if the model must be steered to use it.
 
-**Add middleware** — function in `agent/middleware/`, register it in the `middleware` list in
-`build_agent_graph()`; order matters (`select_model` first so later hooks see the chosen model).
+**Add middleware** — function in `agent/middleware/`, register it in `default_middleware()` in
+`pre_diagnosis_graph.py`; order matters (`select_model` first so later hooks see the chosen model).
 Anything pushed to the user goes through `emit(conversation_id, payload)`; keep event shape stable —
 the FE depends on `type/tool/content/conversationId/messageId`.
 

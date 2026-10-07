@@ -6,7 +6,7 @@ description: Experiment with, compare and debug the Derma agent's reasoning flow
 # Experiment with the agent's reasoning flow
 
 Paths are relative to `core/`. The driver `.claude/skills/experiment-agent-flow/experiment.py`
-imports `agent.graph.chat_graph.build_agent_graph` and runs it in-process with an empty
+imports `agent.graph.chat_graph.build_agent_graph` (the chat graph: `triage` → `pre_diagnosis`; the overrides below apply to the pre-diagnosis graph) and runs it in-process with an empty
 `conversation_id` (so middleware emit nothing to Redis/SSE). It records every step
 (model → tool calls → tool results → answer), auto-answers `ask_user`, and prints a comparison of
 tool sequences across variants. For the full stack over HTTP/SSE use `/run-core` instead.
@@ -52,16 +52,16 @@ uv run python $E/experiment.py --cases $E/examples/cases.json --variants $E/exam
   calls, §3), plus the case's `expect_tools`/`forbid_tools`. Exit code 1 if any run errors or fails.
 - `examples/ask_policy.json` checks the ask-now (`ask_user`) vs answer-and-ask-later policy in
   SYSTEM_PROMPT §6; run it with `--repeat 3` since single runs are noisy.
-- `examples/expand_cases.json` + `examples/expand_variants.json` A/B the `expand_entity_context` tool (with vs
-  without). Note the "without" variant still has the tool named in the system prompt, so the model sometimes
-  calls it and gets an invalid-tool error — read `tool_errors` before trusting the comparison.
+- `examples/expand_cases.json` + `examples/expand_variants.json` were written for the removed `expand_entity_context` tool (now `hybrid_retrieval`'s KG leg / `knowledge_graph_search`) — rewrite them
+  before reuse. In general the "without" variant still names the tool in the system prompt, so the model may call it and get an
+  invalid-tool error — read `tool_errors` before trusting an A/B.
 - Typical loop: change `agent/prompt/orchestrator.py` or a tool docstring (or pass the change as a
   variant), rerun the matrix, compare the "SO SÁNH CHUỖI TOOL" table and the JSON traces.
 
 ## Gotchas
 
 - `build_agent_graph` accepts `tools`, `system_prompt`, `middleware` overrides (used by this
-  driver); production callers pass none. `default_middleware()` returns the production list.
+  driver); production callers pass none. `default_middleware()` (pre-diagnosis graph) returns the production list. Small-talk prompts are answered by the `triage` node before any tool runs — set `AGENT_TRIAGE_ENABLED=false` to exercise the pre-diagnosis graph on every prompt.
 - Run with a real LLM: results vary run to run, so judge a change with `--repeat 3`+, not one run.
 - `--tools` removes tools from the graph but NOT from the system prompt. The model still tries the
   missing tools and gets `X is not a valid tool, try one of [...]` (counted in `tool_errors`, not a

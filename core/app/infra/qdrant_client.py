@@ -61,36 +61,33 @@ class QdrantVectorClient:
             self._sync = None
 
     # ---------------------------------------------------------------- async (Core / Agent)
-    async def ensure_collection(self, name: str, dim: int) -> None:
-        """Tạo collection cosine nếu chưa có (idempotent)."""
-        if not await self.client.collection_exists(name):
-            await self.client.create_collection(name, vectors_config=VectorParams(size=dim, distance=Distance.COSINE))
-
-    async def delete_collection(self, name: str) -> None:
-        """Xoá collection (no-op khi chưa tồn tại)."""
-        if await self.client.collection_exists(name):
-            await self.client.delete_collection(name)
-
-    async def upsert_points(self, name: str, points: list[PointStruct]) -> None:
-        await self.client.upsert(name, points=points)
-
     async def search(self, name: str, vector: list[float], *, limit: int, query_filter: Filter | None = None,
                      score_threshold: float | None = None) -> list[ScoredPoint]:
         result = await self.client.query_points(name, query=vector, query_filter=query_filter, limit=limit,
                                                 score_threshold=score_threshold)
         return result.points
 
-    async def existing_ids(self, name: str, ids: list[str]) -> set[str]:
-        """Trong `ids`, những id đã có trong collection (không tải payload/vector)."""
-        if not ids:
-            return set()
-        records = await self.client.retrieve(name, ids=ids, with_payload=False, with_vectors=False)
-        return {str(r.id) for r in records}
+    async def collection_exists(self, name: str) -> bool:
+        return await self.client.collection_exists(name)
 
-    async def scroll(self, name: str, query_filter: Filter, *, limit: int, with_payload: bool | list[str] = True) -> list[Record]:
-        """Lấy point theo bộ lọc payload thuần (không cần vector)."""
-        records, _ = await self.client.scroll(name, scroll_filter=query_filter, limit=limit, with_payload=with_payload)
-        return records
+    async def count(self, name: str) -> int:
+        """Số point của collection; 0 khi collection chưa có."""
+        if not await self.client.collection_exists(name):
+            return 0
+        return int((await self.client.count(name, exact=True)).count)
+
+    async def scroll_all(self, name: str, *, with_payload: bool | list[str] = True, batch: int = 256) -> list[Record]:
+        """Đọc toàn bộ point (không cần vector), phân trang. Dùng để dựng chỉ mục BM25 trong bộ nhớ — chỉ hợp lý với kho cỡ
+        vài nghìn chunk."""
+        if not await self.client.collection_exists(name):
+            return []
+        records: list[Record] = []
+        offset = None
+        while True:
+            page, offset = await self.client.scroll(name, limit=batch, offset=offset, with_payload=with_payload)
+            records += page
+            if offset is None:
+                return records
 
     # ---------------------------------------------------------------- đồng bộ (pipeline ở thread nền)
     def ensure_collection_sync(self, name: str, dim: int, *, keyword_index_fields: tuple[str, ...] = ()) -> None:

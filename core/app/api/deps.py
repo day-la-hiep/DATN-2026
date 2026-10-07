@@ -20,6 +20,7 @@ from app.config.settings import settings
 from app.infra.docling_client import DoclingClient
 from app.infra.embedding_client import EmbeddingClient
 from app.infra.minio_client import MinioClient
+from app.infra.neo4j_client import Neo4jClient
 from app.infra.postgres_client import PostgresClient
 from app.infra.qdrant_client import QdrantVectorClient
 from app.infra.rabbitmq_client import RabbitMQClient
@@ -33,6 +34,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.services.document_service import DocumentService
 from app.services.conversation_service import ConversationService
 from app.services.knowledge_base_service import KnowledgeBaseService
+from app.services.knowledge_graph_service import KnowledgeGraphService
 from app.services.message_service import MessageService
 from app.services.document_ingest_pipeline_service import DocumentIngestPipelineService
 
@@ -93,6 +95,10 @@ def get_qdrant_client() -> QdrantVectorClient:
     return _singleton("qdrant_client", QdrantVectorClient.from_settings)
 
 
+def get_neo4j_client() -> Neo4jClient:
+    return _singleton("neo4j_client", Neo4jClient.from_settings)
+
+
 def get_minio_client() -> MinioClient:
     return _singleton("minio_client", MinioClient.from_settings)
 
@@ -110,6 +116,13 @@ def get_knowledge_base_service() -> KnowledgeBaseService:
     return _singleton(
         "knowledge_base_service",
         lambda: KnowledgeBaseService(get_qdrant_client()),
+    )
+
+
+def get_knowledge_graph_service() -> KnowledgeGraphService:
+    return _singleton(
+        "knowledge_graph_service",
+        lambda: KnowledgeGraphService(get_neo4j_client()),
     )
 
 

@@ -28,7 +28,7 @@ from agent.graph.common import (
 )
 from agent.llm import get_model
 from agent.prompt.critic import CRITIC_SYSTEM
-from agent.prompt.orchestrator import SYSTEM_PROMPT
+from agent.prompt.orchestrator import DIAGNOSIS_PROMPT
 from agent.state.context import AgentContext
 from agent.tools.memory import search_memories
 from agent.tools.reasoning import (
@@ -47,7 +47,7 @@ async def select_model(
 ) -> ModelResponse:
     """Chọn model theo `AgentContext.model` (đã resolve sẵn thành "provider:model" ở
     `worker.py`) thay cho model mặc định `create_agent()` được khởi tạo cùng — PHẢI đứng
-    ĐẦU danh sách middleware (`build_agent_graph`) để mọi middleware sau (vd
+    ĐẦU danh sách middleware (`default_middleware()` ở `pre_diagnosis_graph.py`) để mọi middleware sau (vd
     `inject_long_term_memory`) thấy đúng model đã chọn qua `request.model`."""
     ctx: AgentContext = request.runtime.context  # type: ignore[assignment]
     if ctx.model:
@@ -80,7 +80,7 @@ async def inject_long_term_memory(
         base = (
             request.system_message.content
             if request.system_message
-            else SYSTEM_PROMPT
+            else DIAGNOSIS_PROMPT
         )
         request = request.override(
             system_message=SystemMessage(
@@ -261,10 +261,20 @@ async def force_reasoning(
     messages = request.state["messages"]
     if messages and isinstance(messages[-1], ToolMessage):
         state = analyze_turn(turn_messages(messages))
-        if state.pending_evidence and state.invalid_count < MAX_REASONING_RETRIES:
+        if (
+            state.pending_evidence
+            and state.invalid_count < MAX_REASONING_RETRIES
+        ):
             request = request.override(
-                tools=[t for t in request.tools if getattr(t, "name", None) == REASONING_TOOL],
-                tool_choice={"type": "function", "function": {"name": REASONING_TOOL}},
+                tools=[
+                    t
+                    for t in request.tools
+                    if getattr(t, "name", None) == REASONING_TOOL
+                ],
+                tool_choice={
+                    "type": "function",
+                    "function": {"name": REASONING_TOOL},
+                },
             )
     return await handler(request)
 
@@ -324,7 +334,9 @@ async def enforce_initial_reasoning(
         # để người dùng nhận câu trả lời trống.
         return {
             "messages": [
-                RemoveMessage(id=last.id) if last.id else HumanMessage(content="."),
+                RemoveMessage(id=last.id)
+                if last.id
+                else HumanMessage(content="."),
                 HumanMessage(
                     content=(
                         f"{FEEDBACK_PREFIX} Phản hồi vừa rồi rỗng. Hãy tiếp tục: gọi tool cần "

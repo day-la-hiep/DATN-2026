@@ -55,7 +55,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | M2.1 | Hỏi đáp với chatbot, stream câu trả lời realtime | ✅ | Core → RabbitMQ → Agent Worker → Redis → SSE |
 | M2.2 | Tạo / xem danh sách / xem lịch sử hội thoại | ✅ | `/conversations`, `/conversations/{id}/messages` |
 | M2.3 | Gửi ảnh da, phân loại bằng CNN | ✅ | `POST /uploads` → MinIO; tool `classify_skin_image` (22 lớp, chỉ là giả thuyết) |
-| M2.4 | Mô tả triệu chứng → gợi ý chẩn đoán phân biệt | ✅ | tool `describe_morphology`, `generate_differential`, `expand_entity_context` |
+| M2.4 | Mô tả triệu chứng → gợi ý chẩn đoán phân biệt | ✅ | bệnh ứng viên từ nhánh KG của `hybrid_retrieval` (hoặc `knowledge_graph_search`) (cùng triệu chứng, bệnh liên quan) + gợi ý câu hỏi phân biệt trong `record_reasoning`; đường xếp hạng theo phenotype (`describe_morphology`, `generate_differential`) đã bỏ |
 | M2.5 | Chatbot hỏi lại khi thiếu thông tin | ✅ | tool `ask_user` + `interrupt()`, trả lời qua `/questions/{id}/answer` |
 | M2.6 | Hiển thị các bước lập luận / tool đã dùng | ✅ | event `message.thinking`, `message.tool_result`, lưu `metadata.reasoning` |
 | M2.7 | Tra cứu thông tin bệnh lý từ KB | ✅ | guideline BYT / WHO / MedlinePlus (Qdrant), PrimeKG + DermO (Neo4j), web nguồn uy tín |
@@ -115,7 +115,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | Mã | Chức năng | Trạng thái | Hiện trạng / việc cần làm |
 |---|---|---|---|
 | M8.1 | KG da liễu (bệnh – triệu chứng – thuốc – gen) và ontology thuật ngữ | ✅ | PrimeKG lọc da liễu + DermO trong Neo4j, nạp từ `core/data_ingest/` |
-| M8.2 | Chatbot truy vấn KG | ✅ | `query_dermatology_kg`, `lookup_dermo_term`, `ground_medical_entities` |
+| M8.2 | Chatbot truy vấn KG | ✅ | tool `hybrid_retrieval` / `knowledge_graph_search` (trích thực thể → DermO → PrimeKG, bệnh ứng viên) |
 | M8.3 | **Trực quan hoá** KG liên quan đến bệnh nhân | 🔲 | cần API trả subgraph quanh các thực thể của bệnh nhân (từ clinical fact M3.1) + thư viện vẽ graph ở FE |
 
 ### M9 — Quản lý Knowledge Base

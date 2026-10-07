@@ -13,8 +13,7 @@ text của `HumanMessage` -> agent tự đọc thấy rồi copy làm tham số 
 QUAN TRỌNG — kết quả tool này KHÔNG phải clinical evidence: đây là xác suất phân loại
 ảnh của 1 CNN (không phải bác sĩ, không có tiền sử/triệu chứng khác của bệnh nhân), nên
 theo đúng nguyên tắc evidence của `SYSTEM_PROMPT` (`graph.py` mục 2/5) — chỉ được coi là
-GIẢ THUYẾT cần đối chiếu tiếp qua `search_disease_guidelines`/`lookup_dermo_term`/
-`ground_medical_entities`, KHÔNG được khẳng định thẳng thành chẩn đoán.
+GIẢ THUYẾT cần đối chiếu tiếp qua `hybrid_retrieval`, KHÔNG được khẳng định thẳng thành chẩn đoán.
 """
 
 import asyncio
@@ -227,8 +226,8 @@ async def classify_skin_image(
 
     KẾT QUẢ TOOL NÀY LÀ GIẢ THUYẾT, KHÔNG PHẢI CHẨN ĐOÁN: đây là xác suất phân loại ảnh
     thuần tuý, không biết tiền sử/triệu chứng khác của người dùng. BẮT BUỘC đối chiếu
-    tên bệnh top-1 (và top-2 nếu tin cậy gần nhau) qua `search_disease_guidelines`
-    hoặc `lookup_dermo_term` để lấy CLINICAL_EVIDENCE trước khi trả lời — KHÔNG được nói
+    tên bệnh top-1 (và top-2 nếu tin cậy gần nhau) qua `hybrid_retrieval`
+    để lấy CLINICAL_EVIDENCE trước khi trả lời — KHÔNG được nói
     thẳng "bạn bị X" chỉ dựa vào % tin cậy của tool này.
 
     Args:
@@ -249,6 +248,6 @@ async def classify_skin_image(
     return (
         "Kết quả phân loại ảnh (CNN, KHÔNG phải chẩn đoán y khoa):\n"
         + _format_predictions(results)
-        + "\n\nCần đối chiếu tên bệnh top-1 qua search_disease_guidelines/lookup_dermo_term "
+        + "\n\nCần đối chiếu tên bệnh top-1 qua hybrid_retrieval "
         "trước khi kết luận."
     )

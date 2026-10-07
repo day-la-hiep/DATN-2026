@@ -1,5 +1,6 @@
 """Xử lý 1 turn của agent: dựng `AgentContext`, chạy `agent_graph.astream()`, forward token
-thật lên Redis và kết thúc turn (xong / hỏi lại qua `ask_user` / lỗi).
+thật lên Redis và kết thúc turn (xong / hỏi lại qua `ask_user` / lỗi). Turn có thể kết thúc ngay ở bước lọc intent
+(node `triage` của chat graph) mà không chạy graph tiền chẩn đoán.
 
 `thread_id` (checkpointer) = `conversation_id` — 1 hội thoại = 1 thread, mọi turn nối tiếp qua
 `messages` (`agent/graph/chat_graph.py::config_for`). `message.thinking`/`message.tool_result`
@@ -21,6 +22,10 @@ from app.config.constants import AGENT_EVENTS_CHANNEL
 from app.api.deps import get_postgres_client
 from app.dto.common import ChoiceOption, MessageChoice
 from app.repositories.conversation_repository import ConversationRepository
+
+# Node của chat graph có thể tạo câu trả lời cuối của turn: bước lọc intent trả lời luôn (`triage`) hoặc graph tiền chẩn đoán
+# (`pre_diagnosis`; update của nó gồm mọi tin mới trong vòng lặp nên câu trả lời là AIMessage cuối cùng).
+_ANSWER_NODES = ("triage", "pre_diagnosis")
 
 _ERROR_TEXT = (
     "Xin lỗi, hệ thống gặp sự cố khi xử lý câu hỏi này (có thể do quá tải "
@@ -83,39 +88,42 @@ async def _stream_graph(
     context: AgentContext,
     req: TurnRequest,
 ) -> tuple[AIMessage | None, Interrupt | None]:
-    """Chạy graph, forward token; trả `(AIMessage cuối, Interrupt nếu tạm dừng)`."""
+    """Chạy chat graph, forward token; trả `(AIMessage cuối, Interrupt nếu tạm dừng)`."""
     interrupt: Interrupt | None = None
     final_message: AIMessage | None = None
+    streamed = False
 
     async for mode, chunk in agent_graph.astream(  # pyright: ignore[reportUnknownMemberType]
         input_,
         config=config_for(req.conversation_id),
         context=context,
-        stream_mode=["messages", "updates"],
+        stream_mode=["updates", "custom"],
     ):
-        if mode == "messages":
-            msg, meta = cast("tuple[Any, dict[str, Any]]", chunk)
-            assert isinstance(msg, BaseMessage)
-            # `langgraph_node == "model"` lọc đúng token của LLM chính — bỏ qua các lần
-            # gọi model nội bộ khác (vd `SummarizationMiddleware` tự gọi LLM tóm tắt khi
-            # vượt ngưỡng), không lẫn vào stream trả lời user.
-            if meta.get("langgraph_node") == "model" and msg.text:
-                await emit(
-                    channel,
-                    {"type": "message.delta", "delta": msg.text, **base},
-                )
+        if mode == "custom":
+            # token model chính do node `pre_diagnosis` của chat graph chuyển tiếp (`agent/graph/chat_graph.py::_pre_diagnosis_node`)
+            payload = cast("dict[str, Any]", chunk)
+            if payload.get("type") == "token" and payload.get("text"):
+                streamed = True
+                await emit(channel, {"type": "message.delta", "delta": payload["text"], **base})
             continue
 
-        # mode == "updates": state diff sau mỗi node — dùng để phát hiện interrupt (tool
-        # `ask_user`) và tóm `AIMessage` cuối cùng (LangGraph đã gộp sẵn khi node "model"
-        # hoàn tất, không cần tự cộng dồn từng chunk).
+        # mode == "updates": state diff sau mỗi node của chat graph — dùng để phát hiện interrupt (tool `ask_user`) và tóm `AIMessage`
+        # cuối cùng (LangGraph đã gộp sẵn, không cần tự cộng dồn từng chunk). Token không đi qua đây mà qua mode "custom" ở trên.
         update = cast(dict[str, Any], chunk)
         if "__interrupt__" in update:
             interrupt = cast(tuple[Interrupt, ...], update["__interrupt__"])[0]
             break
-        model_update = update.get("model")
-        if model_update:
-            final_message = cast(AIMessage, model_update["messages"][-1])
+        for node in _ANSWER_NODES:
+            node_update = update.get(node)
+            if node_update and node_update.get("messages"):
+                last = node_update["messages"][-1]
+                if isinstance(last, AIMessage):
+                    final_message = last
+
+    # Câu trả lời của triage không đi qua token streaming (nằm trong tham số tool của lần phân loại) — phát một lần để FE hiển thị
+    # như các câu trả lời khác.
+    if interrupt is None and final_message is not None and not streamed and final_message.text:
+        await emit(channel, {"type": "message.delta", "delta": final_message.text, **base})
 
     return final_message, interrupt
 

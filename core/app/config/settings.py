@@ -56,23 +56,18 @@ class Settings(BaseSettings):
     # Khớp `QDRANT__SERVICE__API_KEY` của service qdrant trong docker-compose.yml. Rỗng = không
     # gửi api-key (Qdrant không bật auth).
     QDRANT_API_KEY: str = ""
-    # Long-term memory: hạ tầng cũ (app/kien-truc-memory.md), hiện KHÔNG được dùng nữa —
-    # agent/tools/memory.py đã chuyển sang langgraph.store.InMemoryStore. Giữ setting này
-    # để không phá vỡ .env hiện có, chưa xoá client (app/infra/qdrant_client.py).
-    QDRANT_COLLECTION: str = "agent_memories"
-    # Knowledge base guideline (BYT 75/2015, WHO, MedlinePlus) — 435 chunk ingest từ
-    # data-ingest/01_normalize/output/diseases/ qua data-ingest/01_normalize/scripts/load_knowledge_base.py,
-    # dùng bởi agent/tools/knowledge_base_search.py.
-    QDRANT_KB_COLLECTION: str = "derma_kb_chunks"
-    # Phenotype PrimeKG (tên embed) — `describe_morphology` chuẩn hoá mô tả tự do sang nút
-    # phenotype, ingest qua data-ingest/01_normalize/scripts/load_phenotypes.py.
-    QDRANT_PHENOTYPE_COLLECTION: str = "derma_phenotypes"
     # Chunk tài liệu (pipeline/document_ingest, bước "Lưu vào kho tri thức"): mỗi point = 1 chunk đã gắn phần/chương/mục/trang,
-    # payload có `document_id` để xoá/lọc theo tài liệu. Cùng embedding local như KB guideline (384 chiều, cosine).
+    # payload có `document_id` để xoá/lọc theo tài liệu. Embedding local (`agent/embeddings.py`, 384 chiều, cosine).
     QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks"
+    # Collection sách cũ (trước khi đổi Book -> Document, payload `book_id`/`book_title`) vẫn được agent ĐỌC cùng collection mới để
+    # không mất dữ liệu đã nạp; pipeline không ghi vào đây. Rỗng = bỏ qua.
+    QDRANT_LEGACY_BOOK_COLLECTION: str = "derma_book_chunks"
+    # Cross-encoder đa ngôn ngữ (có tiếng Việt) rerank kết quả `hybrid_retrieval` và các tool tra sách chuyên biệt; chạy local qua sentence-transformers, tải
+    # model lần đầu (~470MB). Không tải được thì tool tự bỏ bước rerank và dùng thứ tự RRF.
+    RERANKER_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
 
     # ----- Neo4j (knowledge graph da liễu — PrimeKG, xem
-    # app/agent/knowledge_graph.py + data/PrimeKG/load_to_neo4j.py) -----
+    # app/infra/neo4j_client.py + data_ingest/01_normalize/scripts/load_primekg.py, load_dermo.py) -----
     NEO4J_URL: str = "bolt://localhost:7687"
     NEO4J_USER: str = "neo4j"
     NEO4J_PASSWORD: str = "derma12345"
@@ -131,6 +126,12 @@ class Settings(BaseSettings):
     # supersteps của LangGraph — vượt ngưỡng đó raise `GraphRecursionError`, đã được
     # `worker.py::_drive` bắt graceful (coi turn là "done" kèm thông báo lỗi) thay vì
     # treo turn.)
+
+    # Bước lọc intent trước vòng lập luận chính (`agent/graph/triage.py`, node đầu của chat graph): chào hỏi / cảm ơn / hỏi về trợ lý / ngoài phạm vi
+    # da liễu thì trả lời luôn, còn lại mới sang lập luận tiền chẩn đoán. `AGENT_TRIAGE_MODEL` dạng "provider:model", rỗng thì dùng
+    # model của hội thoại — đặt model nhỏ, rẻ hơn ở đây cũng được vì việc phân loại đơn giản.
+    AGENT_TRIAGE_ENABLED: bool = True
+    AGENT_TRIAGE_MODEL: str = ""
 
     # Chỉ áp dụng khi AGENT_MODEL dùng provider "google_genai" (Gemini "thinking" —
     # xem `agent/llm.py`); OpenRouter/model khác không hỗ trợ tham số này.
@@ -234,7 +235,7 @@ def log_startup_infra() -> None:
         f"[Infra] PostgreSQL -> {_mask(settings.DATABASE_URL)}",
         f"[Infra] Redis      -> {settings.REDIS_HOST}:{settings.REDIS_PORT}/db{settings.REDIS_DB}",
         f"[Infra] RabbitMQ   -> {_mask(settings.RABBITMQ_URL)}",
-        f"[Infra] Qdrant     -> {settings.QDRANT_URL} (collections: {settings.QDRANT_COLLECTION}, {settings.QDRANT_KB_COLLECTION})",
+        f"[Infra] Qdrant     -> {settings.QDRANT_URL} (chunk sách: {settings.QDRANT_DOCUMENT_COLLECTION})",
         f"[Infra] Neo4j      -> {settings.NEO4J_URL} (user={settings.NEO4J_USER})",
         f"[Infra] MinIO      -> {settings.MINIO_ENDPOINT} (bucket={settings.MINIO_BUCKET}, secure={settings.MINIO_SECURE})",
         f"[Infra] LangSmith  -> "

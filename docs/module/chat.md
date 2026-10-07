@@ -14,7 +14,7 @@ knowledge graph, phân loại ảnh; thiếu thông tin thì hỏi lại; câu t
 | Service | `core/app/services/conversation_service.py`, `message_service.py` |
 | Repository / Model | `conversation_repository.py`, `message_repository.py`, `file_repository.py`; `models/conversation.py`, `message.py`, `file.py` |
 | Worker | `core/agent/worker.py` (vòng đời, khoá theo hội thoại), `turn.py` (chạy 1 turn), `handler/publisher.py`, `handler/response_consumer.py` (chạy trong Core) |
-| Agent | `core/agent/graph/chat_graph.py`, `tools/`, `middleware/`, `prompt/orchestrator.py` |
+| Agent | `core/agent/graph/` (`chat_graph.py` lọc intent → `pre_diagnosis_graph.py` tiền chẩn đoán), `tools/`, `middleware/`, `prompt/` |
 
 ## 2. API
 
@@ -103,7 +103,7 @@ bảo vệ cuối, vì `create_agent` không cho chạy song song trên cùng `t
 
 ## 6. Agent
 
-`chat_graph.py` dùng `create_agent` (LangChain) — vòng lặp ReAct có sẵn — với:
+Agent gồm hai graph. **Chat graph** (`chat_graph.py`) lọc intent: tin xã giao / hỏi về trợ lý / ngoài phạm vi da liễu được trả lời luôn, còn lại chuyển sang **graph tiền chẩn đoán** (`pre_diagnosis_graph.py`), dùng `create_agent` (LangChain) — vòng lặp ReAct có sẵn — với:
 
 - **`thread_id = conversation_id`**: checkpointer nối mọi turn của một hội thoại (short-term memory).
 - **Model theo hội thoại**: `conversations.model` lưu id ngắn, Worker map sang `"provider:model"` qua
@@ -119,12 +119,10 @@ bảo vệ cuối, vì `create_agent` không cho chạy song song trên cùng `t
 | `record_reasoning` | ghi lập luận có cấu trúc (hiện thành bước suy luận trên UI) | — |
 | `ask_user` | hỏi lại người dùng, có lựa chọn | `interrupt()` |
 | `save_memory` | lưu thông tin đáng nhớ về người dùng | LangGraph store |
-| `search_disease_guidelines`, `get_disease_guideline_profile` | tra guideline (BYT 75/2015, WHO, MedlinePlus) | Qdrant `derma_kb_chunks` |
-| `query_dermatology_kg` | hỏi đáp quan hệ bệnh–triệu chứng–thuốc (LLM sinh Cypher) | Neo4j PrimeKG |
-| `lookup_dermo_term` | chuẩn hoá thuật ngữ da liễu | Neo4j DermO |
-| `ground_medical_entities` | trích thực thể → DermO → PrimeKG | Neo4j |
-| `expand_entity_context` | mở rộng graph tìm bệnh ứng viên rồi tra guideline từng bệnh | Neo4j + Qdrant |
-| `describe_morphology`, `generate_differential` | chẩn đoán phân biệt theo phenotype | Neo4j + Qdrant |
+| `hybrid_retrieval` | tool tra cứu **mặc định** cho yêu cầu chung: sách giáo khoa đã số hoá + đồ thị tri thức, chạy semantic + BM25 + KG (trích thực thể → DermO → PrimeKG, bệnh ứng viên) rồi rerank bằng cross-encoder; trả đoạn kèm nguồn (sách, mục, trang) | Qdrant `derma_document_chunks` + Neo4j PrimeKG/DermO |
+| `semantic_search` | (chuyên biệt) tra sách giáo khoa đã số hoá theo ngữ nghĩa (embedding → Qdrant), rerank bằng cross-encoder; trả đoạn kèm nguồn (sách, mục, trang) | Qdrant `derma_document_chunks` |
+| `keyword_search` | (chuyên biệt) tra sách giáo khoa theo từ khoá (BM25 trong bộ nhớ) — bắt tên thuốc, thuật ngữ; cùng dạng kết quả với `semantic_search` | Qdrant `derma_document_chunks` |
+| `knowledge_graph_search` | (chuyên biệt) trích thực thể → DermO → PrimeKG: quan hệ bệnh–triệu chứng–thuốc và bệnh ứng viên; chỉ là gợi ý, không phải bằng chứng | Neo4j PrimeKG/DermO |
 | `classify_skin_image` | CNN 22 lớp phân loại ảnh da — chỉ là **giả thuyết** | MinIO + PyTorch |
 | `search_trusted_web`, `fetch_trusted_page` | tra web trong danh sách domain uy tín | Tavily |
 

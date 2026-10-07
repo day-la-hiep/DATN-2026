@@ -58,7 +58,7 @@ Bảng `knowledge_suggestions` tương ứng: FK `origin_message_id` → `messag
 
 ## 4. Câu hỏi cần chốt
 
-- Tri thức đã duyệt nạp chung collection guideline (`derma_kb_chunks`) hay collection riêng?
+- Tri thức đã duyệt nạp chung collection chunk sách (`derma_document_chunks`) hay collection riêng?
 - Chatbot có được tự tạo đề xuất không, hay chỉ bác sĩ? Nếu có, cần giới hạn để tránh rác (ví dụ chỉ khi phải dùng web).
 - Ca bệnh tham khảo tự sinh đề xuất khi bác sĩ đánh dấu, hay bác sĩ chủ động tạo?
 - Ẩn thông tin định danh của ca bệnh ở bước nào (khi tạo đề xuất hay khi nạp)?

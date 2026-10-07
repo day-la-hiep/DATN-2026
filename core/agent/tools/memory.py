@@ -4,7 +4,7 @@ wrapper + business logic riêng cho semantic search (khác quyết định cũ, 
 LangGraph không có sẵn).
 
 `InMemoryStore` (LangGraph, hỗ trợ sẵn semantic search khi cấu hình `index`) đủ cho dev —
-giống cách `InMemorySaver` được dùng cho checkpointer (`agent/graph/chat_graph.py`). Production
+giống cách `InMemorySaver` được dùng cho checkpointer (`agent/graph/chat_graph.py`, chat graph giữ checkpointer và store). Production
 cần store bền vững hơn 1 tiến trình: `langgraph-checkpoint-postgres` có
 `AsyncPostgresStore` cùng interface, hoặc tự viết 1 adapter theo `BaseStore` để giữ hạ
 tầng Qdrant đã triển khai — chỉ cần đổi `build_memory_store()`, không đụng chỗ khác
@@ -49,7 +49,7 @@ async def search_memories(
     store: BaseStore, user_id: str, query: str, limit: int = 5
 ) -> list[str]:
     """Semantic search memory liên quan `query` — dùng trong `pre_model_hook`
-    (`agent/graph/chat_graph.py`) để tự động nạp context đầu mỗi lần gọi LLM, KHÔNG cần agent tự
+    (`agent/graph/pre_diagnosis_graph.py`) để tự động nạp context đầu mỗi lần gọi LLM, KHÔNG cần agent tự
     gọi tool để nhớ lại (nhớ chủ động, giống hành vi bản Qdrant cũ)."""
     if not query.strip():
         return []

@@ -46,7 +46,7 @@ class MessageRepository:
         """Tìm tin AI đang `status="question"` có `choice.question_id` khớp
         (dùng cho `POST .../questions/{question_id}/answer`, `docs/api-doc.md` mục 2.2).
         `extra.choice` set trực tiếp — không còn lồng trong `reasoning[]` như bản
-        Turn/Step/Reasoning cũ, vì agent hiện tại (`agent/graph/chat_graph.py`) chỉ có ĐÚNG 1
+        Turn/Step/Reasoning cũ, vì agent hiện tại (`agent/graph/`) chỉ có ĐÚNG 1
         câu hỏi đang chờ tại 1 thời điểm, không phải danh sách Reasoning."""
         stmt = select(Message).where(
             Message.conversation_id == conversation_id,

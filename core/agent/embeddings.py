@@ -1,6 +1,5 @@
 """Embedding LOCAL (sentence-transformers, chạy CPU, không gọi API ngoài) — dùng chung
-cho long-term memory (`agent/tools/memory.py`) và KB semantic search
-(`agent/tools/knowledge_base_search.py`). Thay cho `GoogleGenerativeAIEmbeddings`
+cho long-term memory (`agent/tools/memory.py`), `hybrid_retrieval` (`agent/tools/hybrid_retrieval/`) và pipeline index sách. Thay cho `GoogleGenerativeAIEmbeddings`
 trước đây (bắt buộc `GOOGLE_API_KEY`) — cùng lúc `AGENT_MODEL` chuyển sang OpenRouter/
 Gemma (`agent/llm.py`), project không còn phụ thuộc Google ở bất kỳ đâu.
 
@@ -36,3 +35,14 @@ class LocalEmbeddings(Embeddings):
     def embed_query(self, text: str) -> list[float]:
         vector = _get_model().encode([text], normalize_embeddings=True)[0]
         return vector.tolist()
+
+
+_embeddings: LocalEmbeddings | None = None
+
+
+def get_embeddings() -> LocalEmbeddings:
+    """Instance dùng chung của process — luôn cùng model / số chiều (`EMBEDDING_DIM`) với lúc ingest."""
+    global _embeddings
+    if _embeddings is None:
+        _embeddings = LocalEmbeddings()
+    return _embeddings

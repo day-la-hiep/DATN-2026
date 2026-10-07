@@ -1,5 +1,5 @@
-"""Hằng số/helper dùng chung giữa `chat_graph` và `middleware/*` — module lá (không import
-lại `chat_graph`/`middleware`) để tránh vòng import."""
+"""Hằng số/helper dùng chung giữa `pre_diagnosis_graph` và `middleware/*` — module lá (không import
+lại `pre_diagnosis_graph`/`chat_graph`/`middleware`) để tránh vòng import."""
 
 import json
 import re
@@ -13,22 +13,18 @@ from app.api.deps import get_redis_client
 
 # Tên tool hiển thị cho người dùng khi FE render bước "đang tra cứu ..." (SSE
 # `message.tool_result`/`message.thinking`, xem `emit_tool_result`/`emit_reasoning_step`
-# bên dưới) — tên hàm tiếng Anh (`ask_user`, `ground_medical_entities`...) khó hiểu với
+# bên dưới) — tên hàm tiếng Anh (`ask_user`, `hybrid_retrieval`...) khó hiểu với
 # người dùng cuối, map sang nhãn tiếng Việt dễ hiểu. Tool nào quên thêm vào đây thì
 # fallback về tên gốc.
 TOOL_DISPLAY_NAMES: dict[str, str] = {
     "record_reasoning": "Lập luận",
     "ask_user": "Hỏi lại người dùng",
     "save_memory": "Lưu thông tin ghi nhớ",
-    "query_dermatology_kg": "Tra cứu cơ sở tri thức da liễu",
-    "lookup_dermo_term": "Tra cứu thuật ngữ da liễu",
-    "ground_medical_entities": "Phân tích & đối chiếu thông tin y khoa",
-    "expand_entity_context": "Mở rộng ứng viên từ đồ thị tri thức",
-    "search_disease_guidelines": "Tra cứu tài liệu hướng dẫn lâm sàng",
-    "get_disease_guideline_profile": "Xem hồ sơ chi tiết 1 bệnh",
+    "hybrid_retrieval": "Tra cứu sách giáo khoa và đồ thị tri thức",
+    "semantic_search": "Tra cứu sách giáo khoa (theo ngữ nghĩa)",
+    "keyword_search": "Tra cứu sách giáo khoa (theo từ khoá)",
+    "knowledge_graph_search": "Tra cứu đồ thị tri thức",
     "classify_skin_image": "Phân tích ảnh tổn thương da",
-    "describe_morphology": "Chuẩn hoá mô tả triệu chứng",
-    "generate_differential": "Xếp hạng bệnh phù hợp",
     "search_trusted_web": "Tra cứu nguồn web uy tín",
     "fetch_trusted_page": "Đọc trang web uy tín",
 }

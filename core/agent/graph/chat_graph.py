@@ -1,129 +1,97 @@
-"""Agent graph — dùng `create_agent` (`langchain.agents`, kế thừa
-`langgraph.prebuilt.create_react_agent` cũ đã deprecated) thay vì tự dựng lại vòng lặp
-"gọi LLM ⇄ gọi tool" bằng `StateGraph` thủ công. `create_agent` cho sẵn: vòng lặp ReAct
-chuẩn, `ToolNode` thực thi tool (kể cả tool tự `interrupt()` —
-`agent/tools/ask_user.py`), checkpointer (short-term memory theo `thread_id`) và
-`store` (long-term memory xuyên thread, `agent/tools/memory.py`).
+"""Chat graph — graph ngoài cùng của một turn chat: lọc intent rồi, nếu cần, chuyển sang graph tiền chẩn đoán.
 
-Phần còn lại tuỳ biến qua `middleware` (cơ chế mở rộng CÓ SẴN của `create_agent`, xem
-`langchain.agents.middleware`) thay vì tự viết node/hook riêng:
-  - `SummarizationMiddleware` (có sẵn): tự tóm tắt lịch sử hội thoại cũ khi vượt
-    ngưỡng — quản lý short-term memory tốt hơn cắt/bỏ tin nhắn (không mất thông tin,
-    chỉ nén lại).
-  - `select_model` (`wrap_model_call`, đứng ĐẦU middleware): override model theo
-    `AgentContext.model` — model chọn theo TỪNG conversation (`Conversation.model`,
-    `app/config/settings.py::AGENT_MODEL_CHOICES`), không còn 1 model cố định toàn hệ thống.
-  - `inject_long_term_memory` (`wrap_model_call`, phải tự viết vì đây là logic
-    nghiệp vụ — LangChain không biết trước "nhớ gì" cho app cụ thể): trước mỗi lần gọi
-    LLM, semantic search long-term memory liên quan (`agent/tools/memory.py`) rồi chèn
-    vào `system_message`.
-  - `emit_reasoning_step` (`wrap_model_call`) + `emit_tool_result` (`wrap_tool_call`):
-    nguồn phát SSE DUY NHẤT cho 2 event `message.thinking`/`message.tool_result` — trước
-    đây `worker.py::_drive` tự trích 2 event này từ state diff của `astream()`, nay
-    chuyển hẳn vào middleware để: (a) bắt được MỌI lần gọi LLM/tool trong vòng lặp ReAct
-    kể cả khi provider không trả "thinking" block (tự tổng hợp từ `tool_calls` +
-    `TOOL_DISPLAY_NAMES`), (b) giữ NGUYÊN shape event cũ — FE không cần đổi gì.
-  - `critic_review` (`after_model`, dùng cơ chế `jump_to` CÓ SẴN của `create_agent` —
-    KHÔNG tự dựng `StateGraph`/node riêng): chạy sau MỖI lần model trả lời; câu trả lời
-    KHÔNG kèm `tool_calls` (coi như bản nháp cuối, sắp kết thúc turn) VÀ turn có tra cứu
-    tool (không áp dụng cho chào hỏi/ngoài phạm vi, mục 2 SYSTEM_PROMPT) → 1 lệnh gọi LLM
-    riêng (critic) chấm bản nháp theo mục 1/7/8 SYSTEM_PROMPT (bằng chứng, cờ đỏ, không
-    kê đơn, có nêu độ tin cậy). Đạt → cho qua (`return None`, để routing mặc định sang
-    "end"). Chưa đạt → chèn feedback + `jump_to="model"` bắt trả lời lại, tối đa
-    `MAX_CRITIC_RETRIES` lần/turn (tránh treo turn vô thời hạn nếu model không bao giờ
-    đạt).
-"""
+```
+START ──▶ triage ──answer──▶ END                      (xã giao / hỏi về trợ lý / ngoài phạm vi da liễu: trả lời luôn)
+             └─diagnose / lỗi / có ảnh──▶ pre_diagnosis ──▶ END   (graph tiền chẩn đoán: `pre_diagnosis_graph.py`)
+```
 
+Chat graph giữ checkpointer (short-term memory theo `thread_id`) và `store` (long-term memory, `agent/tools/memory.py`) cho cả hai
+graph. `AGENT_TRIAGE_ENABLED=false` thì bỏ node `triage`, mọi tin đi thẳng sang graph tiền chẩn đoán.
+
+Graph tiền chẩn đoán được gọi bên trong node `pre_diagnosis` (thay vì `add_node(<graph>)`) để truyền lại việc xoá tin nhắn: middleware
+của nó dùng `RemoveMessage` (bỏ `AIMessage` có `tool_calls` mồ côi, xem `enforce_initial_reasoning`), mà reducer `add_messages` của
+chat graph không tự xoá những tin vắng mặt trong state con — thiếu bước này checkpoint của chat graph sẽ giữ lại tin đã bị xoá."""
 from typing import Any, cast
 
-from langchain.agents import AgentState, create_agent  # pyright: ignore[reportUnknownVariableType]
-from langchain.agents.middleware import (
-    AgentMiddleware,
-)
+from langchain.agents import AgentState
+from langchain.agents.middleware import AgentMiddleware
+from langchain_core.messages import AIMessageChunk, RemoveMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.config import get_config, get_stream_writer
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
+from langgraph.runtime import Runtime
 from langgraph.store.base import BaseStore
 
+from agent.graph.pre_diagnosis_graph import ALL_TOOLS, build_pre_diagnosis_graph, default_middleware
+from agent.graph.triage import triage
+from agent.state.chat_state import ChatState
 from agent.state.context import AgentContext
-from agent.middleware.model import (
-    enforce_initial_reasoning,
-    force_reasoning,
-    emit_reasoning_step,
-    inject_long_term_memory,
-    select_model,
-)
-from agent.middleware.tool import emit_tool_result
-from agent.prompt.orchestrator import SYSTEM_PROMPT
-from agent.tools.ask_user import ask_user
-from agent.tools.dermo_terms import lookup_dermo_term
-from agent.tools.entity_grounding import ground_medical_entities
-from agent.tools.differential import (
-    describe_morphology,
-    generate_differential,
-)
-from agent.tools.expand_context import expand_entity_context
-from agent.tools.knowledge_base_search import (
-    get_disease_guideline_profile,
-    search_disease_guidelines,
-)
-from agent.tools.knowledge_graph import query_dermatology_kg
-from agent.tools.reasoning import record_reasoning
-from agent.tools.skin_image_classifier import classify_skin_image
-from agent.tools.web_search import fetch_trusted_page, search_trusted_web
-from agent.llm import get_model
-from agent.tools.memory import (
-    build_memory_store,
-    save_memory,
-)
+from agent.tools.memory import build_memory_store
+from app.config.settings import settings
+
+__all__ = ["ALL_TOOLS", "agent_graph", "build_agent_graph", "build_chat_graph", "config_for", "default_middleware"]
 
 
-ALL_TOOLS = [
-    record_reasoning,
-    ask_user,
-    save_memory,
-    query_dermatology_kg,
-    lookup_dermo_term,
-    ground_medical_entities,
-    expand_entity_context,
-    search_disease_guidelines,
-    get_disease_guideline_profile,
-    classify_skin_image,
-    describe_morphology,
-    generate_differential,
-    search_trusted_web,
-    fetch_trusted_page,
-]
+def _pre_diagnosis_node(graph: CompiledStateGraph[Any, AgentContext, Any, Any]):
+    async def run(state: ChatState, runtime: Runtime[AgentContext]) -> dict[str, Any]:
+        before = state["messages"]
+        write = get_stream_writer()
+        final: dict[str, Any] = {}
+        # Đọc stream của graph con thay vì `ainvoke`: gọi `ainvoke` bên trong node thì token LLM không đi tiếp ra stream của chat graph
+        # (chỉ còn tin hoàn chỉnh, gắn tên node của cha). Token của model chính (node "model", không phải các lần gọi LLM phụ như
+        # tóm tắt) được chuyển tiếp qua kênh `custom` cho `turn.py` phát `message.delta`.
+        # `get_config()`: truyền tiếp config của lượt chạy (checkpoint namespace, thread_id) để `interrupt()` của `ask_user` hoạt động.
+        async for mode, chunk in graph.astream(
+            {"messages": before},
+            config=get_config(),
+            context=runtime.context,
+            stream_mode=["messages", "values"],
+        ):
+            if mode == "messages":
+                message, meta = cast("tuple[Any, dict[str, Any]]", chunk)
+                if meta.get("langgraph_node") == "model" and isinstance(message, AIMessageChunk) and message.text:
+                    write({"type": "token", "text": message.text})
+            else:
+                final = cast("dict[str, Any]", chunk)
+        known = {m.id for m in before}
+        kept = {m.id for m in final["messages"]}
+        return {
+            "messages": [
+                *(RemoveMessage(id=i) for i in known - kept if i),
+                *(m for m in final["messages"] if m.id not in known),
+            ]
+        }
+
+    return run
 
 
-def default_middleware() -> list[
-    AgentMiddleware[AgentState[Any], AgentContext, Any]
-]:
-    # `cast` CHỈ để dẹp lỗi kiểu tĩnh, KHÔNG đổi hành vi runtime: `ToolCallRequest`
-    # (dùng bởi `emit_tool_result`, `@wrap_tool_call`) không phải generic — Pylance tự
-    # suy ra `ContextT=None` cho middleware đó, lệch với các middleware còn lại
-    # (`@wrap_model_call` trên `ModelRequest[AgentContext]` → `ContextT=AgentContext`),
-    # khiến cả list bị coi là union 2 kiểu không tương thích (`ContextT` invariant).
-    # `create_agent` không hề đọc type param này lúc chạy nên cast an toàn.
-    return cast(
-        "list[AgentMiddleware[AgentState[Any], AgentContext, Any]]",
-        [
-            select_model,
-            inject_long_term_memory,
-            force_reasoning,
-            enforce_initial_reasoning,
-            # emit_reasoning_step,
-            emit_tool_result,
-            # critic_review,
-            # trigger/keep tính theo SỐ TIN NHẮN — đơn giản, không cần tokenizer riêng
-            # cho từng provider. Vượt 20 tin nhắn -> tóm tắt còn lại 10 tin gần nhất.
-            # SummarizationMiddleware(
-            #     model=get_model(),
-            #     trigger=("messages", 20),
-            #     keep=("messages", 10),
-            # ),
-        ],
+def _after_triage(state: ChatState) -> str:
+    return END if state.get("route") == "answer" else "pre_diagnosis"
+
+
+def build_chat_graph(
+    checkpointer: BaseCheckpointSaver[str] | None = None,
+    store: BaseStore | None = None,
+    *,
+    pre_diagnosis: CompiledStateGraph[Any, AgentContext, Any, Any] | None = None,
+) -> CompiledStateGraph[Any, AgentContext, Any, Any]:
+    graph = StateGraph(ChatState, context_schema=AgentContext)
+    graph.add_node("pre_diagnosis", _pre_diagnosis_node(pre_diagnosis or build_pre_diagnosis_graph()))
+    if settings.AGENT_TRIAGE_ENABLED:
+        graph.add_node("triage", triage)
+        graph.add_edge(START, "triage")
+        graph.add_conditional_edges("triage", _after_triage, ["pre_diagnosis", END])
+    else:
+        graph.add_edge(START, "pre_diagnosis")
+    graph.add_edge("pre_diagnosis", END)
+    return graph.compile(
+        # InMemorySaver/InMemoryStore: đủ cho dev (worker 1 tiến trình duy nhất).
+        # Production cần backend bền vững hơn — xem `agent/tools/memory.py`.
+        checkpointer=checkpointer or InMemorySaver(),
+        store=store or build_memory_store(),
     )
 
 
@@ -133,26 +101,18 @@ def build_agent_graph(
     *,
     tools: list[Any] | None = None,
     system_prompt: str | None = None,
-    middleware: list[AgentMiddleware[AgentState[Any], AgentContext, Any]]
-    | None = None,
+    middleware: list[AgentMiddleware[AgentState[Any], AgentContext, Any]] | None = None,
 ) -> CompiledStateGraph[Any, AgentContext, Any, Any]:
-    """`tools`/`system_prompt`/`middleware` chỉ để thử nghiệm luồng lập luận (xem skill
-    `experiment-agent-flow`) — production luôn để mặc định (`ALL_TOOLS`, `SYSTEM_PROMPT`,
-    `default_middleware()`)."""
-    return create_agent(
-        get_model(),
-        tools=ALL_TOOLS if tools is None else tools,
-        system_prompt=SYSTEM_PROMPT if system_prompt is None else system_prompt,
-        middleware=default_middleware() if middleware is None else middleware,
-        context_schema=AgentContext,
-        # InMemorySaver/InMemoryStore: đủ cho dev (worker 1 tiến trình duy nhất).
-        # Production cần backend bền vững hơn — xem `agent/tools/memory.py`.
-        checkpointer=checkpointer or InMemorySaver(),
-        store=store or build_memory_store(),
+    """Chat graph đầy đủ; `tools`/`system_prompt`/`middleware` chỉ để thử nghiệm graph tiền chẩn đoán (skill `experiment-agent-flow`)
+    — production luôn để mặc định."""
+    return build_chat_graph(
+        checkpointer,
+        store,
+        pre_diagnosis=build_pre_diagnosis_graph(tools=tools, system_prompt=system_prompt, middleware=middleware),
     )
 
 
-agent_graph = build_agent_graph()
+agent_graph = build_chat_graph()
 
 
 def config_for(conversation_id: str) -> RunnableConfig:

@@ -27,7 +27,7 @@ Các file sau **phải có** trước khi build, kiểm tra kỹ vì có file kh
 |---|---|---|
 | `core/data-ingest/01_normalize/output/kg/primekg/derma_nodes.csv`, `derma_edges.csv` | Có (sau khi sửa `.gitignore`) | ~3MB, nạp Neo4j |
 | `core/data-ingest/01_normalize/output/kg/dermo/dermo_kg.json` | Có | Nạp Neo4j |
-| `core/data-ingest/01_normalize/output/diseases/*.json` | Có | Nguồn để chunk + nạp Qdrant (87 bệnh -> 435 chunk) |
+| `core/data-ingest/01_normalize/output/diseases/*.json` | Có | Dữ liệu 87 bệnh đã chuẩn hoá; hiện chưa có script nạp nào đọc (guideline KB cũ đã bỏ) |
 | `model/model_output/AdaptiveCNN_SkinDisease_v5_best.pth` | **Chưa** (44MB) | Nếu thiếu, `docker build` core lỗi ở bước `COPY`. Commit hoặc copy tay lên server |
 | `fe/pnpm-workspace.yaml` | Có | Bắt buộc, thiếu thì `pnpm install` lỗi |
 | `.env`, `core/.env` | **Không** (ignore) | Tạo ở bước 2.2 và 2.3 |
@@ -85,13 +85,13 @@ Cả 9 container phải `Up`; `postgres`, `redis`, `rabbitmq`, `neo4j`, `minio` 
 ./reset-and-gen-data.sh
 ```
 
-Script chạy trong container `derma-core-api`, nạp 3 nguồn:
+Script chạy trong container `derma-core-api`, nạp đồ thị tri thức vào Neo4j:
 
 | Nguồn | Đích | Dùng bởi |
 |---|---|---|
-| Guideline BYT/WHO/MedlinePlus (435 chunk) | Qdrant | `search_disease_guidelines`, `get_disease_guideline_profile` |
-| PrimeKG (36k node, 474k cạnh) | Neo4j | `query_dermatology_kg`, `ground_medical_entities` |
-| DermO (3.4k thuật ngữ) | Neo4j | `lookup_dermo_term`, `ground_medical_entities` |
+| PrimeKG (36k node, 474k cạnh) | Neo4j | `hybrid_retrieval` (nhánh KG), `knowledge_graph_search`, gợi ý câu hỏi của `record_reasoning` |
+| DermO (3.4k thuật ngữ) | Neo4j | `hybrid_retrieval` (nhánh KG), `knowledge_graph_search` |
+| Chunk sách (pipeline `document_ingest`) | Qdrant `derma_document_chunks` | `hybrid_retrieval` (semantic + BM25), `semantic_search`, `keyword_search` — **không** nạp bằng script này mà qua giao diện admin `/admin/documents` |
 
 - Chạy lại nhiều lần không sao (idempotent).
 - `./reset-and-gen-data.sh --reset` — **xoá sạch** rồi nạp lại từ đầu (dùng khi đổi dữ liệu/model embedding).
@@ -113,10 +113,8 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/v1/co
 # 3. Dữ liệu đã nạp
 docker compose -f docker-compose.prod.yml exec -T derma-core-api python -c "
 import asyncio
-from app.infra.qdrant_client import client
-from app.config.settings import settings
-async def m(): print('Qdrant KB points:', (await client.count(settings.QDRANT_KB_COLLECTION)).count)
-asyncio.run(m())"          # kỳ vọng 435
+from app.api.deps import get_knowledge_base_service
+print('Chunk sách trong Qdrant:', asyncio.run(get_knowledge_base_service().count_document_chunks()))"   # 0 tới khi index sách đầu tiên ở /admin/documents
 ```
 
 Rồi mở `http://<host>:3000`, nhập mã `APP_ACCESS_TOKEN` ở màn hình đầu tiên, gửi thử một tin nhắn.

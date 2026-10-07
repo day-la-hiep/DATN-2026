@@ -25,7 +25,7 @@ Xử lý dữ liệu thô -> dữ liệu sạch cho `core/`, **tổ chức theo 
 
 | Output | Ai dùng |
 |---|---|
-| `diseases/*.json` (87 bệnh, schema thống nhất, id duy nhất giữa các nguồn) | `load_knowledge_base.py`: chunk -> embed -> **Qdrant** (không qua file JSON) |
+| `diseases/*.json` (87 bệnh, schema thống nhất, id duy nhất giữa các nguồn) | hiện chưa có script nạp nào đọc (guideline KB cũ đã bỏ, tool tra cứu đã chuyển sang chunk sách) |
 | `kg/primekg/` | `load_primekg.py` (Neo4j) |
 | `kg/dermo/` | `load_dermo.py` (Neo4j) |
 | `manifest.json` | số bản ghi + sha256 mỗi file, để biết bộ data đang deploy build từ đâu |
@@ -51,10 +51,9 @@ Chỉ dùng thư viện chuẩn Python. `run.py` dừng ở script đầu tiên 
 
 ```bash
 cd core
-python data-ingest/01_normalize/scripts/load_knowledge_base.py [--reset]  # chunk + embed -> Qdrant
 python data-ingest/01_normalize/scripts/load_primekg.py [--reset]         # Neo4j
 python data-ingest/01_normalize/scripts/load_dermo.py [--reset]           # Neo4j
-# prod: ../reset-and-gen-data.sh chạy cả 3 trong container
+# prod: ../reset-and-gen-data.sh chạy cả 2 trong container
 ```
 
 ## Lưu ý

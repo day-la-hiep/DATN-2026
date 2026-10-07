@@ -1,6 +1,6 @@
 # Long-term memory — Qdrant + distill bằng LLM
 
-Xem [`kien-truc-agent.md`](./kien-truc-agent.md) cho vòng lặp Turn/Step/Reasoning — tài liệu
+Xem [`kien-truc-agent.md`](./kien-truc-agent.md) cho cách agent chạy một turn (`create_agent` của LangChain) — tài liệu
 này chỉ mô tả lớp memory PHỤ TRỢ nằm ngoài 1 turn.
 
 ## 0. Vấn đề cần giải quyết
