@@ -1,4 +1,4 @@
-.PHONY: infra infra-down backend worker migrate migrate-new init-db load-primekg load-dermo load-kg frontend
+.PHONY: infra infra-down backend worker ingest-worker migrate migrate-new init-db load-primekg load-dermo load-kg frontend
 
 infra:
 	docker compose up -d
@@ -11,6 +11,9 @@ backend:
 
 worker:
 	cd core && uv run python -u -m agent.worker
+
+ingest-worker:
+	cd core && uv run python -u -m app.workers.document_ingest_worker
 
 migrate:
 	cd core && uv run alembic upgrade head

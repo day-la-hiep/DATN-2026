@@ -2,15 +2,23 @@
 
 Vòng đời: not_started -> running -> pending_review -> (approve) approved. Bước chỉ chạy khi mọi bước phụ thuộc đã
 `approved`. Chạy lại một bước làm các bước hạ nguồn thành `stale`. `run_stage` chạy đồng bộ trong thread hiện tại; `start_stage` (API)
-chạy ở thread nền riêng và trả về ngay, cờ dừng giữ trong `DocumentService` để `reconcile` biết bước nào thật sự còn chạy. Dữ liệu tài liệu
+chỉ ghi `running` rồi đẩy yêu cầu vào RabbitMQ — ingest worker (`app/workers/document_ingest_worker.py`, tiến trình riêng) mới chạy bước,
+Dừng đi qua Redis (Pub/Sub + cờ key). Dữ liệu tài liệu
 (CRUD, cài đặt, mục lục, chunk) do `DocumentService` lo. Client do `app/api/deps.py` tạo, truyền cho từng bước qua `StageContext`."""
 
+import asyncio
 import importlib
+import json
 import threading
 import traceback
 from types import ModuleType
 from typing import Any
 
+from app.config.constants import (
+    DOCUMENT_CANCEL_KEY,
+    DOCUMENT_INGEST_CANCEL_CHANNEL,
+    DOCUMENT_INGEST_QUEUE,
+)
 from app.dto.request.document import TocUpdate
 from app.dto.response.document import DocumentOutput
 from app.exception.errors import (
@@ -22,6 +30,8 @@ from app.exception.errors import (
 from app.infra.docling_client import DoclingClient
 from app.infra.embedding_client import EmbeddingClient
 from app.infra.llm_client import LLMClient
+from app.infra.rabbitmq_client import RabbitMQClient
+from app.infra.redis_client import RedisClient
 from app.models.document_stage import STAGE_BY_ID
 from app.repositories.document_repository import DocumentRepository, now_iso
 from app.services.document_service import DocumentService
@@ -51,8 +61,12 @@ class DocumentIngestPipelineService:
         *,
         docling: DoclingClient | None = None,
         embedding: EmbeddingClient | None = None,
+        rabbitmq: RabbitMQClient | None = None,
+        redis: RedisClient | None = None,
     ) -> None:
+        """`rabbitmq`/`redis` chỉ Core cần (đẩy yêu cầu chạy + Dừng); ingest worker chỉ gọi `execute` nên để trống."""
         self.documentService, self._repo = documentService, repository
+        self._rabbitmq, self._redis = rabbitmq, redis
         self._docling, self._embedding = docling, embedding
 
     def make_ctx(
@@ -204,46 +218,54 @@ class DocumentIngestPipelineService:
         return self.execute(document_id, stage_id, options, llm=llm, cancel=cancel)
 
     # ---- API admin: chạy nền / dừng / duyệt / áp lại, trả về trạng thái tài liệu ----
-    def start_stage(
+    async def start_stage(
         self,
         document_id: str,
         stage_id: str,
         options: dict[str, Any],
         force: bool,
     ) -> DocumentOutput:
-        """Kiểm tra điều kiện rồi chạy bước ở thread nền và trả về ngay (trạng thái `running`)."""
+        """Kiểm tra điều kiện, ghi `running` rồi đẩy yêu cầu cho ingest worker; trả về ngay."""
+        if self._rabbitmq is None or self._redis is None:
+            raise RuntimeError("start_stage cần RabbitMQ + Redis (chỉ Core có)")
+        await asyncio.to_thread(self._prepare, document_id, stage_id, options, force)
+        await self._redis.delete(DOCUMENT_CANCEL_KEY.format(document_id=document_id, stage_id=stage_id))
+        try:
+            await self._rabbitmq.publish(
+                DOCUMENT_INGEST_QUEUE,
+                json.dumps({"document_id": document_id, "stage_id": stage_id, "options": options}).encode(),
+            )
+        except Exception as e:
+            # không đẩy được thì không có ai chạy — đừng để bước kẹt ở `running`
+            await asyncio.to_thread(
+                self._repo.update_stage, document_id, stage_id,
+                state="failed", finished_at=now_iso(), error=f"Không gửi được yêu cầu cho worker: {e}",
+            )
+            raise
+        return await asyncio.to_thread(self.documentService.get_document, document_id)
+
+    def _prepare(self, document_id: str, stage_id: str, options: dict[str, Any], force: bool) -> None:
         if not self._repo.exists(document_id):
             raise NotFoundError(document_id)
-        self.documentService.reconcile(document_id)
         self.check_runnable(document_id, stage_id, force=force)
-        cancel = self.documentService.track_run(document_id, stage_id)
         self.begin(document_id, stage_id, options)
 
-        def work() -> None:
-            try:
-                self.execute(document_id, stage_id, options, cancel=cancel)
-            except Exception:  # noqa: BLE001 — runner đã ghi `failed`/`cancelled` + nhật ký
-                pass
-            finally:
-                self.documentService.untrack_run(document_id, stage_id)
-
-        threading.Thread(
-            target=work,
-            name=f"document-pipeline-{document_id}-{stage_id}",
-            daemon=True,
-        ).start()
-        return self.documentService.get_document(document_id)
-
-    def cancel_stage(
+    async def cancel_stage(
         self, document_id: str, stage_id: str
     ) -> DocumentOutput:
-        if not self._repo.exists(document_id):
+        if self._redis is None:
+            raise RuntimeError("cancel_stage cần Redis (chỉ Core có)")
+        if not await asyncio.to_thread(self._repo.exists, document_id):
             raise NotFoundError(document_id)
-        cancel = self.documentService.run_cancel_event(document_id, stage_id)
-        if cancel is None:
+        status = await asyncio.to_thread(self._repo.status, document_id)
+        if status["stages"].get(stage_id, {}).get("state") != "running":
             raise ConflictError("Bước này hiện không chạy.")
-        cancel.set()  # bước dừng ở điểm kiểm tra gần nhất (giữa các cụm trang / nhóm gọi AI)
-        return self.documentService.get_document(document_id)
+        # bước có thể còn nằm trong queue (Pub/Sub không replay) nên đặt thêm cờ key; worker kiểm tra cờ khi nhận message
+        await self._redis.set_value(
+            DOCUMENT_CANCEL_KEY.format(document_id=document_id, stage_id=stage_id), "1", ex_seconds=3600
+        )
+        await self._redis.publish(DOCUMENT_INGEST_CANCEL_CHANNEL, json.dumps({"document_id": document_id, "stage_id": stage_id}))
+        return await asyncio.to_thread(self.documentService.get_document, document_id)
 
     def approve_stage(
         self, document_id: str, stage_id: str

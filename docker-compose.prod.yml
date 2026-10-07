@@ -170,6 +170,32 @@ services:
       minio: {condition: service_healthy}
     networks: [derma-net]
 
+  document-ingest-worker:
+    build:
+      context: .
+      dockerfile: core/Dockerfile
+    restart: unless-stopped
+    command: ["python", "-m", "app.workers.document_ingest_worker"]
+    env_file: core/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-derma_hospital_db}
+      REDIS_HOST: redis
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      QDRANT_URL: http://qdrant:6333
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      qdrant: {condition: service_started}
+      neo4j: {condition: service_healthy}
+      minio: {condition: service_healthy}
+    networks: [derma-net]
+
   derma-fe:
     build:
       context: fe

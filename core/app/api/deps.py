@@ -159,6 +159,8 @@ def get_document_ingest_pipeline_service() -> DocumentIngestPipelineService:
             get_document_repository(),
             docling=get_docling_client(),
             embedding=get_embedding_client(),
+            rabbitmq=get_rabbitmq_client(),
+            redis=get_redis_client(),
         ),
     )
 

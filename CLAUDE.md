@@ -37,6 +37,7 @@ make migrate        # alembic upgrade head
 make init-db        # bucket MinIO + dữ liệu mẫu (user-1, bác sĩ, admin) — chạy sau migrate
 make backend        # Core FastAPI :3050
 make worker         # Agent Worker (tiến trình riêng, consume RabbitMQ)
+make ingest-worker  # Ingest Worker: chạy các bước pipeline tài liệu (bắt buộc chạy thì bấm "Chạy" ở /admin/documents mới có tác dụng)
 make frontend       # Next.js :3000
 ```
 
@@ -72,7 +73,7 @@ Các bước theo thứ tự, mỗi bước phải được người duyệt **a
 
 - Trạng thái: `not_started → running → pending_review → approved`; `failed`/`cancelled`; `stale`
   khi bước phía trước chạy lại. Thứ tự và phụ thuộc: `app/models/document_stage.py::STAGES`.
-- Chạy nền bằng thread trong Core; FE poll `GET /admin/documents/{id}` để xem tiến độ.
+- Core chỉ ghi `running` rồi publish `document_ingest_queue`; **Ingest Worker** (`app/workers/document_ingest_worker.py`) chạy bước. Dừng qua Redis; FE poll `GET /admin/documents/{id}` để xem tiến độ.
 - Sửa tay của người duyệt lưu trong `document_overrides` (không ghi đè kết quả máy).
 
 ### 3.3 Lưu trữ tài liệu

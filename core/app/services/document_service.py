@@ -11,7 +11,6 @@ import json
 import shutil
 import subprocess
 import tempfile
-import threading
 import uuid
 from collections.abc import Generator
 from pathlib import Path
@@ -73,9 +72,6 @@ class DocumentService:
         self._repo, self.files = repository, repository.files
         self._qdrant, self.collection = qdrant, collection
         self.files.ensure_bucket()
-        # (document_id, stage_id) -> cờ dừng của lần chạy đang diễn ra trong process này (instance dùng chung cả process, xem deps.py)
-        self._runs: dict[tuple[str, str], threading.Event] = {}
-        self._runs_lock = threading.Lock()
 
     # ---- tiện ích trên repository ----
     @staticmethod
@@ -121,41 +117,28 @@ class DocumentService:
             except FileNotFoundError as exc:
                 raise FileNotFoundError("Không tìm thấy file PDF của tài liệu.") from exc
 
-    # ---- bước đang chạy trong process ----
-    def track_run(self, document_id: str, stage_id: str) -> threading.Event:
-        cancel = threading.Event()
-        with self._runs_lock:
-            self._runs[(document_id, stage_id)] = cancel
-        return cancel
-
-    def untrack_run(self, document_id: str, stage_id: str) -> None:
-        with self._runs_lock:
-            self._runs.pop((document_id, stage_id), None)
-
-    def run_cancel_event(self, document_id: str, stage_id: str) -> threading.Event | None:
-        with self._runs_lock:
-            return self._runs.get((document_id, stage_id))
-
     # ---- tài liệu ----
     def ensure_idle(self, document_id: str, action: str) -> None:
-        self.reconcile(document_id)
         running = [sid for sid, s in self._repo.status(document_id)["stages"].items() if s.get("state") == "running"]
         if running:
             raise ConflictError(f"Tài liệu đang được xử lý — hãy chờ xong hoặc dừng trước khi {action}.")
 
-    def reconcile(self, document_id: str) -> None:
-        """Bước ghi `running` nhưng không có thread nào đang chạy nó (Core vừa khởi động lại, thread chết) -> failed."""
-        for sid, st in self._repo.status(document_id)["stages"].items():
-            with self._runs_lock:
-                active = (document_id, sid) in self._runs
-            if st.get("state") == "running" and not active:
-                self._repo.update_stage(
-                    document_id,
-                    sid,
-                    state="failed",
-                    finished_at=now_iso(),
-                    error="Tiến trình xử lý đã dừng bất thường (xem nhật ký).",
-                )
+    def fail_orphaned_runs(self) -> int:
+        """Bước ghi `running` nhưng không còn tiến trình nào chạy nó -> failed. Chỉ gọi lúc ingest worker khởi động (lúc đó chắc chắn
+        chưa có bước nào chạy), vì Core không còn biết bước nào thật sự đang chạy."""
+        n = 0
+        for did in self._repo.list_ids():
+            for sid, st in self._repo.status(did)["stages"].items():
+                if st.get("state") == "running":
+                    self._repo.update_stage(
+                        did,
+                        sid,
+                        state="failed",
+                        finished_at=now_iso(),
+                        error="Tiến trình xử lý đã dừng bất thường (xem nhật ký).",
+                    )
+                    n += 1
+        return n
 
     def _document(self, document_id: str, detail: dict[str, Any]) -> Document:
         """`Document` nghiệp vụ của tài liệu — dựng từ `detail` (`DocumentRepository.get_detail`, gồm cả 2 dòng `files`)."""
@@ -223,7 +206,6 @@ class DocumentService:
     def list_documents(self) -> list[DocumentSummary]:
         out = []
         for did in self._repo.list_ids():
-            self.reconcile(did)
             detail = self._repo.get_detail(did)
             out.append(
                 DocumentSummary(
@@ -250,7 +232,6 @@ class DocumentService:
         return n
 
     def get_document(self, document_id: str) -> DocumentOutput:
-        self.reconcile(document_id)
         detail = self._repo.get_detail(document_id)
         if not detail:
             raise NotFoundError(document_id)

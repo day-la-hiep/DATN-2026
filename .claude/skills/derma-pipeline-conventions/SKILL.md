@@ -148,15 +148,15 @@ and write to MinIO, e.g. `document/<document_id>/figures/`), not something alrea
 
 ## Concurrency & control flow
 
-`run_stage` runs synchronously in the calling thread; the API's `start_stage` spawns a daemon
-thread and returns immediately — FE polls `GET /documents/{id}` for progress (see
-`derma-fe-conventions`'s `useDocument`/`useDocuments` polling). Each run gets its own
-`threading.Event` for cancellation (`ctx.cancel`, checked via `ctx.check_cancel()`/`ctx.progress`).
-If Core restarts mid-run, `_reconcile` in `DocumentIngestPipelineService` marks orphaned `running`
-stages `failed` (no thread survives a process restart) so they can be retried; `ingest`'s
-`docling_parts/` checkpoint means that retry doesn't re-OCR already-finished pages.
-`document_stages`/`document_overrides` writes happen under a Postgres row lock (`FOR UPDATE`)
-because Core and background stage threads write concurrently.
+Chạy bước nằm ở **Ingest Worker** (`app/workers/document_ingest_worker.py`, `make ingest-worker`), tiến trình riêng như Agent
+Worker. `start_stage` (Core, async) chạy `check_runnable` + `begin` (ghi `running`) rồi publish `document_ingest_queue`
+(`{document_id, stage_id, options}`); worker consume, chạy `execute` trong thread (một bước một lần, semaphore) và tự ghi
+kết quả/log. FE vẫn poll `GET /documents/{id}`. Dừng: `cancel_stage` đặt key Redis `document:ingest:cancel:{doc}:{stage}` +
+publish channel `document:ingest:cancel`; worker set `threading.Event` (`ctx.check_cancel()`/`ctx.progress`) hoặc đọc key
+khi nhận message nếu bước còn nằm trong queue. Khởi động worker: purge queue + `DocumentService.fail_orphaned_runs()`
+đánh dấu mọi bước `running` là `failed` (Core không còn biết bước nào thật sự chạy); `docling_parts/` giúp retry không OCR
+lại. `run_stage` (đồng bộ) vẫn dùng cho test/script. `document_stages`/`document_overrides` ghi dưới Postgres row lock
+(`FOR UPDATE`) vì Core và worker ghi đồng thời.
 
 ## Testing
 
