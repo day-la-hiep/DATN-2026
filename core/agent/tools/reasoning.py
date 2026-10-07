@@ -14,12 +14,15 @@ không lưu state riêng — nên tự đúng qua checkpoint/resume (`ask_user`)
   - after_evidence : ngay sau 1 đợt kết quả tool — cập nhật giả thuyết theo bằng chứng mới.
   - final          : đủ căn cứ để trả lời/hỏi — kết luận xếp hạng, cờ đỏ đã kiểm tra.
 """
+import logging
 from typing import Any, Literal
 
 from langchain.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.messages import AnyMessage
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field, ValidationError, field_validator
+
+logger = logging.getLogger(__name__)
 
 TOOL_NAME = "record_reasoning"
 INVALID_PREFIX = "Không hợp lệ:"
@@ -222,7 +225,7 @@ async def record_reasoning(**kwargs: Any) -> str:
             )
             text += _render_questions(result)
         except Exception as exc:  # noqa: BLE001 — gợi ý là phần thêm, không làm hỏng lập luận
-            print(f"[record_reasoning] gợi ý câu hỏi lỗi: {exc}")
+            logger.warning("gợi ý câu hỏi lỗi: %s", exc)
     return text
 
 

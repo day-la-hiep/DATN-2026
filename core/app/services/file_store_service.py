@@ -8,6 +8,7 @@
   `agent/tools/skin_image_classifier.py` — Agent Worker đọc lại qua object key, không cần chung filesystem với Core.
 Instance do `app/api/deps.py` tạo (bucket ảnh đính kèm, bucket sách)."""
 
+import logging
 import asyncio
 import json
 import os
@@ -22,6 +23,8 @@ from fastapi import UploadFile
 from minio.error import S3Error
 
 from app.infra.minio_client import MinioClient
+
+logger = logging.getLogger(__name__)
 
 # Ảnh đính kèm: chỉ nhận ảnh — phạm vi hiện tại là input cho skin CNN classifier, không phải upload file đa dụng.
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -186,5 +189,5 @@ class FileStoreService:
             return None
         except S3Error as exc:
             # Lỗi khác NoSuchKey (AccessDenied, InvalidAccessKeyId...) là lỗi cấu hình MinIO — log để phân biệt với "key sai/đã xoá".
-            print(f"[file_store] get_object failed: code={exc.code} key={name!r} bucket={self.bucket!r}")
+            logger.warning("get_object failed: code=%s key=%r bucket=%r", exc.code, name, self.bucket)
             return None

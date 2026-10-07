@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Awaitable, Callable
 
 from langchain.agents.middleware import ToolCallRequest, wrap_tool_call
@@ -8,6 +9,8 @@ from langgraph.types import Command
 from agent.graph.common import TOOL_DISPLAY_NAMES, emit
 from agent.state.context import AgentContext
 from agent.tools.reasoning import STAGE_LABELS, TOOL_NAME as REASONING_TOOL
+
+logger = logging.getLogger(__name__)
 
 
 @wrap_tool_call
@@ -46,7 +49,7 @@ async def emit_tool_result(
             if request.tool
             else request.tool_call.get("name", "")
         )
-        print(f"[Agent Graph] tool '{tool_name}' lỗi: {exc}")
+        logger.warning("tool '%s' lỗi: %s", tool_name, exc)
         response = ToolMessage(
             content=f"Lỗi khi gọi công cụ '{tool_name}': {exc}",
             name=tool_name,

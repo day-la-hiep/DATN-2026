@@ -7,6 +7,7 @@ Model đa ngôn ngữ (hỗ trợ tiếng Việt) — cùng lựa chọn với p
 (`knowledge_base/src/semantic.py`). Tải về ~470MB lần chạy đầu tiên (cache tại
 `~/.cache/huggingface`), các lần sau load từ cache, không cần mạng.
 """
+import app.config.settings  # noqa: F401  # phải đứng TRƯỚC sentence_transformers: nạp `.env` (HF_HUB_OFFLINE...) trước khi huggingface_hub đọc biến môi trường
 from langchain_core.embeddings import Embeddings
 from sentence_transformers import SentenceTransformer
 

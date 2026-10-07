@@ -8,6 +8,7 @@ thật lên Redis và kết thúc turn (xong / hỏi lại qua `ask_user` / lỗ
 lặp `astream()` ở đây — vòng lặp này chỉ forward token (`message.delta`) và tóm kết quả cuối.
 """
 
+import logging
 from typing import Any, cast
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -22,6 +23,8 @@ from app.config.constants import AGENT_EVENTS_CHANNEL
 from app.api.deps import get_postgres_client
 from app.dto.common import ChoiceOption, MessageChoice
 from app.repositories.conversation_repository import ConversationRepository
+
+logger = logging.getLogger(__name__)
 
 # Node của chat graph có thể tạo câu trả lời cuối của turn: bước lọc intent trả lời luôn (`triage`) hoặc graph tiền chẩn đoán
 # (`pre_diagnosis`; update của nó gồm mọi tin mới trong vòng lặp nên câu trả lời là AIMessage cuối cùng).
@@ -186,7 +189,7 @@ async def _drive(req: TurnRequest, input_: object) -> None:
         # Coi như turn "done" với nội dung báo lỗi thay vì thêm 1 trạng thái mới
         # (`status="error"` phải sửa cả DTO/FE/DB enum) — người dùng vẫn thấy phản hồi,
         # có thể hỏi lại ngay. Suy luận đã tích luỹ TRƯỚC KHI lỗi vẫn có giá trị xem lại.
-        print(f"[Agent Worker] lỗi khi chạy turn {req.message_id}: {exc}")
+        logger.exception("lỗi khi chạy turn %s: %s", req.message_id, exc)
         await finish_turn(
             channel,
             req,

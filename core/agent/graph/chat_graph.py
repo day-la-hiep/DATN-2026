@@ -30,6 +30,7 @@ from agent.graph.triage import triage
 from agent.state.chat_state import ChatState
 from agent.state.context import AgentContext
 from agent.tools.memory import build_memory_store
+from agent.tracing import trace_callback
 from app.config.settings import settings
 
 __all__ = ["ALL_TOOLS", "agent_graph", "build_agent_graph", "build_chat_graph", "config_for", "default_middleware"]
@@ -121,4 +122,4 @@ def config_for(conversation_id: str) -> RunnableConfig:
     `kien-truc-memory.md` mục 0), nay không cần tầng memory riêng ghép lại các turn vì
     checkpointer đã tự làm việc đó qua `messages`. Dùng chung bởi mọi caller chạy
     `agent_graph` (`agent/worker.py`)."""
-    return {"configurable": {"thread_id": conversation_id}}
+    return {"configurable": {"thread_id": conversation_id}, "callbacks": [trace_callback]}

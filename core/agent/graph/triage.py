@@ -1,6 +1,7 @@
 """Node lọc intent của chat graph: tin xã giao / hỏi về trợ lý / ngoài phạm vi da liễu được trả lời luôn bằng một lần gọi LLM ngắn
 (`prompt/triage.py`) rồi kết thúc turn; còn lại — và mọi trường hợp lỗi hoặc không chắc — chuyển sang graph tiền chẩn đoán. Triage
 sai về phía "diagnose" thì chỉ tốn thêm, sai về phía "answer" mới nguy hiểm nên mặc định luôn là diagnose."""
+import logging
 from typing import Any, Literal
 
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
@@ -12,6 +13,8 @@ from agent.prompt.triage import TRIAGE_SYSTEM
 from agent.state.chat_state import ChatState
 from agent.state.context import AgentContext
 from app.config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 _CONTEXT_MESSAGES = 6  # số tin gần nhất đưa vào để hiểu ngữ cảnh ("vâng", "3 ngày" là tiếp nối câu hỏi y khoa)
 _CONTEXT_CHARS = 300
@@ -53,7 +56,7 @@ async def triage(state: ChatState, runtime: Runtime[AgentContext]) -> dict[str, 
     try:
         decision = await classify(messages, settings.AGENT_TRIAGE_MODEL or runtime.context.model)
     except Exception as exc:  # noqa: BLE001 — triage hỏng không được chặn câu hỏi y khoa
-        print(f"[Triage] lỗi, chuyển sang graph tiền chẩn đoán: {exc}")
+        logger.warning("lỗi, chuyển sang graph tiền chẩn đoán: %s", exc)
         return {"route": "diagnose"}
     if decision.route != "answer" or not decision.reply.strip():
         return {"route": "diagnose"}

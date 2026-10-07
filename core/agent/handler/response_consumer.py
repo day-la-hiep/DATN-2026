@@ -3,6 +3,7 @@ lifespan) — Core là writer duy nhất của bảng `messages`, upsert khi nh�
 Agent Worker (`agent/worker.py`, tiến trình khác) qua RabbitMQ.
 """
 
+import logging
 import json
 from typing import Any
 
@@ -13,6 +14,8 @@ from app.config.constants import AGENT_ACTIVE_TURN_KEY, AGENT_RESPONSE_QUEUE
 from app.api.deps import get_postgres_client, get_rabbitmq_client, get_redis_client
 from app.repositories.message_repository import MessageRepository
 
+logger = logging.getLogger(__name__)
+
 
 async def _on_message(message: AbstractIncomingMessage) -> None:
     async with message.process():
@@ -20,7 +23,7 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
             payload = json.loads(message.body.decode("utf-8"))
             msg = AgentResponseMessage.model_validate(payload)
         except Exception as exc:  # noqa: BLE001
-            print(f"[ResponseConsumer] invalid message: {exc}")
+            logger.warning("message không hợp lệ: %s", exc)
             return
 
         # `Message.extra` cho row assistant CHỈ gồm 2 field này (`reasoning`/`choice`,

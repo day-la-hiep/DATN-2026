@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Reset + nạp lại TOÀN BỘ dữ liệu tĩnh cho stack PROD (docker-compose.prod.yml):
-#   - Neo4j:  PrimeKG (quan hệ bệnh-triệu chứng-thuốc) -> core/data-ingest/01_normalize/scripts/load_primekg.py
-#   - Neo4j:  DermO (từ điển thuật ngữ da liễu)         -> core/data-ingest/01_normalize/scripts/load_dermo.py
+#   - Neo4j:  PrimeKG (quan hệ bệnh-triệu chứng-thuốc) -> core/data_ingest/01_normalize/scripts/load_primekg.py
+#   - Neo4j:  DermO (từ điển thuật ngữ da liễu)         -> core/data_ingest/01_normalize/scripts/load_dermo.py
 #
 # Cả 2 script chạy BÊN TRONG container `derma-core-api` (đã có sẵn code + data +
 # dependency, đọc đúng NEO4J_URL/QDRANT_URL nội bộ Docker network từ compose) — không
@@ -31,9 +31,9 @@ run() {
 }
 
 echo "── Neo4j: PrimeKG ─────────────────────────────────────────────"
-run python data-ingest/01_normalize/scripts/load_primekg.py "${RESET_FLAG[@]}"
+run python data_ingest/01_normalize/scripts/load_primekg.py "${RESET_FLAG[@]}"
 
 echo "── Neo4j: DermO ────────────────────────────────────────────────"
-run python data-ingest/01_normalize/scripts/load_dermo.py "${RESET_FLAG[@]}"
+run python data_ingest/01_normalize/scripts/load_dermo.py "${RESET_FLAG[@]}"
 
 echo "Hoàn tất."

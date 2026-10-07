@@ -2,12 +2,14 @@
 
 Model đa ngôn ngữ để chấm được cả tiếng Việt lẫn câu KG tiếng Anh (`settings.RERANKER_MODEL`). Tải model lười ở lần dùng đầu
 tiên; không tải / chạy được thì `rerank` trả `None` để caller giữ thứ tự cũ thay vì làm hỏng cả lượt tìm kiếm."""
+import logging
 import asyncio
 import math
 
+from app.config.settings import settings  # đứng trước sentence_transformers: nạp `.env` (HF_HUB_OFFLINE) trước khi huggingface_hub đọc biến
 from sentence_transformers import CrossEncoder
 
-from app.config.settings import settings
+logger = logging.getLogger(__name__)
 
 _model: CrossEncoder | None = None
 _failed = False
@@ -34,5 +36,5 @@ async def rerank(query: str, passages: list[str]) -> list[float] | None:
         return await asyncio.to_thread(_score, query, passages)
     except Exception as exc:  # noqa: BLE001  # thiếu mạng lần đầu tải model, thiếu RAM...
         _failed = True  # không thử lại mỗi lượt: tải model hỏng thường kéo dài cả phiên chạy
-        print(f"[Reranker] không dùng được {settings.RERANKER_MODEL}: {exc}")
+        logger.warning("không dùng được %s: %s", settings.RERANKER_MODEL, exc)
         return None

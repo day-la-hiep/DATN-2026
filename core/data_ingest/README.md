@@ -51,8 +51,8 @@ Chỉ dùng thư viện chuẩn Python. `run.py` dừng ở script đầu tiên 
 
 ```bash
 cd core
-python data-ingest/01_normalize/scripts/load_primekg.py [--reset]         # Neo4j
-python data-ingest/01_normalize/scripts/load_dermo.py [--reset]           # Neo4j
+python data_ingest/01_normalize/scripts/load_primekg.py [--reset]         # Neo4j
+python data_ingest/01_normalize/scripts/load_dermo.py [--reset]           # Neo4j
 # prod: ../reset-and-gen-data.sh chạy cả 2 trong container
 ```
 

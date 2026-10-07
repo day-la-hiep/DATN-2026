@@ -13,6 +13,7 @@ from app.api.health import router as health_router
 from app.api.document_api import router as document_router
 from app.api.upload_api import router as upload_router
 from app.config.auth import require_app_token
+from app.config.log import RequestLogMiddleware, setup_logging
 from app.config.settings import log_startup_infra, settings
 from app.exception.exception_handler import register_exception_handlers
 
@@ -51,6 +52,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+setup_logging("core")
+app.add_middleware(RequestLogMiddleware)
 register_exception_handlers(app)
 app.add_middleware(
     CORSMiddleware,

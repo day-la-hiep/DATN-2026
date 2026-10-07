@@ -13,9 +13,9 @@ fe/.next
 
 # data-ingest: image chỉ cần 01_normalize/output + scripts/load_*.py (nạp Neo4j/Qdrant). Bỏ input thô
 # (~850MB) và output của từng nguồn.
-core/data-ingest/*/input
-core/data-ingest/dermnet
-core/data-ingest/primekg/output
-core/data-ingest/*/scripts
+core/data_ingest/*/input
+core/data_ingest/dermnet
+core/data_ingest/primekg/output
+core/data_ingest/*/scripts
 # ...trừ 01_normalize/scripts: chứa load_*.py chạy trong container (reset-and-gen-data.sh)
-!core/data-ingest/01_normalize/scripts
+!core/data_ingest/01_normalize/scripts

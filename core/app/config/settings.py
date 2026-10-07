@@ -106,6 +106,9 @@ class Settings(BaseSettings):
     #   dù chat thường (không tool) vẫn gọi được bình thường. Agent này LUÔN cần
     #   tool-calling để hoạt động nên phải dùng bản trả phí. (`nvidia/nemotron-3-
     #   super-120b-a12b:free` cũng đã verify hoạt động ổn định nếu muốn phương án free.)
+    # Mức log toàn hệ thống (Core + Worker): DEBUG/INFO/WARNING/ERROR — xem `app/config/log.py`.
+    LOG_LEVEL: str = "INFO"
+
     AGENT_MODEL: str = "openai:google/gemma-4-26b-a4b-it"
     AGENT_TEMPERATURE: float = 0.3
     # id ngắn hiển thị FE (dropdown chọn model/conversation, `app/dto/request/conversation.py`) ->
@@ -245,8 +248,9 @@ def log_startup_infra() -> None:
             else "TẮT (set LANGSMITH_TRACING=true + LANGSMITH_API_KEY trong .env để bật)"
         ),
     ]
-    # `print` thay vì `logging` — uvicorn/asyncio worker không có handler nào cấu hình
-    # sẵn cho root logger nên `logger.info` sẽ im lặng, trong khi `print` luôn ra
-    # console (đồng nhất với các log "[Agent Worker] ..." hiện có trong `worker.py`).
+    # Logger riêng (import trong hàm để tránh vòng import với `app/config/log.py`).
+    import logging
+
+    logger = logging.getLogger("infra")
     for line in lines:
-        print(line)
+        logger.info(line.removeprefix("[Infra] "))
