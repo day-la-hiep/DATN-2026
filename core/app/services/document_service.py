@@ -2,7 +2,7 @@
 trang, mục lục, chunk), cài đặt (`documents.profile`), các bước đang chạy trong process, và lưu chunk vào Qdrant (bước "Lưu vào kho tri thức"): mỗi chunk của `chunks.jsonl` -> một point
 (vector = embedding của `context_text`, payload = metadata mục lục + trang + vị trí PDF nguồn trong MinIO).
 
-Collection `settings.QDRANT_DOCUMENT_COLLECTION`, cosine, cùng embedding local như KB guideline. Xây trên capability Qdrant generic (đồng bộ) của
+Collection `settings.QDRANT_DOCUMENT_COLLECTION`: dense cosine (cùng embedding local như KB guideline) + sparse `bm25` (từ khoá, IDF do Qdrant tính). Xây trên capability Qdrant generic (đồng bộ) của
 `QdrantVectorClient` vì pipeline chạy ở thread nền riêng. Nạp lại một tài liệu luôn xoá các point cũ của tài liệu đó trước (lọc theo `document_id`) nên
 chunk bị xoá/đổi sau khi chỉnh mục lục không còn sót lại. Embedding do pipeline tính, service này chỉ lưu/xoá/đếm."""
 import asyncio
@@ -34,6 +34,7 @@ from app.dto.response.document import (
     StageOutput,
 )
 from app.exception.errors import ConflictError, InvalidError, NotFoundError
+from app.infra.bm25_sparse import SPARSE_NAME, encode_document
 from app.infra.qdrant_client import QdrantVectorClient, eq_filter
 from app.models.document_profile import Profile
 from app.models.document_stage import STAGE_BY_ID, STAGES
@@ -583,7 +584,7 @@ class DocumentService:
         return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
 
     def ensure_collection(self, dim: int) -> None:
-        self._qdrant.ensure_collection_sync(self.collection, dim, keyword_index_fields=("document_id",))
+        self._qdrant.ensure_collection_sync(self.collection, dim, keyword_index_fields=("document_id",), sparse_names=(SPARSE_NAME,))
 
     def delete_chunks(self, document_id: str) -> None:
         """Xoá mọi point của tài liệu (no-op khi collection chưa có)."""
@@ -594,7 +595,8 @@ class DocumentService:
 
     def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any]) -> None:
         points = [
-            PointStruct(id=self.point_id(c["chunk_id"]), vector=v,
+            # vector không tên = dense (semantic); "bm25" = sparse để Qdrant chấm điểm từ khoá, cùng văn bản với embedding
+            PointStruct(id=self.point_id(c["chunk_id"]), vector={"": v, SPARSE_NAME: encode_document(str(c.get("context_text") or c.get("text") or ""))},
                         payload={**{k: c.get(k) for k in _PAYLOAD_KEYS}, "document_id": document_id, **extra})
             for c, v in zip(chunks, vectors, strict=True)
         ]

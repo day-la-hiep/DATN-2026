@@ -6,7 +6,7 @@ from typing import Any, TypeVar
 
 from langchain_core.tools import tool
 
-from agent.tools.hybrid_retrieval.bm25 import get_bm25_index
+from agent.tools.hybrid_retrieval.bm25 import bm25_search
 from agent.tools.hybrid_retrieval.fusion import book_result, fallback_top, merge_chunks
 from agent.tools.hybrid_retrieval.kg import kg_search
 from agent.tools.hybrid_retrieval.reranker import rerank
@@ -59,7 +59,7 @@ def _unwrap(name: str, result: list[T] | BaseException, notes: list[str]) -> lis
 
 
 async def _bm25_payloads(query: str) -> list[dict[str, Any]]:
-    return [hit.payload for hit in await get_bm25_index().search(query, _LEG_LIMIT)]
+    return await bm25_search(query, _LEG_LIMIT)
 
 
 @tool

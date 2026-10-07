@@ -91,7 +91,7 @@ Script chạy trong container `derma-core-api`, nạp đồ thị tri thức và
 |---|---|---|
 | PrimeKG (36k node, 474k cạnh) | Neo4j | `hybrid_retrieval` (nhánh KG), `knowledge_graph_search`, gợi ý câu hỏi của `record_reasoning` |
 | DermO (3.4k thuật ngữ) | Neo4j | `hybrid_retrieval` (nhánh KG), `knowledge_graph_search` |
-| Chunk sách (pipeline `document_ingest`) | Qdrant `derma_document_chunks` | `hybrid_retrieval` (semantic + BM25), `semantic_search`, `keyword_search` — **không** nạp bằng script này mà qua giao diện admin `/admin/documents` |
+| Chunk sách (pipeline `document_ingest`) | Qdrant `derma_document_chunks_v2` | `hybrid_retrieval` (semantic + BM25), `semantic_search`, `keyword_search` — **không** nạp bằng script này mà qua giao diện admin `/admin/documents` |
 
 - Chạy lại nhiều lần không sao (idempotent).
 - `./reset-and-gen-data.sh --reset` — **xoá sạch** rồi nạp lại từ đầu (dùng khi đổi dữ liệu/model embedding).

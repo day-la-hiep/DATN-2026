@@ -74,7 +74,7 @@ terminals, then the Next.js app in `../fe` (`pnpm dev`). Not usable headless.
 - Qdrant in compose has `QDRANT__SERVICE__API_KEY=derma_qdrant_2026`; `.env` needs
   `QDRANT_API_KEY=derma_qdrant_2026` (read by `app/infra/qdrant_client.py`), else `hybrid_retrieval`
   returns a failed-leg note (`401 Must provide an API key`). The book-chunk collection
-  `derma_document_chunks` is empty on a fresh Qdrant — upload and index a book in `/admin/documents`
+  `derma_document_chunks_v2` is empty on a fresh Qdrant — upload and index a book in `/admin/documents`
   (or the retrieval returns no `book` results). Restart the worker after changing `.env`.
 
 ## Troubleshooting

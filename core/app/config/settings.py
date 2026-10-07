@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     QDRANT_API_KEY: str = ""
     # Chunk tài liệu (pipeline/document_ingest, bước "Lưu vào kho tri thức"): mỗi point = 1 chunk đã gắn phần/chương/mục/trang,
     # payload có `document_id` để xoá/lọc theo tài liệu. Embedding local (`agent/embeddings.py`, 384 chiều, cosine).
-    QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks"
+    QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks_v2"  # v2: có thêm sparse vector bm25 (collection v1 không thêm được)
     # Collection sách cũ (trước khi đổi Book -> Document, payload `book_id`/`book_title`) vẫn được agent ĐỌC cùng collection mới để
     # không mất dữ liệu đã nạp; pipeline không ghi vào đây. Rỗng = bỏ qua.
     QDRANT_LEGACY_BOOK_COLLECTION: str = "derma_book_chunks"

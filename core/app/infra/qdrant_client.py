@@ -1,5 +1,5 @@
 """Qdrant dùng chung: class `QdrantVectorClient` = kết nối (async cho Core/Agent, đồng bộ cho pipeline chạy ở thread nền) + capability generic
-(đảm bảo/xoá collection, upsert, search, retrieve, scroll, lọc theo payload). Tên collection và payload cụ thể của từng loại dữ liệu
+(đảm bảo/xoá collection, upsert, search dense + sparse, lọc theo payload). Tên collection và payload cụ thể của từng loại dữ liệu
 nằm ở service (`KnowledgeBaseService`, `DocumentService`). Instance do `app/api/deps.py` tạo và đóng."""
 import threading
 from typing import Any
@@ -11,10 +11,13 @@ from qdrant_client.models import (
     Filter,
     FilterSelector,
     MatchValue,
+    Modifier,
     PayloadSchemaType,
     PointStruct,
     Record,
     ScoredPoint,
+    SparseVector,
+    SparseVectorParams,
     VectorParams,
 )
 
@@ -67,6 +70,22 @@ class QdrantVectorClient:
                                                 score_threshold=score_threshold)
         return result.points
 
+    async def search_sparse(self, name: str, vector: SparseVector, *, using: str, limit: int,
+                            query_filter: Filter | None = None) -> list[ScoredPoint]:
+        """Tìm theo sparse vector đã đặt tên (BM25); chỉ trả point có điểm > 0, tức có ít nhất một từ trùng."""
+        if not vector.indices:
+            return []
+        result = await self.client.query_points(name, query=vector, using=using, query_filter=query_filter, limit=limit)
+        return result.points
+
+    async def has_sparse_vector(self, name: str, vector_name: str) -> bool:
+        """Collection có sparse vector tên này không. Sparse vector chỉ khai báo được lúc tạo collection nên collection cũ
+        (tạo trước khi có BM25 qua Qdrant) sẽ không có."""
+        if not await self.client.collection_exists(name):
+            return False
+        sparse = (await self.client.get_collection(name)).config.params.sparse_vectors
+        return bool(sparse) and vector_name in sparse
+
     async def collection_exists(self, name: str) -> bool:
         return await self.client.collection_exists(name)
 
@@ -77,8 +96,7 @@ class QdrantVectorClient:
         return int((await self.client.count(name, exact=True)).count)
 
     async def scroll_all(self, name: str, *, with_payload: bool | list[str] = True, batch: int = 256) -> list[Record]:
-        """Đọc toàn bộ point (không cần vector), phân trang. Dùng để dựng chỉ mục BM25 trong bộ nhớ — chỉ hợp lý với kho cỡ
-        vài nghìn chunk."""
+        """Đọc toàn bộ point (không cần vector), phân trang. Chỉ dùng cho thống kê / kiểm tra bằng tay trên kho cỡ vài nghìn chunk."""
         if not await self.client.collection_exists(name):
             return []
         records: list[Record] = []
@@ -90,15 +108,29 @@ class QdrantVectorClient:
                 return records
 
     # ---------------------------------------------------------------- đồng bộ (pipeline ở thread nền)
-    def ensure_collection_sync(self, name: str, dim: int, *, keyword_index_fields: tuple[str, ...] = ()) -> None:
-        """Tạo collection nếu chưa có; có rồi thì kiểm tra số chiều khớp. Tạo chỉ mục keyword cho các trường lọc/xoá nhiều."""
+    def ensure_collection_sync(self, name: str, dim: int, *, keyword_index_fields: tuple[str, ...] = (),
+                               sparse_names: tuple[str, ...] = ()) -> None:
+        """Tạo collection nếu chưa có; có rồi thì kiểm tra số chiều và sparse vector khớp. Tạo chỉ mục keyword cho các trường
+        lọc/xoá nhiều. `sparse_names` bật IDF phía Qdrant (cho BM25). Qdrant không cho thêm sparse vector vào collection đã
+        tạo nên thiếu thì báo lỗi rõ thay vì nạp chunk không tìm được bằng từ khoá."""
         client = self.sync_client
         if not client.collection_exists(name):
-            client.create_collection(name, vectors_config=VectorParams(size=dim, distance=Distance.COSINE))
+            client.create_collection(
+                name,
+                vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+                sparse_vectors_config={n: SparseVectorParams(modifier=Modifier.IDF) for n in sparse_names} or None,
+            )
         else:
-            size = client.get_collection(name).config.params.vectors.size  # type: ignore[union-attr]
+            params = client.get_collection(name).config.params
+            size = params.vectors.size  # type: ignore[union-attr]
             if size != dim:
                 raise RuntimeError(f"Collection {name} có vector {size} chiều, khác embedding hiện tại ({dim} chiều).")
+            missing = [n for n in sparse_names if n not in (params.sparse_vectors or {})]
+            if missing:
+                raise RuntimeError(
+                    f"Collection {name} thiếu sparse vector {', '.join(missing)} và Qdrant không thêm được vào collection đã tạo — "
+                    "đặt QDRANT_DOCUMENT_COLLECTION sang tên mới rồi chạy lại bước Lưu vào kho tri thức."
+                )
         for field in keyword_index_fields:
             try:
                 client.create_payload_index(name, field_name=field, field_schema=PayloadSchemaType.KEYWORD)

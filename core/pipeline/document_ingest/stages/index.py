@@ -1,7 +1,7 @@
 """Lưu vào kho tri thức (bước 4) -> Qdrant, không LLM.
 
 Embed `context_text` của từng chunk (đường dẫn mục lục + nội dung) bằng embedding local và nạp vào collection chunk sách
-của Qdrant, kèm metadata part/section/topic/trang và vị trí PDF nguồn trong MinIO. Nạp lại xoá các point cũ của sách trước,
+của Qdrant cùng sparse vector BM25 (do `ChunkIndex.upsert_chunks` mã hoá từ cùng văn bản, để agent tìm từ khoá ngay trên Qdrant), kèm metadata part/section/topic/trang và vị trí PDF nguồn trong MinIO. Nạp lại xoá các point cũ của sách trước,
 nên chạy lại bước Chia đoạn rồi bước này luôn cho kết quả khớp `chunks.jsonl`. Ghi `index.json` để biết lần nạp gần nhất."""
 from datetime import UTC, datetime
 from typing import Any

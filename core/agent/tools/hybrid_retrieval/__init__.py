@@ -4,7 +4,7 @@
                                rerank chung; một lần gọi cho kết quả sách + đồ thị;
 
   - `semantic_search`        : embedding local (`agent/embeddings.py`) -> Qdrant, chunk sách của pipeline `document_ingest`;
-  - `keyword_search`         : chỉ mục BM25 trong bộ nhớ trên chính các chunk đó (`bm25.py`) — bắt tên thuốc, mã, thuật ngữ mà
+  - `keyword_search`         : BM25 do Qdrant chấm trên sparse vector của chính các chunk đó (`bm25.py`) — bắt tên thuốc, mã, thuật ngữ mà
                                embedding hay bỏ lỡ;
   - `knowledge_graph_search` : PrimeKG / DermO (`kg.py`) — quan hệ bệnh–triệu chứng–thuốc và bệnh ứng viên.
 
@@ -18,7 +18,7 @@ Kết quả là bằng chứng để trích dẫn, KHÔNG phải chẩn đoán y
 Các file:
   - `tool.py`      — 4 tool trên;
   - `semantic.py`  — nhánh semantic (embedding -> Qdrant);
-  - `bm25.py`      — nhánh từ khoá, chỉ mục BM25 trong bộ nhớ;
+  - `bm25.py`      — nhánh từ khoá, BM25 do Qdrant chấm (sparse vector);
   - `kg.py`        — nhánh đồ thị tri thức (PrimeKG / DermO);
   - `fusion.py`    — trộn thứ hạng (RRF) và dựng kết quả sách;
   - `reranker.py`  — cross-encoder chấm lại ứng viên.

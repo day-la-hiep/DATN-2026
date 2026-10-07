@@ -63,7 +63,7 @@ Chữ ngoài mọi mục (bìa, lời nói đầu) không thành chunk nhưng đ
 
 ### `index`
 Embed `context_text` (đường dẫn mục lục + nội dung) bằng embedding local, nạp vào Qdrant
-`derma_document_chunks` (payload có `document_id`, part/section/topic, trang, vị trí PDF nguồn). Chạy lại
+`derma_document_chunks_v2` (dense + sparse `bm25` cho tìm từ khoá; payload có `document_id`, part/section/topic, trang, vị trí PDF nguồn). Chạy lại
 xoá toàn bộ point cũ của tài liệu trước.
 
 ## 3. Trạng thái và duyệt
@@ -112,7 +112,7 @@ Lỗi người dùng sửa được (`StageError`, `InvalidError`) hiển thị 
 |---|---|
 | **Postgres** | `documents` (metadata, `profile` JSON, `source_file_id`, `pdf_pages`), `document_stages` (state, options, progress, summary, error, thời điểm), `document_overrides`, `files` (dòng cho `source.pdf`) |
 | **MinIO** `MINIO_DOCUMENTS_BUCKET` | `document/<id>/`: `source.pdf`, `pages.jsonl`, `toc.auto.json`, `toc.json`, `chunks.jsonl`, `index.json`, `review/`, `logs/`, `page_img/`, `docling_parts/` (checkpoint OCR), `figures/` |
-| **Qdrant** | `derma_document_chunks`, một point/chunk |
+| **Qdrant** | `derma_document_chunks_v2`, một point/chunk |
 
 **Upload**: file stream qua Core vào thư mục tạm, kiểm tra header `%PDF` và ≤ 500 MB, rồi
 `DocumentRepository.create` tạo record + một dòng `not_started` cho mỗi bước + ghi file MinIO trong một luồng;

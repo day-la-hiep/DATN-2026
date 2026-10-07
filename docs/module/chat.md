@@ -121,7 +121,7 @@ Agent gồm hai graph. **Chat graph** (`chat_graph.py`) lọc intent: tin xã gi
 | `save_memory` | lưu thông tin đáng nhớ về người dùng | LangGraph store |
 | `hybrid_retrieval` | tool tra cứu **mặc định** cho yêu cầu chung: sách giáo khoa đã số hoá + đồ thị tri thức, chạy semantic + BM25 + KG (trích thực thể → DermO → PrimeKG, bệnh ứng viên) rồi rerank bằng cross-encoder; trả đoạn kèm nguồn (sách, mục, trang) | Qdrant `derma_document_chunks` + Neo4j PrimeKG/DermO |
 | `semantic_search` | (chuyên biệt) tra sách giáo khoa đã số hoá theo ngữ nghĩa (embedding → Qdrant), rerank bằng cross-encoder; trả đoạn kèm nguồn (sách, mục, trang) | Qdrant `derma_document_chunks` |
-| `keyword_search` | (chuyên biệt) tra sách giáo khoa theo từ khoá (BM25 trong bộ nhớ) — bắt tên thuốc, thuật ngữ; cùng dạng kết quả với `semantic_search` | Qdrant `derma_document_chunks` |
+| `keyword_search` | (chuyên biệt) tra sách giáo khoa theo từ khoá (BM25 do Qdrant chấm trên sparse vector) — bắt tên thuốc, thuật ngữ; cùng dạng kết quả với `semantic_search` | Qdrant `derma_document_chunks` |
 | `knowledge_graph_search` | (chuyên biệt) trích thực thể → DermO → PrimeKG: quan hệ bệnh–triệu chứng–thuốc và bệnh ứng viên; chỉ là gợi ý, không phải bằng chứng | Neo4j PrimeKG/DermO |
 | `classify_skin_image` | CNN 22 lớp phân loại ảnh da — chỉ là **giả thuyết** | MinIO + PyTorch |
 | `search_trusted_web`, `fetch_trusted_page` | tra web trong danh sách domain uy tín | Tavily |
