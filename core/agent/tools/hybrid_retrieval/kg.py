@@ -61,7 +61,8 @@ _EXTRACT_SYSTEM = (
     "(dữ liệu tra cứu gốc là tiếng Anh, vd 'nổi mề đay' -> 'urticaria', 'da tôi đỏ và "
     "ngứa' -> 2 thực thể 'erythema' và 'pruritus'). CHỈ trích xuất thực thể RÕ RÀNG có "
     "trong câu hỏi — không suy đoán, không bổ sung thực thể không được nhắc tới. Nếu câu "
-    "hỏi không chứa thực thể y khoa nào, trả về danh sách rỗng."
+    "hỏi không chứa thực thể y khoa nào, trả về danh sách rỗng. Với mỗi thực thể, điền thêm tên "
+    "tiếng Việt chuẩn trong sách giáo khoa da liễu (`vi`) để khớp từ khoá ở sách tiếng Việt."
 )
 
 # Chỉ giữ quan hệ có giá trị lâm sàng trực tiếp (khớp `ALLOWED_RELATION_TYPES` của `data_ingest` PrimeKG); bỏ nhiễu mức phân
@@ -97,6 +98,7 @@ class ExtractedEntity(BaseModel):
         description="Tên bệnh/triệu chứng/thuốc bằng tiếng Anh y khoa chuẩn, dịch từ "
         "câu hỏi gốc nếu cần"
     )
+    vi: str = Field(default="", description="Tên tiếng Việt chuẩn của thực thể (rỗng nếu không có)")
     type: Literal["disease", "symptom", "drug", "other"]
 
 
@@ -106,7 +108,7 @@ class ExtractedEntities(BaseModel):
     )
 
 
-async def _extract_entities(query: str) -> list[ExtractedEntity]:
+async def extract_entities(query: str) -> list[ExtractedEntity]:
     # `method="function_calling"` bắt buộc — mặc định (tự chọn theo model, thường ngả
     # về "json_schema" strict) làm proxy OpenRouter cho model hiện dùng
     # (`nvidia/nemotron-3-super-120b-a12b:free`, xem `app/config/settings.py::AGENT_MODEL`)
@@ -202,9 +204,9 @@ async def _candidate_facts(entity_names: list[str]) -> list[str]:
     ]
 
 
-async def kg_search(query: str, *, limit: int = 15) -> list[str]:
-    """Các câu văn ngắn rút từ PrimeKG / DermO liên quan câu hỏi"""
-    entities = (await _extract_entities(query))[:_MAX_INPUTS]
+async def kg_search(query: str, *, limit: int = 15, entities: list[ExtractedEntity] | None = None) -> list[str]:
+    """Các câu văn ngắn rút từ PrimeKG / DermO liên quan câu hỏi; truyền `entities` để khỏi trích lại"""
+    entities = (entities if entities is not None else await extract_entities(query))[:_MAX_INPUTS]
     if not entities:
         return []
     per_entity = await asyncio.gather(*(_entity_facts(e) for e in entities))

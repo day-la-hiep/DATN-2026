@@ -12,7 +12,7 @@ PDF → ingest (chữ từng trang) → toc (LLM đọc mục lục, người du
 | ingest | `stages/ingest.py` | `pages.jsonl` | không |
 | toc | `stages/toc.py` + `mapping.py` | `toc.auto.json` (máy), `toc.json` (đã áp override + độ lệch + neo) | đọc vài chục trang mục lục |
 | chunks | `stages/chunks.py` | `chunks.jsonl`, `review/chunks.json` | không |
-| index | `stages/index.py` (+ `DocumentService`) | `index.json` + các point trong Qdrant | không (embedding local) |
+| index | `stages/index.py` (+ `DocumentService`) | `index.json` + các point trong Qdrant | không (embedding qua OpenRouter) |
 
 - `toc` **không phụ thuộc** `ingest`: đọc mục lục chỉ OCR riêng vài trang. `mapping.py` (độ lệch + neo) cần `pages.jsonl` nên
   được tính lại mỗi khi sửa mục lục (`reapply`) và ngay trước khi chunk — rất rẻ, không gọi LLM.
@@ -54,7 +54,7 @@ Trong `pipeline/document_ingest/`: `stages/` (ingest, toc, chunks, index — m�
 Mọi thứ nằm trong **MinIO**, bucket `MINIO_DOCUMENTS_BUCKET` (mặc định `derma-documents`), dưới `document/<document_id>/`: `source.pdf`, `page_img/p<N>.png`,
 `pages.jsonl`, `toc.auto.json`, `toc.json`, `chunks.jsonl`, `index.json`, `status.json`, `overrides/`, `review/`, `logs/`, `docling_parts/`
 (điểm lưu để OCR tiếp tục được). Cache LLM ở `_cache/llm/`. Chunk được embed (local, 384 chiều) và nạp vào **Qdrant** collection
-`QDRANT_DOCUMENT_COLLECTION` (mặc định `derma_document_chunks_v2`; vector dense + sparse `bm25`, IDF do Qdrant tính — Qdrant không thêm sparse vector vào collection đã tạo nên bản cũ `derma_document_chunks` cần index lại sang collection mới), payload có `document_id`, part/section/topic, trang, `source_pdf`.
+`QDRANT_DOCUMENT_COLLECTION` (mặc định `derma_document_chunks_v4`; vector dense + sparse `bm25`, IDF do Qdrant tính — Qdrant không thêm sparse vector vào collection đã tạo nên bản cũ `derma_document_chunks` cần index lại sang collection mới), payload có `document_id`, part/section/topic, trang, `source_pdf`.
 
 - Chỉ backend (Core) chạm MinIO/Qdrant; FE chỉ gọi API (ảnh trang được Core đọc từ MinIO rồi trả về).
 - `status.json` và override được ghi dưới khoá Redis (Core và các thread xử lý cùng ghi). Thư mục tạm chỉ chứa bản sao PDF cho

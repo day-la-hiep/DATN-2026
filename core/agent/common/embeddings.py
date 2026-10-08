@@ -1,38 +1,51 @@
-import app.config.settings  # noqa: F401  # phải đứng TRƯỚC sentence_transformers: nạp `.env` (HF_HUB_OFFLINE...) trước khi huggingface_hub đọc biến môi trường
+import httpx
 from langchain_core.embeddings import Embeddings
-from sentence_transformers import SentenceTransformer
 
-EMBEDDING_MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
-EMBEDDING_DIM = 384
+from app.config.settings import settings
 
-_model: SentenceTransformer | None = None
+EMBEDDING_MODEL_NAME = settings.EMBEDDING_MODEL
+EMBEDDING_DIM = settings.EMBEDDING_DIM
 
-
-def _get_model() -> SentenceTransformer:
-    global _model
-    if _model is None:
-        _model = SentenceTransformer(EMBEDDING_MODEL_NAME)
-    return _model
+_BATCH = 32
+# Qwen3-Embedding được huấn luyện với query dạng "Instruct: ...\nQuery: ..." (đoạn văn thì để nguyên)
+_QUERY_INSTRUCTION = "Given a Vietnamese or English dermatology question, retrieve relevant textbook passages that answer it"
 
 
-class LocalEmbeddings(Embeddings):
+def _embed(texts: list[str]) -> list[list[float]]:
+    if not settings.OPENROUTER_API_KEY:
+        raise RuntimeError("Thiếu OPENROUTER_API_KEY để gọi embedding.")
+    vectors: list[list[float]] = []
+    for i in range(0, len(texts), _BATCH):
+        resp = httpx.post(
+            f"{settings.OPENROUTER_BASE_URL}/embeddings",
+            headers={"Authorization": f"Bearer {settings.OPENROUTER_API_KEY}"},
+            json={"model": EMBEDDING_MODEL_NAME, "input": texts[i : i + _BATCH], "encoding_format": "float"},
+            timeout=120,
+        )
+        resp.raise_for_status()
+        data = sorted(resp.json()["data"], key=lambda d: d["index"])
+        vectors += [d["embedding"] for d in data]
+    if vectors and len(vectors[0]) != EMBEDDING_DIM:
+        raise RuntimeError(f"{EMBEDDING_MODEL_NAME} trả {len(vectors[0])} chiều, khác EMBEDDING_DIM={EMBEDDING_DIM}.")
+    return vectors
+
+
+class OpenRouterEmbeddings(Embeddings):
     """Chỉ cài sync"""
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        vectors = _get_model().encode(texts, normalize_embeddings=True)
-        return vectors.tolist()
+        return _embed(texts)
 
     def embed_query(self, text: str) -> list[float]:
-        vector = _get_model().encode([text], normalize_embeddings=True)[0]
-        return vector.tolist()
+        return _embed([f"Instruct: {_QUERY_INSTRUCTION}\nQuery: {text}"])[0]
 
 
-_embeddings: LocalEmbeddings | None = None
+_embeddings: OpenRouterEmbeddings | None = None
 
 
-def get_embeddings() -> LocalEmbeddings:
+def get_embeddings() -> OpenRouterEmbeddings:
     """Instance dùng chung của process — luôn cùng model / số chiều (`EMBEDDING_DIM`) với lúc ingest."""
     global _embeddings
     if _embeddings is None:
-        _embeddings = LocalEmbeddings()
+        _embeddings = OpenRouterEmbeddings()
     return _embeddings

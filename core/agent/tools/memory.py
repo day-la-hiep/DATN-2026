@@ -5,7 +5,7 @@ from langgraph.store.base import BaseStore
 from langgraph.store.memory import InMemoryStore
 
 from agent.context.agent_context import AgentContext
-from agent.common.embeddings import EMBEDDING_DIM, LocalEmbeddings
+from agent.common.embeddings import EMBEDDING_DIM, OpenRouterEmbeddings
 
 MEMORY_NAMESPACE = "memories"
 
@@ -15,7 +15,7 @@ def build_memory_store() -> BaseStore:
     return InMemoryStore(
         index={
             "dims": EMBEDDING_DIM,
-            "embed": LocalEmbeddings(),
+            "embed": OpenRouterEmbeddings(),
             "fields": ["content"],
         }
     )

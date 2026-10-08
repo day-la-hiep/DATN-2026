@@ -1,37 +1,29 @@
-"""Rerank bằng cross-encoder local"""
+"""Rerank bằng Qwen3-Reranker qua OpenRouter"""
 import logging
-import asyncio
-import math
 
-from app.config.settings import settings  # đứng trước sentence_transformers: nạp `.env` (HF_HUB_OFFLINE) trước khi huggingface_hub đọc biến
-from sentence_transformers import CrossEncoder
+import httpx
+
+from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-_model: CrossEncoder | None = None
-_failed = False
-
-
-def _get_model() -> CrossEncoder:
-    global _model
-    if _model is None:
-        _model = CrossEncoder(settings.RERANKER_MODEL)
-    return _model
-
-
-def _score(query: str, passages: list[str]) -> list[float]:
-    logits = _get_model().predict([(query, p) for p in passages])
-    return [1.0 / (1.0 + math.exp(-float(x))) for x in logits]  # logit -> 0..1 để dễ đọc trong kết quả
-
 
 async def rerank(query: str, passages: list[str]) -> list[float] | None:
-    """Điểm liên quan 0..1 cho từng đoạn, cùng thứ tự `passages`; `None` nếu cross-encoder không dùng được."""
-    global _failed
-    if not passages or _failed:
-        return None if _failed else []
+    """Điểm liên quan 0..1 cho từng đoạn, cùng thứ tự `passages`; `None` nếu reranker không dùng được."""
+    if not passages:
+        return []
     try:
-        return await asyncio.to_thread(_score, query, passages)
-    except Exception as exc:  # noqa: BLE001  # thiếu mạng lần đầu tải model, thiếu RAM...
-        _failed = True  # không thử lại mỗi lượt: tải model hỏng thường kéo dài cả phiên chạy
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                f"{settings.OPENROUTER_BASE_URL}/rerank",
+                headers={"Authorization": f"Bearer {settings.OPENROUTER_API_KEY}"},
+                json={"model": settings.RERANKER_MODEL, "query": query, "documents": passages},
+            )
+            resp.raise_for_status()
+        scores = [0.0] * len(passages)
+        for r in resp.json()["results"]:
+            scores[r["index"]] = float(r["relevance_score"])
+        return scores
+    except Exception as exc:  # noqa: BLE001  # mất mạng, hết quota, model không có trên OpenRouter...
         logger.warning("không dùng được %s: %s", settings.RERANKER_MODEL, exc)
         return None

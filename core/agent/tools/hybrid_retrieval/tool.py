@@ -7,7 +7,7 @@ from langchain_core.tools import tool
 
 from agent.tools.hybrid_retrieval.bm25 import bm25_search
 from agent.tools.hybrid_retrieval.fusion import book_result, fallback_top, merge_chunks
-from agent.tools.hybrid_retrieval.kg import kg_search
+from agent.tools.hybrid_retrieval.kg import ExtractedEntity, extract_entities, kg_search
 from agent.tools.hybrid_retrieval.reranker import rerank
 from agent.tools.hybrid_retrieval.semantic import semantic_search as semantic_leg
 
@@ -15,7 +15,7 @@ T = TypeVar("T")
 
 _LEG_LIMIT = 20  # số chunk lấy về từ mỗi nhánh (semantic / BM25) trước khi trộn / rerank
 _POOL = 20  # số chunk giữ lại sau RRF để đem rerank (hybrid_retrieval)
-_PASSAGE_CHARS = 1200  # cắt đoạn đưa vào cross-encoder (model nhỏ, ngữ cảnh ngắn)
+_PASSAGE_CHARS = 3000  # cắt đoạn đưa vào reranker (giới hạn kích thước request / chi phí token)
 _MAX_TOP_K = 10
 
 
@@ -42,7 +42,7 @@ async def _book_response(query: str, payloads: list[dict[str, Any]], top_k: int,
         candidates.sort(key=lambda c: c["score"], reverse=True)
         ranked_by = "reranker"
     else:
-        notes.append(f"Không rerank được (cross-encoder không khả dụng) — giữ thứ tự của nhánh {leg}.")
+        notes.append(f"Không rerank được (reranker không khả dụng) — giữ thứ tự của nhánh {leg}.")
         ranked_by = leg
     return _dump(
         {"query": query, "evidence_found": True, "ranked_by": ranked_by, "results": _clean(candidates[:top_k]), "notes": notes}
@@ -57,8 +57,24 @@ def _unwrap(name: str, result: list[T] | BaseException, notes: list[str]) -> lis
     return result
 
 
-async def _bm25_payloads(query: str) -> list[dict[str, Any]]:
-    return await bm25_search(query, _LEG_LIMIT)
+async def _bm25_payloads(query: str, entities: list[ExtractedEntity] | None = None) -> list[dict[str, Any]]:
+    if entities is None:
+        try:
+            entities = await extract_entities(query)
+        except Exception:  # noqa: BLE001  # LLM lỗi -> vẫn tìm từ khoá bằng query gốc
+            entities = []
+    return await bm25_search(_expand_query(query, entities), _LEG_LIMIT)
+
+
+def _expand_query(query: str, entities: list[ExtractedEntity]) -> str:
+    """BM25 chỉ khớp đúng chữ: thêm tên Anh + Việt của thực thể để bắt cả sách viết khác ngôn ngữ với câu hỏi."""
+    seen = query.lower()
+    extra: list[str] = []
+    for term in (t for e in entities for t in (e.text, e.vi)):
+        if term and term.lower() not in seen:
+            seen += " " + term.lower()
+            extra.append(term)
+    return " ".join([query, *extra])
 
 
 @tool
@@ -80,10 +96,16 @@ async def hybrid_retrieval(query: str, top_k: int = 5) -> str:
         top_k: Số kết quả trả về (1-10, mặc định 5).
     """
     top_k = min(max(top_k, 1), _MAX_TOP_K)
-    semantic_r, bm25_r, kg_r = await asyncio.gather(
-        semantic_leg(query, _LEG_LIMIT), _bm25_payloads(query), kg_search(query), return_exceptions=True
-    )
     notes: list[str] = []
+    # trích thực thể một lần, dùng chung cho BM25 (mở rộng query) và KG
+    try:
+        entities = await extract_entities(query)
+    except Exception as exc:  # noqa: BLE001
+        entities = []
+        notes.append(f"Không mở rộng được query Việt–Anh ({type(exc).__name__}) — BM25 dùng query gốc, KG bỏ qua.")
+    semantic_r, bm25_r, kg_r = await asyncio.gather(
+        semantic_leg(query, _LEG_LIMIT), _bm25_payloads(query, entities), kg_search(query, entities=entities), return_exceptions=True
+    )
     semantic = _unwrap("semantic", semantic_r, notes)
     bm25 = _unwrap("bm25", bm25_r, notes)
     kg = _unwrap("kg", kg_r, notes)
@@ -111,7 +133,7 @@ async def hybrid_retrieval(query: str, top_k: int = 5) -> str:
         ranked = sorted(candidates, key=lambda c: c["score"], reverse=True)[:top_k]
         ranked_by = "reranker"
     else:
-        notes.append("Không rerank được (cross-encoder không khả dụng) — dùng thứ tự trộn semantic + BM25.")
+        notes.append("Không rerank được (reranker không khả dụng) — dùng thứ tự trộn semantic + BM25.")
         ranked = fallback_top(candidates, top_k)
         ranked_by = "rrf"
 

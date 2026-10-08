@@ -1,4 +1,4 @@
-"""Embedding LOCAL dùng chung"""
+"""Embedding dùng chung (OpenRouter)"""
 
 from typing import Any
 
@@ -10,9 +10,9 @@ class EmbeddingClient:
     @property
     def model(self) -> Any:
         if self._model is None:
-            from agent.common.embeddings import LocalEmbeddings
+            from agent.common.embeddings import OpenRouterEmbeddings
 
-            self._model = LocalEmbeddings()
+            self._model = OpenRouterEmbeddings()
         return self._model
 
     def embed(self, texts: list[str]) -> tuple[list[list[float]], int, str]:

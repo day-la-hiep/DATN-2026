@@ -9,7 +9,7 @@ Paths are relative to `core/`. Turns an uploaded PDF (currently: textbooks, `Doc
 "book"`) into table-of-contents-anchored chunks in Qdrant, reviewed stage-by-stage by a human via
 `/admin/documents` (FE: `derma-fe-conventions`'s `features/document-pipeline/`). No CLI — Core runs each stage
 in a background thread; everything lives in Postgres (`documents`, `document_stages`,
-`document_overrides`) + MinIO (`derma-documents` bucket) + Qdrant (`derma_document_chunks_v2`), never
+`document_overrides`) + MinIO (`derma-documents` bucket) + Qdrant (`derma_document_chunks_v4`), never
 on local disk except a PDF scratch copy.
 
 Renamed from `book_ingest`/`Book*` on 2026-10-04 (see migration
@@ -28,7 +28,7 @@ PDF → ingest (text/page)  → toc (LLM reads TOC, human reviews) → mapping (
 | `ingest` | `stages/ingest.py` | `pages.jsonl` | no |
 | `toc` | `stages/toc.py` + `mapping.py` | `toc.auto.json` (machine), `toc.json` (+ overrides + offset + anchor) | reads a few dozen TOC pages |
 | `chunks` | `stages/chunks.py` | `chunks.jsonl`, `review/chunks.json` | no |
-| `index` | `stages/index.py` (+ `DocumentService`) | `index.json` + points in Qdrant | no (local embedding) |
+| `index` | `stages/index.py` (+ `DocumentService`) | `index.json` + points in Qdrant | no (embedding via OpenRouter) |
 
 Stage order/deps live in `app/models/document_stage.py` (`STAGES`, `downstream()`) — the single
 source of truth, shared by repository, runner, and API. `toc` does **not** depend on `ingest`:
@@ -135,7 +135,7 @@ Mirror in FE's `features/document-pipeline/api.ts` + `hooks.ts` (see `derma-fe-c
 embedded figures — see below), `pages.jsonl`, `toc.auto.json`, `toc.json`, `chunks.jsonl`,
 `index.json`, `status.json`, `overrides/`, `review/`, `logs/`, `docling_parts/` (OCR checkpoint —
 lets a killed `ingest` resume without re-OCRing finished pages). LLM cache: `_cache/llm/`. Chunks
-are embedded locally (384-dim) and upserted into Qdrant collection `derma_document_chunks_v2` (unnamed dense vector + sparse vector `bm25` encoded by `app/infra/bm25_sparse.py` in `DocumentService.upsert_chunks`; Qdrant applies IDF, so the agent's keyword leg queries Qdrant directly — no in-memory index)
+are embedded via OpenRouter (qwen/qwen3-embedding-8b, 4096-dim) and upserted into Qdrant collection `derma_document_chunks_v4` (unnamed dense vector + sparse vector `bm25` encoded by `app/infra/bm25_sparse.py` in `DocumentService.upsert_chunks`; Qdrant applies IDF, so the agent's keyword leg queries Qdrant directly — no in-memory index)
 (`settings.QDRANT_DOCUMENT_COLLECTION`), payload carries `document_id`, part/section/topic, page,
 `source_pdf`. Deleting a document deletes both the MinIO objects and the Qdrant points; rerunning
 `index` replaces all of a document's points.

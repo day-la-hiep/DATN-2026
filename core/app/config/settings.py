@@ -57,14 +57,16 @@ class Settings(BaseSettings):
     # gửi api-key (Qdrant không bật auth).
     QDRANT_API_KEY: str = ""
     # Chunk tài liệu (pipeline/document_ingest, bước "Lưu vào kho tri thức"): mỗi point = 1 chunk đã gắn phần/chương/mục/trang,
-    # payload có `document_id` để xoá/lọc theo tài liệu. Embedding local (`agent/embeddings.py`, 384 chiều, cosine).
-    QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks_v2"  # v2: có thêm sparse vector bm25 (collection v1 không thêm được)
+    # payload có `document_id` để xoá/lọc theo tài liệu. Embedding gọi OpenRouter (`agent/common/embeddings.py`, cosine).
+    QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks_v4"  # v4: Qwen3-Embedding-8B (4096 chiều); v2/v3 khác số chiều nên không dùng lại được
     # Collection sách cũ (trước khi đổi Book -> Document, payload `book_id`/`book_title`) vẫn được agent ĐỌC cùng collection mới để
     # không mất dữ liệu đã nạp; pipeline không ghi vào đây. Rỗng = bỏ qua.
     QDRANT_LEGACY_BOOK_COLLECTION: str = "derma_book_chunks"
-    # Cross-encoder đa ngôn ngữ (có tiếng Việt) rerank kết quả `hybrid_retrieval` và các tool tra sách chuyên biệt; chạy local qua sentence-transformers, tải
-    # model lần đầu (~470MB). Không tải được thì tool tự bỏ bước rerank và dùng thứ tự RRF.
-    RERANKER_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+    # Embedding + reranker Qwen3 gọi qua OpenRouter (cùng OPENROUTER_API_KEY với LLM). Đổi EMBEDDING_MODEL / EMBEDDING_DIM thì phải đổi
+    # QDRANT_DOCUMENT_COLLECTION và index lại sách. Reranker lỗi thì tool tự bỏ bước rerank và dùng thứ tự RRF.
+    EMBEDDING_MODEL: str = "qwen/qwen3-embedding-8b"
+    EMBEDDING_DIM: int = 4096
+    RERANKER_MODEL: str = "qwen/qwen3-reranker-8b"
 
     # ----- Neo4j (knowledge graph da liễu — PrimeKG, xem
     # app/infra/neo4j_client.py + data_ingest/01_normalize/scripts/load_primekg.py, load_dermo.py) -----
