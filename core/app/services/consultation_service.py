@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from agent.llm import get_model
+from agent.common.llm import get_model
 from app.common.constant import MessageSender, MessageType
 from app.dto.consultation import (
     ClinicalFactOutput,
