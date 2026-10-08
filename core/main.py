@@ -12,6 +12,7 @@ from app.api.deps import close_clients, get_file_store_service, get_rabbitmq_cli
 from app.api.health import router as health_router
 from app.api.document_api import router as document_router
 from app.api.upload_api import router as upload_router
+from app.api.doctor_api import router as doctor_router
 from app.config.auth import require_app_token
 from app.config.settings import log_startup_infra, settings
 from app.exception.exception_handler import register_exception_handlers
@@ -73,6 +74,11 @@ app.include_router(
 )
 app.include_router(
     upload_router,
+    prefix=settings.API_V1_PREFIX,
+    dependencies=[Depends(require_app_token)],
+)
+app.include_router(
+    doctor_router,
     prefix=settings.API_V1_PREFIX,
     dependencies=[Depends(require_app_token)],
 )
