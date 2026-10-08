@@ -6,7 +6,9 @@ interface PatientInfoCardProps {
 }
 
 export function PatientInfoCard({ patient, reason }: PatientInfoCardProps) {
-  const formattedDob = new Date(patient.dob).toLocaleDateString("vi-VN");
+  const formattedDob = patient?.dob
+    ? new Date(patient.dob).toLocaleDateString("vi-VN")
+    : "Chưa cập nhật";
 
   return (
     <div className="rounded-xl border border-border bg-card/80 p-3 shadow-xs">
@@ -16,12 +18,12 @@ export function PatientInfoCard({ patient, reason }: PatientInfoCardProps) {
       <div className="grid grid-cols-2 gap-y-1.5 gap-x-3 text-xs">
         <div>
           <span className="text-muted-foreground">Họ tên:</span>{" "}
-          <span className="font-medium text-foreground">{patient.fullName}</span>
+          <span className="font-medium text-foreground">{patient?.fullName ?? "Chưa rõ"}</span>
         </div>
         <div>
           <span className="text-muted-foreground">Giới:</span>{" "}
           <span className="font-medium text-foreground">
-            {patient.gender === "male" ? "Nam" : "Nữ"}
+            {patient?.gender === "female" ? "Nữ" : "Nam"}
           </span>
         </div>
         <div>

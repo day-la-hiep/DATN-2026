@@ -42,7 +42,7 @@ export function ReportPanel() {
     );
   }
 
-  const actionCfg = STATUS_ACTION_CONFIG[session.status];
+  const actionCfg = STATUS_ACTION_CONFIG[session.status] ?? STATUS_ACTION_CONFIG.pending;
   const ActionIcon = actionCfg.icon;
 
   return (
@@ -59,7 +59,7 @@ export function ReportPanel() {
         </div>
         <p className="text-[10px] text-muted-foreground font-mono">
           PRE-CONSULTATION REPORT •{" "}
-          {session.report
+          {session.report?.createdAt
             ? new Date(session.report.createdAt).toLocaleString("vi-VN")
             : "Chưa có"}
         </p>
@@ -73,7 +73,7 @@ export function ReportPanel() {
         </div>
 
         {/* Structured Clinical Facts */}
-        <ClinicalFactList facts={session.clinicalFacts} />
+        <ClinicalFactList facts={session.clinicalFacts ?? []} />
 
         {/* AI Markdown Summary */}
         {session.report ? (

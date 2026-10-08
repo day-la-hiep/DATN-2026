@@ -8,7 +8,7 @@ interface ClinicalFactListProps {
 }
 
 export function ClinicalFactList({ facts }: ClinicalFactListProps) {
-  if (facts.length === 0) return null;
+  if (!facts || facts.length === 0) return null;
 
   return (
     <div className="px-4 pb-3">
@@ -20,7 +20,7 @@ export function ClinicalFactList({ facts }: ClinicalFactListProps) {
       </div>
       <div className="space-y-2">
         {facts.map((fact) => {
-          const cfg = FACT_TYPE_CONFIG[fact.factType];
+          const cfg = FACT_TYPE_CONFIG[fact.factType] ?? FACT_TYPE_CONFIG.other;
           const Icon = cfg.icon;
           return (
             <div

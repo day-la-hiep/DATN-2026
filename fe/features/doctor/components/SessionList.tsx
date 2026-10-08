@@ -13,13 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function calculateAge(dob: string): number {
-  const today = new Date();
+function calculateAge(dob?: string): number | string {
+  if (!dob) return "--";
   const birth = new Date(dob);
+  if (isNaN(birth.getTime())) return "--";
+  const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
+  return isNaN(age) || age < 0 ? "--" : age;
 }
 
 interface SessionCardProps {
@@ -29,10 +31,10 @@ interface SessionCardProps {
 }
 
 function SessionCard({ session, isActive, onSelect }: SessionCardProps) {
-  const cfg = STATUS_CONFIG[session.status];
+  const cfg = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.pending;
   const StatusIcon = cfg.icon;
-  const age = calculateAge(session.patient.dob);
-  const factsCount = session.clinicalFacts.length;
+  const age = calculateAge(session.patient?.dob);
+  const factsCount = session.clinicalFacts?.length ?? 0;
 
   return (
     <div
@@ -49,10 +51,10 @@ function SessionCard({ session, isActive, onSelect }: SessionCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-xs text-foreground truncate">
-              {session.patient.fullName}
+              {session.patient?.fullName ?? "Bệnh nhân"}
             </span>
             <span className="text-[11px] text-muted-foreground shrink-0 font-medium">
-              ({session.patient.gender === "male" ? "Nam" : "Nữ"}, {age}t)
+              ({session.patient?.gender === "female" ? "Nữ" : "Nam"}, {age}t)
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">

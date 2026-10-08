@@ -9,8 +9,13 @@
 import axios from "axios";
 import { api } from "@/services/client";
 import type {
+  ClinicalFact,
+  ClinicalFactType,
   ConsultationSession,
+  ConsultationStatus,
   DoctorViewMessage,
+  PatientProfile,
+  PreConsultationReport,
 } from "./types";
 import { MOCK_SESSIONS, MOCK_MESSAGES } from "./mockData";
 
@@ -39,12 +44,56 @@ async function unwrap<T>(p: Promise<{ data: { data?: T } } | { data: T }>): Prom
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
+/** Chuyển đổi dữ liệu từ backend (snake_case) hoặc mock (camelCase) sang kiểu frontend chuẩn */
+export function adaptSession(raw: any): ConsultationSession {
+  const patient: PatientProfile = {
+    id: raw.patient?.id ?? "",
+    fullName: raw.patient?.fullName ?? raw.patient?.full_name ?? "Bệnh nhân",
+    dob: raw.patient?.dob ?? "1995-01-01",
+    gender: raw.patient?.gender === "female" ? "female" : "male",
+  };
+
+  const rawFacts: any[] = raw.clinicalFacts ?? raw.clinical_facts ?? [];
+  const clinicalFacts: ClinicalFact[] = rawFacts.map((f: any) => ({
+    id: f.id ?? "",
+    templateLabel: f.templateLabel ?? f.template_label ?? "Dữ kiện lâm sàng",
+    factType: (f.factType ?? f.fact_type ?? "other") as ClinicalFactType,
+    detail: f.detail ?? "",
+    status: f.status === "superseded" ? "superseded" : "active",
+    createdAt: f.createdAt ?? f.created_at ?? new Date().toISOString(),
+  }));
+
+  const report: PreConsultationReport | null = raw.report
+    ? {
+        id: raw.report.id ?? "",
+        summary: raw.report.summary ?? "",
+        createdAt: raw.report.createdAt ?? raw.report.created_at ?? new Date().toISOString(),
+      }
+    : null;
+
+  return {
+    id: raw.id,
+    conversationId: raw.conversationId ?? raw.conversation_id ?? "",
+    conversationTitle: raw.conversationTitle ?? raw.conversation_title ?? "Tư vấn da liễu",
+    patient,
+    doctorId: raw.doctorId ?? raw.doctor_id ?? null,
+    status: (raw.status ?? "pending") as ConsultationStatus,
+    reason: raw.reason ?? "",
+    requestedAt: raw.requestedAt ?? raw.requested_at ?? new Date().toISOString(),
+    startedAt: raw.startedAt ?? raw.started_at ?? null,
+    resolvedAt: raw.resolvedAt ?? raw.resolved_at ?? null,
+    report,
+    clinicalFacts,
+  };
+}
+
 export const doctorApi = {
   /** Lấy danh sách phiên tư vấn */
   async listSessions(): Promise<ConsultationSession[]> {
     if (USE_MOCK) return MOCK_SESSIONS;
     try {
-      return await unwrap<ConsultationSession[]>(api.get("/doctor/consultations"));
+      const raw = await unwrap<any[]>(api.get("/doctor/consultations"));
+      return Array.isArray(raw) ? raw.map(adaptSession) : [];
     } catch {
       // Fallback về mock data để màn hình bác sĩ luôn demo được trơn tru khi backend chưa mount endpoint
       return MOCK_SESSIONS;
@@ -57,9 +106,10 @@ export const doctorApi = {
       return MOCK_SESSIONS.find((s) => s.id === sessionId) ?? null;
     }
     try {
-      return await unwrap<ConsultationSession>(
+      const raw = await unwrap<any>(
         api.get(`/doctor/consultations/${encodeURIComponent(sessionId)}`)
       );
+      return raw ? adaptSession(raw) : null;
     } catch {
       return MOCK_SESSIONS.find((s) => s.id === sessionId) ?? null;
     }
@@ -74,10 +124,12 @@ export const doctorApi = {
       const raw = await unwrap<
         Array<{
           id: string;
+          conversation_id?: string;
           conversationId?: string;
           role: "user" | "assistant" | "doctor";
           content: string;
-          createdAt: string;
+          created_at?: string;
+          createdAt?: string;
           metadata?: {
             attachments?: Array<{ id: string; name: string; url?: string }>;
             sender?: string;
@@ -95,11 +147,11 @@ export const doctorApi = {
         }
         return {
           id: m.id,
-          conversationId: m.conversationId ?? conversationId,
+          conversationId: m.conversationId ?? m.conversation_id ?? conversationId,
           sender,
           messageType: "text",
           content: m.content,
-          createdAt: m.createdAt,
+          createdAt: m.createdAt ?? m.created_at ?? new Date().toISOString(),
           attachments: m.metadata?.attachments,
         };
       });
@@ -148,10 +200,12 @@ export const doctorApi = {
     try {
       const res = await unwrap<{
         id: string;
+        conversation_id?: string;
         conversationId?: string;
         role: string;
         content: string;
-        createdAt: string;
+        created_at?: string;
+        createdAt?: string;
       }>(
         api.post(`/doctor/consultations/${encodeURIComponent(sessionId)}/reply`, {
           content,
@@ -159,11 +213,11 @@ export const doctorApi = {
       );
       return {
         id: res.id,
-        conversationId: res.conversationId ?? conversationId,
+        conversationId: res.conversationId ?? res.conversation_id ?? conversationId,
         sender: "doctor",
         messageType: "text",
         content: res.content,
-        createdAt: res.createdAt,
+        createdAt: res.createdAt ?? res.created_at ?? new Date().toISOString(),
       };
     } catch {
       return fallbackMessage;
@@ -175,10 +229,11 @@ export const doctorApi = {
     conversationId: string,
     reason: string = "Bệnh nhân yêu cầu bác sĩ tư vấn"
   ): Promise<ConsultationSession> {
-    return await unwrap<ConsultationSession>(
+    const raw = await unwrap<any>(
       api.post(`/conversations/${encodeURIComponent(conversationId)}/request-consultation`, {
         reason,
       })
     );
+    return adaptSession(raw);
   },
 };
