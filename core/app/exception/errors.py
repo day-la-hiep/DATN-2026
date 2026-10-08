@@ -27,3 +27,21 @@ class InvalidError(AppError):
 
 class PipelineError(ConflictError):
     """Lỗi điều khiển pipeline (sai bước, chưa đủ điều kiện chạy...)."""
+
+
+class AuthenticationError(AppError):
+    """Xác thực thất bại (sai thông tin đăng nhập, token không hợp lệ hoặc đã hết hạn)."""
+
+    status_code = 401
+
+
+class ForbiddenError(AppError):
+    """Không có quyền truy cập tài nguyên hoặc thao tác này."""
+
+    status_code = 403
+
+
+class UsernameAlreadyExistsError(ConflictError):
+    """Tên đăng nhập đã tồn tại trong hệ thống."""
+
+    status_code = 409

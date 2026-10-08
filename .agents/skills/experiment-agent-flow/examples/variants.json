@@ -1,0 +1,5 @@
+{
+  "baseline": {"model": "deepseek-v4-flash"},
+  "no-memory": {"model": "deepseek-v4-flash", "skip_middleware": ["inject_long_term_memory"]},
+  "kg-only": {"model": "deepseek-v4-flash", "tools": ["make_plan", "ask_user", "ground_medical_entities", "lookup_dermo_term"]}
+}

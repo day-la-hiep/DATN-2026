@@ -21,7 +21,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trợ lý Da liễu AI | Derma AI",
+  title: "Derma AI",
   description: "Hệ thống Trợ lý Tư vấn và Chăm sóc Da liễu AI",
   icons: {
     icon: [

@@ -18,3 +18,11 @@ class PatientProfileRepository:
             .limit(1)
         )
         return (await self._db.execute(stmt)).scalar_one_or_none()
+
+    async def create(self, profile: PatientProfile) -> PatientProfile:
+        """Tạo mới một hồ sơ bệnh nhân (flush để sinh id/giá trị mặc định)."""
+        self._db.add(profile)
+        await self._db.flush()
+        await self._db.refresh(profile)
+        return profile
+

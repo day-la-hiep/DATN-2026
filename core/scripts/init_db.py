@@ -11,6 +11,7 @@ from alembic.script import ScriptDirectory  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.api.deps import get_document_file_store, get_file_store_service, get_postgres_client  # noqa: E402
+from app.config.security import hash_password  # noqa: E402
 from app.models.admin import Admin  # noqa: E402
 from app.models.doctor import Doctor  # noqa: E402
 from app.models.patient_profile import PatientProfile  # noqa: E402
@@ -18,10 +19,12 @@ from app.models.user import User  # noqa: E402
 
 # id cố định: FE hard-code `user-1`; hồ sơ `pp-<user_id>-self` cùng quy ước với migration `align_schema_with_base`.
 # Giá trị của `user-1` PHẢI khớp `USER_1` trong migration đó.
+DEFAULT_PASSWORD_HASH = hash_password("123456")
+
 USERS = [
-    {"id": "user-1", "username": "user-1", "full_name": "Nguyễn Văn An", "dob": date(1995, 5, 20), "gender": "male"},
-    {"id": "doctor-1", "username": "doctor-1", "full_name": "BS. Trần Thị Bình", "dob": date(1982, 3, 14), "gender": "female"},
-    {"id": "admin-1", "username": "admin-1", "full_name": "Quản trị viên", "dob": date(1990, 1, 1), "gender": "male"},
+    {"id": "user-1", "username": "user-1", "full_name": "Nguyễn Văn An", "dob": date(1995, 5, 20), "gender": "male", "password_hash": DEFAULT_PASSWORD_HASH},
+    {"id": "doctor-1", "username": "doctor-1", "full_name": "BS. Trần Thị Bình", "dob": date(1982, 3, 14), "gender": "female", "password_hash": DEFAULT_PASSWORD_HASH},
+    {"id": "admin-1", "username": "admin-1", "full_name": "Quản trị viên", "dob": date(1990, 1, 1), "gender": "male", "password_hash": DEFAULT_PASSWORD_HASH},
 ]
 DOCTORS = [{"user_id": "doctor-1", "description": "Bác sĩ chuyên khoa Da liễu (dữ liệu mẫu)."}]
 ADMINS = [{"user_id": "admin-1"}]
@@ -40,9 +43,13 @@ def _check_migrated() -> None:
 def _seed(s: Session) -> list[str]:
     created: list[str] = []
     for u in USERS:
-        if s.get(User, u["id"]) is None:
+        user_row = s.get(User, u["id"])
+        if user_row is None:
             s.add(User(**u))
             created.append(f"user {u['id']}")
+        elif user_row.password_hash is None and "password_hash" in u:
+            user_row.password_hash = u["password_hash"]
+            created.append(f"password for {u['id']}")
     s.flush()  # bảng con trỏ FK tới users
     for d in DOCTORS:
         if s.get(Doctor, d["user_id"]) is None:

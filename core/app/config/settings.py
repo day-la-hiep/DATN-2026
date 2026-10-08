@@ -174,6 +174,12 @@ class Settings(BaseSettings):
     # `Authorization: Bearer <token>` (xem app/config/auth.py).
     APP_ACCESS_TOKEN: str = ""
 
+    # ----- User JWT Authentication (Access Token & Refresh Token) -----
+    JWT_SECRET_KEY: str = "derma-secret-key-change-in-production-datn-2026"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # 30 phút
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30    # 7 ngày
+
     # TTL (giây) cho các Redis key phục vụ 1 turn nhưng phụ thuộc client mở SSE:
     # `agent:pending_turn:*` (turn chờ flush) và `agent:active_turn:*`. Nếu client gọi
     # `POST .../messages` rồi không bao giờ mở `GET .../stream`, key tự hết hạn thay vì

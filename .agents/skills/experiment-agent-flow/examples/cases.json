@@ -1,0 +1,5 @@
+[
+  {"id": "definition", "question": "Bệnh chàm (eczema) là gì? Trả lời ngắn gọn.", "expect_tools": ["make_plan", "ground_medical_entities"]},
+  {"id": "smalltalk", "question": "Chào bạn, cảm ơn nhé.", "forbid_tools": ["query_dermatology_kg", "search_disease_guidelines"]},
+  {"id": "vague-symptom", "question": "Tôi bị nổi mẩn ngứa ở da, không rõ là gì.", "answers": ["Mặt"]}
+]

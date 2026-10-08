@@ -1,0 +1,4 @@
+{
+  "with-expand": {"model": "deepseek-v4-flash"},
+  "without-expand": {"model": "deepseek-v4-flash", "tools": ["make_plan", "ask_user", "save_memory", "query_dermatology_kg", "lookup_dermo_term", "ground_medical_entities", "search_disease_guidelines", "get_disease_guideline_profile", "classify_skin_image"]}
+}

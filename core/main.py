@@ -7,11 +7,17 @@ from fastapi.middleware.cors import CORSMiddleware
 # Import aggregator: đăng ký toàn bộ ORM model (relationship giữa các model cần đủ mapper).
 import app.models  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.workers.agent_response_consumer import start_consuming
+from app.api.auth_api import router as auth_router
 from app.api.conversation_api import router as conversation_router
-from app.api.deps import close_clients, get_file_store_service, get_rabbitmq_client
+from app.api.deps import (
+    close_clients,
+    get_file_store_service,
+    get_rabbitmq_client,
+)
 from app.api.health import router as health_router
 from app.api.document_api import router as document_router
 from app.api.upload_api import router as upload_router
+from app.api.doctor_api import router as doctor_router
 from app.config.auth import require_app_token
 from app.config.log import RequestLogMiddleware, setup_logging
 from app.config.settings import log_startup_infra, settings
@@ -37,7 +43,9 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    await close_clients()  # RabbitMQ, Redis, Postgres, Qdrant... mọi client đã tạo
+    await (
+        close_clients()
+    )  # RabbitMQ, Redis, Postgres, Qdrant... mọi client đã tạo
 
 
 app = FastAPI(
@@ -64,6 +72,7 @@ app.add_middleware(
 )
 
 app.include_router(health_router, prefix=settings.API_V1_PREFIX)
+app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(
     conversation_router,
     prefix=settings.API_V1_PREFIX,
@@ -76,6 +85,11 @@ app.include_router(
 )
 app.include_router(
     upload_router,
+    prefix=settings.API_V1_PREFIX,
+    dependencies=[Depends(require_app_token)],
+)
+app.include_router(
+    doctor_router,
     prefix=settings.API_V1_PREFIX,
     dependencies=[Depends(require_app_token)],
 )
