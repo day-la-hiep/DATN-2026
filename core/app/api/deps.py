@@ -13,10 +13,15 @@ import threading
 from collections.abc import AsyncGenerator, Callable
 from typing import Annotated, Any, TypeVar
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config.security import decode_token
 from app.config.settings import settings
+from app.exception.errors import AuthenticationError, ForbiddenError
+from app.models.user import User
+from app.repositories.user_repository import UserRepository
+from app.services.auth_service import AuthService
 from app.infra.docling_client import DoclingClient
 from app.infra.embedding_client import EmbeddingClient
 from app.infra.minio_client import MinioClient
@@ -225,4 +230,65 @@ def get_consultation_service(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ConsultationService:
     return ConsultationService(db)
+
+
+def get_user_repository(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UserRepository:
+    return UserRepository(db)
+
+
+def get_auth_service(
+    user_repository: Annotated[UserRepository, Depends(get_user_repository)],
+    patient_profile_repository: Annotated[
+        PatientProfileRepository, Depends(get_patient_profile_repository)
+    ],
+    redis: Annotated[RedisClient, Depends(get_redis_client)],
+) -> AuthService:
+    return AuthService(user_repository, patient_profile_repository, redis)
+
+
+async def get_current_user(
+    request: Request,
+    user_repository: Annotated[UserRepository, Depends(get_user_repository)],
+) -> User:
+    """Dependency trích xuất user hiện tại từ Access Token (Bearer JWT)."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise AuthenticationError("Yêu cầu đăng nhập (thiếu Authorization Bearer header).")
+    token = auth_header.removeprefix("Bearer ").strip()
+    try:
+        payload = decode_token(token)
+    except Exception as exc:
+        raise AuthenticationError("Access token không hợp lệ hoặc đã hết hạn.") from exc
+
+    if payload.get("type") != "access":
+        raise AuthenticationError("Token không phải là access token.")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise AuthenticationError("Token thiếu thông tin người dùng.")
+
+    user = await user_repository.get_by_id(user_id)
+    if user is None:
+        raise AuthenticationError("Không tìm thấy người dùng của token.")
+
+    return user
+
+
+def require_role(*allowed_roles: str):
+    """Dependency kiểm tra vai trò người dùng (patient, doctor, admin)."""
+
+    async def role_checker(
+        current_user: Annotated[User, Depends(get_current_user)],
+        user_repository: Annotated[UserRepository, Depends(get_user_repository)],
+    ) -> User:
+        role = await user_repository.get_role(current_user.id)
+        if role not in allowed_roles:
+            raise ForbiddenError(
+                f"Bạn không có quyền truy cập chức năng này (yêu cầu vai trò: {', '.join(allowed_roles)})."
+            )
+        return current_user
+
+    return role_checker
 
