@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { FileText, Sparkles } from "lucide-react";
+import { FileText, Sparkles, Stethoscope } from "lucide-react";
 import type { ChatMessage } from "../types";
 import { ImageThumbnail } from "./ImageThumbnail";
 import { MarkdownMessage } from "./MarkdownMessage";
@@ -40,8 +40,38 @@ function parseQAPairs(content: string): QAPair[] {
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
+  const isDoctor = message.role === "doctor";
   const streaming = message.status === "streaming";
   const contentRef = useRef<HTMLDivElement>(null);
+
+  if (isDoctor) {
+    return (
+      <div
+        id={`msg-${message.id}`}
+        className="flex w-full justify-start py-2 text-foreground"
+      >
+        <div className="w-full max-w-[90%] sm:max-w-[80%] rounded-2xl rounded-tl-xs border border-sky-500/30 bg-sky-50/60 dark:bg-sky-950/20 p-4 shadow-sm shadow-sky-500/5">
+          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-sky-500/15">
+            <span className="flex size-6 items-center justify-center rounded-full bg-sky-500 text-white shadow-xs">
+              <Stethoscope className="size-3.5" />
+            </span>
+            <span className="text-xs font-semibold text-sky-800 dark:text-sky-300">
+              Bác sĩ chuyên khoa phụ trách
+            </span>
+            <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+              {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+          <div className="text-sm sm:text-base leading-relaxed text-foreground">
+            <MarkdownMessage content={message.content} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isUser) {
     const isChoiceAnswerMessage =
