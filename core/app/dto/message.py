@@ -104,7 +104,7 @@ class MessageMetadataDto(CamelModel):
 class MessageOutput(CamelModel):
     id: str
     conversation_id: str
-    role: Literal["user", "assistant"]
+    role: Literal["user", "assistant", "doctor"]
     content: str
     status: Literal["pending", "queued", "streaming", "done", "question"]
     metadata: MessageMetadataDto | None = None

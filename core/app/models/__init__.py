@@ -5,3 +5,8 @@ from app.models.document import Document, DocumentOverride, DocumentStage  # noq
 from app.models.conversation import Conversation  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.models.message import Message  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.models.user import User  # noqa: F401  # pyright: ignore[reportUnusedImport]
+from app.models.consultation import (  # noqa: F401  # pyright: ignore[reportUnusedImport]
+    ConsultationSession,
+    PreConsultationReport,
+    ClinicalFact,
+)

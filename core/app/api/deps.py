@@ -196,3 +196,14 @@ def get_conversation_service(
     message_service: Annotated[MessageService, Depends(get_message_service)],
 ) -> ConversationService:
     return ConversationService(conversation_repository, message_service)
+
+
+from app.services.consultation_service import ConsultationService
+
+
+def get_consultation_service(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ConsultationService:
+    return ConsultationService(db)
+
+

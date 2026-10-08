@@ -17,3 +17,15 @@ def new_conversation_id() -> str:
 
 def new_message_id() -> str:
     return f"msg-{uuid.uuid4()}"
+
+
+def new_consultation_session_id() -> str:
+    return f"cs-{uuid.uuid4()}"
+
+
+def new_report_id() -> str:
+    return f"rep-{uuid.uuid4()}"
+
+
+def new_clinical_fact_id() -> str:
+    return f"cf-{uuid.uuid4()}"
