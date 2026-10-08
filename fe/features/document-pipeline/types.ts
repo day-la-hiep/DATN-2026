@@ -72,6 +72,7 @@ export interface Settings {
   min_tokens: number;
   boundary_level: number;
   breadcrumb: boolean;
+  text_language: "vi" | "en" | "mixed";
 }
 
 export interface TocEntry {

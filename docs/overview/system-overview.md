@@ -35,7 +35,7 @@ Derma Hospital gồm **2 module nghiệp vụ** dùng chung một Core (FastAPI)
 | **PostgreSQL** | Nguồn sự thật: user, hồ sơ bệnh nhân, hội thoại, tin nhắn, file, tài liệu + trạng thái bước | migration Alembic `core/migrations/` |
 | **Redis** | Pub/Sub event realtime của chat; key turn đang chạy / turn chờ đẩy | `app/infra/redis_client.py` |
 | **RabbitMQ** | `agent_request_queue` (Core → Worker), `agent_response_queue` (Worker → Core) | `app/infra/rabbitmq_client.py` |
-| **Qdrant** | `derma_document_chunks_v2` (chunk sách do pipeline nạp, agent tìm bằng `hybrid_retrieval` (hoặc `semantic_search` / `keyword_search`)) | `app/infra/qdrant_client.py` |
+| **Qdrant** | `derma_document_chunks_v4` (chunk sách do pipeline nạp, agent tìm bằng `hybrid_retrieval` (hoặc `semantic_search` / `keyword_search`)) | `app/infra/qdrant_client.py` |
 | **Neo4j** | PrimeKG lọc da liễu (`:Entity`) + ontology DermO (`:DermoTerm`) | nạp từ `core/data_ingest/` |
 | **MinIO** | ảnh đính kèm tin nhắn; mọi file của tài liệu dưới `document/<id>/` | `app/infra/minio_client.py` |
 

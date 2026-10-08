@@ -2,6 +2,7 @@ import httpx
 from langchain_core.embeddings import Embeddings
 
 from app.config.settings import settings
+from app.infra.text_clean import clean_text
 
 EMBEDDING_MODEL_NAME = settings.EMBEDDING_MODEL
 EMBEDDING_DIM = settings.EMBEDDING_DIM
@@ -14,6 +15,7 @@ _QUERY_INSTRUCTION = "Given a Vietnamese or English dermatology question, retrie
 def _embed(texts: list[str]) -> list[list[float]]:
     if not settings.OPENROUTER_API_KEY:
         raise RuntimeError("Thiếu OPENROUTER_API_KEY để gọi embedding.")
+    texts = [clean_text(t) for t in texts]
     vectors: list[list[float]] = []
     for i in range(0, len(texts), _BATCH):
         resp = httpx.post(

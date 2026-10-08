@@ -69,7 +69,7 @@ Các bước theo thứ tự, mỗi bước phải được người duyệt **a
 | `ingest` | PDF → chữ theo trang (`pages.jsonl`) | không |
 | `toc` | AI đọc trang mục lục → cây mục; người duyệt sửa qua override | có |
 | `chunks` | cắt đoạn theo khung mục lục (`chunks.jsonl`) | không |
-| `index` | embedding local + nạp Qdrant | không |
+| `index` | embedding (OpenRouter) + nạp Qdrant | không |
 
 - Trạng thái: `not_started → running → pending_review → approved`; `failed`/`cancelled`; `stale`
   khi bước phía trước chạy lại. Thứ tự và phụ thuộc: `app/models/document_stage.py::STAGES`.

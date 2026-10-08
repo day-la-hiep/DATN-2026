@@ -29,7 +29,8 @@ def run(ctx: StageContext) -> dict:
     vectors.ensure_collection(dim)
     vectors.delete_chunks(document_id)  # bỏ các đoạn cũ của tài liệu (đã đổi hoặc không còn)
     for i in range(0, len(chunks), BATCH):
-        vectors.upsert_chunks(document_id, chunks[i : i + BATCH], embeddings[i : i + BATCH], extra)
+        vectors.upsert_chunks(document_id, chunks[i : i + BATCH], embeddings[i : i + BATCH], extra,
+                              language=ctx.profile.indexing.text_language)
         ctx.progress(len(chunks) + min(i + BATCH, len(chunks)), len(chunks) * 2, "lưu vào Qdrant")
     stored = vectors.count_chunks(document_id)
     if stored != len(chunks):

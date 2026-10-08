@@ -135,7 +135,7 @@ Mirror in FE's `features/document-pipeline/api.ts` + `hooks.ts` (see `derma-fe-c
 embedded figures — see below), `pages.jsonl`, `toc.auto.json`, `toc.json`, `chunks.jsonl`,
 `index.json`, `status.json`, `overrides/`, `review/`, `logs/`, `docling_parts/` (OCR checkpoint —
 lets a killed `ingest` resume without re-OCRing finished pages). LLM cache: `_cache/llm/`. Chunks
-are embedded via OpenRouter (qwen/qwen3-embedding-8b, 4096-dim) and upserted into Qdrant collection `derma_document_chunks_v4` (unnamed dense vector + sparse vector `bm25` encoded by `app/infra/bm25_sparse.py` in `DocumentService.upsert_chunks`; Qdrant applies IDF, so the agent's keyword leg queries Qdrant directly — no in-memory index)
+are embedded via OpenRouter (qwen/qwen3-embedding-8b, 4096-dim) and upserted into Qdrant collection `derma_document_chunks_v4` (unnamed dense vector + sparse vector `bm25` encoded by `app/infra/bm25/` (tokenizer + stopwords + sparse; `text_language` per document in `Profile.indexing`, stored as payload `bm25_mode`) in `DocumentService.upsert_chunks`; Qdrant applies IDF, so the agent's keyword leg queries Qdrant directly — no in-memory index)
 (`settings.QDRANT_DOCUMENT_COLLECTION`), payload carries `document_id`, part/section/topic, page,
 `source_pdf`. Deleting a document deletes both the MinIO objects and the Qdrant points; rerunning
 `index` replaces all of a document's points.

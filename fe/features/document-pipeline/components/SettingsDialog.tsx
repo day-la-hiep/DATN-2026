@@ -106,6 +106,16 @@ function Form({ documentId, initial, onClose }: { documentId: string; initial: S
           </Field>
           <Toggle label="Ghi kèm đường dẫn mục lục vào đoạn" hint="Vd “Phần I › Chương 1 › Mụn trứng cá”, giúp trợ lý AI hiểu ngữ cảnh của đoạn." checked={s.breadcrumb} onChange={(v) => set("breadcrumb", v)} />
         </div>
+        <div className="space-y-3 rounded-xl border border-border p-3">
+          <p className="text-xs font-semibold text-foreground">Tìm kiếm từ khoá</p>
+          <Field label="Ngôn ngữ của sách" hint="Quyết định cách xử lý chữ khi lưu vào kho tri thức: tiếng Việt tách từ ghép (vảy nến), tiếng Anh gộp số ít/số nhiều (treatments → treatment). Chọn “tiếng Anh” cho sách thuần Anh để lưu nhanh hơn. Đổi xong cần làm lại bước Lưu vào kho.">
+            <select value={s.text_language} onChange={(e) => set("text_language", e.target.value as Settings["text_language"])} className={selectBox}>
+              <option value="mixed">Việt có xen thuật ngữ Anh (khuyến nghị)</option>
+              <option value="vi">Tiếng Việt</option>
+              <option value="en">Tiếng Anh</option>
+            </select>
+          </Field>
+        </div>
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onClose} disabled={save.isPending}>

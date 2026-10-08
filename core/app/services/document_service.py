@@ -28,7 +28,7 @@ from app.dto.response.document import (
     StageOutput,
 )
 from app.exception.errors import ConflictError, InvalidError, NotFoundError
-from app.infra.bm25_sparse import SPARSE_NAME, encode_document
+from app.infra.bm25 import SPARSE_NAME, encode_document
 from app.infra.qdrant_client import QdrantVectorClient, eq_filter
 from app.models.document_profile import Profile
 from app.models.document_stage import STAGE_BY_ID, STAGES
@@ -524,6 +524,7 @@ class DocumentService:
             min_tokens=p.chunking.min_tokens,
             boundary_level=p.chunking.boundary_level,
             breadcrumb=p.chunking.breadcrumb,
+            text_language=p.indexing.text_language,
         )
 
     def update_settings(self, document_id: str, body: DocumentSettings) -> DocumentSettings:
@@ -545,6 +546,7 @@ class DocumentService:
             body.boundary_level,
             body.breadcrumb,
         )
+        p.indexing.text_language = body.text_language
         self.save_profile(self._repo, document_id, p)
         self._repo.update_meta(document_id, title=title)
         return self.get_settings(document_id)
@@ -572,7 +574,7 @@ class DocumentService:
         return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
 
     def ensure_collection(self, dim: int) -> None:
-        self._qdrant.ensure_collection_sync(self.collection, dim, keyword_index_fields=("document_id",), sparse_names=(SPARSE_NAME,))
+        self._qdrant.ensure_collection_sync(self.collection, dim, keyword_index_fields=("document_id", "bm25_mode"), sparse_names=(SPARSE_NAME,))
 
     def delete_chunks(self, document_id: str) -> None:
         """Xoá mọi point của tài liệu (no-op khi collection chưa có)."""
@@ -581,11 +583,13 @@ class DocumentService:
     def count_chunks(self, document_id: str) -> int:
         return self._qdrant.count_sync(self.collection, eq_filter("document_id", document_id))
 
-    def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any]) -> None:
+    def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any],
+                      language: str = "mixed") -> None:
         points = [
             # vector không tên = dense (semantic); "bm25" = sparse để Qdrant chấm điểm từ khoá, cùng văn bản với embedding
-            PointStruct(id=self.point_id(c["chunk_id"]), vector={"": v, SPARSE_NAME: encode_document(str(c.get("context_text") or c.get("text") or ""))},
-                        payload={**{k: c.get(k) for k in _PAYLOAD_KEYS}, "document_id": document_id, **extra})
+            PointStruct(id=self.point_id(c["chunk_id"]), vector={"": v, SPARSE_NAME: encode_document(str(c.get("context_text") or c.get("text") or ""), language)},
+                        # bm25_mode: câu hỏi phải được mã hoá cùng cách với đoạn nó tìm, nên mỗi point ghi lại ngôn ngữ đã dùng
+                        payload={**{k: c.get(k) for k in _PAYLOAD_KEYS}, "document_id": document_id, "bm25_mode": language, **extra})
             for c, v in zip(chunks, vectors, strict=True)
         ]
         self._qdrant.upsert_points_sync(self.collection, points)

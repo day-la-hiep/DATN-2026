@@ -94,7 +94,7 @@ class IndexTest(Base):
         )
 
     def test_points_carry_bm25_sparse_vector_that_finds_chunks_by_keyword(self) -> None:
-        from app.infra.bm25_sparse import SPARSE_NAME, encode_query, tokenize
+        from app.infra.bm25 import SPARSE_NAME, encode_query, tokenize
 
         self.runner.run_stage("tbook", "index", {}, force=True)
         chunks = self.files.read_jsonl("chunks.jsonl")

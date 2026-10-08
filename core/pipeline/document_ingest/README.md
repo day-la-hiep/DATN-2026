@@ -56,6 +56,8 @@ Mọi thứ nằm trong **MinIO**, bucket `MINIO_DOCUMENTS_BUCKET` (mặc địn
 (điểm lưu để OCR tiếp tục được). Cache LLM ở `_cache/llm/`. Chunk được embed (local, 384 chiều) và nạp vào **Qdrant** collection
 `QDRANT_DOCUMENT_COLLECTION` (mặc định `derma_document_chunks_v4`; vector dense + sparse `bm25`, IDF do Qdrant tính — Qdrant không thêm sparse vector vào collection đã tạo nên bản cũ `derma_document_chunks` cần index lại sang collection mới), payload có `document_id`, part/section/topic, trang, `source_pdf`.
 
+Tiền xử lý cho tìm từ khoá (`app/infra/bm25/`): làm sạch chữ OCR (`text_clean`), tách từ ghép tiếng Việt bằng underthesea, bỏ stopword (giữ phủ định và đơn vị liều), stem tiếng Anh bằng Snowball (nltk). Mỗi tài liệu chọn `text_language` (vi / en / mixed) trong cài đặt; giá trị này được ghi vào payload `bm25_mode` để câu hỏi được mã hoá đúng cách cho từng nhóm. Đổi ngôn ngữ hoặc tokenizer thì phải làm lại bước Lưu vào kho.
+
 - Chỉ backend (Core) chạm MinIO/Qdrant; FE chỉ gọi API (ảnh trang được Core đọc từ MinIO rồi trả về).
 - `status.json` và override được ghi dưới khoá Redis (Core và các thread xử lý cùng ghi). Thư mục tạm chỉ chứa bản sao PDF cho
   pdftotext/Docling/pdftoppm (`/tmp/document_ingest_tmp/<document_id>/`, xoá cùng sách).

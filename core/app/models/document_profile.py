@@ -34,9 +34,16 @@ class ChunkingConfig(_Model):
     breadcrumb: bool = True  # thêm đường dẫn mục lục vào `context_text` (dùng khi embed)
 
 
+class IndexingConfig(_Model):
+    # Ngôn ngữ chính của sách, quyết định cách xử lý chữ cho tìm từ khoá (BM25): vi = tách từ ghép tiếng Việt, en = stem tiếng Anh
+    # (bỏ bước tách từ chậm), mixed = cả hai.
+    text_language: Literal["vi", "en", "mixed"] = "mixed"
+
+
 class Profile(_Model):
     document_id: str
     language: str = "en"
     extraction: ExtractionConfig = ExtractionConfig()
     llm: LLMConfig = LLMConfig()
     chunking: ChunkingConfig = ChunkingConfig()
+    indexing: IndexingConfig = IndexingConfig()

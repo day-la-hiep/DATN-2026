@@ -4,8 +4,10 @@ from typing import Any
 from qdrant_client.models import Record, ScoredPoint
 
 from app.config.settings import settings
-from app.infra.bm25_sparse import SPARSE_NAME, encode_query
-from app.infra.qdrant_client import QdrantVectorClient
+import asyncio
+
+from app.infra.bm25 import LANGUAGES, SPARSE_NAME, encode_query
+from app.infra.qdrant_client import QdrantVectorClient, eq_filter
 
 
 def _normalize_legacy(payload: dict[str, Any] | None) -> None:
@@ -40,16 +42,18 @@ class KnowledgeBaseService:
         return sorted(points, key=lambda p: p.score, reverse=True)[:limit]
 
     async def search_document_chunks_bm25(self, *, query: str, limit: int) -> list[ScoredPoint]:
-        """Tìm từ khoá"""
-        vector = encode_query(query)
+        """Tìm từ khoá: mỗi nhóm đoạn (theo `bm25_mode`) được tìm bằng câu hỏi mã hoá đúng cách của nhóm đó"""
         points: list[ScoredPoint] = []
         for name in self._collections():
             if not await self._qdrant.has_sparse_vector(name, SPARSE_NAME):
                 continue
-            found = await self._qdrant.search_sparse(name, vector, using=SPARSE_NAME, limit=limit)
-            for p in found:
+            found = await asyncio.gather(
+                *(self._qdrant.search_sparse(name, encode_query(query, mode), using=SPARSE_NAME, limit=limit,
+                                             query_filter=eq_filter("bm25_mode", mode)) for mode in LANGUAGES)
+            )
+            for p in (p for group in found for p in group):
                 self._fix(name, p.payload)
-            points += found
+                points.append(p)
         return sorted(points, key=lambda p: p.score, reverse=True)[:limit]
 
     async def all_document_chunks(self) -> list[Record]:
