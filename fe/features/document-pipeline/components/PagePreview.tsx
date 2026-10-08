@@ -97,8 +97,8 @@ export function PagePreview({
         </div>
         <p className="min-h-4 text-[11px] leading-relaxed text-muted-foreground">
           {caption}
-          {text.data && text.data.pagePrinted !== page && (
-            <span className="ml-1.5 font-mono">· số trang in {text.data.pagePrinted}</span>
+          {text.data && text.data.page_printed !== page && (
+            <span className="ml-1.5 font-mono">· số trang in {text.data.page_printed}</span>
           )}
         </p>
       </div>

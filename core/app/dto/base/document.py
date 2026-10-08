@@ -1,8 +1,12 @@
+"""Bounded context Tài liệu: sách / guideline số hoá qua pipeline ingest."""
+
 from typing import Any, Literal
 
 from pydantic import BaseModel, field_validator, model_validator
 
-from app.dto.base.file import File
+from app.dto.base.identity import Doctor
+from app.dto.base.shared import File
+
 
 class DocumentChunk(BaseModel):
     """Một đoạn chunk theo khung mục lục của `Document` — CHỈ tồn tại khi `Document.type ==
@@ -20,7 +24,9 @@ class DocumentChunk(BaseModel):
     subtopic: str = ""
     toc_path: list[str] = []
     toc_node_ids: list[str] = []
-    figure_ids: list[str] = []  # ảnh nằm trong khoảng trang của chunk (xem `DocumentFigure`)
+    figure_ids: list[
+        str
+    ] = []  # ảnh nằm trong khoảng trang của chunk (xem `DocumentFigure`)
     level: int
     pages_hint: list[int]
     boundary: bool
@@ -46,45 +52,19 @@ class DocumentFigure(BaseModel):
     caption: str = ""
 
 
-class Document(BaseModel):
-    """Một tài liệu được upload — field chung cho MỌI loại; field riêng của từng loại để
-    optional=None khi không áp dụng (cùng quy ước với `MessageMetadata`, xem `docs/db-diagram.md`
-    mục 2). Hiện chỉ loại `"book"` (pipeline `document_ingest`, nguồn: `app/models/document.py::Document`)
-    được xử lý sâu (OCR, mục lục, chunk — xem `ProcessStage`/`DocumentChunk`); các loại khác là
-    tệp người dùng đính kèm tin nhắn, chưa qua pipeline nào.
+class DocumentStageOverride(BaseModel):
+    """Chỉnh sửa tay của người duyệt lên kết quả một bước (`DocumentStage.overrides`) — nguồn:
+    `app/models/document.py::DocumentOverride`. Lưu riêng khỏi kết quả máy để chạy lại bước không mất công sửa."""
 
-    File đi kèm là `File` (`app/dto/base/file.py`): `source_file` là file gốc người dùng upload,
-    `ingested_file` là file JSON sau bước ingest (`pages.jsonl`); chunk nằm trong `chunks`."""
-
-    id: str
-    title: str
-    type: Literal["book", "image", "video", "other"]
-    created_at: str | None = None
-    source_file: File | None = None
-    ingested_file: File | None = None  # chỉ có khi type == "book" và đã qua bước ingest
-    pdf_pages: int | None = None  # chỉ có khi type == "book"
-    chunks: list[DocumentChunk] | None = None  # chỉ có khi type == "book"
-    figures: list[DocumentFigure] | None = None  # chỉ có khi type == "book"
-
-    @model_validator(mode="after")
-    def validate_type(self):
-        if self.type != "book":
-            if self.pdf_pages is not None:
-                raise ValueError('pdf_pages chỉ áp dụng cho Document type="book"')
-            if self.chunks is not None:
-                raise ValueError('chunks chỉ áp dụng cho Document type="book"')
-            if self.figures is not None:
-                raise ValueError('figures chỉ áp dụng cho Document type="book"')
-            if self.ingested_file is not None:
-                raise ValueError('ingested_file chỉ áp dụng cho Document type="book"')
-        return self
+    data: dict[str, Any] = {}
+    updated_at: str | None = None
 
 
-class ProcessStage(BaseModel):
-    """Trạng thái một bước xử lý của một `Document` — nguồn: `app/models/document.py::DocumentStage`
+class DocumentStage(BaseModel):
+    """Trạng thái một bước xử lý của một `Document` (`Document.stages`) — nguồn: `app/models/document.py::DocumentStage`
     + hằng nghiệp vụ `app/models/document_stage.py::STAGES`."""
 
-    document_id: str
+    id: str
     stage_id: str
     title: str
     deps: list[str] = []
@@ -98,16 +78,51 @@ class ProcessStage(BaseModel):
     error: str | None = None
     options: dict[str, Any] = {}
     blocked_by: list[str] = []
+    overrides: list[DocumentStageOverride] = []  # sửa tay của người duyệt cho bước này
 
 
-class ProcessStageOverride(BaseModel):
-    """Chỉnh sửa tay của người duyệt lên kết quả một bước — nguồn:
-    `app/models/document.py::DocumentOverride`."""
+class Document(BaseModel):
+    """Một tài liệu được upload — field chung cho MỌI loại; field riêng của từng loại để
+    optional=None khi không áp dụng (cùng quy ước với `MessageMetadata`, xem `docs/db-diagram.md`
+    mục 2). Hiện chỉ loại `"book"` (pipeline `document_ingest`, nguồn: `app/models/document.py::Document`)
+    được xử lý sâu (OCR, mục lục, chunk — xem `stages`/`DocumentChunk`); các loại khác là
+    tệp người dùng đính kèm tin nhắn, chưa qua pipeline nào.
 
-    document_id: str
-    stage_id: str
-    data: dict[str, Any] = {}
-    updated_at: str | None = None
+    File đi kèm là `File` (`app/dto/base/shared.py`): `source_file` là file gốc người dùng upload,
+    `ingested_file` là file JSON sau bước ingest (`pages.jsonl`); chunk nằm trong `chunks`."""
+
+    id: str
+    title: str
+    type: Literal["book", "image", "video", "other"]
+    created_at: str | None = None
+    source_file: File | None = None
+    ingested_file: File | None = (
+        None  # chỉ có khi type == "book" và đã qua bước ingest
+    )
+    pdf_pages: int | None = None  # chỉ có khi type == "book"
+    uploaded_by: Doctor | None = (
+        None  # chỉ bác sĩ được tải tài liệu lên; None với tài liệu tạo trước khi có đăng nhập
+    )
+    chunks: list[DocumentChunk] | None = None  # chỉ có khi type == "book"
+    figures: list[DocumentFigure] | None = None  # chỉ có khi type == "book"
+    stages: list[DocumentStage] = []  # các bước xử lý (ingest/toc/chunks/index), mỗi bước giữ override của nó
+
+    @model_validator(mode="after")
+    def validate_type(self):
+        if self.type != "book":
+            if self.pdf_pages is not None:
+                raise ValueError(
+                    'pdf_pages chỉ áp dụng cho Document type="book"'
+                )
+            if self.chunks is not None:
+                raise ValueError('chunks chỉ áp dụng cho Document type="book"')
+            if self.figures is not None:
+                raise ValueError('figures chỉ áp dụng cho Document type="book"')
+            if self.ingested_file is not None:
+                raise ValueError(
+                    'ingested_file chỉ áp dụng cho Document type="book"'
+                )
+        return self
 
 
 class NewDocument(BaseModel):

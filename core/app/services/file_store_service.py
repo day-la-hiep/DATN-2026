@@ -168,10 +168,14 @@ class FileStoreService:
 
         def _put() -> str:
             self.put_bytes(name, data, content_type)
-            return self._minio.presigned_get_url(self.bucket, self.key(name), _PRESIGNED_URL_TTL)
+            return self.presigned_url(name)
 
         url = await asyncio.to_thread(_put)
         return StoredUpload(id=name, name=file.filename or name, size=len(data), type=content_type, url=url)
+
+    def presigned_url(self, name: str) -> str:
+        """Link tạm để FE xem trước file (không lưu: tạo lại mỗi lần trả tin nhắn vì link hết hạn)."""
+        return self._minio.presigned_get_url(self.bucket, self.key(name), _PRESIGNED_URL_TTL)
 
     async def get_object_bytes(self, name: str) -> bytes | None:
         """Đọc lại ảnh theo object key — dùng bởi `agent/tools/skin_image_classifier.py`. `name` đi qua `SendMessageInput`

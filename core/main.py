@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import app.models  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from agent.handler.response_consumer import start_consuming
 from app.api.conversation_api import router as conversation_router
-from app.api.deps import close_clients, get_file_store_service, get_postgres_client, get_rabbitmq_client
+from app.api.deps import close_clients, get_file_store_service, get_rabbitmq_client
 from app.api.health import router as health_router
 from app.api.document_api import router as document_router
 from app.api.upload_api import router as upload_router
@@ -16,7 +16,6 @@ from app.api.doctor_api import router as doctor_router
 from app.config.auth import require_app_token
 from app.config.settings import log_startup_infra, settings
 from app.exception.exception_handler import register_exception_handlers
-from app.models.user import User
 
 
 @asynccontextmanager
@@ -25,19 +24,7 @@ async def lifespan(app: FastAPI):
 
     # Schema DB do Alembic quản lý (`uv run alembic upgrade head`, xem `migrations/`) — không tạo bảng ở đây.
 
-    # FE chưa có auth thật, hard-code userId "user-1" (fe/features/user/index.ts) — DB mới
-    # tinh (deploy prod) thiếu row này thì `POST /conversations` dính FK violation
-    # (`fk_conversations_user_id_users`). Tạo sẵn user mặc định, idempotent.
-    async with get_postgres_client().session_factory() as session:
-        if await session.get(User, "user-1") is None:
-            session.add(
-                User(
-                    id="user-1",
-                    name="Nguyễn Văn An",
-                    email="an.nguyen@example.com",
-                )
-            )
-            await session.commit()
+    # Dữ liệu mẫu (user-1 mà FE hard-code, bác sĩ, admin) do `scripts/init_db.py` tạo — Core khởi động không ghi dữ liệu.
 
     # RabbitMQ: mở 1 connection/channel dùng chung cho toàn app.
     await get_rabbitmq_client().connect()

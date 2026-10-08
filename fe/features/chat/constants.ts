@@ -1,9 +1,6 @@
 import { WandSparkles, Search, Stethoscope, Languages, type LucideIcon } from "lucide-react";
 
 /** Giới hạn khi gửi 1 tin nhắn — đồng bộ với core/app/constant/limits.py */
-// Trích dẫn: tối đa 1 đoạn / mỗi loại nguồn (1 từ tin nhắn + 1 từ canvas).
-export const MAX_SELECTIONS_PER_SOURCE = 1;
-export const MAX_SELECTIONS_TOTAL = 2;
 export const MAX_ATTACHMENTS = 5;
 export const MAX_ATTACHMENT_TOTAL_BYTES = 20 * 1024 * 1024;
 

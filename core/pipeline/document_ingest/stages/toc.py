@@ -247,9 +247,8 @@ def reapply(ctx: StageContext) -> dict:
     doc = ctx.files.read_json("toc.json")
     ents = doc["entries"]
     by_level = Counter(e["level"] for e in ents)
-    # khoá camelCase ngay từ đây — summary đi thẳng ra API/FE, không qua bước đổi tên nào nữa
     summary: dict[str, Any] = {
-        "tocPages": f"{doc['toc_pages'][0]}-{doc['toc_pages'][-1]}", "pagesSource": doc["pages_source"], "entries": len(ents),
+        "toc_pages": f"{doc['toc_pages'][0]}-{doc['toc_pages'][-1]}", "pages_source": doc["pages_source"], "entries": len(ents),
         "parts": by_level.get(0, 0), "sections": by_level.get(1, 0), "topics": by_level.get(2, 0) + by_level.get(3, 0),
         "suspect": sum(1 for e in ents if e.get("suspect")), "offset": doc["offset"], "anchored": doc["anchored"],
     }

@@ -18,7 +18,7 @@ async def emit_tool_result(
     """Publish `message.tool_result` lên Redis SAU khi tool thực thi xong — thay thế
     hoàn toàn phần `tools_update` cũ trong `worker.py::_drive`, GIỮ NGUYÊN shape event
     (`type`/`tool`/`content`/`conversationId`/`messageId`) nên FE không cần đổi gì. Tool tự
-    `interrupt()` (`ask_user`, `app/agent/tools/ask_user.py`) raise `GraphBubbleUp` ngay
+    `interrupt()` (`ask_user`, `agent/tools/ask_user.py`) raise `GraphBubbleUp` ngay
     trong `handler()` — KHÔNG chạy tới dòng emit, turn tạm dừng và được xử lý riêng ở
     `worker.py::_handle_interrupt`, giống hành vi cũ (re-raise ngay, KHÔNG rơi vào nhánh
     bắt lỗi bên dưới).
@@ -79,7 +79,7 @@ async def emit_tool_result(
             "input": tool_args,
             "content": str(response.content),
             "status": "done",
-            "type": "tool_call",
+            "type": "tool",
         }
         existing_index = next(
             (
@@ -101,8 +101,8 @@ async def emit_tool_result(
                 "tool": display_name,
                 "input": tool_args,
                 "content": response.content,
-                "conversationId": ctx.conversation_id,
-                "messageId": ctx.message_id,
+                "conversation_id": ctx.conversation_id,
+                "message_id": ctx.message_id,
             },
         )
     return response

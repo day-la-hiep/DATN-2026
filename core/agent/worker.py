@@ -1,7 +1,7 @@
 """Agent worker — tiến trình riêng, tách khỏi FastAPI process.
 
 Luồng:
-  1. consume RabbitMQ `agent_request_queue` (Core đẩy turn mới/Steer/resume, xem
+  1. consume RabbitMQ `agent_request_queue` (Core đẩy turn mới/resume, xem
      `agent/dto/schemas.py::TurnRequest`).
   2. mỗi turn xử lý ở `agent/turn.py` (chạy `agent_graph`, forward token lên
      Redis `agent:events:{id}`).
@@ -27,10 +27,8 @@ from app.config.constants import AGENT_REQUEST_QUEUE
 from app.api.deps import close_clients, get_rabbitmq_client
 
 # 1 Lock/conversation_id — `create_agent` KHÔNG hỗ trợ 2 lần `ainvoke()` đồng thời trên
-# CÙNG `thread_id` (đụng checkpoint). Turn/Steer mới tới khi turn TRƯỚC của CÙNG hội
-# thoại chưa xong sẽ CHỜ tới lượt thay vì chen ngang giữa chừng (đánh đổi có chủ đích —
-# đơn giản hơn nhiều so với node `pre_step` tự dựng của bản trước, chấp nhận Steer chỉ
-# thực sự được xử lý ngay SAU khi turn hiện tại xong thay vì ngay lập tức).
+# CÙNG `thread_id` (đụng checkpoint). Core đã chặn tin mới khi turn đang chạy, lock này là
+# lớp bảo vệ cuối nếu vẫn có 2 request cùng hội thoại lọt vào queue.
 _conversation_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
 

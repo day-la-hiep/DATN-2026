@@ -25,7 +25,9 @@ from app.infra.qdrant_client import QdrantVectorClient
 from app.infra.rabbitmq_client import RabbitMQClient
 from app.infra.redis_client import RedisClient
 from app.repositories.conversation_repository import ConversationRepository
+from app.repositories.file_repository import FileRepository
 from app.repositories.message_repository import MessageRepository
+from app.repositories.patient_profile_repository import PatientProfileRepository
 from app.services.file_store_service import FileStoreService
 from app.repositories.document_repository import DocumentRepository
 from app.services.document_service import DocumentService
@@ -171,10 +173,22 @@ def get_conversation_repository(
     return ConversationRepository(db)
 
 
+def get_patient_profile_repository(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PatientProfileRepository:
+    return PatientProfileRepository(db)
+
+
 def get_message_repository(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MessageRepository:
     return MessageRepository(db)
+
+
+def get_file_repository(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> FileRepository:
+    return FileRepository(db)
 
 
 def get_message_service(
@@ -184,18 +198,24 @@ def get_message_service(
     conversation_repository: Annotated[
         ConversationRepository, Depends(get_conversation_repository)
     ],
+    file_repository: Annotated[FileRepository, Depends(get_file_repository)],
     redis: Annotated[RedisClient, Depends(get_redis_client)],
 ) -> MessageService:
-    return MessageService(message_repository, conversation_repository, redis)
+    return MessageService(
+        message_repository, conversation_repository, file_repository, get_file_store_service(), redis
+    )
 
 
 def get_conversation_service(
     conversation_repository: Annotated[
         ConversationRepository, Depends(get_conversation_repository)
     ],
+    patient_profile_repository: Annotated[
+        PatientProfileRepository, Depends(get_patient_profile_repository)
+    ],
     message_service: Annotated[MessageService, Depends(get_message_service)],
 ) -> ConversationService:
-    return ConversationService(conversation_repository, message_service)
+    return ConversationService(conversation_repository, patient_profile_repository, message_service)
 
 
 from app.services.consultation_service import ConsultationService
@@ -205,5 +225,4 @@ def get_consultation_service(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ConsultationService:
     return ConsultationService(db)
-
 

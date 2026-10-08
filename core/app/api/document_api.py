@@ -221,9 +221,9 @@ async def list_chunks(
     documents: Documents,
     q: str = "",
     node: str = "",
-    only_review: Annotated[bool, Query(alias="onlyReview")] = False,
+    only_review: Annotated[bool, Query()] = False,
     page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=100, alias="pageSize")] = 20,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> ApiResponse[ChunkListOutput]:
     return ApiResponse(
         data=await _call(

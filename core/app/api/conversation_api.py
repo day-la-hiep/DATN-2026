@@ -10,27 +10,22 @@ from app.api.deps import get_conversation_service, get_message_service, get_rabb
 from app.config.settings import settings
 from app.config.constants import AGENT_EVENTS_CHANNEL, STREAM_DONE_SENTINEL
 from app.dto.common import ApiResponse
-from app.dto.conversation import (
-    ConversationOutput,
-    CreateConversationInput,
-    ModelOption,
-    UpdateConversationModelInput,
-)
+from app.dto.request.conversation import CreateConversationInput, UpdateConversationModelInput
+from app.dto.request.message import MessageAnswerDto, SendMessageInput
+from app.dto.response.conversation import ConversationOutput, ModelOption
+from app.dto.response.message import MessageOutput, SendMessageResult
 from app.infra.rabbitmq_client import RabbitMQClient
 from app.infra.redis_client import RedisClient
-from app.dto.message import (
-    MessageAnswerDto,
-    MessageOutput,
-    SendMessageInput,
-    SendMessageResult,
-)
 from app.services.conversation_service import (
     ConversationNotFoundError,
     ConversationService,
+    PatientProfileNotFoundError,
 )
 from app.services.message_service import (
+    AttachmentNotFoundError,
     MessageNotFoundError,
     MessageService,
+    TurnInProgressError,
     flush_pending_turn,
 )
 
@@ -66,7 +61,7 @@ async def list_model_options() -> ApiResponse[list[ModelOption]]:
 )
 async def list_conversations(
     service: ConversationServiceDep,
-    user_id: Annotated[str, Query(alias="userId")],
+    user_id: Annotated[str, Query()],
 ) -> ApiResponse[list[ConversationOutput]]:
     """`docs/api-doc.md` mục 1.1. Auth chưa có — `userId` truyền tay (mục 0)."""
     conversations = await service.list_conversations(user_id)
@@ -82,8 +77,13 @@ async def list_conversations(
 async def create_conversation(
     body: CreateConversationInput, service: ConversationServiceDep
 ) -> ApiResponse[ConversationOutput]:
-    """`docs/api-doc.md` mục 1.2 — tạo hội thoại + lưu `initMessage` + publish turn đầu."""
-    conversation = await service.create_conversation(body)
+    """`docs/api-doc.md` mục 1.2 — tạo hội thoại + lưu `content` + publish turn đầu."""
+    try:
+        conversation = await service.create_conversation(body)
+    except PatientProfileNotFoundError as exc:
+        raise HTTPException(
+            status_code=400, detail="Tài khoản chưa có hồ sơ bệnh nhân."
+        ) from exc
     return ApiResponse(data=conversation)
 
 
@@ -98,7 +98,7 @@ async def update_conversation_model(
     service: ConversationServiceDep,
 ) -> ApiResponse[ConversationOutput]:
     """Đổi model cho hội thoại — chỉ áp dụng cho turn KẾ TIẾP (worker resolve model mới
-    nhất từ DB mỗi turn, `app/agent/worker.py::_conversation_for`), không ảnh hưởng turn
+    nhất từ DB mỗi turn, `agent/worker.py::_conversation_for`), không ảnh hưởng turn
     đang chạy dở."""
     try:
         conversation = await service.update_model(conversation_id, body.model)
@@ -131,14 +131,24 @@ async def list_messages(
 async def send_message(
     conversation_id: str, body: SendMessageInput, service: MessageServiceDep
 ) -> ApiResponse[SendMessageResult]:
-    """`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới HOẶC Steer (không dùng để
-    trả lời câu hỏi agent đang chờ, xem `answer_question` bên dưới).
+    """`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới (không dùng để trả lời câu hỏi
+    agent đang chờ, xem `answer_question` bên dưới). Còn turn đang chạy -> 409.
 
     Trả về `{ userMessage, assistantMessage }`: Core tạo sẵn row assistant
     (`status="queued"`) và trả `id` để FE lắng nghe SSE theo đó. Turn CHƯA được đẩy cho
     Worker — chỉ chạy khi client mở `GET .../stream` (`docs/async-api-doc.md` mục 1).
     """
-    result = await service.send_message(conversation_id, body)
+    try:
+        result = await service.send_message(conversation_id, body)
+    except AttachmentNotFoundError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"Tệp đính kèm chưa được tải lên: {exc}"
+        ) from exc
+    except TurnInProgressError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Trợ lý đang trả lời hoặc đang chờ bạn trả lời câu hỏi, vui lòng đợi.",
+        ) from exc
     return ApiResponse(data=result)
 
 

@@ -1,15 +1,15 @@
 """DTO cho resource Consultation và Pre-consultation Report."""
-from app.dto.common import CamelModel
+from pydantic import BaseModel
 
 
-class PatientProfileDto(CamelModel):
+class PatientProfileDto(BaseModel):
     id: str
     full_name: str
     dob: str
     gender: str
 
 
-class ClinicalFactOutput(CamelModel):
+class ClinicalFactOutput(BaseModel):
     id: str
     template_label: str
     fact_type: str
@@ -18,13 +18,13 @@ class ClinicalFactOutput(CamelModel):
     created_at: str
 
 
-class PreConsultationReportOutput(CamelModel):
+class PreConsultationReportOutput(BaseModel):
     id: str
     summary: str
     created_at: str
 
 
-class ConsultationSessionOutput(CamelModel):
+class ConsultationSessionOutput(BaseModel):
     id: str
     conversation_id: str
     conversation_title: str
@@ -39,9 +39,9 @@ class ConsultationSessionOutput(CamelModel):
     clinical_facts: list[ClinicalFactOutput] = []
 
 
-class RequestConsultationInput(CamelModel):
+class RequestConsultationInput(BaseModel):
     reason: str = "Bệnh nhân yêu cầu bác sĩ tư vấn"
 
 
-class DoctorReplyInput(CamelModel):
+class DoctorReplyInput(BaseModel):
     content: str

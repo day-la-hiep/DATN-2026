@@ -21,8 +21,9 @@ from fastapi import UploadFile
 from pydantic import ValidationError
 from qdrant_client.models import PointStruct
 
-from app.dto.base.document import Document, NewDocument, ProcessStage
-from app.dto.base.file import File
+from app.dto.base.document import Document, NewDocument, DocumentStage
+from app.dto.base.shared import File
+from app.dto.common import FileDto
 from app.dto.request.document import DocumentSettings, TocUpdate
 from app.dto.response.document import (
     ChunkOutput,
@@ -31,7 +32,6 @@ from app.dto.response.document import (
     DocumentOutput,
     DocumentSummary,
     ChunkListOutput,
-    StageProgress,
     StageOutput,
 )
 from app.exception.errors import ConflictError, InvalidError, NotFoundError
@@ -157,51 +157,30 @@ class DocumentService:
                     error="Tiến trình xử lý đã dừng bất thường (xem nhật ký).",
                 )
 
-    def _document(self, document_id: str, detail: dict[str, Any], *, has_pdf: bool, has_pages: bool) -> Document:
-        """`Document` nghiệp vụ của tài liệu — dựng từ `detail` (`DocumentRepository.get_detail`) và các file trong MinIO."""
-        files = self._repo.files_for(document_id)
-        created_at = detail.get("created_at")
-        source_file = (
-            File(
-                file_name=detail.get("pdf_name", ""),
-                storage_key=files.key("source.pdf"),
-                content_type="application/pdf",
-                size=detail.get("pdf_bytes"),
-                created_at=created_at,
-            )
-            if has_pdf
-            else None
-        )
-        ingested_file = (
-            File(
-                file_name="pages.jsonl",
-                storage_key=files.key("pages.jsonl"),
-                content_type="application/x-ndjson",
-                created_at=created_at,
-            )
-            if has_pages
-            else None
-        )
+    def _document(self, document_id: str, detail: dict[str, Any]) -> Document:
+        """`Document` nghiệp vụ của tài liệu — dựng từ `detail` (`DocumentRepository.get_detail`, gồm cả 2 dòng `files`)."""
+        source = detail.get("source_file")
+        ingested = detail.get("ingested_file")
         return Document(
             id=document_id,
             title=detail.get("title", document_id),
-            type="book",
-            created_at=created_at,
-            source_file=source_file,
-            ingested_file=ingested_file,
-            pdf_pages=self.pdf_pages(document_id) if has_pdf else None,
+            type=detail.get("type", "book"),
+            created_at=detail.get("created_at"),
+            source_file=File(**source) if source else None,
+            ingested_file=File(**ingested) if ingested else None,
+            pdf_pages=self.pdf_pages(document_id) if source else None,
         )
 
-    def _process_stages(self, document_id: str, detail: dict[str, Any]) -> list[ProcessStage]:
-        """Trạng thái từng bước xử lý của tài liệu, dạng `ProcessStage` nghiệp vụ."""
+    def _process_stages(self, document_id: str, detail: dict[str, Any]) -> list[DocumentStage]:
+        """Trạng thái từng bước xử lý của tài liệu, dạng `DocumentStage` nghiệp vụ."""
         status = detail["stages"]
         out = []
         for s in STAGES:
             st = status[s["id"]]
             prog = st.get("progress")
             out.append(
-                ProcessStage(
-                    document_id=document_id,
+                DocumentStage(
+                    id=st.get("id") or f"{document_id}/{s['id']}",  # bước chưa có dòng DB (tài liệu cũ) chưa có id thật
                     stage_id=s["id"],
                     title=s["title"],
                     deps=s["deps"],
@@ -220,10 +199,10 @@ class DocumentService:
         return out
 
     @staticmethod
-    def _stage_output(stage: ProcessStage) -> StageOutput:
-        """Map `ProcessStage` nghiệp vụ -> DTO wire (camelCase) cho API admin."""
+    def _stage_output(stage: DocumentStage) -> StageOutput:
+        """Map `DocumentStage` nghiệp vụ -> DTO wire cho API admin."""
         return StageOutput(
-            id=stage.stage_id,
+            stage_id=stage.stage_id,
             title=stage.title,
             deps=stage.deps,
             uses_llm=stage.uses_llm,
@@ -231,9 +210,8 @@ class DocumentService:
             started_at=stage.started_at,
             finished_at=stage.finished_at,
             approved_at=stage.approved_at,
-            progress=StageProgress(**stage.progress) if stage.progress else None,
-            # key của summary đã là camelCase ngay từ stage (xem `pipeline/document_ingest/stages/*.py`)
-            summary=stage.summary,
+            progress=stage.progress,
+            summary=stage.summary or None,
             error=stage.error,
             options=stage.options,
             blocked_by=stage.blocked_by,
@@ -276,23 +254,17 @@ class DocumentService:
         detail = self._repo.get_detail(document_id)
         if not detail:
             raise NotFoundError(document_id)
-        files = self._repo.files_for(document_id)
-        document = self._document(
-            document_id,
-            detail,
-            has_pdf=files.exists("source.pdf"),
-            has_pages=files.exists("pages.jsonl"),
-        )
+        document = self._document(document_id, detail)
         stages = self._stage_outputs(document_id, detail)
         return DocumentOutput(
             id=document.id,
             title=document.title,
             created_at=document.created_at,
-            has_pdf=document.source_file is not None,
+            source_file=FileDto.model_validate(document.source_file.model_dump()) if document.source_file else None,
             pdf_pages=document.pdf_pages,
             stages=stages,
             running_stage=next(
-                (s.id for s in stages if s.state == "running"), None
+                (s.stage_id for s in stages if s.state == "running"), None
             ),
         )
 
@@ -312,14 +284,16 @@ class DocumentService:
         tmp_dir = Path(tempfile.mkdtemp(prefix="toc_upload_"))
         try:
             tmp = tmp_dir / "source.pdf"
-            size = await self._save_upload(upload, head, tmp)
+            await self._save_upload(upload, head, tmp)  # chỉ kiểm tra giới hạn; kích thước ghi vào `files` khi tạo
             pages = await asyncio.to_thread(self._count_pages, tmp)
             did = await asyncio.to_thread(
                 self._repo.create,
                 draft.title,
-                {"pdf_name": upload.filename or "", "pdf_bytes": size, "pdf_pages": pages},
+                {"pdf_pages": pages},
                 default_profile("", draft.engine),
                 {"source.pdf": tmp},
+                None,
+                upload.filename or "",
             )
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -399,7 +373,13 @@ class DocumentService:
         doc = self._repo.files_for(document_id).read_json("toc.json")
         if doc is None:
             raise NotFoundError("toc.json")
-        return TocOutput.model_validate(doc)
+        # `toc.json` giữ khoá lưu trữ cũ; đổi sang tên wire ở đây thay vì sửa dữ liệu đã có
+        entries = [
+            {**{k: v for k, v in e.items() if k not in ("printed_page", "pdf_page")},
+             "page_printed": e.get("printed_page"), "page": e.get("pdf_page")}
+            for e in doc.get("entries", [])
+        ]
+        return TocOutput.model_validate({**doc, "entries": entries})
 
     def update_toc(self, document_id: str, body: TocUpdate) -> None:
         """Lưu chỉnh sửa mục lục của người duyệt vào override (bảng `document_overrides`, stage `toc`). Caller áp lại bước `toc` sau đó."""
@@ -432,8 +412,8 @@ class DocumentService:
                 cur["title"] = it.title.strip()
             if it.level is not None:
                 cur["level"] = it.level
-            if it.printed_page is not None:
-                cur["printed_page"] = it.printed_page
+            if it.page_printed is not None:
+                cur["printed_page"] = it.page_printed
             if it.clear_page:
                 cur["printed_page"] = None
             ov[it.id] = cur
@@ -466,7 +446,7 @@ class DocumentService:
                     ],
                     "title": a.title.strip(),
                     "level": a.level,
-                    "printed_page": a.printed_page,
+                    "printed_page": a.page_printed,
                     "after": a.after_id,
                 }
             )
@@ -549,7 +529,7 @@ class DocumentService:
                 "all": len(rows),
                 "review": len(review),
                 "tokens": sum(c["tokens"] for c in rows),
-                "perNode": per_node,
+                "per_node": per_node,
             },
         )
 

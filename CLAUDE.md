@@ -34,6 +34,7 @@ docker-compose.yml   hạ tầng dev (Postgres, Redis, RabbitMQ, Qdrant, Neo4j, 
 ```bash
 make infra          # docker compose up -d (hạ tầng)
 make migrate        # alembic upgrade head
+make init-db        # bucket MinIO + dữ liệu mẫu (user-1, bác sĩ, admin) — chạy sau migrate
 make backend        # Core FastAPI :3050
 make worker         # Agent Worker (tiến trình riêng, consume RabbitMQ)
 make frontend       # Next.js :3000
@@ -87,7 +88,7 @@ Các bước theo thứ tự, mỗi bước phải được người duyệt **a
 
 Chi tiết nằm trong các skill; ở đây chỉ các điểm hay nhầm:
 
-- **Entity nghiệp vụ** ở `core/app/dto/base/` (`Document`, `File`, `ProcessStage`, `DocumentChunk`, ...)
+- **Entity nghiệp vụ** ở `core/app/dto/base/` (`Document`, `File`, `DocumentStage`, `DocumentChunk`, ...)
   khác với ORM (`app/models/`) và DTO wire (`app/dto/request|response/`). **Đổi `dto/base` phải hỏi
   người dùng duyệt trước** rồi mới cascade sang models/repo/service.
 - **Repository là stateless**: `DocumentRepository` nhận `document_id` trực tiếp. Override nằm ở

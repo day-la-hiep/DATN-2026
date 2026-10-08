@@ -5,9 +5,9 @@ Adaptive GeM pooling, 22 lớp bệnh) huấn luyện sẵn ở `model/` (repo r
 đó là thư mục thử nghiệm ngoài `core/`, không phải dependency Python cài đặt được).
 
 Ảnh vào tool qua object key MinIO (`app/services/file_store_service.py`), KHÔNG phải path đĩa
-cục bộ hay base64 — luồng đầy đủ: FE `POST /uploads` -> `FileAttachmentDto.id` (=
-object key) -> `SendMessageInput.attachments` -> Core forward qua `TurnRequest.attachments`
-(`app/agent/schemas.py`) -> `worker.py::_human_message_content` chèn `object_key` vào
+cục bộ hay base64 — luồng đầy đủ: FE `POST /uploads` -> `FileDto.storage_key` (=
+object key) -> `SendMessageInput.attached_files` -> Core forward qua `TurnRequest.attached_files`
+(`agent/dto/schemas.py`) -> `turn.py::_human_message_content` chèn `object_key` vào
 text của `HumanMessage` -> agent tự đọc thấy rồi copy làm tham số gọi tool này.
 
 QUAN TRỌNG — kết quả tool này KHÔNG phải clinical evidence: đây là xác suất phân loại

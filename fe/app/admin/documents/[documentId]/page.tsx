@@ -27,9 +27,9 @@ function stepLine(stage: Stage): string {
   const s = stage.summary ?? {};
   if (stage.state === "running") return stage.progress?.message || "đang xử lý";
   if (!HAS_RESULT.includes(stage.state)) return "chưa có kết quả";
-  if (stage.id === "ingest") return `${s.pages ?? "?"} trang`;
-  if (stage.id === "toc") return `${s.entries ?? "?"} mục`;
-  if (stage.id === "chunks") return `${s.chunks ?? "?"} đoạn`;
+  if (stage.stage_id === "ingest") return `${s.pages ?? "?"} trang`;
+  if (stage.stage_id === "toc") return `${s.entries ?? "?"} mục`;
+  if (stage.stage_id === "chunks") return `${s.chunks ?? "?"} đoạn`;
   return `${s.points ?? "?"} đoạn đã lưu`;
 }
 
@@ -37,7 +37,7 @@ function Stepper({ doc, step, onPick }: { doc: Document; step: StepId; onPick: (
   return (
     <ol className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4" aria-label="Các bước xử lý">
       {STEP_ORDER.map((id, i) => {
-        const stage = doc.stages.find((s) => s.id === id) as Stage;
+        const stage = doc.stages.find((s) => s.stage_id === id) as Stage;
         const Icon = STEP_INFO[id].icon;
         const active = id === step;
         return (
@@ -80,8 +80,8 @@ function Stepper({ doc, step, onPick }: { doc: Document; step: StepId; onPick: (
 }
 
 function defaultStep(doc: Document): StepId {
-  if (doc.runningStage) return doc.runningStage;
-  return STEP_ORDER.find((id) => doc.stages.find((s) => s.id === id)?.state !== "approved") ?? "chunks";
+  if (doc.running_stage) return doc.running_stage;
+  return STEP_ORDER.find((id) => doc.stages.find((s) => s.stage_id === id)?.state !== "approved") ?? "chunks";
 }
 
 export default function TocDocumentPage({ params }: { params: Promise<{ documentId: string }> }) {
@@ -96,7 +96,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const data = documentQuery.data;
-  const tocStage = data?.stages.find((s) => s.id === "toc");
+  const tocStage = data?.stages.find((s) => s.stage_id === "toc");
   const tocReady = Boolean(tocStage && HAS_RESULT.includes(tocStage.state));
   const toc = useData(documentId, "toc", {}, () => documentApi.toc(documentId), tocReady);
 
@@ -116,26 +116,26 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
   if (!data) return <Skeleton className="h-96 rounded-2xl" />;
 
   const step = picked ?? defaultStep(data);
-  const stage = data.stages.find((s) => s.id === step) as Stage;
+  const stage = data.stages.find((s) => s.stage_id === step) as Stage;
   const hasResult = HAS_RESULT.includes(stage.state);
   const busy = run.isPending || cancel.isPending || approve.isPending;
-  const runningName = data.runningStage ? STEP_INFO[data.runningStage].label : null;
+  const runningName = data.running_stage ? STEP_INFO[data.running_stage].label : null;
   const nextStep = STEP_ORDER[STEP_ORDER.indexOf(step) + 1];
 
   const selected = toc.data?.entries.find((e) => e.id === selectedId) ?? null;
-  const page = previewPage ?? selected?.pdfPage ?? (step === "toc" ? toc.data?.tocPages[0] : undefined) ?? 1;
+  const page = previewPage ?? selected?.page ?? (step === "toc" ? toc.data?.toc_pages[0] : undefined) ?? 1;
   const caption =
     step === "toc" && selected ? (
       <>
-        <span className="font-medium text-foreground">{selected.title}</span> · trang in {selected.printedPage ?? "—"}
-        {selected.pdfPage != null && selected.pdfPage === page && (
+        <span className="font-medium text-foreground">{selected.title}</span> · trang in {selected.page_printed ?? "—"}
+        {selected.page != null && selected.page === page && (
           <>
-            {" "}→ trang {selected.pdfPage} trong file ·{" "}
+            {" "}→ trang {selected.page} trong file ·{" "}
             {selected.anchored ? "đã định vị tiêu đề mục" : "chưa tìm thấy dòng tiêu đề (chỉ biết số trang)"}
           </>
         )}
       </>
-    ) : step === "toc" && toc.data?.tocPages.includes(page) ? (
+    ) : step === "toc" && toc.data?.toc_pages.includes(page) ? (
       "Trang mục lục"
     ) : undefined;
 
@@ -145,7 +145,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
   };
   const onSelectEntry = (e: TocEntry) => {
     setSelectedId(e.id);
-    setPreviewPage(e.pdfPage ?? null);
+    setPreviewPage(e.page ?? null);
   };
   const startRun = () => (hasRunOptions(step) ? setRunOpen(true) : run.mutate({ stage: step }));
 
@@ -160,7 +160,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
             <h1 className="truncate font-serif text-2xl font-bold tracking-tight text-foreground">{data.title}</h1>
             <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
               <span>{documentId}</span>
-              {data.pdfPages != null && <span>{data.pdfPages} trang</span>}
+              {data.pdf_pages != null && <span>{data.pdf_pages} trang</span>}
               {runningName && (
                 <span className="inline-flex items-center gap-1 text-brand">
                   <Loader2 className="size-3 animate-spin" /> đang xử lý: {runningName}
@@ -181,7 +181,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
           <StagePanel
             stage={stage}
             busy={busy}
-            anotherRunning={Boolean(data.runningStage) && data.runningStage !== step}
+            anotherRunning={Boolean(data.running_stage) && data.running_stage !== step}
             onRun={startRun}
             onCancel={() => cancel.mutate(step)}
             onApprove={() => approve.mutate(step)}
@@ -228,14 +228,14 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
             ))}
         </div>
 
-        {data.hasPdf && (
+        {data.source_file && (
           <div className="h-[32rem] xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
             <PagePreview
               documentId={documentId}
               page={page}
-              total={data.pdfPages}
+              total={data.pdf_pages}
               caption={caption}
-              highlightLine={selected && selected.pdfPage === page && selected.anchored ? selected.anchorLine : null}
+              highlightLine={selected && selected.page === page && selected.anchored ? selected.anchor_line : null}
               onPage={setPreviewPage}
             />
           </div>
@@ -253,7 +253,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
           run.mutate({ stage: step, options });
         }}
       />
-      <StageLogDialog documentId={documentId} stage={logStage} running={data.runningStage === logStage} onClose={() => setLogStage(null)} />
+      <StageLogDialog documentId={documentId} stage={logStage} running={data.running_stage === logStage} onClose={() => setLogStage(null)} />
       <SettingsDialog documentId={documentId} open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );

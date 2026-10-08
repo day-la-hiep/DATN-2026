@@ -1,30 +1,26 @@
 """Nghiệp vụ Tư vấn & Báo cáo tiền tư vấn (Pre-consultation Report Generation)."""
 import json
 import logging
+import uuid
 from datetime import UTC, datetime
 
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agent.llm import get_model
-from app.config.ids import (
-    new_clinical_fact_id,
-    new_consultation_session_id,
-    new_message_id,
-    new_report_id,
-)
+from app.common.constant import MessageSender, MessageType
 from app.dto.consultation import (
     ClinicalFactOutput,
     ConsultationSessionOutput,
     PatientProfileDto,
     PreConsultationReportOutput,
 )
-from app.dto.message import MessageOutput
-from app.models.consultation import (
+from app.dto.response.message import MessageOutput
+from app.models.clinical import (
     ClinicalFact,
-    ConsultationSession,
     PreConsultationReport,
 )
+from app.models.consultation_session import ConsultationSession
 from app.models.message import Message
 from app.repositories.consultation_repository import ConsultationRepository
 from app.repositories.conversation_repository import ConversationRepository
@@ -67,9 +63,12 @@ class ConsultationService:
         self._msg_repo = MessageRepository(db)
 
     def _to_output(
-        self, session: ConsultationSession, conv_title: str = "Hội thoại tư vấn"
+        self,
+        session: ConsultationSession,
+        conv_title: str = "Hội thoại tư vấn",
+        report: PreConsultationReport | None = None,
+        facts: list[ClinicalFactOutput] | None = None,
     ) -> ConsultationSessionOutput:
-        # Mock profile mặc định (vì đồ án chưa có bảng auth/profiles hoàn chỉnh)
         patient_dto = PatientProfileDto(
             id="p-default",
             full_name="Nguyễn Văn A",
@@ -78,24 +77,12 @@ class ConsultationService:
         )
 
         report_dto = None
-        if session.report:
+        if report:
             report_dto = PreConsultationReportOutput(
-                id=session.report.id,
-                summary=session.report.summary,
-                created_at=session.report.created_at.isoformat(),
+                id=report.id,
+                summary=report.summary,
+                created_at=report.created_at.isoformat(),
             )
-
-        facts_dto = [
-            ClinicalFactOutput(
-                id=f.id,
-                template_label=f.template_label,
-                fact_type=f.fact_type,
-                detail=f.detail,
-                status=f.status,
-                created_at=f.created_at.isoformat(),
-            )
-            for f in session.clinical_facts
-        ]
 
         return ConsultationSessionOutput(
             id=session.id,
@@ -109,7 +96,7 @@ class ConsultationService:
             started_at=session.started_at.isoformat() if session.started_at else None,
             resolved_at=session.resolved_at.isoformat() if session.resolved_at else None,
             report=report_dto,
-            clinical_facts=facts_dto,
+            clinical_facts=facts or [],
         )
 
     async def list_sessions(
@@ -120,7 +107,22 @@ class ConsultationService:
         for s in sessions:
             conv = await self._conv_repo.get(s.conversation_id)
             title = conv.title if conv else "Hội thoại da liễu"
-            results.append(self._to_output(s, title))
+            report = await self._repo.get_report(s.id)
+            facts_dto: list[ClinicalFactOutput] = []
+            if conv and conv.patient_profile_id:
+                raw_facts = await self._repo.get_clinical_facts_by_patient(conv.patient_profile_id)
+                facts_dto = [
+                    ClinicalFactOutput(
+                        id=f.id,
+                        template_label=tpl.label,
+                        fact_type=tpl.fact_type,
+                        detail=f.detail,
+                        status=f.status,
+                        created_at=f.created_at.isoformat(),
+                    )
+                    for f, tpl in raw_facts
+                ]
+            results.append(self._to_output(s, title, report, facts_dto))
         return results
 
     async def get_session(
@@ -131,7 +133,22 @@ class ConsultationService:
             return None
         conv = await self._conv_repo.get(session.conversation_id)
         title = conv.title if conv else "Hội thoại da liễu"
-        return self._to_output(session, title)
+        report = await self._repo.get_report(session.id)
+        facts_dto: list[ClinicalFactOutput] = []
+        if conv and conv.patient_profile_id:
+            raw_facts = await self._repo.get_clinical_facts_by_patient(conv.patient_profile_id)
+            facts_dto = [
+                ClinicalFactOutput(
+                    id=f.id,
+                    template_label=tpl.label,
+                    fact_type=tpl.fact_type,
+                    detail=f.detail,
+                    status=f.status,
+                    created_at=f.created_at.isoformat(),
+                )
+                for f, tpl in raw_facts
+            ]
+        return self._to_output(session, title, report, facts_dto)
 
     async def accept_session(
         self, session_id: str, doctor_id: str = "doc-default"
@@ -141,7 +158,8 @@ class ConsultationService:
             raise ValueError(f"Không tìm thấy phiên tư vấn id={session_id}")
         session = await self._repo.accept_session(session, doctor_id)
         conv = await self._conv_repo.get(session.conversation_id)
-        return self._to_output(session, conv.title if conv else "Hội thoại")
+        report = await self._repo.get_report(session.id)
+        return self._to_output(session, conv.title if conv else "Hội thoại", report)
 
     async def resolve_session(
         self, session_id: str
@@ -151,7 +169,8 @@ class ConsultationService:
             raise ValueError(f"Không tìm thấy phiên tư vấn id={session_id}")
         session = await self._repo.resolve_session(session)
         conv = await self._conv_repo.get(session.conversation_id)
-        return self._to_output(session, conv.title if conv else "Hội thoại")
+        report = await self._repo.get_report(session.id)
+        return self._to_output(session, conv.title if conv else "Hội thoại", report)
 
     async def request_consultation(
         self, conversation_id: str, reason: str = "Bệnh nhân yêu cầu bác sĩ tư vấn"
@@ -162,10 +181,11 @@ class ConsultationService:
         conv = await self._conv_repo.get(conversation_id)
         conv_title = conv.title if conv else "Hội thoại da liễu"
         if existing:
-            return self._to_output(existing, conv_title)
+            rep = await self._repo.get_report(existing.id)
+            return self._to_output(existing, conv_title, rep)
 
         # 2. Tạo session mới
-        session_id = new_consultation_session_id()
+        session_id = f"cs-{uuid.uuid4()}"
         session = ConsultationSession(
             id=session_id,
             conversation_id=conversation_id,
@@ -178,12 +198,14 @@ class ConsultationService:
         # 3. Lấy lịch sử hội thoại để nạp vào LLM
         messages = await self._msg_repo.list_by_conversation(conversation_id)
         chat_transcript = "\n".join(
-            f"[{m.role.upper()}]: {m.content}" for m in messages if m.content
+            f"[{m.sender.upper()}]: {m.content}" for m in messages if m.content
         )
 
         # 4. Gọi LLM sinh báo cáo & bóc tách dữ kiện lâm sàng
         facts_to_save: list[ClinicalFact] = []
+        facts_dto: list[ClinicalFactOutput] = []
         summary_text = ""
+        patient_profile_id = conv.patient_profile_id if conv else "p-default"
 
         try:
             llm = get_model()
@@ -213,15 +235,30 @@ class ConsultationService:
             raw_facts = parsed.get("facts", [])
 
             for rf in raw_facts:
+                f_type = rf.get("fact_type", "symptom")
+                f_label = rf.get("template_label", "Dữ kiện lâm sàng")
+                f_detail = rf.get("detail", "")
+                tpl = await self._repo.get_or_create_template(f_type, f_label)
+                fact_id = f"cf-{uuid.uuid4()}"
+                now = datetime.now(UTC)
                 facts_to_save.append(
                     ClinicalFact(
-                        id=new_clinical_fact_id(),
-                        consultation_session_id=session_id,
-                        template_label=rf.get("template_label", "Dữ kiện lâm sàng"),
-                        fact_type=rf.get("fact_type", "symptom"),
-                        detail=rf.get("detail", ""),
+                        id=fact_id,
+                        patient_profile_id=patient_profile_id,
+                        template_id=tpl.id,
+                        detail=f_detail,
                         status="active",
-                        created_at=datetime.now(UTC),
+                        created_at=now,
+                    )
+                )
+                facts_dto.append(
+                    ClinicalFactOutput(
+                        id=fact_id,
+                        template_label=tpl.label,
+                        fact_type=tpl.fact_type,
+                        detail=f_detail,
+                        status="active",
+                        created_at=now.isoformat(),
                     )
                 )
         except Exception as exc:  # noqa: BLE001
@@ -235,7 +272,7 @@ class ConsultationService:
 
         # 5. Lưu Report và Facts
         report = PreConsultationReport(
-            id=new_report_id(),
+            id=f"rep-{uuid.uuid4()}",
             consultation_session_id=session_id,
             summary=summary_text,
             created_at=datetime.now(UTC),
@@ -244,12 +281,7 @@ class ConsultationService:
         if facts_to_save:
             await self._repo.add_clinical_facts(facts_to_save)
 
-        # Lấy lại session đầy đủ quan hệ để serialize
-        fresh_session = await self._repo.get_session(session_id)
-        if not fresh_session:
-            fresh_session = session
-
-        return self._to_output(fresh_session, conv_title)
+        return self._to_output(session, conv_title, report, facts_dto)
 
     async def send_doctor_reply(
         self, session_id: str, content: str, doctor_id: str = "doc-default"
@@ -263,15 +295,16 @@ class ConsultationService:
         if session.status == "pending":
             await self._repo.accept_session(session, doctor_id)
 
-        msg_id = new_message_id()
+        msg_id = f"msg-{uuid.uuid4()}"
         now = datetime.now(UTC)
         msg = Message(
             id=msg_id,
             conversation_id=session.conversation_id,
-            role="doctor",
+            sender=MessageSender.DOCTOR.value,
+            message_type=MessageType.TEXT.value,
             content=content,
             status="done",
-            extra={"sender": "doctor", "doctorId": doctor_id},
+            extra={"doctorId": doctor_id},
             created_at=now,
         )
         await self._msg_repo.create(msg)
@@ -285,7 +318,7 @@ class ConsultationService:
             event_payload = json.dumps({
                 "type": "message.done",
                 "messageId": msg_id,
-                "role": "doctor",
+                "sender": MessageSender.DOCTOR.value,
                 "content": content,
             })
             await redis.publish(channel, event_payload)
@@ -295,7 +328,7 @@ class ConsultationService:
         return MessageOutput(
             id=msg.id,
             conversation_id=msg.conversation_id,
-            role="doctor",
+            sender=MessageSender.DOCTOR,
             content=msg.content,
             status="done",
             created_at=msg.created_at.isoformat(),

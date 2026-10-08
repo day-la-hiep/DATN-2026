@@ -54,10 +54,10 @@ class ApiTest(Base):
         book = r.json()["data"]
         did = book["id"]
         self.assertEqual(
-            (book["title"], book["pdfPages"], [s["id"] for s in book["stages"]]),
+            (book["title"], book["pdf_pages"], [s["stage_id"] for s in book["stages"]]),
             ("Sách thử", 3, ["ingest", "toc", "chunks", "index"]),
         )
-        self.assertEqual(book["stages"][2]["blockedBy"], ["ingest", "toc"])
+        self.assertEqual(book["stages"][2]["blocked_by"], ["ingest", "toc"])
         bad = self.c.post(
             f"{self.base}/documents",
             data={"title": "x"},
@@ -85,29 +85,29 @@ class ApiTest(Base):
     def test_settings_roundtrip_and_validation(self) -> None:
         s = self.c.get(f"{self.base}/documents/tbook/settings").json()["data"]
         self.assertEqual(
-            (s["engine"], s["maxTokens"], s["boundaryLevel"]),
+            (s["engine"], s["max_tokens"], s["boundary_level"]),
             ("pdftotext", 400, 3),
         )
         s.update(
             {
-                "maxTokens": 200,
+                "max_tokens": 200,
                 "engine": "docling",
                 "title": "Mới",
-                "noisePages": ["1-3", " "],
+                "noise_pages": ["1-3", " "],
             }
         )
         got = self.c.put(f"{self.base}/documents/tbook/settings", json=s).json()[
             "data"
         ]
         self.assertEqual(
-            (got["maxTokens"], got["engine"], got["title"], got["noisePages"]),
+            (got["max_tokens"], got["engine"], got["title"], got["noise_pages"]),
             (200, "docling", "Mới", ["1-3"]),
         )
         self.assertEqual(
             self.c.get(f"{self.base}/documents/tbook").json()["data"]["title"],
             "Mới",
         )
-        s["maxTokens"] = 5
+        s["max_tokens"] = 5
         self.assertEqual(
             self.c.put(f"{self.base}/documents/tbook/settings", json=s).status_code,
             422,
@@ -131,7 +131,7 @@ class ApiTest(Base):
             },
         )
         self.assertEqual(r.status_code, 200, r.text)
-        stages = {s["id"]: s["state"] for s in r.json()["data"]["stages"]}
+        stages = {s["stage_id"]: s["state"] for s in r.json()["data"]["stages"]}
         self.assertEqual(
             (stages["toc"], stages["chunks"]), ("pending_review", "stale")
         )  # sửa mục lục làm chunk cũ hết hạn
@@ -161,7 +161,7 @@ class ApiTest(Base):
             lst["items"]
             and all(c["section"] == "SECTION 2 PSORIASIS" for c in lst["items"])
         )  # lọc theo nhánh mục lục
-        self.assertEqual(lst["counts"]["perNode"][sec["id"]], lst["total"])
+        self.assertEqual(lst["counts"]["per_node"][sec["id"]], lst["total"])
         self.assertEqual(
             self.c.get(
                 f"{self.base}/documents/tbook/chunks", params={"node": "nope"}
@@ -186,7 +186,7 @@ class ApiTest(Base):
         }])
         lst = self.c.get(f"{self.base}/documents/tbook/figures").json()["data"]
         self.assertEqual(
-            [(f["figureId"], f["page"], f["caption"]) for f in lst], [("tbook:f00001", 2, "Hình 1")]
+            [(f["figure_id"], f["page"], f["caption"]) for f in lst], [("tbook:f00001", 2, "Hình 1")]
         )
         img = self.c.get(f"{self.base}/documents/tbook/figures/tbook:f00001/image")
         self.assertEqual((img.status_code, img.content), (200, png))
@@ -226,7 +226,7 @@ class ApiTest(Base):
         end = time.time() + timeout
         while time.time() < end:
             b = self.c.get(f"{self.base}/documents/{book}").json()["data"]
-            st = next(x for x in b["stages"] if x["id"] == stage)
+            st = next(x for x in b["stages"] if x["stage_id"] == stage)
             if st["state"] in states:
                 return st
             time.sleep(0.05)
@@ -239,7 +239,7 @@ class ApiTest(Base):
         r = self.c.post(f"{self.base}/documents/tbook/stages/ingest/run", json={})
         self.assertEqual(r.status_code, 202, r.text)
         self.assertEqual(
-            next(s for s in r.json()["data"]["stages"] if s["id"] == "ingest")[
+            next(s for s in r.json()["data"]["stages"] if s["stage_id"] == "ingest")[
                 "state"
             ],
             "running",

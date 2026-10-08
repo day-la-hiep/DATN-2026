@@ -28,7 +28,7 @@ export function useDocument(documentId: string) {
   return useQuery({
     queryKey: qk.document(documentId),
     queryFn: () => documentApi.getDocument(documentId),
-    refetchInterval: (q) => (q.state.data?.runningStage ? POLL_MS : false),
+    refetchInterval: (q) => (q.state.data?.running_stage ? POLL_MS : false),
   });
 }
 

@@ -2,12 +2,12 @@
 from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.models.consultation import (
-    ConsultationSession,
-    PreConsultationReport,
+from app.models.consultation_session import ConsultationSession
+from app.models.clinical import (
     ClinicalFact,
+    ClinicalFactTemplate,
+    PreConsultationReport,
 )
 
 
@@ -21,31 +21,16 @@ class ConsultationRepository:
         return session
 
     async def get_session(self, session_id: str) -> ConsultationSession | None:
-        stmt = (
-            select(ConsultationSession)
-            .where(ConsultationSession.id == session_id)
-            .options(
-                selectinload(ConsultationSession.report),
-                selectinload(ConsultationSession.clinical_facts),
-            )
-        )
+        stmt = select(ConsultationSession).where(ConsultationSession.id == session_id)
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none()
 
     async def list_sessions(
         self, status: str | None = None
     ) -> list[ConsultationSession]:
-        stmt = (
-            select(ConsultationSession)
-            .options(
-                selectinload(ConsultationSession.report),
-                selectinload(ConsultationSession.clinical_facts),
-            )
-            .order_by(ConsultationSession.requested_at.desc())
-        )
+        stmt = select(ConsultationSession).order_by(ConsultationSession.requested_at.desc())
         if status and status != "all":
             stmt = stmt.where(ConsultationSession.status == status)
-
         result = await self._db.execute(stmt)
         return list(result.scalars().all())
 
@@ -59,10 +44,13 @@ class ConsultationRepository:
                 ConsultationSession.conversation_id == conversation_id,
                 ConsultationSession.status != "resolved",
             )
-            .options(
-                selectinload(ConsultationSession.report),
-                selectinload(ConsultationSession.clinical_facts),
-            )
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_report(self, session_id: str) -> PreConsultationReport | None:
+        stmt = select(PreConsultationReport).where(
+            PreConsultationReport.consultation_session_id == session_id
         )
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none()
@@ -73,6 +61,34 @@ class ConsultationRepository:
         self._db.add(report)
         await self._db.flush()
         return report
+
+    async def get_clinical_facts_by_patient(
+        self, patient_profile_id: str
+    ) -> list[tuple[ClinicalFact, ClinicalFactTemplate]]:
+        stmt = (
+            select(ClinicalFact, ClinicalFactTemplate)
+            .join(ClinicalFactTemplate, ClinicalFact.template_id == ClinicalFactTemplate.id)
+            .where(ClinicalFact.patient_profile_id == patient_profile_id)
+            .order_by(ClinicalFact.created_at.desc())
+        )
+        result = await self._db.execute(stmt)
+        return [(r[0], r[1]) for r in result.all()]
+
+    async def get_or_create_template(
+        self, fact_type: str, label: str
+    ) -> ClinicalFactTemplate:
+        stmt = select(ClinicalFactTemplate).where(ClinicalFactTemplate.label == label)
+        result = await self._db.execute(stmt)
+        tpl = result.scalar_one_or_none()
+        if tpl:
+            return tpl
+        tpl = ClinicalFactTemplate(
+            fact_type=fact_type,
+            label=label,
+        )
+        self._db.add(tpl)
+        await self._db.flush()
+        return tpl
 
     async def add_clinical_facts(
         self, facts: list[ClinicalFact]

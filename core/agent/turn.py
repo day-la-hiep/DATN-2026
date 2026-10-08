@@ -19,7 +19,7 @@ from agent.handler.publisher import emit, finish_turn
 from app.config.settings import settings
 from app.config.constants import AGENT_EVENTS_CHANNEL
 from app.api.deps import get_postgres_client
-from app.dto.message import ChoiceOptionDto, MessageChoiceDto
+from app.dto.common import ChoiceOption, MessageChoice
 from app.repositories.conversation_repository import ConversationRepository
 
 _ERROR_TEXT = (
@@ -35,11 +35,13 @@ async def _conversation_for(conversation_id: str) -> tuple[str, str]:
     conversation đã chọn) -> trả rỗng, `AgentContext.model` rỗng -> middleware
     `select_model` tự fallback `settings.AGENT_MODEL`."""
     async with get_postgres_client().session_factory() as db:
-        conversation = await ConversationRepository(db).get(conversation_id)
-    if conversation is None:
-        return "", ""
+        repo = ConversationRepository(db)
+        conversation = await repo.get(conversation_id)
+        if conversation is None:
+            return "", ""
+        user_id = await repo.owner_user_id(conversation) or ""
     model = settings.AGENT_MODEL_CHOICES.get(conversation.model, "")
-    return conversation.user_id, model
+    return user_id, model
 
 
 async def _build_context(req: TurnRequest) -> AgentContext:
@@ -49,9 +51,9 @@ async def _build_context(req: TurnRequest) -> AgentContext:
         conversation_id=req.conversation_id,
         message_id=req.message_id,
         image_keys=[
-            a.object_key
-            for a in (req.attachments or [])
-            if a.type.startswith("image/")
+            a.storage_key
+            for a in (req.attached_files or [])
+            if a.content_type.startswith("image/")
         ],
         model=model,
     )
@@ -65,11 +67,12 @@ def _human_message_content(req: TurnRequest) -> str:
     hiện tại nên forward bằng text là cách đơn giản nhất, nhất quán với cách LLM
     orchestrate mọi tool khác (đọc context -> tự chọn tham số gọi tool)."""
     content = req.content or ""
-    images = [a for a in (req.attachments or []) if a.type.startswith("image/")]
+    images = [a for a in (req.attached_files or []) if a.content_type.startswith("image/")]
     if not images:
         return content
 
-    lines = [f'- name="{a.name}" object_key="{a.object_key}"' for a in images]
+    # nhãn `object_key` giữ nguyên: là tên tham số của tool `classify_skin_image` mà prompt hướng dẫn LLM chép lại
+    lines = [f'- name="{a.file_name}" object_key="{a.storage_key}"' for a in images]
     return content + "\n\n[Ảnh đính kèm]\n" + "\n".join(lines)
 
 
@@ -126,21 +129,21 @@ async def _finish_with_question(
 ) -> None:
     """Turn tạm dừng ở tool `ask_user` — payload `interrupt.value` là `{"question": ...,
     "options": [...]}` do tool tự truyền, `interrupt.id` (LangGraph tự sinh, ổn định cho
-    ĐÚNG lần dừng này) dùng làm `questionId` cho FE (`POST
-    .../questions/{questionId}/answer`, `docs/api-doc.md` mục 2.2)."""
+    ĐÚNG lần dừng này) dùng làm `question_id` cho FE (`POST
+    .../questions/{question_id}/answer`, `docs/api-doc.md` mục 2.2)."""
     raw: Any = interrupt.value
     payload: dict[str, Any] = (
         cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
     )
-    choice = MessageChoiceDto(
+    choice = MessageChoice(
         question_id=interrupt.id,
         question=str(payload.get("question", "")),
         options=[
-            ChoiceOptionDto(id=f"opt-{i}", label=str(label))
+            ChoiceOption(id=f"opt-{i}", label=str(label))
             for i, label in enumerate(payload.get("options") or [])
         ],
     )
-    choice_json = choice.model_dump(mode="json", by_alias=True)
+    choice_json = choice.model_dump(mode="json")
     await finish_turn(
         channel,
         req,
@@ -156,12 +159,12 @@ async def _drive(req: TurnRequest, input_: object) -> None:
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
     context = await _build_context(req)
     base: dict[str, Any] = {
-        "conversationId": req.conversation_id,
-        "messageId": req.message_id,
+        "conversation_id": req.conversation_id,
+        "message_id": req.message_id,
     }
 
     await emit(
-        channel, {"type": "message.started", "corrId": req.corr_id, **base}
+        channel, {"type": "message.started", "corr_id": req.corr_id, **base}
     )
 
     try:
@@ -202,19 +205,7 @@ async def _drive(req: TurnRequest, input_: object) -> None:
 
 
 async def handle_turn(req: TurnRequest) -> None:
-    """Turn mới hoặc Steer (`req.is_steer`)."""
-    channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
-    if req.is_steer:
-        await emit(
-            channel,
-            {
-                "type": "message.steered",
-                "corrId": req.corr_id,
-                "conversationId": req.conversation_id,
-                "messageId": req.message_id,
-                "content": req.content,
-            },
-        )
+    """Turn mới."""
     await _drive(
         req, {"messages": [HumanMessage(content=_human_message_content(req))]}
     )

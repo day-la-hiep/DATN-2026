@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.exception.errors import NotFoundError
-from app.models.document import Document, DocumentOverride
+from app.models.document import Document, DocumentOverride, DocumentStage
 
 SessionFactory = Callable[[], Session]
 
@@ -36,9 +36,17 @@ class DocumentOverrideRepository:
         with self._sessions() as s, s.begin():
             yield s
 
+    @staticmethod
+    def _stage_row_id(s: Session, document_id: str, stage_id: str) -> str | None:
+        """Override trỏ tới dòng bước (`document_stages.id`), nên cần tra id bước từ (tài liệu, mã bước) trước."""
+        return s.scalars(
+            select(DocumentStage.id).where(DocumentStage.document_id == document_id, DocumentStage.stage_id == stage_id)
+        ).first()
+
     def get(self, document_id: str, stage_id: str) -> dict[str, Any]:
         with self._sessions() as s:
-            row = s.get(DocumentOverride, (document_id, stage_id))
+            stage_row_id = self._stage_row_id(s, document_id, stage_id)
+            row = s.get(DocumentOverride, stage_row_id) if stage_row_id else None
             return dict(row.data) if row is not None else {}
 
     def _set(
@@ -51,10 +59,13 @@ class DocumentOverrideRepository:
             # khoá dòng tài liệu (không phải dòng override, có thể chưa tồn tại): hai lần sửa cùng lúc không ghi đè nhau
             if s.scalars(select(Document).where(Document.id == document_id).with_for_update()).first() is None:
                 raise NotFoundError(document_id)
-            row = s.get(DocumentOverride, (document_id, stage_id))
+            stage_row_id = self._stage_row_id(s, document_id, stage_id)
+            if stage_row_id is None:
+                raise NotFoundError(f"{document_id}/{stage_id}")
+            row = s.get(DocumentOverride, stage_row_id)
             data = change(dict(row.data) if row is not None else {})
             if row is None:
-                s.add(DocumentOverride(document_id=document_id, stage_id=stage_id, data=data))
+                s.add(DocumentOverride(document_stage_id=stage_row_id, data=data))
             else:
                 row.data = data
             return data

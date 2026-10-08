@@ -9,9 +9,8 @@ AGENT_EVENTS_CHANNEL = "agent:events:{conversation_id}"  # Agent -> SSE client (
 STREAM_DONE_SENTINEL = "[DONE]"  # đánh dấu kết thúc 1 stream SSE
 
 # ----- Redis key (không phải Pub/Sub) -----
-# Giá trị = messageId của turn đang chạy — dùng để phân biệt "tin nhắn mới" (turn mới)
-# với "Steer" (turn hiện tại còn đang chạy). Set khi publish turn, xoá khi turn message.done.
-# Xem docs/async-api-doc.md mục 5, docs/api-doc.md mục 2.1.
+# Giá trị = messageId của turn đang chạy (kể cả đang chờ trả lời `ask_user`) — còn key thì
+# `POST .../messages` trả 409 (không có Steer). Set khi mở turn, xoá khi turn message.done.
 AGENT_ACTIVE_TURN_KEY = "agent:active_turn:{conversation_id}"
 
 # Giá trị = `TurnRequest` JSON của turn/resume đã persist nhưng CHƯA đẩy vào

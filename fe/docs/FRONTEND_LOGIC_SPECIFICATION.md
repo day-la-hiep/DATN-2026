@@ -38,7 +38,7 @@ Là trung tâm quản lý hội thoại, tin nhắn và trạng thái khung nh�
 | `activeId` | `string \| null` | ID cuộc trò chuyện đang được chọn. `null` nghĩa là đang ở trang "Hội thoại mới". |
 | `messagesByConversation` | `Record<string, ChatMessage[]>` | Lưu danh sách tin nhắn theo key là `conversationId`. |
 | `activeStreams` | `Record<string, number>` | Số luồng AI đang streaming theo từng `conversationId` (cho phép gửi tin song song ở các chat khác nhau). |
-| **`inputsByConversation`** | `Record<string, ConversationInputState>` | **Đồng bộ trạng thái ô nhập theo từng `conversationId`**. Lưu nháp (`value`), kỹ năng chọn (`selectedSkill`), tệp đính kèm (`files`), và trích dẫn (`pendingSelection`). |
+| **`inputsByConversation`** | `Record<string, ConversationInputState>` | **Đồng bộ trạng thái ô nhập theo từng `conversationId`**. Lưu nháp (`value`), kỹ năng chọn (`selectedSkill`), tệp đính kèm (`files`). |
 | `selectedModelId` | `string` | Mô hình AI được chọn (ví dụ: `gemini-2.5-flash`, `gemini-2.5-pro`). |
 
 #### Các Actions chính của `useChatStore`:
@@ -61,9 +61,6 @@ Quản lý trạng thái hiển thị các panel bên phải và các tương t�
 | `highlightedMessageId` | `string \| null` | ID tin nhắn đang được highlight (tự động nháy viền trong 2 giây). |
 
 ---
-
-### 2.3. Store Trích Dẫn: `useSelectionStore` (`features/chat/selectionStore.ts`)
-- `pending`: `MessageSelectionRef | null` — Đoạn văn bản bôi đen từ tin nhắn hoặc Quill Editor đang chờ người dùng đặt câu hỏi trong `ChatInput`.
 
 ---
 
@@ -104,7 +101,6 @@ type ChatStreamEvent =
   - Khi `range.length > 0`, lấy tọa độ `selection.bounds.bottom` bên dưới dòng bôi đen.
   - Hiển thị Toolbar nổi với màu đặc 100% (`opacity-100 bg-popover`):
     - **Nút "Sửa bằng AI"**: Mở ô nhập prompt để AI thay thế/sửa trực tiếp đoạn văn bản bôi đen trong Quill Canvas.
-    - **Nút "Hỏi về đoạn này"**: Đẩy trích dẫn xuống `ChatInput` (`pendingSelection`) để người dùng hỏi AI trong khung chat chính.
 
 #### B. Sự Kiện Tự Đóng Khi Mất Focus (Click Outside)
 - **Event**: `window.document.addEventListener("mousedown", handleClickOutside)`

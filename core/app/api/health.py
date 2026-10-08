@@ -1,7 +1,7 @@
 """Health check endpoints — dùng cho liveness/readiness probe và debug thủ công.
 
 Đồng thời làm ví dụ quy ước DTO: response được validate/serialize qua Pydantic
-model trong `app/dto/health.py` thay vì trả dict tay.
+model trong `app/dto/response/health.py` thay vì trả dict tay.
 """
 from typing import Annotated
 
@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from app.api.deps import get_postgres_client, get_rabbitmq_client, get_redis_client
-from app.dto.health import LivenessResponse, ReadinessChecks, ReadinessResponse
+from app.dto.response.health import LivenessResponse, ReadinessChecks, ReadinessResponse
 from app.infra.postgres_client import PostgresClient
 from app.infra.rabbitmq_client import RabbitMQClient
 from app.infra.redis_client import RedisClient

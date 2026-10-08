@@ -10,7 +10,7 @@ from app.dto.consultation import (
     DoctorReplyInput,
     RequestConsultationInput,
 )
-from app.dto.message import MessageOutput
+from app.dto.response.message import MessageOutput
 from app.services.consultation_service import ConsultationService
 
 router = APIRouter(tags=["doctor"])

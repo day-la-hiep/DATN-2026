@@ -2,8 +2,8 @@
 `langgraph.prebuilt.create_react_agent` cũ đã deprecated) thay vì tự dựng lại vòng lặp
 "gọi LLM ⇄ gọi tool" bằng `StateGraph` thủ công. `create_agent` cho sẵn: vòng lặp ReAct
 chuẩn, `ToolNode` thực thi tool (kể cả tool tự `interrupt()` —
-`app/agent/tools.py::ask_user`), checkpointer (short-term memory theo `thread_id`) và
-`store` (long-term memory xuyên thread, `app/agent/memory.py`).
+`agent/tools/ask_user.py`), checkpointer (short-term memory theo `thread_id`) và
+`store` (long-term memory xuyên thread, `agent/tools/memory.py`).
 
 Phần còn lại tuỳ biến qua `middleware` (cơ chế mở rộng CÓ SẴN của `create_agent`, xem
 `langchain.agents.middleware`) thay vì tự viết node/hook riêng:
@@ -15,7 +15,7 @@ Phần còn lại tuỳ biến qua `middleware` (cơ chế mở rộng CÓ SẴN
     `app/config/settings.py::AGENT_MODEL_CHOICES`), không còn 1 model cố định toàn hệ thống.
   - `inject_long_term_memory` (`wrap_model_call`, phải tự viết vì đây là logic
     nghiệp vụ — LangChain không biết trước "nhớ gì" cho app cụ thể): trước mỗi lần gọi
-    LLM, semantic search long-term memory liên quan (`app/agent/memory.py`) rồi chèn
+    LLM, semantic search long-term memory liên quan (`agent/tools/memory.py`) rồi chèn
     vào `system_message`.
   - `emit_reasoning_step` (`wrap_model_call`) + `emit_tool_result` (`wrap_tool_call`):
     nguồn phát SSE DUY NHẤT cho 2 event `message.thinking`/`message.tool_result` — trước
@@ -160,5 +160,5 @@ def config_for(conversation_id: str) -> RunnableConfig:
     turn cùng 1 thread) — khác bản trước (`thread_id = message_id` riêng từng turn, xem
     `kien-truc-memory.md` mục 0), nay không cần tầng memory riêng ghép lại các turn vì
     checkpointer đã tự làm việc đó qua `messages`. Dùng chung bởi mọi caller chạy
-    `agent_graph` (`app/agent/worker.py`)."""
+    `agent_graph` (`agent/worker.py`)."""
     return {"configurable": {"thread_id": conversation_id}}

@@ -41,7 +41,7 @@ hardcode them. The Core↔Worker contract is `agent/dto/schemas.py` (`TurnReques
 | `app/repositories/` | SQLAlchemy queries; `flush()` only, `get_db` commits | commit/rollback |
 | `app/models/` | ORM tables only — SQLAlchemy persistence schema (register in `app/models/__init__.py`) | leak into API responses, hold business/domain fields that belong in `dto/base` |
 | `app/dto/base/` | **the business entity layer** — domain objects (`Document`, `Conversation`, `User`, ...), the source of truth for what fields a business concept has | import ORM models |
-| `app/dto/common/` (currently `app/dto/common.py`) | cross-resource shared DTOs: `CamelModel`, `ApiResponse[T]` envelope, `PageParams`/`PageResponse` | hold resource-specific fields |
+| `app/dto/common/` | cross-resource shared DTOs, package split by topic: `envelope.py` (`ApiResponse[T]`), `file.py` (`FileDto(File)` — inherits base), `consultation.py` (`DoctorDto`/`ConsultationSessionDto` — trimmed base entities, never expose `password_hash`). Wire is snake_case — no camelCase aliases. **Base is the single source of truth**: when a wire shape is identical to a base entity (`VideoCall`...) use the base class directly or subclass it (`FileDto(File)`), don't redeclare fields. Data that is only stored as JSON inside a row, never as its own table (`Step`, `MessageChoice`, `Source`, in `common/chat.py`), is not a base entity | hold resource-specific fields |
 | `app/dto/request/` | per-resource **Input** DTOs (`XxxInput`) — what an endpoint accepts | hold Output/response shapes |
 | `app/dto/response/` | per-resource **Output** DTOs (`XxxOutput`/`XxxResult`) — what an endpoint returns | hold Input/request shapes |
 | `app/infra/` | per-service clients: redis, rabbitmq, qdrant, minio, llm, docling, embedding | resource-specific business logic |
@@ -71,7 +71,7 @@ it's persisted (`app/models/`, SQLAlchemy schema) or how it's exposed over the A
 Models exist to store an entity; `dto/base` entities exist to define it.
 
 Within `app/dto/`, the per-resource files split further into groups: `base/` (entities, above),
-`common/` (shared cross-resource DTOs — envelope, pagination, `CamelModel`), `request/` (Input DTOs,
+`common/` (shared cross-resource DTOs — envelope, `FileDto`), `request/` (Input DTOs,
 one concern per endpoint body/query) and `response/` (Output DTOs). A resource like `conversation`
 or `message` gets its Input shapes under `request/` and Output shapes under `response/` rather than
 mixed in one flat file — existing flat files (`app/dto/conversation.py`, `app/dto/message.py`) predate
