@@ -11,7 +11,8 @@ import {
   Stethoscope,
   X,
 } from "lucide-react";
-import { CURRENT_USER, getInitials } from "@/features/user";
+import { getInitials } from "@/features/user";
+import { api, clearAuthSession, getAuthenticatedUser, REFRESH_TOKEN_STORAGE_KEY, type AuthenticatedUser } from "@/services/client";
 import { SettingsDialog } from "@/features/settings/components/SettingsDialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -53,11 +54,35 @@ function SidebarInner({
   onToggleCollapse: () => void;
   setSettingsOpen: (open: boolean) => void;
 }) {
+  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
   const conversations = useChatStore((s) => s.conversations);
   const activeId = useChatStore((s) => s.activeId);
   const loading = useChatStore((s) => s.loadingConversations);
   const startNewChat = useChatStore((s) => s.startNewChat);
   const selectConversation = useChatStore((s) => s.selectConversation);
+
+  useEffect(() => {
+    setCurrentUser(getAuthenticatedUser());
+  }, []);
+
+  async function handleLogout() {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+    if (refreshToken) {
+      try {
+        await api.post("/auth/logout", { refresh_token: refreshToken });
+      } catch {
+        // Xóa session cục bộ dù API logout không liên lạc được.
+      }
+    }
+    clearAuthSession();
+  }
+
+  const displayName = currentUser?.full_name || currentUser?.username || "Tài khoản";
+  const displayRole = currentUser?.role === "doctor"
+    ? "Bác sĩ"
+    : currentUser?.role === "admin"
+      ? "Quản trị viên"
+      : "Bệnh nhân";
 
   return (
     <Sidebar className="w-full h-full border-r border-border bg-sidebar/70 backdrop-blur-md overflow-hidden" collapsible="none">
@@ -229,17 +254,17 @@ function SidebarInner({
                 >
                   <Avatar className="size-7.5 shrink-0 rounded-full border border-border">
                     <AvatarFallback className="bg-brand/15 text-xs font-semibold text-brand rounded-full">
-                      {getInitials(CURRENT_USER.name)}
+                      {getInitials(displayName)}
                     </AvatarFallback>
                   </Avatar>
                   {!collapsed && (
                     <div className="flex flex-1 items-center justify-between min-w-0 overflow-hidden">
                       <div className="flex flex-col text-left leading-tight min-w-0 overflow-hidden whitespace-nowrap">
                         <span className="truncate text-xs font-semibold text-foreground">
-                          {CURRENT_USER.name}
+                          {displayName}
                         </span>
                         <span className="truncate text-[10px] text-muted-foreground">
-                          {CURRENT_USER.email}
+                          {currentUser ? `@${currentUser.username} · ${displayRole}` : "Đang tải tài khoản..."}
                         </span>
                       </div>
                       <ChevronUp className="size-3.5 shrink-0 text-muted-foreground ml-1" />
@@ -257,7 +282,7 @@ function SidebarInner({
                   <span className="text-xs font-medium">Cài đặt hệ thống</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border" />
-                <DropdownMenuItem variant="destructive" className="rounded-lg cursor-pointer">
+                <DropdownMenuItem variant="destructive" onClick={() => void handleLogout()} className="rounded-lg cursor-pointer">
                   <LogOut className="size-4" />
                   <span className="text-xs font-medium">Đăng xuất</span>
                 </DropdownMenuItem>
