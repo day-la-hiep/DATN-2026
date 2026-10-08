@@ -12,19 +12,32 @@ from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMi
 from langgraph.runtime import Runtime
 from langgraph.store.base import BaseStore
 
-from agent.graph.pre_diagnosis_graph import ALL_TOOLS, build_pre_diagnosis_graph, default_middleware
+from agent.graph.pre_diagnosis_graph import (
+    ALL_TOOLS,
+    build_pre_diagnosis_graph,
+    default_middleware,
+)
 from agent.graph.triage import triage
 from agent.state.chat_state import ChatState
-from agent.state.context import AgentContext
+from agent.context.agent_context import AgentContext
 from agent.tools.memory import build_memory_store
-from agent.tracing import trace_callback
+from agent.common.tracing import trace_callback
 from app.config.settings import settings
 
-__all__ = ["ALL_TOOLS", "agent_graph", "build_agent_graph", "build_chat_graph", "config_for", "default_middleware"]
+__all__ = [
+    "ALL_TOOLS",
+    "chat_graph",
+    "build_agent_graph",
+    "build_chat_graph",
+    "config_for",
+    "default_middleware",
+]
 
 
 def _pre_diagnosis_node(graph: CompiledStateGraph[Any, AgentContext, Any, Any]):
-    async def run(state: ChatState, runtime: Runtime[AgentContext]) -> dict[str, Any]:
+    async def run(
+        state: ChatState, runtime: Runtime[AgentContext]
+    ) -> dict[str, Any]:
         before = state["messages"]
         write = get_stream_writer()
         final: dict[str, Any] = {}
@@ -40,7 +53,11 @@ def _pre_diagnosis_node(graph: CompiledStateGraph[Any, AgentContext, Any, Any]):
         ):
             if mode == "messages":
                 message, meta = cast("tuple[Any, dict[str, Any]]", chunk)
-                if meta.get("langgraph_node") == "model" and isinstance(message, AIMessageChunk) and message.text:
+                if (
+                    meta.get("langgraph_node") == "model"
+                    and isinstance(message, AIMessageChunk)
+                    and message.text
+                ):
                     write({"type": "token", "text": message.text})
             else:
                 final = cast("dict[str, Any]", chunk)
@@ -64,14 +81,20 @@ def build_chat_graph(
     checkpointer: BaseCheckpointSaver[str] | None = None,
     store: BaseStore | None = None,
     *,
-    pre_diagnosis: CompiledStateGraph[Any, AgentContext, Any, Any] | None = None,
+    pre_diagnosis: CompiledStateGraph[Any, AgentContext, Any, Any]
+    | None = None,
 ) -> CompiledStateGraph[Any, AgentContext, Any, Any]:
     graph = StateGraph(ChatState, context_schema=AgentContext)
-    graph.add_node("pre_diagnosis", _pre_diagnosis_node(pre_diagnosis or build_pre_diagnosis_graph()))
+    graph.add_node(
+        "pre_diagnosis",
+        _pre_diagnosis_node(pre_diagnosis or build_pre_diagnosis_graph()),
+    )
     if settings.AGENT_TRIAGE_ENABLED:
         graph.add_node("triage", triage)
         graph.add_edge(START, "triage")
-        graph.add_conditional_edges("triage", _after_triage, ["pre_diagnosis", END])
+        graph.add_conditional_edges(
+            "triage", _after_triage, ["pre_diagnosis", END]
+        )
     else:
         graph.add_edge(START, "pre_diagnosis")
     graph.add_edge("pre_diagnosis", END)
@@ -89,19 +112,25 @@ def build_agent_graph(
     *,
     tools: list[Any] | None = None,
     system_prompt: str | None = None,
-    middleware: list[AgentMiddleware[AgentState[Any], AgentContext, Any]] | None = None,
+    middleware: list[AgentMiddleware[AgentState[Any], AgentContext, Any]]
+    | None = None,
 ) -> CompiledStateGraph[Any, AgentContext, Any, Any]:
     """Chat graph đầy đủ"""
     return build_chat_graph(
         checkpointer,
         store,
-        pre_diagnosis=build_pre_diagnosis_graph(tools=tools, system_prompt=system_prompt, middleware=middleware),
+        pre_diagnosis=build_pre_diagnosis_graph(
+            tools=tools, system_prompt=system_prompt, middleware=middleware
+        ),
     )
 
 
-agent_graph = build_chat_graph()
+chat_graph = build_chat_graph()
 
 
 def config_for(conversation_id: str) -> RunnableConfig:
     """`thread_id` = `conversation_id`"""
-    return {"configurable": {"thread_id": conversation_id}, "callbacks": [trace_callback]}
+    return {
+        "configurable": {"thread_id": conversation_id},
+        "callbacks": [trace_callback],
+    }

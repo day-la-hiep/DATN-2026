@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import aggregator: đăng ký toàn bộ ORM model (relationship giữa các model cần đủ mapper).
 import app.models  # noqa: F401  # pyright: ignore[reportUnusedImport]
-from agent.handler.response_consumer import start_consuming
+from app.workers.agent_response_consumer import start_consuming
 from app.api.conversation_api import router as conversation_router
 from app.api.deps import close_clients, get_file_store_service, get_rabbitmq_client
 from app.api.health import router as health_router

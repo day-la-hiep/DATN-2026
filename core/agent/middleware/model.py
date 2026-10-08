@@ -26,10 +26,10 @@ from agent.graph.common import (
     CriticVerdict,
     emit,
 )
-from agent.llm import get_model
+from agent.common.llm import get_model
 from agent.prompt.critic import CRITIC_SYSTEM
 from agent.prompt.orchestrator import DIAGNOSIS_PROMPT
-from agent.state.context import AgentContext
+from agent.context.agent_context import AgentContext
 from agent.tools.memory import search_memories
 from agent.tools.reasoning import (
     FEEDBACK_PREFIX,

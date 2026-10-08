@@ -12,7 +12,7 @@ from langchain.tools import ToolRuntime, tool
 from PIL import Image
 from torchvision import models, transforms  # pyright: ignore[reportMissingTypeStubs]
 
-from agent.state.context import AgentContext
+from agent.context.agent_context import AgentContext
 from app.config.settings import settings
 from app.api.deps import get_file_store_service
 

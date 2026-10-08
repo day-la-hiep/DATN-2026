@@ -21,7 +21,7 @@ def sha(*parts: str) -> str:
 
 def get_chat_model(model_id: str) -> Any:
     """Chat model LangChain theo id (provider:model hoặc id ngắn trong `settings.AGENT_MODEL_CHOICES`); cấu hình provider ở `agent/llm.py`."""
-    from agent.llm import get_model
+    from agent.common.llm import get_model
 
     return get_model(model_id)
 
@@ -79,7 +79,9 @@ class BlobCache(Protocol):
 
     def get_bytes(self, name: str) -> bytes | None: ...
 
-    def put_bytes(self, name: str, data: bytes, content_type: str | None = None) -> None: ...
+    def put_bytes(
+        self, name: str, data: bytes, content_type: str | None = None
+    ) -> None: ...
 
 
 class LLMClient:
@@ -150,7 +152,9 @@ class LLMClient:
             return
         if self._cache is None:
             return
-        self._cache.put_bytes(self._cache_key(key), text.encode("utf-8"), "application/json")
+        self._cache.put_bytes(
+            self._cache_key(key), text.encode("utf-8"), "application/json"
+        )
 
     def complete_json(
         self, system: str, user: str, *, name: str = "", retries: int = 2

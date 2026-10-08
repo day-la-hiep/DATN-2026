@@ -19,7 +19,7 @@ class Conversation(Base):
     title: Mapped[str] = mapped_column(String(255), default="")
     # id ngắn trong `AGENT_MODEL_CHOICES` (`app/config/settings.py`), KHÔNG phải chuỗi
     # "provider:model" thật — worker tự map sang chuỗi thật lúc chạy turn
-    # (`agent/worker.py::_conversation_for`) để đổi danh sách model không cần
+    # (`agent/context/builder.py::_conversation_for`) để đổi danh sách model không cần
     # migration cột này. Chọn 1 lần lúc tạo hội thoại, đổi được sau qua `PATCH
     # /conversations/{id}/model` (`app/api/conversation_api.py`).
     model: Mapped[str] = mapped_column(

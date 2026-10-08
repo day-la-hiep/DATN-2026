@@ -1,12 +1,11 @@
-
 import uuid
 from typing import Any
 from langchain.tools import tool, ToolRuntime
 from langgraph.store.base import BaseStore
 from langgraph.store.memory import InMemoryStore
 
-from agent.state.context import AgentContext
-from agent.embeddings import EMBEDDING_DIM, LocalEmbeddings
+from agent.context.agent_context import AgentContext
+from agent.common.embeddings import EMBEDDING_DIM, LocalEmbeddings
 
 MEMORY_NAMESPACE = "memories"
 
@@ -35,7 +34,9 @@ async def search_memories(
 
 
 @tool
-async def save_memory(content: str, runtime: ToolRuntime[AgentContext, Any]) -> str:
+async def save_memory(
+    content: str, runtime: ToolRuntime[AgentContext, Any]
+) -> str:
     """Lưu 1 fact đáng nhớ về người dùng (tình trạng da, tiền sử bệnh, thuốc/dị ứng,
     sở thích điều trị...) để dùng lại ở hội thoại sau.
 

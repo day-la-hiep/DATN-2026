@@ -30,7 +30,7 @@ from langgraph.errors import GraphRecursionError  # noqa: E402
 from langgraph.types import Command  # noqa: E402
 
 from agent.middleware.evidence import evidence_status  # noqa: E402
-from agent.state.context import AgentContext  # noqa: E402
+from agent.context.agent_context import AgentContext  # noqa: E402
 from agent.tools.reasoning import INVALID_PREFIX, TOOL_NAME as REASONING, render_reasoning, validate_reasoning  # noqa: E402
 from app.config.settings import settings  # noqa: E402
 

@@ -29,7 +29,7 @@ from agent.graph.chat_graph import (  # noqa: E402
     ALL_TOOLS, build_agent_graph, config_for, default_middleware,
 )
 from agent.prompt.orchestrator import SYSTEM_PROMPT  # noqa: E402
-from agent.state.context import AgentContext  # noqa: E402
+from agent.context.agent_context import AgentContext  # noqa: E402
 from app.config.settings import settings  # noqa: E402
 
 TOOL_BUDGET = 8  # SYSTEM_PROMPT mục 3: tối đa ~8 lần gọi tool/lượt (kể cả make_plan)

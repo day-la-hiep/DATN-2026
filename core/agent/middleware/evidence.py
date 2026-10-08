@@ -16,7 +16,7 @@ from langchain.agents.middleware import (
 from langchain.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.types import Command
 
-from agent.state.context import AgentContext
+from agent.context.agent_context import AgentContext
 from agent.tools.reasoning import FEEDBACK_PREFIX, INVALID_PREFIX, TOOL_NAME as REASONING_TOOL, turn_messages
 
 EVIDENCE_FEEDBACK_PREFIX = "[Hệ thống kiểm soát bằng chứng — không phải lời người dùng]"

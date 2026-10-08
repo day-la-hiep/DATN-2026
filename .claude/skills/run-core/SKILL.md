@@ -49,7 +49,7 @@ The driver reads `APP_ACCESS_TOKEN` from env or `./.env` and sends it as a Beare
 `pyright` runs in basic mode (`typeCheckingMode` in `pyproject.toml`):
 
 ```bash
-pyright agent/tools agent/middleware agent/graph agent/handler agent/prompt agent/turn.py agent/worker.py
+pyright agent/tools agent/middleware agent/graph agent/prompt agent/turn.py agent/worker.py
 ```
 
 ## Run (human path)

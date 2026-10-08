@@ -1,20 +1,23 @@
 """Xử lý 1 turn của agent"""
 
+import json
 import logging
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langgraph.types import Command, Interrupt
 
-from agent.dto.schemas import TurnRequest
-from agent.graph.chat_graph import agent_graph, config_for
-from agent.state.context import AgentContext
-from agent.handler.publisher import emit, finish_turn
-from app.config.settings import settings
-from app.config.constants import AGENT_EVENTS_CHANNEL
-from app.api.deps import get_postgres_client
+from agent.dto.schemas import AgentResponseMessage, TurnRequest
+from agent.graph.chat_graph import chat_graph, config_for
+from agent.context.agent_context import AgentContext
+from agent.context.builder import build_context
+from app.api.deps import get_rabbitmq_client, get_redis_client
+from app.config.constants import (
+    AGENT_EVENTS_CHANNEL,
+    AGENT_RESPONSE_QUEUE,
+    STREAM_DONE_SENTINEL,
+)
 from app.dto.common import ChoiceOption, MessageChoice
-from app.repositories.conversation_repository import ConversationRepository
 
 logger = logging.getLogger(__name__)
 
@@ -28,41 +31,21 @@ _ERROR_TEXT = (
 )
 
 
-async def _conversation_for(conversation_id: str) -> tuple[str, str]:
-    async with get_postgres_client().session_factory() as db:
-        repo = ConversationRepository(db)
-        conversation = await repo.get(conversation_id)
-        if conversation is None:
-            return "", ""
-        user_id = await repo.owner_user_id(conversation) or ""
-    model = settings.AGENT_MODEL_CHOICES.get(conversation.model, "")
-    return user_id, model
-
-
-async def _build_context(req: TurnRequest) -> AgentContext:
-    user_id, model = await _conversation_for(req.conversation_id)
-    return AgentContext(
-        user_id=user_id,
-        conversation_id=req.conversation_id,
-        message_id=req.message_id,
-        image_keys=[
-            a.storage_key
-            for a in (req.attached_files or [])
-            if a.content_type.startswith("image/")
-        ],
-        model=model,
-    )
-
-
 def _human_message_content(req: TurnRequest) -> str:
     """Nối thêm object key MinIO của ảnh đính kèm"""
     content = req.content or ""
-    images = [a for a in (req.attached_files or []) if a.content_type.startswith("image/")]
+    images = [
+        a
+        for a in (req.attached_files or [])
+        if a.content_type.startswith("image/")
+    ]
     if not images:
         return content
 
     # nhãn `object_key` giữ nguyên: là tên tham số của tool `classify_skin_image` mà prompt hướng dẫn LLM chép lại
-    lines = [f'- name="{a.file_name}" object_key="{a.storage_key}"' for a in images]
+    lines = [
+        f'- name="{a.file_name}" object_key="{a.storage_key}"' for a in images
+    ]
     return content + "\n\n[Ảnh đính kèm]\n" + "\n".join(lines)
 
 
@@ -78,7 +61,7 @@ async def _stream_graph(
     final_message: AIMessage | None = None
     streamed = False
 
-    async for mode, chunk in agent_graph.astream(  # pyright: ignore[reportUnknownMemberType]
+    async for mode, chunk in chat_graph.astream(  # pyright: ignore[reportUnknownMemberType]
         input_,
         config=config_for(req.conversation_id),
         context=context,
@@ -89,7 +72,10 @@ async def _stream_graph(
             payload = cast("dict[str, Any]", chunk)
             if payload.get("type") == "token" and payload.get("text"):
                 streamed = True
-                await emit(channel, {"type": "message.delta", "delta": payload["text"], **base})
+                await emit(
+                    channel,
+                    {"type": "message.delta", "delta": payload["text"], **base},
+                )
             continue
 
         # mode == "updates": state diff sau mỗi node của chat graph — dùng để phát hiện interrupt (tool `ask_user`) và tóm `AIMessage`
@@ -107,8 +93,16 @@ async def _stream_graph(
 
     # Câu trả lời của triage không đi qua token streaming (nằm trong tham số tool của lần phân loại) — phát một lần để FE hiển thị
     # như các câu trả lời khác.
-    if interrupt is None and final_message is not None and not streamed and final_message.text:
-        await emit(channel, {"type": "message.delta", "delta": final_message.text, **base})
+    if (
+        interrupt is None
+        and final_message is not None
+        and not streamed
+        and final_message.text
+    ):
+        await emit(
+            channel,
+            {"type": "message.delta", "delta": final_message.text, **base},
+        )
 
     return final_message, interrupt
 
@@ -147,7 +141,7 @@ async def _finish_with_question(
 
 async def _drive(req: TurnRequest, input_: object) -> None:
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
-    context = await _build_context(req)
+    context = await build_context(req)
     base: dict[str, Any] = {
         "conversation_id": req.conversation_id,
         "message_id": req.message_id,
@@ -200,3 +194,35 @@ async def handle_turn(req: TurnRequest) -> None:
 async def handle_resume(req: TurnRequest) -> None:
     """Tiếp tục turn đang dừng ở `ask_user` với câu trả lời của người dùng."""
     await _drive(req, Command(resume=req.answer))
+
+
+async def emit(channel: str, payload: dict[str, Any]) -> None:
+    await get_redis_client().publish(channel, json.dumps(payload))
+
+
+async def finish_turn(
+    channel: str,
+    req: TurnRequest,
+    event: dict[str, Any],
+    *,
+    content: str,
+    status: Literal["done", "question"],
+    choice: dict[str, Any] | None = None,
+    reasoning: list[dict[str, Any]] | None = None,
+) -> None:
+    """Kết thúc/tạm dừng turn"""
+    await emit(channel, event)
+    await get_redis_client().publish(channel, STREAM_DONE_SENTINEL)
+    await get_rabbitmq_client().publish(
+        AGENT_RESPONSE_QUEUE,
+        AgentResponseMessage(
+            conversation_id=req.conversation_id,
+            message_id=req.message_id,
+            content=content,
+            status=status,
+            choice=choice,
+            reasoning=reasoning or None,
+        )
+        .model_dump_json()
+        .encode("utf-8"),
+    )

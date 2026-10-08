@@ -20,7 +20,7 @@ Xem thêm: [`docs/module/chat.md`](../../docs/module/chat.md) (luồng chat từ
 | **Graph tiền chẩn đoán** | `create_agent` + tool + middleware: vòng lặp ReAct (model trả lời → có `tool_calls` thì thực thi tool rồi gọi model tiếp → lặp tới khi model trả lời không còn tool). | `agent/graph/pre_diagnosis_graph.py` |
 | **Tool** | Hàm `@tool` agent được gọi. Đăng ký trong `ALL_TOOLS`. | `agent/tools/` |
 | **Middleware** | Hook quanh lần gọi model / tool (chọn model, chèn memory, ép lập luận, phát event). | `agent/middleware/` |
-| **Context** | `AgentContext` — dữ liệu riêng của một turn (`user_id`, `conversation_id`, `message_id`, ảnh đính kèm, model, danh sách bước đã ghi). | `agent/state/context.py` |
+| **Context** | `AgentContext` — dữ liệu riêng của một turn (`user_id`, `conversation_id`, `message_id`, ảnh đính kèm, model, danh sách bước đã ghi). | `agent/context/agent_context.py` |
 | **Thread** | `thread_id` của checkpointer = `conversation_id`: mọi turn của một hội thoại nối tiếp trong cùng một lịch sử `messages`. | `agent/graph/chat_graph.py::config_for` |
 
 ```
@@ -57,12 +57,12 @@ FE ──POST /messages──▶ Core ──publish──▶ RabbitMQ agent_requ
         SSE ◀──forward───┘◀────────────────────────┘
                                                    │ xong / hỏi lại / lỗi
                                                    ▼
-                                    finish_turn (agent/handler/publisher.py)
+                                    finish_turn (agent/publisher.py)
                                     event cuối + [DONE] + AgentResponseMessage
                                                    │
                                                    ▼
                           RabbitMQ agent_response_queue ──▶ Core ghi Postgres
-                                                  (agent/handler/response_consumer.py)
+                                                  (app/workers/agent_response_consumer.py)
 ```
 
 - Worker **không ghi Postgres**; Core là nơi duy nhất upsert bảng `messages`.
@@ -85,8 +85,8 @@ FE ──POST /messages──▶ Core ──publish──▶ RabbitMQ agent_requ
 | `tools/` | Mỗi file một (nhóm) tool; `ask_user.py` là tool hỏi lại người dùng. |
 | `prompt/orchestrator.py` | `SYSTEM_PROMPT`: nguyên tắc bằng chứng, khung quyết định, cách chọn tool, ngân sách tool. |
 | `llm.py` | `get_model()` — khởi tạo model theo `provider:model` (OpenRouter, DeepSeek, Gemini...). |
-| `handler/publisher.py` | `emit` / `finish_turn`: event cuối + sentinel `[DONE]` + `AgentResponseMessage` lên RabbitMQ. |
-| `handler/response_consumer.py` | Chạy **trong Core**: nhận `AgentResponseMessage` và ghi `messages`. |
+| `agent/publisher.py` | `emit` / `finish_turn`: event cuối + sentinel `[DONE]` + `AgentResponseMessage` lên RabbitMQ. |
+| `app/workers/agent_response_consumer.py` | Chạy **trong Core**: nhận `AgentResponseMessage` và ghi `messages`. |
 | `dto/schemas.py` | `TurnRequest` (Core → worker), `AgentResponseMessage` (worker → Core). |
 
 ## 3b. Chat graph và lọc intent

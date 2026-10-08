@@ -10,7 +10,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
 from langgraph.store.base import BaseStore
 
-from agent.state.context import AgentContext
+from agent.context.agent_context import AgentContext
 from agent.middleware.model import (
     enforce_initial_reasoning,
     force_reasoning,
@@ -26,11 +26,16 @@ from agent.middleware.evidence import (
 from agent.middleware.tool import emit_tool_result
 from agent.prompt.orchestrator import DIAGNOSIS_PROMPT
 from agent.tools.ask_user import ask_user
-from agent.tools.hybrid_retrieval import hybrid_retrieval, keyword_search, knowledge_graph_search, semantic_search
+from agent.tools.hybrid_retrieval import (
+    hybrid_retrieval,
+    keyword_search,
+    knowledge_graph_search,
+    semantic_search,
+)
 from agent.tools.reasoning import record_reasoning
 from agent.tools.skin_image_classifier import classify_skin_image
 from agent.tools.web_search import fetch_trusted_page, search_trusted_web
-from agent.llm import get_model
+from agent.common.llm import get_model
 from agent.tools.memory import save_memory
 
 

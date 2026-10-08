@@ -7,7 +7,7 @@ from langgraph.errors import GraphBubbleUp
 from langgraph.types import Command
 
 from agent.graph.common import TOOL_DISPLAY_NAMES, emit
-from agent.state.context import AgentContext
+from agent.context.agent_context import AgentContext
 from agent.tools.reasoning import STAGE_LABELS, TOOL_NAME as REASONING_TOOL
 
 logger = logging.getLogger(__name__)

@@ -12,7 +12,7 @@ import httpx
 import trafilatura
 from langchain_core.tools import tool
 
-from agent.embeddings import get_embeddings
+from agent.common.embeddings import get_embeddings
 from app.config.settings import settings
 from app.api.deps import get_redis_client
 

@@ -6,7 +6,7 @@ from typing import Any, Literal
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
-from agent.llm import get_model
+from agent.common.llm import get_model
 from app.api.deps import get_knowledge_graph_service
 from app.services.knowledge_graph_service import base_name, name_variants
 
@@ -149,25 +149,52 @@ async def _entity_facts(entity: ExtractedEntity) -> list[str]:
     """Quan hệ PrimeKG 1 bước quanh một thực thể"""
     names: list[str] = [entity.text]
     if entity.type != "drug":
-        records = await get_knowledge_graph_service().search_dermo_terms(entity.text, limit=1)
+        records = await get_knowledge_graph_service().search_dermo_terms(
+            entity.text, limit=1
+        )
         if records:
-            names = list({entity.text, records[0]["name"], *(records[0].get("synonyms") or [])})
-    rows = await _search_primekg(names, _RELATION_TYPES, entity_limit=3, rel_limit=_FACTS_PER_ENTITY)
+            names = list(
+                {
+                    entity.text,
+                    records[0]["name"],
+                    *(records[0].get("synonyms") or []),
+                }
+            )
+    rows = await _search_primekg(
+        names, _RELATION_TYPES, entity_limit=3, rel_limit=_FACTS_PER_ENTITY
+    )
     return [_relation_fact(r) for r in rows]
 
 
 async def _candidate_facts(entity_names: list[str]) -> list[str]:
     """Bệnh ứng viên lan ra từ graph (cùng triệu chứng, bệnh liên quan, thuốc chỉ định), loại chính bệnh đầu vào."""
-    seeds, _, seed_dermo_ids = await get_knowledge_graph_service().resolve_seeds(entity_names)
+    (
+        seeds,
+        _,
+        seed_dermo_ids,
+    ) = await get_knowledge_graph_service().resolve_seeds(entity_names)
     if not seeds:
         return []
-    pool = await get_knowledge_graph_service().run(_CANDIDATE_QUERY, seed_ids=[s["id"] for s in seeds], pool=_POOL, shared_cap=_SHARED_CAP)
-    pool = list(await asyncio.gather(*(get_knowledge_graph_service().attach_dermo_id(c) for c in pool)))
+    pool = await get_knowledge_graph_service().run(
+        _CANDIDATE_QUERY,
+        seed_ids=[s["id"] for s in seeds],
+        pool=_POOL,
+        shared_cap=_SHARED_CAP,
+    )
+    pool = list(
+        await asyncio.gather(
+            *(get_knowledge_graph_service().attach_dermo_id(c) for c in pool)
+        )
+    )
     # PrimeKG có nút trùng cho cùng một bệnh (vd "atopic dermatitis" / "dermatitis, atopic")
-    input_names = {base_name(n) for n in [*entity_names, *(s["name"] for s in seeds)]}
+    input_names = {
+        base_name(n) for n in [*entity_names, *(s["name"] for s in seeds)]
+    }
     pool = [
-        c for c in pool
-        if c["dermo_id"] not in seed_dermo_ids and not input_names & {base_name(v) for v in name_variants(c["name"])}
+        c
+        for c in pool
+        if c["dermo_id"] not in seed_dermo_ids
+        and not input_names & {base_name(v) for v in name_variants(c["name"])}
     ]
     return [
         f"Bệnh ứng viên theo đồ thị tri thức: {c['name']} (điểm đồ thị {c['score']:.2f}; {'; '.join(c['why'])})"
@@ -181,7 +208,11 @@ async def kg_search(query: str, *, limit: int = 15) -> list[str]:
     if not entities:
         return []
     per_entity = await asyncio.gather(*(_entity_facts(e) for e in entities))
-    candidates = [] if all(e.type == "other" for e in entities) else await _candidate_facts([e.text for e in entities])
+    candidates = (
+        []
+        if all(e.type == "other" for e in entities)
+        else await _candidate_facts([e.text for e in entities])
+    )
     facts: list[str] = []
     for fact in [*candidates, *(f for group in per_entity for f in group)]:
         if fact not in facts:

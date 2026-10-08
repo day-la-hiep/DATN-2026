@@ -13,7 +13,7 @@ knowledge graph, phân loại ảnh; thiếu thông tin thì hỏi lại; câu t
 | API | `core/app/api/conversation_api.py`, `core/app/api/upload_api.py` |
 | Service | `core/app/services/conversation_service.py`, `message_service.py` |
 | Repository / Model | `conversation_repository.py`, `message_repository.py`, `file_repository.py`; `models/conversation.py`, `message.py`, `file.py` |
-| Worker | `core/agent/worker.py` (vòng đời, khoá theo hội thoại), `turn.py` (chạy 1 turn), `handler/publisher.py`, `handler/response_consumer.py` (chạy trong Core) |
+| Worker | `core/agent/worker.py` (vòng đời, khoá theo hội thoại), `turn.py` (chạy 1 turn), `publisher.py`, `core/app/workers/agent_response_consumer.py` (chạy trong Core) |
 | Agent | `core/agent/graph/` (`chat_graph.py` lọc intent → `pre_diagnosis_graph.py` tiền chẩn đoán), `tools/`, `middleware/`, `prompt/` |
 
 ## 2. API

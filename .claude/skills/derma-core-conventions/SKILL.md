@@ -53,10 +53,11 @@ hardcode them. The Core↔Worker contract is `agent/dto/schemas.py` (`TurnReques
 | `agent/graph/common.py` | **leaf module**: `emit`, `TOOL_DISPLAY_NAMES`, `CriticState`, constants | import graph/middleware |
 | `agent/middleware/` | `@wrap_model_call` / `@wrap_tool_call` / `@after_model` hooks (pre-diagnosis graph only) | import `chat_graph` / `pre_diagnosis_graph` |
 | `agent/tools/` | one `@tool` per file (or small family) | import FastAPI |
-| `agent/state/context.py` | `AgentContext` dataclass — per-turn data tools read via `runtime.context` | |
+| `agent/context/` | `agent_context.py` = `AgentContext` dataclass (per-turn data tools read via `runtime.context`); `builder.py` = `build_context(req)` that fills it from the DB/request | run the graph |
 | `agent/worker.py` | process entry only: consume queue, per-conversation lock, `main` | hold turn logic |
 | `agent/turn.py` | one turn (agent logic): build `AgentContext`, stream graph, finish (done / `ask_user` question / error) | |
-| `agent/handler/` | **backend communication only** (no agent logic): `publisher.py` = `emit` + `finish_turn` (SSE event → `[DONE]` → `agent_response_queue`); `response_consumer.py` = Core-side consumer that persists the assistant row | import graph/tools/middleware |
+| `agent/publisher.py` | worker → backend only (no agent logic): `emit` + `finish_turn` (SSE event → `[DONE]` → `agent_response_queue`) | import graph/tools/middleware |
+| `app/workers/agent_response_consumer.py` | Core-side consumer of `agent_response_queue` that persists the assistant row (runs in Core, not the agent worker) | import from `agent/` beyond `agent/dto/schemas.py` |
 | `agent/prompt/` | `orchestrator.py` (SYSTEM_PROMPT of the pre-diagnosis graph), `triage.py` (short intent-filter prompt), `critic.py` | |
 | `agent/dto/schemas.py` | RabbitMQ message contract | |
 
@@ -109,7 +110,7 @@ Anything pushed to the user goes through `emit(conversation_id, payload)`; keep 
 the FE depends on `type/tool/content/conversationId/messageId`.
 
 **Add per-turn state** — add a field to `AgentContext`, set it where the worker builds it
-(`agent/turn.py::_build_context`), read it in tools/middleware via `runtime.context`.
+(`agent/context/builder.py::build_context`), read it in tools/middleware via `runtime.context`.
 
 **Add a setting** — declare in `Settings` (`app/config/settings.py`), mirror it in `.env.example`; a
 worker restart is needed to pick up `.env` changes. Model choices for the UI are
@@ -132,8 +133,7 @@ worker restart is needed to pick up `.env` changes. Model choices for the UI are
 
 ## Known loose ends (verify before relying on them)
 
-The stale `app/agent/response_consumer.py` leftover from the refactor is gone (confirmed
-2026-10-03) — the live consumer is `agent/handler/response_consumer.py`, imported by `main.py`.
+The live consumer is `app/workers/agent_response_consumer.py`, imported by `main.py`.
 `README.md` (root + `core/`) and `core/docs/quy-uoc.md`/`async-api-doc.md` still mention the old
 `app/agent/...` paths and `python -m app.agent.worker` — that layout no longer exists (it's
 `agent/...` and `python -m agent.worker`); don't follow those docs for paths.
