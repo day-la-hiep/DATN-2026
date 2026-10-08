@@ -1,15 +1,3 @@
-"""Ingest worker — tiến trình riêng chạy các bước pipeline tài liệu (OCR/Docling, embedding rất nặng nên không để chung với Core).
-
-Luồng:
-  1. Core (`DocumentIngestPipelineService.start_stage`) ghi stage `running` rồi publish `document_ingest_queue`.
-  2. Worker nhận message, chạy `execute` trong thread (code stage là đồng bộ) và tự ghi kết quả vào Postgres/MinIO.
-  3. Bấm Dừng: Core đặt cờ key + publish Redis `document:ingest:cancel`; worker set `threading.Event` của lần chạy tương ứng.
-
-Mỗi lần chỉ chạy một bước (Docling chiếm hết CPU/RAM). Khi worker khởi động, queue bị xoá và mọi bước còn `running` chuyển
-`failed`, vì không biết chúng còn tiến trình nào chạy — người duyệt bấm chạy lại (OCR có checkpoint nên không mất công).
-
-Chạy: cd core && python -m app.workers.document_ingest_worker
-"""
 
 import asyncio
 import json

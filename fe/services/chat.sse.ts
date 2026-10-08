@@ -21,16 +21,7 @@ import type {
   SendMessageResult,
 } from "@/features/chat/types";
 
-/**
- * Service kết nối backend API theo contract core/app/api/conversation_api.py:
- * - GET /conversations
- * Wire snake_case; chuyển đổi sang kiểu UI ở `services/apiAdapters.ts`.
- * - POST /conversations (CreateConversationInput: user_id, content, title)
- * - GET /conversations/{conversation_id}/messages
- * - POST /conversations/{conversation_id}/messages (SendMessageInput: client_message_id, content, model_id, attached_files)
- * - POST /conversations/{conversation_id}/questions/{question_id}/answer (MessageAnswerDto: question_id, option_id, label, custom)
- * - GET /conversations/{conversation_id}/stream (SSE response stream text/event-stream)
- */
+// Contract: core/app/api/conversation_api.py; chuyển sang kiểu UI ở `services/apiAdapters.ts`.
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
@@ -98,15 +89,7 @@ const impl = {
     return () => impl.listeners.delete(listener);
   },
 
-  /**
-   * Mở SSE connection và forward event tới listeners cho tới khi nhận `[DONE]`.
-   *
-   * Không còn cần "mở stream trước khi POST": Core **hoãn** đẩy turn cho Agent Worker
-   * (`agent:pending_turn` trong Redis) tới khi handler SSE này `subscribe` xong
-   * (`flush_pending_turn`) — nên dù mở SSE ngay SAU khi POST trả về, không event nào bị
-   * rơi. Dùng chung cho `sendMessage` (turn mới) lẫn `answerQuestion` (resume sau
-   * `tool_ask` — connection cũ đã đóng lúc pause).
-   */
+  /** Mở SSE tới khi nhận `[DONE]`; mở sau POST vẫn không mất event vì Core hoãn turn tới khi subscribe xong. */
   async _openStream(conversationId: string) {
     const token = getAccessToken();
     const res = await fetch(

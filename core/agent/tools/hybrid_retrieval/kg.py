@@ -1,14 +1,4 @@
-"""Nhánh KG của `hybrid_retrieval`: PrimeKG + DermO (Neo4j) -> các câu văn ngắn đem rerank chung với đoạn sách.
-
-Gộp lại logic của 4 tool cũ (`query_dermatology_kg`, `lookup_dermo_term`, `ground_medical_entities`, `expand_entity_context`) thành
-một chuỗi cố định, không để LLM sinh Cypher:
-
-  1. LLM trích thực thể y khoa từ câu hỏi và dịch sang tên tiếng Anh chuẩn (`_extract_entities`).
-  2. Chuẩn hoá bệnh / triệu chứng qua DermO (lấy từ đồng nghĩa), thuốc tra thẳng PrimeKG.
-  3. Lấy quan hệ lâm sàng 1 bước của thực thể trong PrimeKG và lan ra BỆNH ỨNG VIÊN (cùng triệu chứng, bệnh liên quan, thuốc
-     chỉ định) có điểm heuristic.
-
-Điểm đồ thị chỉ là heuristic xếp hạng ứng viên, KHÔNG phải xác suất chẩn đoán."""
+"""Nhánh KG của `hybrid_retrieval`"""
 
 import asyncio
 from typing import Any, Literal
@@ -156,8 +146,7 @@ def _relation_fact(row: dict[str, Any]) -> str:
 
 
 async def _entity_facts(entity: ExtractedEntity) -> list[str]:
-    """Quan hệ PrimeKG 1 bước quanh một thực thể. DermO là ontology bệnh / triệu chứng, không phải thuốc — `drug` đi qua DermO
-    dễ khớp nhầm (vd "aspirin" -> "aspirin burn"), nên tra PrimeKG thẳng bằng tên gốc."""
+    """Quan hệ PrimeKG 1 bước quanh một thực thể"""
     names: list[str] = [entity.text]
     if entity.type != "drug":
         records = await get_knowledge_graph_service().search_dermo_terms(entity.text, limit=1)
@@ -187,8 +176,7 @@ async def _candidate_facts(entity_names: list[str]) -> list[str]:
 
 
 async def kg_search(query: str, *, limit: int = 15) -> list[str]:
-    """Các câu văn ngắn rút từ PrimeKG / DermO liên quan câu hỏi; rỗng nếu không trích được thực thể hoặc đồ thị không có dữ liệu.
-    Lỗi kết nối / LLM do caller xử lý (`hybrid_retrieval` bắt lỗi để các nhánh còn lại vẫn chạy)."""
+    """Các câu văn ngắn rút từ PrimeKG / DermO liên quan câu hỏi"""
     entities = (await _extract_entities(query))[:_MAX_INPUTS]
     if not entities:
         return []

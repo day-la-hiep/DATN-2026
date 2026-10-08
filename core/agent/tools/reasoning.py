@@ -1,19 +1,3 @@
-"""Tool `record_reasoning` — ép agent lập luận CÓ CẤU TRÚC, quan sát được qua step.
-
-Thay `make_plan` (chuỗi tự do, không ai kiểm tra). Model hiện dùng trả `content=''` mỗi khi gọi
-tool, nên lập luận chỉ hiển thị được nếu là THAM SỐ của 1 tool call; tool này validate tham số
-theo schema, render thành đoạn văn tiếng Việt (nội dung step `tool_call` mà FE hiển thị, xem
-`middleware/tool.py::emit_tool_result`) và không tra cứu gì.
-
-Cơ chế ép nằm ở `middleware/model.py` (`force_reasoning`, `enforce_initial_reasoning`): trạng thái
-lập luận được SUY RA từ chính `messages` của turn (các lần gọi `record_reasoning` + `ToolMessage`),
-không lưu state riêng — nên tự đúng qua checkpoint/resume (`ask_user`).
-
-3 giai đoạn (`stage`):
-  - initial        : trước khi gọi tool tra cứu đầu tiên — dữ kiện đã biết + giả thuyết ban đầu.
-  - after_evidence : ngay sau 1 đợt kết quả tool — cập nhật giả thuyết theo bằng chứng mới.
-  - final          : đủ căn cứ để trả lời/hỏi — kết luận xếp hạng, cờ đỏ đã kiểm tra.
-"""
 import logging
 from typing import Any, Literal
 
@@ -111,8 +95,7 @@ class ReasoningInput(BaseModel):
 
 
 def validate_reasoning(args: dict[str, Any]) -> tuple[ReasoningInput | None, list[str]]:
-    """Kiểm tra schema + ràng buộc ngữ nghĩa. Trả `(input, [])` nếu hợp lệ, ngược lại
-    `(None, [lỗi...])`."""
+    """Kiểm tra schema + ràng buộc ngữ nghĩa"""
     try:
         data = ReasoningInput.model_validate(args)
     except ValidationError as exc:
@@ -243,9 +226,7 @@ def _is_system_marker(message: AnyMessage) -> bool:
 
 
 def turn_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
-    """Các message SAU tin nhắn thật gần nhất của người dùng (bỏ qua tin nhắn nội bộ do
-    middleware chèn). `ask_user` resume vẫn nằm trong cùng turn: đáp án đi vào state dưới
-    dạng `ToolMessage`, không phải `HumanMessage` mới."""
+    """Các message SAU tin nhắn thật gần nhất của người dùng"""
     for i in range(len(messages) - 1, -1, -1):
         m = messages[i]
         if isinstance(m, HumanMessage) and not _is_system_marker(m):

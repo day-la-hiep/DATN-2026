@@ -1,5 +1,3 @@
-"""User — field chung của mọi tài khoản (`app/dto/base/identity.py::User`, `docs/db-diagram.md` mục 1). Bác sĩ/admin là bảng con
-`doctors`/`admins` có PK = FK tới `users.id`, theo đúng kế thừa `Doctor(User)`/`Admin(User)` của base."""
 from datetime import UTC, date, datetime
 
 from sqlalchemy import Date, DateTime, String, text

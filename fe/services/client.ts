@@ -1,10 +1,6 @@
 import axios from "axios";
 
-/**
- * Shared-token auth đơn giản (bảo vệ bản demo khi deploy cho người ngoài test — xem
- * `core/app/core/auth.py`). Token nhập 1 lần qua `AccessGate` (`app/access-gate.tsx`),
- * lưu localStorage, tự gắn vào mọi request qua interceptor bên dưới.
- */
+// Shared-token auth: token nhập qua `AccessGate`, lưu localStorage, interceptor gắn vào mọi request.
 export const ACCESS_TOKEN_STORAGE_KEY = "derma-ai-access-token";
 
 export function getAccessToken(): string | null {

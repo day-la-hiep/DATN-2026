@@ -1,9 +1,4 @@
-"""Khởi tạo dữ liệu cho môi trường mới — chạy SAU `alembic upgrade head`:
-
-    cd core && uv run python scripts/init_db.py      (hoặc `make init-db`)
-
-Tạo bucket MinIO và dữ liệu mẫu (user FE đang hard-code, một bác sĩ, một admin). Chạy lại nhiều lần không tạo trùng, không xoá gì.
-Dữ liệu là giả định để demo, không phải thông tin bệnh nhân thật. Chưa có đăng nhập/đăng ký nên đây là cách duy nhất có user."""
+"""Khởi tạo dữ liệu cho môi trường mới"""
 import sys
 from datetime import date
 from pathlib import Path

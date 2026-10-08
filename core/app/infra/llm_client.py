@@ -1,7 +1,4 @@
-"""LLM dùng chung: lấy chat model theo id + gọi trả JSON (retry khi JSON hỏng, cache theo hash trong MinIO).
-
-Chỉ mượn model từ agent (`agent.llm.get_model`) — import lười để test không phải nạp
-LangChain khi chạy toàn luật hay khi dùng LLM giả. Client ĐỒNG BỘ vì pipeline chạy ở thread nền riêng."""
+"""LLM dùng chung"""
 
 import hashlib
 import json
@@ -45,11 +42,7 @@ def _repair(text: str) -> str:
 
 
 def extract_json(text: str) -> Any:
-    """Lấy JSON trong câu trả lời (chịu ```json fence, lời dẫn thừa, vài lỗi cú pháp quen thuộc).
-
-    KHÔNG BAO GIỜ trả về một object con khi cả tài liệu hỏng: từng có lỗi thật — JSON sai một chỗ
-    trong lô 60 heading, parser "cứu" object con đầu tiên và cả lô bị mất im lặng. Hỏng thì raise
-    để nơi gọi retry hoặc chia nhỏ lô."""
+    """Lấy JSON trong câu trả lời"""
     text = _FENCE.sub("", text.strip())
     m = re.search(r"[\[{]", text)
     if m is None:
@@ -98,8 +91,7 @@ class LLMClient:
         cache: BlobCache | None = None,
         fn: Callable[[str, str], str] | None = None,
     ):
-        """Cache phản hồi theo hash: ở thư mục `cache_dir` (test) hoặc ở kho file `cache` (khoá `<2 ký tự>/<hash>.json`); không truyền gì
-        = không cache. `fn(system, user) -> text` thay LLM thật (dùng trong test)."""
+        """Cache phản hồi theo hash"""
         self.model_id = model
         self.cache_dir = cache_dir
         self._cache = cache

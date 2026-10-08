@@ -168,9 +168,9 @@ MinIO/Postgres/Qdrant service needs to be running for these tests.
 ## Code style
 
 Same as `derma-core-conventions` (Vietnamese comments explaining *why*, basic-mode pyright, async
-I/O) — this pipeline lives inside `core/` and follows the same rules. Module docstrings here tend
-to front-load the non-obvious design decision (e.g. `mapping.py`'s docstring explains the
-offset/anchor algorithm before any code) — match that when adding a module. Stage-level prose
+I/O) — this pipeline lives inside `core/` and follows the same rules, including **no long module
+docstring at the top of a file and no multi-line function docstrings** (at most one line; put a
+non-obvious algorithm decision in a short comment next to the code, or in `README.md`). Stage-level prose
 ("sách", "cuốn sách") still refers to the book being processed — that's fine to leave as-is since
 the pipeline genuinely only processes `type="book"` documents today; only identifiers (`book_id`,
 `BookService`, table/route names) were renamed to `document_*`, not the descriptive Vietnamese text.

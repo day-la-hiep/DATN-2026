@@ -1,18 +1,3 @@
-"""Agent worker — tiến trình riêng, tách khỏi FastAPI process.
-
-Luồng:
-  1. consume RabbitMQ `agent_request_queue` (Core đẩy turn mới/resume, xem
-     `agent/dto/schemas.py::TurnRequest`).
-  2. mỗi turn xử lý ở `agent/turn.py` (chạy `agent_graph` = chat graph, forward token lên
-     Redis `agent:events:{id}`).
-  3. Khi turn xong/tạm dừng, `agent/handler/publisher.py` publish `AgentResponseMessage`
-     vào `agent_response_queue` — Worker KHÔNG đụng Postgres để ghi, Core là consumer duy
-     nhất làm upsert (`agent/handler/response_consumer.py`).
-
-File này chỉ lo vòng đời tiến trình: nhận message, khoá theo hội thoại, chạy `main`.
-
-Chạy: cd core && python -m agent.worker
-"""
 
 import asyncio
 import json

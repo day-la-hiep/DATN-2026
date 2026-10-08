@@ -1,8 +1,4 @@
-"""Truy vấn DB cho `Message` (`docs/db-diagram.md` mục 1–2).
-
-`upsert_assistant`: insert/update 1 row assistant duy nhất cho cả turn — dùng khi turn
-tạm dừng (`status="question"`) và khi kết thúc (`status="done"`,
-`agent/handler/response_consumer.py`)."""
+"""Truy vấn DB cho `Message`"""
 from typing import Any
 
 from sqlalchemy import select
@@ -43,11 +39,7 @@ class MessageRepository:
     async def find_pending_by_question_id(
         self, conversation_id: str, question_id: str
     ) -> Message | None:
-        """Tìm tin AI đang `status="question"` có `choice.question_id` khớp
-        (dùng cho `POST .../questions/{question_id}/answer`, `docs/api-doc.md` mục 2.2).
-        `extra.choice` set trực tiếp — không còn lồng trong `reasoning[]` như bản
-        Turn/Step/Reasoning cũ, vì agent hiện tại (`agent/graph/`) chỉ có ĐÚNG 1
-        câu hỏi đang chờ tại 1 thời điểm, không phải danh sách Reasoning."""
+        """Tìm tin AI đang `status="question"` có `choice.question_id` khớp"""
         stmt = select(Message).where(
             Message.conversation_id == conversation_id,
             Message.sender == "ai",
@@ -69,11 +61,7 @@ class MessageRepository:
         status: str,
         extra: dict[str, Any] | None,
     ) -> Message:
-        """Insert nếu chưa có, update nếu đã có — cùng 1 row cho cả turn.
-
-        Với luồng hiện tại Core đã tạo sẵn row assistant (`status="queued"`) lúc
-        `POST .../messages` nên đây gần như luôn là UPDATE.
-        """
+        """Insert nếu chưa có, update nếu đã có"""
         message = await self.get(message_id)
         if message is None:
             message = Message(

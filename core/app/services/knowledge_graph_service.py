@@ -1,6 +1,4 @@
-"""Truy vấn knowledge graph da liễu trên Neo4j (PrimeKG + DermO) dùng chung cho tool: chuẩn hoá tên bệnh / triệu chứng qua DermO,
-khớp thực thể với nút PrimeKG, gợi ý câu hỏi phân biệt giữa các bệnh. Xây trên `Neo4jClient` (`app/infra/neo4j_client.py`); Cypher
-CỐ ĐỊNH, không qua LLM sinh Cypher. Dùng bởi `agent/tools/hybrid_retrieval/kg.py` và `agent/tools/reasoning.py`."""
+"""Truy vấn knowledge graph da liễu trên Neo4j"""
 import re
 from typing import Any, LiteralString
 
@@ -94,8 +92,7 @@ class KnowledgeGraphService:
         return await self._neo4j.run(_LOOKUP_QUERY, term=term, limit=limit)
 
     async def exact_dermo(self, name: str) -> dict[str, Any] | None:
-        """Chỉ nhận DermO term khớp CHÍNH XÁC (tên hoặc từ đồng nghĩa) — `search_dermo_terms` còn trả kết quả CONTAINS, mà
-        `dermo_id` sai sẽ nối nhầm sang guideline bệnh khác."""
+        """Chỉ nhận DermO term khớp CHÍNH XÁC"""
         for variant in name_variants(name):
             records = await self.search_dermo_terms(variant, limit=1)
             if not records:
@@ -149,15 +146,7 @@ class KnowledgeGraphService:
     async def discriminating_questions(
         self, diseases: list[str], known_phenotype_ids: list[str] | None = None, top_k: int = 3
     ) -> dict[str, Any]:
-        """Chọn phenotype nên HỎI tiếp để phân biệt các bệnh đang cân nhắc: phenotype có ở một số bệnh nhưng không ở các bệnh còn
-        lại, ưu tiên cái chia nhóm gần đôi nhất (loại trừ được nhiều giả thuyết nhất dù trả lời có hay không). Bỏ qua phenotype
-        đã biết. `record_reasoning` gọi khi `next_action="ask_user"`; agent tự diễn đạt thành câu hỏi tiếng Việt.
-
-        Args:
-            diseases: 2-5 tên bệnh tiếng Anh đang cân nhắc.
-            known_phenotype_ids: `primekg_id` phenotype đã biết (có hoặc đã hỏi), để không hỏi lại.
-            top_k: Số câu hỏi gợi ý (1-5).
-        """
+        """Chọn phenotype nên HỎI tiếp để phân biệt các bệnh đang cân nhắc"""
         names = list(dict.fromkeys(n.strip() for n in diseases if n.strip()))[:5]
         top_k = min(max(top_k, 1), 5)
         if len(names) < 2:

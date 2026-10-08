@@ -1,11 +1,4 @@
-"""Redis dùng chung: class `RedisClient` = kết nối + capability generic (Pub/Sub, key/value, khoá phân tán).
-
-Realtime event (vd: forward sự kiện agent -> SSE client) theo pattern:
-  - publish(channel, message)      : bên gửi sự kiện
-  - subscribe(*channels)           : lắng nghe kênh cố định
-  - psubscribe(*patterns)          : lắng nghe theo pattern (vd "agent:events:*")
-Client async dùng cho Core/Agent; client đồng bộ chỉ cho khoá phân tán của pipeline chạy ở thread nền.
-Instance do `app/api/deps.py` tạo và đóng (không có singleton ở mức module)."""
+"""Redis dùng chung"""
 from collections.abc import AsyncIterator
 from contextlib import AbstractContextManager
 
@@ -90,8 +83,7 @@ class RedisClient:
         await self.client.delete(key)
 
     async def get_del(self, key: str) -> str | None:
-        """GET + DELETE atomic (Redis `GETDEL`) — dùng để "claim" 1 lần duy nhất 1 giá trị
-        (vd `agent:pending_turn:*`: chỉ SSE connection đầu tiên flush turn vào RabbitMQ)."""
+        """GET + DELETE atomic"""
         return await self.client.getdel(key)  # type: ignore[no-any-return]
 
     async def ping(self) -> bool:
@@ -99,6 +91,5 @@ class RedisClient:
 
     # ----- khoá phân tán -----
     def lock(self, name: str, *, timeout: int = 30, blocking_timeout: int = 30) -> AbstractContextManager[object]:
-        """Khoá phân tán (đồng bộ) cho các lần đọc-sửa-ghi dùng chung giữa nhiều tiến trình/thread. `timeout` = tự nhả nếu bên giữ khoá
-        chết; `blocking_timeout` = chờ khoá tối đa bao lâu."""
+        """Khoá phân tán"""
         return self.sync_client.lock(f"lock:{name}", timeout=timeout, blocking_timeout=blocking_timeout)  # type: ignore[return-value]

@@ -103,7 +103,8 @@ the hook from a component in `components/`.
 - Path alias `@/*`, never deep relative imports (`../../../`) across feature boundaries.
 - Comments are Vietnamese, explain *why* (a backend contract detail, a UI/race-condition
   reason), not what — match the surrounding file; see `services/chat.sse.ts` and
-  `features/document-pipeline/api.ts` for the density expected.
+  `features/document-pipeline/api.ts` for the density expected. No long block comments at the top
+  of a file or above a function/component (no JSDoc essays); one short line at most.
 - `pnpm lint` (ESLint) should be clean of errors (pre-existing `no-unused-vars` warnings in
   `services/mock/mockChatService.ts` for intentionally-unused mock params are known-acceptable).
 - Error messages shown to users go through a `errorMessage(e)`-style helper that prefers the

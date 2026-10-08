@@ -1,9 +1,4 @@
-"""Upload ảnh đính kèm tin nhắn — dùng làm input cho
-`agent/tools/skin_image_classifier.py` (phân loại bệnh da liễu qua ảnh). Endpoint
-tách biệt khỏi `conversation_api.py`: FE upload TRƯỚC, nhận lại `FileDto`
-(có `storage_key`/`url`), rồi gửi nguyên object đó trong `SendMessageInput.attached_files` khi
-`POST /conversations/{id}/messages` (mục 2.1, `docs/api-doc.md`). File được ghi vào bảng `files`.
-"""
+"""Upload ảnh đính kèm tin nhắn"""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile

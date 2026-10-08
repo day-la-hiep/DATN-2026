@@ -1,6 +1,3 @@
-"""MinIO (S3-compatible) dùng chung: class `MinioClient` = kết nối + capability generic theo (bucket, key) — put/get/list/delete/presign.
-Client ĐỒNG BỘ; caller async bọc qua `asyncio.to_thread`. Quy ước khoá và nghiệp vụ nằm ở service (`FileStoreService`).
-Instance do `app/api/deps.py` tạo."""
 from datetime import timedelta
 from io import BytesIO
 from pathlib import Path

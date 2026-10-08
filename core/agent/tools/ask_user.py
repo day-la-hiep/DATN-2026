@@ -1,13 +1,3 @@
-"""Tool `ask_user` — hỏi lại người dùng khi agent thiếu thông tin.
-
-Dùng THẲNG `langgraph.types.interrupt()` — cơ chế human-in-the-loop CÓ SẴN của
-LangGraph — ngay trong thân hàm tool: gọi `interrupt(payload)` tạm dừng graph tại đây,
-LangGraph tự checkpoint + trả lại đúng giá trị này khi resume qua
-`Command(resume=answer)` (`agent/turn.py::handle_resume`). Không cần tự dựng khái
-niệm "tool chờ"/node chờ riêng như bản trước — `ToolNode` (dùng bên trong
-`create_agent`, `agent/graph/pre_diagnosis_graph.py`) coi tool này như mọi tool khác, chỉ khác ở
-chỗ nó không `return` ngay lần đầu.
-"""
 
 from langchain.tools import tool
 from langgraph.types import interrupt

@@ -1,39 +1,4 @@
-"""Graph tiền chẩn đoán — dùng `create_agent` (`langchain.agents`, kế thừa `langgraph.prebuilt.create_react_agent` cũ đã deprecated)
-thay vì tự dựng lại vòng lặp "gọi LLM ⇄ gọi tool" bằng `StateGraph` thủ công. `create_agent` cho sẵn: vòng lặp ReAct chuẩn,
-`ToolNode` thực thi tool (kể cả tool tự `interrupt()` — `agent/tools/ask_user.py`), và hỗ trợ checkpointer / `store`.
-
-Graph này CHỈ lo lập luận tiền chẩn đoán (lập luận có cấu trúc, tra cứu, hỏi lại người dùng, kiểm soát bằng chứng). Việc quyết định
-có cần vào đây hay trả lời luôn là của chat graph (`chat_graph.py`), nơi graph này được nối vào như một node. Khi được nối vào chat
-graph nó dùng chung checkpointer / store / `thread_id` của chat graph nên KHÔNG tự truyền checkpointer.
-
-Tuỳ biến qua `middleware` (cơ chế mở rộng CÓ SẴN của `create_agent`, xem
-`langchain.agents.middleware`) thay vì tự viết node/hook riêng:
-  - `SummarizationMiddleware` (có sẵn): tự tóm tắt lịch sử hội thoại cũ khi vượt
-    ngưỡng — quản lý short-term memory tốt hơn cắt/bỏ tin nhắn (không mất thông tin,
-    chỉ nén lại).
-  - `select_model` (`wrap_model_call`, đứng ĐẦU middleware): override model theo
-    `AgentContext.model` — model chọn theo TỪNG conversation (`Conversation.model`,
-    `app/config/settings.py::AGENT_MODEL_CHOICES`), không còn 1 model cố định toàn hệ thống.
-  - `inject_long_term_memory` (`wrap_model_call`, phải tự viết vì đây là logic
-    nghiệp vụ — LangChain không biết trước "nhớ gì" cho app cụ thể): trước mỗi lần gọi
-    LLM, semantic search long-term memory liên quan (`agent/tools/memory.py`) rồi chèn
-    vào `system_message`.
-  - `emit_reasoning_step` (`wrap_model_call`) + `emit_tool_result` (`wrap_tool_call`):
-    nguồn phát SSE DUY NHẤT cho 2 event `message.thinking`/`message.tool_result` — trước
-    đây `worker.py::_drive` tự trích 2 event này từ state diff của `astream()`, nay
-    chuyển hẳn vào middleware để: (a) bắt được MỌI lần gọi LLM/tool trong vòng lặp ReAct
-    kể cả khi provider không trả "thinking" block (tự tổng hợp từ `tool_calls` +
-    `TOOL_DISPLAY_NAMES`), (b) giữ NGUYÊN shape event cũ — FE không cần đổi gì.
-  - `critic_review` (`after_model`, dùng cơ chế `jump_to` CÓ SẴN của `create_agent` —
-    KHÔNG tự dựng `StateGraph`/node riêng): chạy sau MỖI lần model trả lời; câu trả lời
-    KHÔNG kèm `tool_calls` (coi như bản nháp cuối, sắp kết thúc turn) VÀ turn có tra cứu
-    tool (không áp dụng cho chào hỏi/ngoài phạm vi, mục 2 SYSTEM_PROMPT) → 1 lệnh gọi LLM
-    riêng (critic) chấm bản nháp theo mục 1/7/8 SYSTEM_PROMPT (bằng chứng, cờ đỏ, không
-    kê đơn, có nêu độ tin cậy). Đạt → cho qua (`return None`, để routing mặc định sang
-    "end"). Chưa đạt → chèn feedback + `jump_to="model"` bắt trả lời lại, tối đa
-    `MAX_CRITIC_RETRIES` lần/turn (tránh treo turn vô thời hạn nếu model không bao giờ
-    đạt).
-"""
+"""Graph tiền chẩn đoán"""
 
 from typing import Any, cast
 
@@ -86,12 +51,7 @@ ALL_TOOLS = [
 def default_middleware() -> list[
     AgentMiddleware[AgentState[Any], AgentContext, Any]
 ]:
-    # `cast` CHỈ để dẹp lỗi kiểu tĩnh, KHÔNG đổi hành vi runtime: `ToolCallRequest`
-    # (dùng bởi `emit_tool_result`, `@wrap_tool_call`) không phải generic — Pylance tự
-    # suy ra `ContextT=None` cho middleware đó, lệch với các middleware còn lại
-    # (`@wrap_model_call` trên `ModelRequest[AgentContext]` → `ContextT=AgentContext`),
-    # khiến cả list bị coi là union 2 kiểu không tương thích (`ContextT` invariant).
-    # `create_agent` không hề đọc type param này lúc chạy nên cast an toàn.
+    # cast chỉ để dẹp lỗi kiểu: `emit_tool_result` bị suy ra ContextT=None, lệch với các middleware khác.
     return cast(
         "list[AgentMiddleware[AgentState[Any], AgentContext, Any]]",
         [
@@ -126,9 +86,7 @@ def build_pre_diagnosis_graph(
     middleware: list[AgentMiddleware[AgentState[Any], AgentContext, Any]]
     | None = None,
 ) -> CompiledStateGraph[Any, AgentContext, Any, Any]:
-    """`checkpointer` / `store` để None khi nối vào chat graph (dùng chung của nó). `tools`/`system_prompt`/`middleware` chỉ để thử
-    nghiệm luồng lập luận (xem skill `experiment-agent-flow`) — production luôn để mặc định (`ALL_TOOLS`, `SYSTEM_PROMPT`,
-    `default_middleware()`)."""
+    """`checkpointer` / `store` để None khi nối vào chat graph"""
     return create_agent(
         get_model(),
         tools=ALL_TOOLS if tools is None else tools,

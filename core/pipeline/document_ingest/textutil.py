@@ -46,8 +46,7 @@ def parse_page_ranges(specs: list[str], total: int) -> set[int]:
 
 
 def noise_score(text: str) -> float:
-    """Tỉ lệ token 'lạ' (chữ hoa lẫn giữa từ, ký tự ~ ^ \\ { } chen giữa chữ...) — chỉ để xếp hạng
-    trang nhiễu cho người duyệt, không phải thước đo tuyệt đối."""
+    """Tỉ lệ token 'lạ'"""
     toks = re.findall(r"\S{4,}", text)
     if not toks:
         return 0.0

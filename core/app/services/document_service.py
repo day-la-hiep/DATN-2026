@@ -1,10 +1,4 @@
-"""Nghiệp vụ tài liệu (pipeline `document_ingest`): dữ liệu tài liệu cho API admin (danh sách, chi tiết + trạng thái bước, tạo/xoá, ảnh
-trang, mục lục, chunk), cài đặt (`documents.profile`), các bước đang chạy trong process, và lưu chunk vào Qdrant (bước "Lưu vào kho tri thức"): mỗi chunk của `chunks.jsonl` -> một point
-(vector = embedding của `context_text`, payload = metadata mục lục + trang + vị trí PDF nguồn trong MinIO).
-
-Collection `settings.QDRANT_DOCUMENT_COLLECTION`: dense cosine (cùng embedding local như KB guideline) + sparse `bm25` (từ khoá, IDF do Qdrant tính). Xây trên capability Qdrant generic (đồng bộ) của
-`QdrantVectorClient` vì pipeline chạy ở thread nền riêng. Nạp lại một tài liệu luôn xoá các point cũ của tài liệu đó trước (lọc theo `document_id`) nên
-chunk bị xoá/đổi sau khi chỉnh mục lục không còn sót lại. Embedding do pipeline tính, service này chỉ lưu/xoá/đếm."""
+"""Nghiệp vụ tài liệu"""
 import asyncio
 import contextlib
 import json
@@ -68,8 +62,7 @@ def temp_root() -> Path:
 
 class DocumentService:
     def __init__(self, repository: DocumentRepository, qdrant: QdrantVectorClient, collection: str) -> None:
-        """`repository` = repository tài liệu (`files` của nó dùng cho dữ liệu tài liệu + cache LLM, tạo bucket nếu chưa có); `collection` chứa chunk đã lưu vào kho
-        tri thức."""
+        """`repository` = repository tài liệu"""
         self._repo, self.files = repository, repository.files
         self._qdrant, self.collection = qdrant, collection
         self.files.ensure_bucket()
@@ -98,10 +91,7 @@ class DocumentService:
 
     @staticmethod
     def local_pdf(repo: DocumentRepository, document_id: str) -> Path:
-        """Bản sao tạm của `source.pdf` trên đĩa, dùng lại khi cùng kích thước (một bước pipeline có thể gọi lại
-        nhiều lần trong cùng một lần chạy — vd Docling OCR theo cụm trang). Chỉ dùng cho `StageContext.pdf`
-        (`DocumentIngestPipelineService.make_ctx`); request admin lẻ (ảnh trang, đếm số trang) dùng
-        `temp_pdf_copy()` ở dưới, không giữ lại giữa các request. Bị xoá cùng tài liệu."""
+        """Bản sao tạm của `source.pdf` trên đĩa, dùng lại khi cùng kích thước"""
         try:
             return repo.files_for(document_id).local_copy("source.pdf", temp_root() / document_id / "source.pdf")
         except FileNotFoundError as exc:
@@ -110,8 +100,7 @@ class DocumentService:
     @staticmethod
     @contextlib.contextmanager
     def temp_pdf_copy(repo: DocumentRepository, document_id: str) -> Generator[Path]:
-        """Bản sao `source.pdf` dùng cho một lần gọi rồi xoá ngay — cho endpoint admin lẻ (ảnh trang, đếm số
-        trang), không giữ cache giữa các request như `local_pdf()`."""
+        """Bản sao `source.pdf` dùng cho một lần gọi rồi xoá ngay"""
         with tempfile.TemporaryDirectory(prefix="toc_pdf_") as tmp:
             try:
                 yield repo.files_for(document_id).local_copy("source.pdf", Path(tmp) / "source.pdf")
@@ -125,8 +114,7 @@ class DocumentService:
             raise ConflictError(f"Tài liệu đang được xử lý — hãy chờ xong hoặc dừng trước khi {action}.")
 
     def fail_orphaned_runs(self) -> int:
-        """Bước ghi `running` nhưng không còn tiến trình nào chạy nó -> failed. Chỉ gọi lúc ingest worker khởi động (lúc đó chắc chắn
-        chưa có bước nào chạy), vì Core không còn biết bước nào thật sự đang chạy."""
+        """Bước ghi `running` nhưng không còn tiến trình nào chạy nó -> failed"""
         n = 0
         for did in self._repo.list_ids():
             for sid, st in self._repo.status(did)["stages"].items():

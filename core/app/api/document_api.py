@@ -1,7 +1,4 @@
-"""Router admin pipeline tài liệu — `/admin/documents/*`.
-
-Mọi endpoint nằm sau `require_app_token` (xem `main.py`). Bước nặng chạy nền bằng subprocess: endpoint `run` trả về
-ngay, FE poll `GET /documents/{id}` để thấy trạng thái/tiến độ."""
+"""Router admin pipeline tài liệu"""
 
 import asyncio
 from typing import Annotated, Any

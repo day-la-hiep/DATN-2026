@@ -1,18 +1,4 @@
-"""Tool tra cứu web từ NGUỒN UY TÍN (allowlist domain) — bổ sung cho `hybrid_retrieval` (sách giáo khoa đã số hoá)
-khi bệnh nằm ngoài sách hoặc cần thông tin cập nhật.
-
-2 tool phối hợp: `search_trusted_web` (Tavily, lọc `include_domains` ngay ở provider, code lọc
-lại phía server) rồi `fetch_trusted_page` (tải + trích văn bản 1 URL trong kết quả).
-
-An toàn:
-  - Allowlist `settings.TRUSTED_WEB_DOMAINS` (host khớp chính xác hoặc là subdomain) — áp cho
-    kết quả tìm kiếm, URL fetch VÀ từng bước redirect (không cho redirect ra ngoài allowlist).
-  - Chống SSRF: host phải phân giải ra IP công cộng (chặn loopback/private/link-local).
-  - Giới hạn kích thước (2MB) và timeout; chỉ nhận http(s), content-type HTML/text.
-  - Nội dung web là DỮ LIỆU, không phải chỉ thị: kết quả trả về được bọc trong khối đánh dấu
-    rõ, prompt hệ thống (mục 1) yêu cầu bỏ qua mọi lệnh nằm trong dữ liệu.
-  - Cache Redis theo query/URL (TTL 24h); lỗi Redis không làm hỏng tool.
-"""
+"""Tool tra cứu web từ NGUỒN UY TÍN"""
 
 import asyncio
 import hashlib

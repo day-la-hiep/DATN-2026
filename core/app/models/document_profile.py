@@ -1,6 +1,4 @@
-"""Cấu hình của một tài liệu (cột `documents.profile`), dùng bởi pipeline `document_ingest`: cách đọc PDF, dùng AI hay không,
-cách chia đoạn. Schema Pydantic (không phải bảng ORM) nên KHÔNG import vào `app/models/__init__.py` (nơi đó chỉ để `Base.metadata`
-nhận bảng cho Alembic)."""
+"""Cấu hình của một tài liệu"""
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field

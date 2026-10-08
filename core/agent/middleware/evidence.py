@@ -1,15 +1,4 @@
-"""Kiểm soát bằng chứng của lượt tư vấn — chặn hai lỗi mà prompt một mình không giữ được:
-
-  1. Dữ kiện nguồn "user" mà người dùng chưa từng nói (model tự bịa chi tiết rồi dùng nó xếp hạng bệnh).
-  2. Nêu giả thuyết / xếp hạng bệnh khi mọi lần tra cứu (sách, web) đều không trả về bằng chứng.
-
-"Có bằng chứng" nghĩa là có đoạn sách (`hybrid_retrieval` / `semantic_search` / `keyword_search`, kết quả `source="book"`) hoặc trang web uy tín. Quan hệ đồ thị (`kg`) chỉ là
-gợi ý và kết quả phân loại ảnh chỉ là giả thuyết (SYSTEM_PROMPT mục 1, 5) nên không tính.
-
-Ba lớp, từ sớm đến muộn: (a) chèn quy tắc vào system prompt ngay trước lần gọi model khi đã tra cứu mà không có bằng chứng; (b) từ
-chối `record_reasoning` có dữ kiện "user" không truy được về lời người dùng hoặc có giả thuyết khi không có bằng chứng; (c) lưới an
-toàn: câu trả lời cuối vẫn nhắc tên giả thuyết thì bắt viết lại (bản nháp có thể đã stream ra — giới hạn đã biết, giống
-`enforce_initial_reasoning`)."""
+"""Kiểm soát bằng chứng của lượt tư vấn"""
 import json
 import re
 from typing import Any, Awaitable, Callable, Literal

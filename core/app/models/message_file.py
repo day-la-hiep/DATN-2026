@@ -1,5 +1,3 @@
-"""MessageFile — tệp đính kèm của tin nhắn (`MessageMetadata.attached_files` của base). Bảng nối thay vì chép `File` vào
-`messages.metadata`: mỗi file một nguồn sự thật trong `files`, và biết được file nào không còn tin nhắn nào dùng."""
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 

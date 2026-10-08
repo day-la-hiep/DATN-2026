@@ -1,12 +1,4 @@
-"""Xử lý 1 turn của agent: dựng `AgentContext`, chạy `agent_graph.astream()`, forward token
-thật lên Redis và kết thúc turn (xong / hỏi lại qua `ask_user` / lỗi). Turn có thể kết thúc ngay ở bước lọc intent
-(node `triage` của chat graph) mà không chạy graph tiền chẩn đoán.
-
-`thread_id` (checkpointer) = `conversation_id` — 1 hội thoại = 1 thread, mọi turn nối tiếp qua
-`messages` (`agent/graph/chat_graph.py::config_for`). `message.thinking`/`message.tool_result`
-được middleware phát trực tiếp trong lúc graph chạy (`agent/middleware/`), KHÔNG phải từ vòng
-lặp `astream()` ở đây — vòng lặp này chỉ forward token (`message.delta`) và tóm kết quả cuối.
-"""
+"""Xử lý 1 turn của agent"""
 
 import logging
 from typing import Any, cast
@@ -37,11 +29,6 @@ _ERROR_TEXT = (
 
 
 async def _conversation_for(conversation_id: str) -> tuple[str, str]:
-    """`(user_id, model)` — `model` đã resolve từ id ngắn (`Conversation.model`) sang
-    chuỗi "provider:model" thật qua `AGENT_MODEL_CHOICES` (`app/config/settings.py`). Id
-    rỗng/không còn trong `AGENT_MODEL_CHOICES` (model bị gỡ khỏi danh sách sau khi
-    conversation đã chọn) -> trả rỗng, `AgentContext.model` rỗng -> middleware
-    `select_model` tự fallback `settings.AGENT_MODEL`."""
     async with get_postgres_client().session_factory() as db:
         repo = ConversationRepository(db)
         conversation = await repo.get(conversation_id)
@@ -68,12 +55,7 @@ async def _build_context(req: TurnRequest) -> AgentContext:
 
 
 def _human_message_content(req: TurnRequest) -> str:
-    """Nối thêm object key MinIO của ảnh đính kèm (nếu có) vào cuối nội dung tin nhắn —
-    agent đọc thấy `object_key` này trong `messages` rồi tự copy làm tham số khi gọi
-    `classify_skin_image` (`agent/tools/skin_image_classifier.py`, hướng dẫn ở
-    `SYSTEM_PROMPT`). Không có cơ chế multimodal content riêng ở tầng `create_agent`
-    hiện tại nên forward bằng text là cách đơn giản nhất, nhất quán với cách LLM
-    orchestrate mọi tool khác (đọc context -> tự chọn tham số gọi tool)."""
+    """Nối thêm object key MinIO của ảnh đính kèm"""
     content = req.content or ""
     images = [a for a in (req.attached_files or []) if a.content_type.startswith("image/")]
     if not images:
@@ -138,10 +120,7 @@ async def _finish_with_question(
     interrupt: Interrupt,
     context: AgentContext,
 ) -> None:
-    """Turn tạm dừng ở tool `ask_user` — payload `interrupt.value` là `{"question": ...,
-    "options": [...]}` do tool tự truyền, `interrupt.id` (LangGraph tự sinh, ổn định cho
-    ĐÚNG lần dừng này) dùng làm `question_id` cho FE (`POST
-    .../questions/{question_id}/answer`, `docs/api-doc.md` mục 2.2)."""
+    """Turn tạm dừng ở tool `ask_user`"""
     raw: Any = interrupt.value
     payload: dict[str, Any] = (
         cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
@@ -183,12 +162,8 @@ async def _drive(req: TurnRequest, input_: object) -> None:
             input_, channel, base, context, req
         )
     except Exception as exc:  # noqa: BLE001
-        # LLM/tool lỗi giữa chừng (vd 429 rate-limit OpenRouter, network...) — KHÔNG được
-        # để lộ ra ngoài rồi bị `on_message` nuốt im lặng: turn sẽ treo vĩnh viễn — FE chờ
-        # SSE không bao giờ tới, `assistant` message kẹt `status="queued"` trong Postgres.
-        # Coi như turn "done" với nội dung báo lỗi thay vì thêm 1 trạng thái mới
-        # (`status="error"` phải sửa cả DTO/FE/DB enum) — người dùng vẫn thấy phản hồi,
-        # có thể hỏi lại ngay. Suy luận đã tích luỹ TRƯỚC KHI lỗi vẫn có giá trị xem lại.
+        # Không để lỗi lọt ra ngoài (turn sẽ treo, message kẹt "queued"); coi như "done" với nội dung báo lỗi
+        # vì thêm status "error" phải sửa cả DTO/FE/DB enum.
         logger.exception("lỗi khi chạy turn %s: %s", req.message_id, exc)
         await finish_turn(
             channel,

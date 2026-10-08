@@ -1,5 +1,4 @@
-"""System prompt của bước lọc intent (`agent/graph/triage.py`) — cố ý ngắn: chỉ phân loại và trả lời xã giao. Mọi nội dung
-y khoa do bước lập luận chính (`prompt/orchestrator.py`) xử lý."""
+"""System prompt của bước lọc intent"""
 
 TRIAGE_SYSTEM = """Bạn là bộ lọc ý định của trợ lý tư vấn tiền chẩn đoán da liễu. Đọc tin nhắn MỚI NHẤT của người dùng (kèm vài tin trước để hiểu ngữ cảnh) rồi chọn `route`:
 

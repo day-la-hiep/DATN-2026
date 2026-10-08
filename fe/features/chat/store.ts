@@ -615,10 +615,7 @@ export const useChatStore = create<ChatState>((set, get) => {
           attachments,
         })
       ).then((result) => {
-        // Backend thật trả về id thật của cả user message lẫn assistant row
-        // (status="queued") — thay id optimistic để các event SSE sau đó (keyed theo
-        // messageId thật) và thao tác trích dẫn về sau khớp đúng. Mock trả `void` ->
-        // bỏ qua, correlation qua `corrId` ở `message.started` lo phần đó.
+        // Thay id optimistic bằng id thật để event SSE (keyed theo messageId) khớp; mock trả `void` thì bỏ qua.
         if (!result) return;
         set((state) => {
           const list = state.messagesByConversation[activeId] ?? [];

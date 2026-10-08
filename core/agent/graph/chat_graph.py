@@ -1,16 +1,3 @@
-"""Chat graph — graph ngoài cùng của một turn chat: lọc intent rồi, nếu cần, chuyển sang graph tiền chẩn đoán.
-
-```
-START ──▶ triage ──answer──▶ END                      (xã giao / hỏi về trợ lý / ngoài phạm vi da liễu: trả lời luôn)
-             └─diagnose / lỗi / có ảnh──▶ pre_diagnosis ──▶ END   (graph tiền chẩn đoán: `pre_diagnosis_graph.py`)
-```
-
-Chat graph giữ checkpointer (short-term memory theo `thread_id`) và `store` (long-term memory, `agent/tools/memory.py`) cho cả hai
-graph. `AGENT_TRIAGE_ENABLED=false` thì bỏ node `triage`, mọi tin đi thẳng sang graph tiền chẩn đoán.
-
-Graph tiền chẩn đoán được gọi bên trong node `pre_diagnosis` (thay vì `add_node(<graph>)`) để truyền lại việc xoá tin nhắn: middleware
-của nó dùng `RemoveMessage` (bỏ `AIMessage` có `tool_calls` mồ côi, xem `enforce_initial_reasoning`), mà reducer `add_messages` của
-chat graph không tự xoá những tin vắng mặt trong state con — thiếu bước này checkpoint của chat graph sẽ giữ lại tin đã bị xoá."""
 from typing import Any, cast
 
 from langchain.agents import AgentState
@@ -104,8 +91,7 @@ def build_agent_graph(
     system_prompt: str | None = None,
     middleware: list[AgentMiddleware[AgentState[Any], AgentContext, Any]] | None = None,
 ) -> CompiledStateGraph[Any, AgentContext, Any, Any]:
-    """Chat graph đầy đủ; `tools`/`system_prompt`/`middleware` chỉ để thử nghiệm graph tiền chẩn đoán (skill `experiment-agent-flow`)
-    — production luôn để mặc định."""
+    """Chat graph đầy đủ"""
     return build_chat_graph(
         checkpointer,
         store,
@@ -117,9 +103,5 @@ agent_graph = build_chat_graph()
 
 
 def config_for(conversation_id: str) -> RunnableConfig:
-    """`thread_id` = `conversation_id`: checkpointer nối liền TOÀN BỘ hội thoại (mọi
-    turn cùng 1 thread) — khác bản trước (`thread_id = message_id` riêng từng turn, xem
-    `kien-truc-memory.md` mục 0), nay không cần tầng memory riêng ghép lại các turn vì
-    checkpointer đã tự làm việc đó qua `messages`. Dùng chung bởi mọi caller chạy
-    `agent_graph` (`agent/worker.py`)."""
+    """`thread_id` = `conversation_id`"""
     return {"configurable": {"thread_id": conversation_id}, "callbacks": [trace_callback]}

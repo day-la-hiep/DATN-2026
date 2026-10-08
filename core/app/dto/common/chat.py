@@ -1,6 +1,4 @@
-"""Dữ liệu phụ của tin nhắn AI (`messages.metadata`, JSONB): các bước (`Step`), câu hỏi lại, nguồn trích dẫn. Không phải entity
-nghiệp vụ — không có bảng riêng, chỉ được lưu nguyên khối trong JSON và truyền qua wire / agent — nên nằm ở `common`
-thay vì `app/dto/base/`."""
+"""Dữ liệu phụ của tin nhắn AI"""
 
 from typing import Any, Literal
 
@@ -26,8 +24,7 @@ class MessageChoice(BaseModel):
 
 
 class Step(BaseModel):
-    """Một bước của AI trong một lượt trả lời: `default` (bước thường), `tool` (gọi tool, kể cả tool hỏi lại người dùng —
-    khi đó có `choice`) hoặc `thinking` (tự suy nghĩ)."""
+    """Một bước của AI trong một lượt trả lời"""
 
     id: str
     title: str

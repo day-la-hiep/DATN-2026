@@ -1,12 +1,4 @@
-"""Kho file generic trên MinIO: một instance gắn với một bucket (+ tiền tố tuỳ chọn), mọi service cần lưu file đi qua đây thay vì gọi
-`MinioClient` trực tiếp.
-
-- Thao tác ĐỒNG BỘ theo tên tương đối với tiền tố (bytes / text / JSON / JSONL, liệt kê, xoá, bản sao tạm trên đĩa) — dùng trong thread
-  nền của pipeline sách. Caller async bọc qua `asyncio.to_thread`.
-- `scoped(prefix)` trả về một view con (vd `document/<document_id>/`) dùng chung client + bucket.
-- Upload ảnh đính kèm tin nhắn (`save_upload` / `get_object_bytes`, async) cho `app/api/upload_api.py` và
-  `agent/tools/skin_image_classifier.py` — Agent Worker đọc lại qua object key, không cần chung filesystem với Core.
-Instance do `app/api/deps.py` tạo (bucket ảnh đính kèm, bucket sách)."""
+"""Kho file generic trên MinIO"""
 
 import logging
 import asyncio
@@ -104,8 +96,7 @@ class FileStoreService:
         return self._minio.list_dirs(self.bucket, self.key(prefix))
 
     def local_copy(self, name: str, dest: Path) -> Path:
-        """Bản sao trên đĩa của `name` cho công cụ cần file thật; dùng lại khi cùng kích thước. Tải vào file tạm riêng rồi thay nguyên
-        tử vì nhiều thread có thể cùng cần một lúc."""
+        """Bản sao trên đĩa của `name` cho công cụ cần file thật"""
         size = self.size(name)
         if size is None:
             raise FileNotFoundError(name)
@@ -181,8 +172,7 @@ class FileStoreService:
         return self._minio.presigned_get_url(self.bucket, self.key(name), _PRESIGNED_URL_TTL)
 
     async def get_object_bytes(self, name: str) -> bytes | None:
-        """Đọc lại ảnh theo object key — dùng bởi `agent/tools/skin_image_classifier.py`. `name` đi qua `SendMessageInput`
-        (client-controlled) -> trả `None` khi không tồn tại / không hợp lệ thay vì raise, tool tự báo lỗi cho agent."""
+        """Đọc lại ảnh theo object key"""
         try:
             return await asyncio.to_thread(self.get_bytes, name)
         except ValueError:

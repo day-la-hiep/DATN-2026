@@ -1,18 +1,3 @@
-"""Mục lục — LLM tìm trang mục lục rồi đọc thành cây part/section/mục kèm số trang in (bước 1 của luồng).
-
-1. Trang mục lục: người dùng chỉ định (`pages=8-22`) thì dùng luôn; không thì LLM đọc bản tóm tắt các trang đầu/cuối.
-2. LLM đọc từng nhóm vài trang mục lục (OCR nhiễu, bảng Markdown) -> các mục theo thứ tự: cấp (0 part, 1 section,
-   2 mục/bệnh, 3 mục con), tên, số trang in. Nhóm sau nhận ngữ cảnh part/section cuối của nhóm trước.
-3. Kiểm tra bằng luật: số trang phải tăng dần; mục phá thứ tự (hay là OCR sai chữ số) bị đánh dấu `suspect`.
-4. Gắn vào trang thật (độ lệch + neo) KHÔNG nằm ở đây mà ở `mapping.py` (luật, không LLM); chạy lại rẻ mỗi khi
-   người duyệt sửa hay có dữ liệu trang mới.
-
-Ra: `toc.auto.json` (kết quả máy, giữ nguyên) và `toc.json` (đã áp override + độ lệch + neo).
-Override của người duyệt (bảng `document_overrides`, stage `toc`):
-  { "<id>": {"title": ..., "level": ..., "printed_page": ...},
-    "_deleted": ["<id>", ...],
-    "_added": [{"id": "x1", "title": ..., "level": ..., "printed_page": ..., "after": "<id>"|null}],
-    "_offset": 30 }"""
 import json
 import subprocess
 from collections import Counter
@@ -79,8 +64,7 @@ def _digests(ctx: StageContext) -> list[dict[str, Any]]:
 
 
 def page_texts(ctx: StageContext, pages: list[int]) -> dict[int, str]:
-    """Chữ các trang mục lục: dùng pages.jsonl nếu đã ingest; chưa thì OCR riêng các trang này bằng Docling (engine docling)
-    hoặc lớp text của PDF (engine pdftotext)."""
+    """Chữ các trang mục lục"""
     have = {r["page"]: r["text"] for r in ctx.files.read_jsonl("pages.jsonl")}
     if all(p in have for p in pages):
         return {p: have[p] for p in pages}

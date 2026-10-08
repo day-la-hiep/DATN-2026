@@ -1,5 +1,3 @@
-"""Doctor — phần riêng của tài khoản bác sĩ (`app/dto/base/identity.py::Doctor`). PK đồng thời là FK tới `users.id` (1-1): một user là
-bác sĩ khi có dòng ở đây; field chung nằm ở `users`."""
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 

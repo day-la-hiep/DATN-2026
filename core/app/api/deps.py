@@ -1,13 +1,4 @@
-"""Quản lý vòng đời các instance + provider DI (FastAPI `Depends`).
-
-- **Infra client** (`app/infra/*`: Postgres, Redis, RabbitMQ, Qdrant, MinIO, Docling, Embedding): MỖI client một instance cho cả process,
-  tạo lười ở lần dùng đầu tiên và đóng trong `close_clients()` (gọi ở shutdown của `main.py::lifespan` / worker).
-- **Service dùng chung** xây trên client (KnowledgeBaseService, FileStoreService, pipeline sách): cũng một instance mỗi process.
-- **Theo request** (cây: service -> repository -> db): `get_db` (1 AsyncSession/request, commit/rollback) -> `get_*_repository` (dựng trên session đó)
-  -> `get_*_service` (dựng trên repository + client dùng chung). FastAPI cache dependency trong 1 request nên mỗi repository chỉ có 1 instance (`docs/quy-uoc.md` mục 4).
-
-Các hàm `get_*` là hàm thường nên cũng gọi được ngoài FastAPI (agent worker, script ingest); trong route thì dùng `Depends(get_*)`. Test thay
-instance bằng `set_instance(...)` / `reset_instances()` hoặc `app.dependency_overrides`."""
+"""Quản lý vòng đời các instance + provider DI"""
 
 import threading
 from collections.abc import AsyncGenerator, Callable
@@ -167,12 +158,6 @@ def get_document_ingest_pipeline_service() -> DocumentIngestPipelineService:
 
 # ---------------------------------------------------------------- theo request
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI dependency: yield 1 AsyncSession request-scoped.
-
-    Tự `commit()` khi route xử lý xong không lỗi (Unit of Work — 1 request = 1
-    transaction), tự `rollback()` khi route raise exception. Repository chỉ
-    `flush()` (không tự `commit()`) — xem `docs/quy-uoc.md` mục 4.
-    """
     async with get_postgres_client().session_factory() as session:
         try:
             yield session

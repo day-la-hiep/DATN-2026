@@ -1,8 +1,3 @@
-"""File — một file trên MinIO (`app/dto/base/shared.py::File`). Nơi dùng trỏ FK tới đây thay vì lặp tên/kích thước:
-`documents.source_file_id`/`ingested_file_id`, `message_files` (ảnh đính kèm tin nhắn).
-
-`storage_key` là khoá đầy đủ trong bucket; bucket suy ra từ nơi dùng (tài liệu -> `MINIO_DOCUMENTS_BUCKET`, đính kèm tin nhắn
--> `MINIO_BUCKET`) vì base `File` không có field bucket."""
 from datetime import UTC, datetime
 
 from sqlalchemy import BigInteger, DateTime, String, text

@@ -1,5 +1,4 @@
-"""Nhánh từ khoá của `hybrid_retrieval`: BM25 do Qdrant chấm trên sparse vector `bm25` của chunk sách (bước `index` của pipeline
-nạp cùng lúc với dense vector), nên không dựng chỉ mục trong RAM — nạp / xoá sách có hiệu lực ngay, không cần khởi động lại worker."""
+"""Nhánh từ khoá của `hybrid_retrieval`"""
 from typing import Any
 
 from app.api.deps import get_knowledge_base_service

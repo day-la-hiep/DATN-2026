@@ -17,11 +17,7 @@ export interface SkillOption {
   icon: LucideIcon;
 }
 
-/** Danh sách model cho khung nhập chat — `id` PHẢI khớp key trong
- * `core/app/core/config.py::Settings.AGENT_MODEL_CHOICES` (backend chỉ nhận đúng những
- * id này ở `SendMessageInput.modelId`/`CreateConversationInput.model`, id lạ bị bỏ qua
- * lặng lẽ — xem `core/app/services/message_service.py::_apply_model_choice`). Đổi model
- * ở backend thì sửa CẢ 2 nơi. */
+/** `id` phải khớp `Settings.AGENT_MODEL_CHOICES` ở backend, id lạ bị bỏ qua lặng lẽ. */
 export const MODEL_OPTIONS: ModelOption[] = [
   {
     id: "gemma4-26b",

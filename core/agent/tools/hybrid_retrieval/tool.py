@@ -1,5 +1,4 @@
-"""Tool tra cứu cho agent: `hybrid_retrieval` (3 nhánh + rerank chung, cho yêu cầu chung) và 3 tool chuyên biệt từng nhánh
-(`semantic_search`, `keyword_search`, `knowledge_graph_search`) — xem `__init__.py`."""
+"""Tool tra cứu cho agent"""
 import asyncio
 import json
 from typing import Any, TypeVar

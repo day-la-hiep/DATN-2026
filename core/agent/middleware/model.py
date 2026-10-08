@@ -45,10 +45,7 @@ async def select_model(
     request: ModelRequest[AgentContext],
     handler: Callable[[ModelRequest[AgentContext]], Awaitable[ModelResponse]],
 ) -> ModelResponse:
-    """Chọn model theo `AgentContext.model` (đã resolve sẵn thành "provider:model" ở
-    `worker.py`) thay cho model mặc định `create_agent()` được khởi tạo cùng — PHẢI đứng
-    ĐẦU danh sách middleware (`default_middleware()` ở `pre_diagnosis_graph.py`) để mọi middleware sau (vd
-    `inject_long_term_memory`) thấy đúng model đã chọn qua `request.model`."""
+    """Chọn model theo `AgentContext.model`"""
     ctx: AgentContext = request.runtime.context  # type: ignore[assignment]
     if ctx.model:
         request = request.override(model=get_model(ctx.model))
@@ -60,9 +57,6 @@ async def inject_long_term_memory(
     request: ModelRequest[AgentContext],
     handler: Callable[[ModelRequest[AgentContext]], Awaitable[ModelResponse]],
 ) -> ModelResponse:
-    """Semantic search long-term memory liên quan tin nhắn user gần nhất rồi chèn vào
-    `system_message` TRƯỚC mỗi lần gọi LLM — nhớ chủ động, không cần agent tự hỏi lại
-    (`agent/tools/memory.py::search_memories`)."""
     messages = request.state["messages"]
     query = next(
         (
@@ -95,15 +89,7 @@ async def emit_reasoning_step(
     request: ModelRequest[AgentContext],
     handler: Callable[[ModelRequest[AgentContext]], Awaitable[ModelResponse]],
 ) -> ModelResponse:
-    """Publish `message.thinking` lên Redis SAU MỖI lần gọi LLM trong vòng lặp ReAct
-    (không chỉ lần cuối) — không đổi hành vi model, chỉ quan sát `response.result` rồi
-    forward tiếp. Có "thinking" block thật từ provider (Gemini, `include_thoughts=True`)
-    -> tóm tắt như cũ. KHÔNG có (đa số model qua OpenRouter hiện dùng,
-    `app/config/settings.py::AGENT_MODEL`) nhưng model vừa quyết định gọi tool -> tự tổng hợp
-    1 dòng từ `TOOL_DISPLAY_NAMES` thay vì im lặng bỏ qua như bản cũ (`worker.py::_drive`
-    trước đây chỉ emit khi có reasoning block) — cho người dùng thấy được bước suy luận dù
-    provider không hỗ trợ "thinking" riêng. Không có cả 2 (vd lượt trả lời cuối, nội dung
-    đã đi qua `message.delta`) -> không emit gì thêm."""
+    """Publish `message.thinking` lên Redis SAU MỖI lần gọi LLM trong vòng lặp ReAct"""
     response = await handler(request)
 
     ai_message = next(
@@ -160,17 +146,7 @@ async def emit_reasoning_step(
 async def critic_review(
     state: CriticState, runtime: Runtime[AgentContext]
 ) -> dict[str, Any] | None:
-    """Chạy SAU mỗi lần model trả lời. Bản nháp CÓ `tool_calls` (còn đang tra cứu, chưa
-    phải câu trả lời cuối) → bỏ qua, để routing mặc định sang node "tools" như bình
-    thường. Turn KHÔNG có `ToolMessage` nào (chào hỏi/ngoài phạm vi, mục 2 SYSTEM_PROMPT
-    — không tra cứu gì) → cũng bỏ qua, chạy critic chỉ tốn thêm 1 lệnh gọi LLM vô ích vì
-    không có gì để đối chiếu.
-
-    Từ chối → chèn feedback dạng `HumanMessage` (đánh dấu rõ nguồn gốc nội bộ, không
-    phải lời người dùng thật) rồi `jump_to="model"` bắt model trả lời lại CÓ tính tới
-    feedback. Giới hạn `MAX_CRITIC_RETRIES` lần/turn — hết lượt vẫn bị từ chối thì CHO
-    QUA (chấp nhận câu trả lời còn rủi ro thay vì treo turn vô thời hạn); LangSmith vẫn
-    ghi lại verdict cuối để review sau."""
+    """Chạy SAU mỗi lần model trả lời"""
     messages = state["messages"]
     last = messages[-1] if messages else None
     if not isinstance(last, AIMessage) or last.tool_calls:
@@ -251,13 +227,7 @@ async def force_reasoning(
     request: ModelRequest[AgentContext],
     handler: Callable[[ModelRequest[AgentContext]], Awaitable[ModelResponse]],
 ) -> ModelResponse:
-    """Ngay SAU 1 đợt kết quả tool (message cuối là `ToolMessage`) mà chưa có lần lập luận hợp
-    lệ nào MỚI HƠN bằng chứng đó -> ÉP model gọi `record_reasoning` (chỉ bind đúng tool này +
-    `tool_choice` chỉ định tên) thay vì để nó tự chọn. Ép TRƯỚC khi model sinh chữ nên không có
-    bản nháp nào lọt ra stream `message.delta` (khác chặn sau bằng `after_model`, xem
-    `enforce_initial_reasoning`). `record_reasoning` trả "Không hợp lệ" -> ép lại, tối đa
-    `MAX_REASONING_RETRIES` lần rồi thả tự do. Provider bỏ qua `tool_choice` -> model có thể
-    vẫn trả lời chữ; `enforce_initial_reasoning` là lưới an toàn cho trường hợp đó."""
+    """Ngay SAU 1 đợt kết quả tool"""
     messages = request.state["messages"]
     if messages and isinstance(messages[-1], ToolMessage):
         state = analyze_turn(turn_messages(messages))
@@ -283,19 +253,7 @@ async def force_reasoning(
 async def enforce_initial_reasoning(
     state: AgentState[Any], runtime: Runtime[AgentContext]
 ) -> dict[str, Any] | None:
-    """Lưới an toàn sau mỗi lần model trả lời (`force_reasoning` không phủ được các trường
-    hợp này):
-      - R1: model gọi tool tra cứu mà chưa lập luận (lần đầu của turn, hoặc còn bằng chứng
-        mới chưa được lập luận vì provider bỏ qua `tool_choice`) và không kèm `record_reasoning`
-        hợp lệ trong cùng lượt gọi -> bỏ `AIMessage` đó (`RemoveMessage`, tránh `tool_calls` mồ
-        côi không có `ToolMessage`) và bắt làm lại. Tool call không có chữ nên chưa có gì lọt ra
-        `message.delta`.
-      - R2: model trả lời bằng chữ dù còn bằng chứng chưa được lập luận (provider bỏ qua
-        `tool_choice`) -> bắt viết lại; bản nháp CÓ thể đã stream ra (giới hạn đã biết, giống
-        `critic_review`), nên chỉ là phương án dự phòng.
-      - R3: phản hồi rỗng (không chữ, không tool call) -> bắt làm lại.
-    Lượt chào hỏi/ngoài phạm vi (không tool, không bằng chứng) không bị ép. Hết
-    `MAX_REASONING_RETRIES` thì cho qua."""
+    """Lưới an toàn sau mỗi lần model trả lời"""
     messages = state["messages"]
     last = messages[-1] if messages else None
     if not isinstance(last, AIMessage):

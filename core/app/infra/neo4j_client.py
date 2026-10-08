@@ -1,5 +1,4 @@
-"""Neo4j dùng chung (PrimeKG + DermO): kết nối async lười + chạy Cypher, trả danh sách dict. Truy vấn cụ thể nằm ở service
-(`KnowledgeGraphService`). Instance do `app/api/deps.py` tạo và đóng."""
+"""Neo4j dùng chung"""
 from typing import Any, LiteralString
 
 from neo4j import AsyncDriver, AsyncGraphDatabase

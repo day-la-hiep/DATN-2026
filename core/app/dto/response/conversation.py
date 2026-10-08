@@ -1,12 +1,10 @@
-"""DTO Output cho resource Conversation (`docs/api-doc.md` mục 1). Base `Conversation` chưa có id/tiêu đề/model —
-các field này lấy từ bảng `conversations`."""
+"""DTO Output cho resource Conversation"""
 
 from pydantic import BaseModel
 
 
 class ModelOption(BaseModel):
-    """1 lựa chọn model cho FE hiển thị dropdown (`GET /models`) — `id` là giá trị gửi
-    lên `CreateConversationInput.model`/`UpdateConversationModelInput.model`."""
+    """1 lựa chọn model cho FE hiển thị dropdown"""
 
     id: str
 

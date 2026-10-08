@@ -1,7 +1,4 @@
-/**
- * Tập trung toàn bộ đường dẫn API ở một nơi.
- * Khi backend thật có sẵn, chỉ cần chỉnh endpoints này.
- */
+// Toàn bộ đường dẫn API.
 export const endpoints = {
   conversations: "/conversations",
   messages: (conversationId: string) => `/conversations/${conversationId}/messages`,

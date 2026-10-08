@@ -1,7 +1,4 @@
-"""Log vòng lặp graph: node nào chạy, gọi LLM nào (bao nhiêu token), gọi tool gì với tham số gì, mất bao lâu.
-
-Một `AsyncCallbackHandler` gắn vào `config_for` (`agent/graph/chat_graph.py`) nên bắt được cả graph con và các lần gọi LLM phụ
-(triage, critic, tóm tắt) mà không phải sửa từng middleware/tool. Là leaf module: chỉ import langchain_core."""
+"""Log vòng lặp graph"""
 import logging
 import time
 from typing import Any

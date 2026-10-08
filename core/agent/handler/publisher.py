@@ -1,6 +1,4 @@
-"""Phát kết quả của 1 turn: event realtime lên Redis (SSE) + `AgentResponseMessage` vào
-RabbitMQ để Core persist. Gom vào 1 chỗ vì cả 3 kết cục của turn (xong, tạm dừng hỏi
-lại, lỗi) đều đi đúng chuỗi "event -> [DONE] -> publish response" này."""
+"""Phát kết quả của 1 turn"""
 
 import json
 from typing import Any, Literal
@@ -24,9 +22,7 @@ async def finish_turn(
     choice: dict[str, Any] | None = None,
     reasoning: list[dict[str, Any]] | None = None,
 ) -> None:
-    """Kết thúc/tạm dừng turn: phát `event` cuối lên SSE, đóng stream bằng sentinel
-    `[DONE]`, rồi báo Core (`agent_response_queue`) để upsert dòng assistant.
-    `reasoning` rỗng -> None để Core không ghi đè `Message.extra.reasoning` bằng list rỗng."""
+    """Kết thúc/tạm dừng turn"""
     await emit(channel, event)
     await get_redis_client().publish(channel, STREAM_DONE_SENTINEL)
     await get_rabbitmq_client().publish(

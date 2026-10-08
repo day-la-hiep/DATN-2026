@@ -43,9 +43,7 @@ MessageServiceDep = Annotated[MessageService, Depends(get_message_service)]
     operation_id="listModelOptions",
 )
 async def list_model_options() -> ApiResponse[list[ModelOption]]:
-    """Danh sách model FE cho user chọn lúc tạo/đổi hội thoại (`AGENT_MODEL_CHOICES`,
-    `app/config/settings.py`) — `id` là giá trị gửi lên `CreateConversationInput.model`/
-    `PATCH /conversations/{id}/model`."""
+    """Danh sách model FE cho user chọn lúc tạo/đổi hội thoại"""
     return ApiResponse(
         data=[
             ModelOption(id=model_id)
@@ -97,9 +95,7 @@ async def update_conversation_model(
     body: UpdateConversationModelInput,
     service: ConversationServiceDep,
 ) -> ApiResponse[ConversationOutput]:
-    """Đổi model cho hội thoại — chỉ áp dụng cho turn KẾ TIẾP (worker resolve model mới
-    nhất từ DB mỗi turn, `agent/worker.py::_conversation_for`), không ảnh hưởng turn
-    đang chạy dở."""
+    """Đổi model cho hội thoại"""
     try:
         conversation = await service.update_model(conversation_id, body.model)
     except ConversationNotFoundError as exc:
@@ -131,13 +127,7 @@ async def list_messages(
 async def send_message(
     conversation_id: str, body: SendMessageInput, service: MessageServiceDep
 ) -> ApiResponse[SendMessageResult]:
-    """`docs/api-doc.md` mục 2.1 — tin nhắn mở đầu turn mới (không dùng để trả lời câu hỏi
-    agent đang chờ, xem `answer_question` bên dưới). Còn turn đang chạy -> 409.
-
-    Trả về `{ userMessage, assistantMessage }`: Core tạo sẵn row assistant
-    (`status="queued"`) và trả `id` để FE lắng nghe SSE theo đó. Turn CHƯA được đẩy cho
-    Worker — chỉ chạy khi client mở `GET .../stream` (`docs/async-api-doc.md` mục 1).
-    """
+    """`docs/api-doc.md` mục 2.1"""
     try:
         result = await service.send_message(conversation_id, body)
     except AttachmentNotFoundError as exc:
@@ -177,13 +167,7 @@ async def answer_question(
 
 
 async def _sse_event_stream(redis: RedisClient, rabbitmq: RabbitMQClient, conversation_id: str) -> AsyncIterator[str]:
-    """Forward nguyên văn từng message từ Redis Pub/Sub ra SSE — Core là pure forwarder,
-    không transform (`docs/async-api-doc.md` mục 1).
-
-    Sau khi `subscribe` xong (client chắc chắn nhận được event kể từ đây),
-    `flush_pending_turn` đẩy `TurnRequest` đang chờ vào `agent_request_queue` — đây là lúc
-    Worker mới thực sự bắt đầu xử lý turn, nên không event nào rơi mất.
-    """
+    """Forward nguyên văn từng message từ Redis Pub/Sub ra SSE"""
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=conversation_id)
     pubsub = redis.pubsub()
     await pubsub.subscribe(channel)
@@ -207,11 +191,7 @@ async def stream_conversation(
     redis: Annotated[RedisClient, Depends(get_redis_client)],
     rabbitmq: Annotated[RabbitMQClient, Depends(get_rabbitmq_client)],
 ) -> StreamingResponse:
-    """`docs/async-api-doc.md` mục 1 — SSE, đóng khi nhận sentinel `[DONE]`.
-
-    `include_in_schema=False`: SSE thuộc phạm vi `docs/asyncapi.yaml`, không lặp lại
-    trong `docs/openapi.yaml` (OpenAPI mô tả REST request/response thông thường).
-    """
+    """`docs/async-api-doc.md` mục 1"""
     return StreamingResponse(
         _sse_event_stream(redis, rabbitmq, conversation_id), media_type="text/event-stream"
     )

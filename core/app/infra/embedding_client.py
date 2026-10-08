@@ -1,5 +1,4 @@
-"""Embedding LOCAL dùng chung: class `EmbeddingClient` (sentence-transformers qua `agent/embeddings.py`, 384 chiều). Nạp mô hình rất nặng nên
-lười (lần `embed` đầu tiên). Chạy ĐỒNG BỘ. Instance do `app/api/deps.py` tạo; test thay bằng đối tượng có cùng phương thức `embed`."""
+"""Embedding LOCAL dùng chung"""
 from typing import Any
 
 

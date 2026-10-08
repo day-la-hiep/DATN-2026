@@ -1,9 +1,4 @@
-"""Mã hoá văn bản thành sparse vector BM25 để Qdrant tự chấm điểm (không còn chỉ mục BM25 trong RAM của worker).
-
-Qdrant không có sẵn tokenizer nên ta tự làm hai nửa của BM25: phía chunk lưu phần TF đã chuẩn hoá theo độ dài, phía truy vấn
-chỉ đánh dấu các từ cần khớp; phần IDF do Qdrant nhân vào lúc tìm (`Modifier.IDF` trên cấu hình sparse vector), nên IDF luôn
-theo đúng kho hiện tại mà không phải dựng lại chỉ mục khi thêm / xoá sách. Hàm thuần, dùng chung cho pipeline (ghi) và agent (đọc)
-để hai phía chắc chắn cùng tokenizer và cùng cách băm từ -> chỉ số."""
+"""Mã hoá văn bản thành sparse vector BM25 để Qdrant tự chấm điểm"""
 import re
 import unicodedata
 import zlib

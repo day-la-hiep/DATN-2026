@@ -1,20 +1,4 @@
-"""Tool phân loại bệnh da liễu từ ẢNH — CNN (AdaptiveCNN: AMKC + ResNet-18 backbone +
-Adaptive GeM pooling, 22 lớp bệnh) huấn luyện sẵn ở `model/` (repo root, xem
-`model/test_cnn.py`, `model/tool/cnn_predictor.py` — file này port lại kiến trúc y hệt
-để load đúng `model_state_dict` trong checkpoint, KHÔNG import trực tiếp từ `model/` vì
-đó là thư mục thử nghiệm ngoài `core/`, không phải dependency Python cài đặt được).
-
-Ảnh vào tool qua object key MinIO (`app/services/file_store_service.py`), KHÔNG phải path đĩa
-cục bộ hay base64 — luồng đầy đủ: FE `POST /uploads` -> `FileDto.storage_key` (=
-object key) -> `SendMessageInput.attached_files` -> Core forward qua `TurnRequest.attached_files`
-(`agent/dto/schemas.py`) -> `turn.py::_human_message_content` chèn `object_key` vào
-text của `HumanMessage` -> agent tự đọc thấy rồi copy làm tham số gọi tool này.
-
-QUAN TRỌNG — kết quả tool này KHÔNG phải clinical evidence: đây là xác suất phân loại
-ảnh của 1 CNN (không phải bác sĩ, không có tiền sử/triệu chứng khác của bệnh nhân), nên
-theo đúng nguyên tắc evidence của `SYSTEM_PROMPT` (`graph.py` mục 2/5) — chỉ được coi là
-GIẢ THUYẾT cần đối chiếu tiếp qua `hybrid_retrieval`, KHÔNG được khẳng định thẳng thành chẩn đoán.
-"""
+"""Tool phân loại bệnh da liễu từ ẢNH"""
 
 import asyncio
 import difflib
@@ -203,9 +187,7 @@ def _format_predictions(results: list[dict[str, Any]]) -> str:
 
 
 def _resolve_object_key(object_key: str, turn_keys: list[str]) -> str:
-    """LLM hay chép sai 1-2 ký tự trong `object_key` (uuid hex 32 ký tự) -> sửa lại theo
-    danh sách ảnh THẬT của turn hiện tại (chỉ ảnh user vừa đính kèm, không đụng ảnh khác
-    trong bucket). Không có danh sách (vd turn resume) thì giữ nguyên giá trị LLM đưa."""
+    """LLM hay chép sai 1-2 ký tự trong `object_key`"""
     if not turn_keys or object_key in turn_keys:
         return object_key
     if len(turn_keys) == 1:

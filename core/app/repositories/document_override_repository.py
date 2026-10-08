@@ -1,7 +1,4 @@
-"""Override của người duyệt lên kết quả một bước (bảng `document_overrides`) — tách khỏi `DocumentRepository` vì đây
-là một khái niệm nghiệp vụ riêng (chỉnh tay của người duyệt, giữ tách khỏi kết quả máy để chạy lại bước không mất
-công sửa), không liên quan gì tới file MinIO hay trạng thái bước. `DocumentRepository` giữ 1 instance của class này
-(`DocumentRepository.overrides`) — không cần tạo/khởi tạo riêng."""
+"""Override của người duyệt lên kết quả một bước"""
 
 from collections.abc import Callable
 from contextlib import contextmanager

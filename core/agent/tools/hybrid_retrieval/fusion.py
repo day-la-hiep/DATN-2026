@@ -1,5 +1,4 @@
-"""Trộn kết quả các nhánh của `hybrid_retrieval` (RRF cho 2 nhánh chunk) và dựng kết quả sách để trích dẫn — `book_result` còn
-dùng chung cho `semantic_search` / `keyword_search`."""
+"""Trộn kết quả các nhánh của `hybrid_retrieval`"""
 from typing import Any
 
 _RRF_K = 60  # hằng số chuẩn của RRF: giảm ảnh hưởng chênh lệch thứ hạng ở đầu danh sách
@@ -7,8 +6,7 @@ _KG_FALLBACK_SLOTS = 2  # khi không rerank được, vẫn dành chỗ cho câu
 
 
 def rrf(*rankings: list[str]) -> dict[str, float]:
-    """Điểm RRF theo id: tổng 1 / (k + hạng) qua các danh sách xếp hạng. Điểm semantic và BM25 không cùng thang đo nên chỉ
-    dùng thứ hạng."""
+    """Điểm RRF theo id"""
     scores: dict[str, float] = {}
     for ranking in rankings:
         for rank, key in enumerate(ranking, start=1):

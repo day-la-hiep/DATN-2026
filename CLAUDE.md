@@ -102,7 +102,10 @@ Chi tiết nằm trong các skill; ở đây chỉ các điểm hay nhầm:
   Stage `toc` và `toc.json` là dữ liệu mục lục, tên đó đúng — đừng đổi.
 - Lỗi người dùng sửa được → `StageError` / `InvalidError` (hiển thị nguyên văn trên UI).
 - Tên và comment: Python dùng snake_case; docstring và comment **tiếng Việt**, giải thích **vì sao**,
-  không mô tả **cái gì** đã rõ trong code. Không viết docstring nhiều đoạn.
+  không mô tả **cái gì** đã rõ trong code.
+- **Không** viết docstring/comment dài ở đầu file (module docstring) hay khi định nghĩa hàm/class để kể
+  lại thiết kế, lịch sử, hay luồng chạy. Mặc định: không docstring; hàm cần giải thích thì tối đa 1 dòng
+  (hoặc 1 comment ngắn tại đúng dòng khó hiểu). Ngoại lệ: docstring của `@tool` agent (đó là prompt cho LLM).
 
 ## 5. Skill quy ước (`.claude/skills/`)
 

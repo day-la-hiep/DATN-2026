@@ -1,12 +1,4 @@
-"""Gắn mục lục vào trang thật — chỉ dùng LUẬT, không LLM (bước 2 của luồng).
-
-- **Độ lệch:** trang PDF = trang in + độ lệch. Khớp tên mục với các dòng ngắn trong thân sách, mỗi mục khớp bỏ một phiếu cho
-  `trang tìm thấy - trang in`; thắng khi đủ phiếu và áp đảo. Người dùng đặt tay được (override `_offset` của bước `toc`).
-- **Neo:** tìm dòng tiêu đề của mục ở trang kỳ vọng ±1. Thấy -> biết chính xác dòng bắt đầu (`anchored`); không thấy -> chỉ biết
-  trang (chunk ở đó đánh dấu `boundary`). Part/section không có số trang lấy trang của mục con đầu tiên, rồi cũng thử neo.
-- Không chắc thì báo (`suspect`, `out_of_range`, `anchored=False`), không đoán im lặng.
-
-Giả định cả sách chỉ có MỘT độ lệch. Chạy lại rất rẻ, nên gọi mỗi khi người duyệt sửa hay có `pages.jsonl` mới."""
+"""Gắn mục lục vào trang thật"""
 from collections import Counter, defaultdict
 from difflib import SequenceMatcher
 from typing import Any
@@ -39,8 +31,7 @@ def heading_lines(rows: list[dict[str, Any]], skip: set[int]) -> list[Line]:
 
 
 def prefix_lines(rows: list[dict[str, Any]], skip: set[int]) -> dict[int, list[tuple[int, str]]]:
-    """Mọi dòng của thân sách theo trang (chỉ để neo bằng tiền tố): tiêu đề hay kèm hậu tố mã bệnh ("ROSACEA ICD-10: L71")
-    hoặc bị OCR dính liền đoạn văn sau, nên không khớp được bằng độ giống cả dòng."""
+    """Mọi dòng của thân sách theo trang"""
     out: dict[int, list[tuple[int, str]]] = defaultdict(list)
     for r in rows:
         if r.get("noise") or r["page"] in skip:
@@ -53,8 +44,7 @@ def prefix_lines(rows: list[dict[str, Any]], skip: set[int]) -> dict[int, list[t
 
 
 def _prefix_hit(title: str, tn: str, raw: str) -> bool:
-    """Dòng mở đầu bằng đúng tiêu đề VIẾT HOA (kiểu heading), theo sau là khoảng trắng/ký hiệu. Chữ thường không tính:
-    câu văn mở đầu bằng tên bệnh ("Rosacea is a ...") không phải tiêu đề."""
+    """Dòng mở đầu bằng đúng tiêu đề VIẾT HOA"""
     if len(tn) < 6:
         return False
     head = norm(raw[: len(title) + 6])

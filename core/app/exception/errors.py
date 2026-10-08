@@ -1,5 +1,4 @@
-"""Lỗi nghiệp vụ dùng chung. Service chỉ `raise` các lỗi này (không biết HTTP); mã trạng thái
-và định dạng response do `exception_handler.py` quyết định."""
+"""Lỗi nghiệp vụ dùng chung"""
 
 
 class AppError(Exception):

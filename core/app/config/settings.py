@@ -223,11 +223,7 @@ def _mask(value: str) -> str:
 
 
 def log_startup_infra() -> None:
-    """Log các endpoint infra (Postgres/Redis/RabbitMQ/Qdrant/Neo4j/MinIO) mà process
-    này SẼ dùng, kèm nguồn giá trị (`.env` nếu tìm thấy file, ngược lại fallback default
-    trong `Settings` — vốn khớp `docker-compose.yml`). Gọi 1 lần lúc khởi động ở cả
-    `core/main.py` (Core) và `agent/worker.py` (Agent Worker) — 2 process riêng biệt,
-    mỗi process cần tự xác nhận đang trỏ đúng infra nào (dev local vs. .env override)."""
+    """Log các endpoint infra"""
     source = (
         f".env ({_DOTENV_PATH})"
         if _DOTENV_PATH

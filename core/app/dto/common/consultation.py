@@ -1,6 +1,4 @@
-"""Bản rút gọn của entity `consultation` / `identity` để hiển thị cho FE. Base chứa cả dữ liệu không được lộ ra wire
-(`Doctor` kế thừa `User` nên có `password_hash`, `patient_profiles`), vì vậy wire chỉ lấy phần cần hiển thị — tên field
-và kiểu giữ khớp base."""
+"""Bản rút gọn của entity `consultation` / `identity` để hiển thị cho FE"""
 from datetime import datetime
 
 from pydantic import BaseModel

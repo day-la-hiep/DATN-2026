@@ -1,11 +1,4 @@
-/**
- * Adapter: DTO trên wire của Core Backend (camelCase — mọi response DTO kế thừa
- * `CamelModel`, xem `core/app/dto/common.py`/`core/app/dto/message.py`/
- * `core/app/dto/conversation.py`) <-> model nội bộ của store Frontend.
- *
- * Store + component giữ nguyên `ChatMessage` phẳng; chỉ tầng service này biết cấu trúc
- * `metadata` đa hình của backend.
- */
+// DTO wire của Core (camelCase) <-> model của store; chỉ tầng này biết `metadata` đa hình của backend.
 import {
   MAX_ATTACHMENTS,
 } from "@/features/chat/constants";

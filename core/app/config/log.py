@@ -1,7 +1,4 @@
-"""Log tập trung cho cả Core và Agent Worker (2 process riêng, mỗi process gọi `setup_logging`
-đúng 1 lần lúc khởi động). Mọi module chỉ cần `logging.getLogger(__name__)` — không tự cấu
-hình handler. Format: `HH:MM:SS.mmm LEVEL service logger  message`, có màu khi chạy trong
-terminal (tắt bằng `NO_COLOR=1`, ép bật bằng `FORCE_COLOR=1` khi pipe qua `less -R`/docker)."""
+"""Log tập trung cho cả Core và Agent Worker"""
 
 import logging
 import os
@@ -114,8 +111,7 @@ def setup_logging(service: str) -> None:
 
 
 class RequestLogMiddleware:
-    """Thay access log của uvicorn: thêm request id + thời gian xử lý. Viết dạng ASGI thuần
-    (không dùng `BaseHTTPMiddleware`) để không làm vỡ stream SSE của `/conversations/{id}/stream`."""
+    """Thay access log của uvicorn"""
 
     def __init__(self, app) -> None:
         self.app = app

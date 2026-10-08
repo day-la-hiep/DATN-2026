@@ -1,6 +1,4 @@
-"""Qdrant dùng chung: class `QdrantVectorClient` = kết nối (async cho Core/Agent, đồng bộ cho pipeline chạy ở thread nền) + capability generic
-(đảm bảo/xoá collection, upsert, search dense + sparse, lọc theo payload). Tên collection và payload cụ thể của từng loại dữ liệu
-nằm ở service (`KnowledgeBaseService`, `DocumentService`). Instance do `app/api/deps.py` tạo và đóng."""
+"""Qdrant dùng chung"""
 import threading
 from typing import Any
 
@@ -79,8 +77,7 @@ class QdrantVectorClient:
         return result.points
 
     async def has_sparse_vector(self, name: str, vector_name: str) -> bool:
-        """Collection có sparse vector tên này không. Sparse vector chỉ khai báo được lúc tạo collection nên collection cũ
-        (tạo trước khi có BM25 qua Qdrant) sẽ không có."""
+        """Collection có sparse vector tên này không"""
         if not await self.client.collection_exists(name):
             return False
         sparse = (await self.client.get_collection(name)).config.params.sparse_vectors
@@ -110,9 +107,7 @@ class QdrantVectorClient:
     # ---------------------------------------------------------------- đồng bộ (pipeline ở thread nền)
     def ensure_collection_sync(self, name: str, dim: int, *, keyword_index_fields: tuple[str, ...] = (),
                                sparse_names: tuple[str, ...] = ()) -> None:
-        """Tạo collection nếu chưa có; có rồi thì kiểm tra số chiều và sparse vector khớp. Tạo chỉ mục keyword cho các trường
-        lọc/xoá nhiều. `sparse_names` bật IDF phía Qdrant (cho BM25). Qdrant không cho thêm sparse vector vào collection đã
-        tạo nên thiếu thì báo lỗi rõ thay vì nạp chunk không tìm được bằng từ khoá."""
+        """Tạo collection nếu chưa có"""
         client = self.sync_client
         if not client.collection_exists(name):
             client.create_collection(

@@ -1,7 +1,4 @@
-"""Rerank bằng cross-encoder local (sentence-transformers `CrossEncoder`, không gọi API ngoài), bước cuối của `hybrid_retrieval`.
-
-Model đa ngôn ngữ để chấm được cả tiếng Việt lẫn câu KG tiếng Anh (`settings.RERANKER_MODEL`). Tải model lười ở lần dùng đầu
-tiên; không tải / chạy được thì `rerank` trả `None` để caller giữ thứ tự cũ thay vì làm hỏng cả lượt tìm kiếm."""
+"""Rerank bằng cross-encoder local"""
 import logging
 import asyncio
 import math

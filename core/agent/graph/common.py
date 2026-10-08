@@ -1,5 +1,4 @@
-"""Hằng số/helper dùng chung giữa `pre_diagnosis_graph` và `middleware/*` — module lá (không import
-lại `pre_diagnosis_graph`/`chat_graph`/`middleware`) để tránh vòng import."""
+"""Hằng số/helper dùng chung giữa `pre_diagnosis_graph` và `middleware/*`"""
 
 import json
 import re
@@ -46,10 +45,7 @@ THINKING_SUMMARY_MAX_LEN = 160
 
 
 class CriticState(AgentState):
-    """`AgentState` mở rộng: đếm số lần critic đã yêu cầu viết lại câu trả lời trong
-    CÙNG 1 turn — không dùng reducer (`Annotated[..., operator.add]`) vì mỗi lần cần GHI
-    ĐÈ giá trị mới, không cộng dồn qua nhiều turn (field reset ngầm mỗi
-    `agent_graph.astream()` mới vì không nằm trong checkpoint theo cách cộng dồn)."""
+    """`AgentState` mở rộng"""
 
     critic_retries: NotRequired[int]
 

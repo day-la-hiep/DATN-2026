@@ -1,6 +1,4 @@
-"""Node lọc intent của chat graph: tin xã giao / hỏi về trợ lý / ngoài phạm vi da liễu được trả lời luôn bằng một lần gọi LLM ngắn
-(`prompt/triage.py`) rồi kết thúc turn; còn lại — và mọi trường hợp lỗi hoặc không chắc — chuyển sang graph tiền chẩn đoán. Triage
-sai về phía "diagnose" thì chỉ tốn thêm, sai về phía "answer" mới nguy hiểm nên mặc định luôn là diagnose."""
+"""Node lọc intent của chat graph"""
 import logging
 from typing import Any, Literal
 

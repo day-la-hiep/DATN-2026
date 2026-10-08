@@ -4,12 +4,7 @@ import { useSyncExternalStore, useState } from "react";
 import { getAccessToken, setAccessToken } from "@/services/client";
 import { KeyRound } from "lucide-react";
 
-/**
- * Gate đơn giản cho shared-token auth (bảo vệ bản demo khi deploy cho người ngoài
- * test — xem `core/app/core/auth.py`). KHÔNG phải màn hình đăng nhập thật: không
- * validate token với backend ở đây, chỉ lưu localStorage rồi để request thật tự 401
- * nếu sai (interceptor trong `services/client.ts` sẽ xoá + reload lại gate).
- */
+// Không validate token ở đây: request thật tự 401 nếu sai, interceptor trong `services/client.ts` sẽ xoá và mở lại gate.
 export function AccessGate({ children }: { children: React.ReactNode }) {
   const isClient = useSyncExternalStore(
     () => () => {},

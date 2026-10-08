@@ -1,7 +1,4 @@
-"""Consumer `agent_response_queue`, chạy TRONG tiến trình Core (FastAPI, `main.py`
-lifespan) — Core là writer duy nhất của bảng `messages`, upsert khi nhận kết quả từ
-Agent Worker (`agent/worker.py`, tiến trình khác) qua RabbitMQ.
-"""
+"""Consumer `agent_response_queue`, chạy TRONG tiến trình Core"""
 
 import logging
 import json
@@ -60,6 +57,5 @@ async def _on_message(message: AbstractIncomingMessage) -> None:
 
 
 async def start_consuming() -> None:
-    """Đăng ký consumer rồi return ngay (không block) — gọi trong `main.py` lifespan
-    TRƯỚC `yield`, an toàn vì `consume()` chỉ đăng ký callback."""
+    """Đăng ký consumer rồi return ngay"""
     await get_rabbitmq_client().consume(AGENT_RESPONSE_QUEUE, _on_message)

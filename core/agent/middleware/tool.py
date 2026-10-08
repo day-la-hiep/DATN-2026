@@ -18,32 +18,14 @@ async def emit_tool_result(
     request: ToolCallRequest,
     handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command[Any]]],
 ) -> ToolMessage | Command[Any]:
-    """Publish `message.tool_result` lên Redis SAU khi tool thực thi xong — thay thế
-    hoàn toàn phần `tools_update` cũ trong `worker.py::_drive`, GIỮ NGUYÊN shape event
-    (`type`/`tool`/`content`/`conversationId`/`messageId`) nên FE không cần đổi gì. Tool tự
-    `interrupt()` (`ask_user`, `agent/tools/ask_user.py`) raise `GraphBubbleUp` ngay
-    trong `handler()` — KHÔNG chạy tới dòng emit, turn tạm dừng và được xử lý riêng ở
-    `worker.py::_handle_interrupt`, giống hành vi cũ (re-raise ngay, KHÔNG rơi vào nhánh
-    bắt lỗi bên dưới).
-
-    Lỗi THẬT của tool (Neo4j/Qdrant/MinIO sập, API rate-limit...) — `ToolNode` mặc định
-    của `create_agent` CHỈ tự bắt `ToolInvocationError` (sai tham số), còn lỗi runtime từ
-    BÊN TRONG tool (vd `query_dermatology_kg` mất kết nối Neo4j) bị ném thẳng lên
-    `agent_graph.astream()`, `worker.py::_drive` bắt ở tầng NGOÀI CÙNG rồi coi cả TURN là
-    lỗi — nhưng KHÔNG rollback checkpoint: `AIMessage(tool_calls=[...])` đã bị
-    `create_agent` ghi vào state TRƯỚC KHI tool này chạy vẫn còn trong lịch sử, không có
-    `ToolMessage` nào theo sau. Turn SAU đó (checkpointer nối tiếp `messages`, xem
-    `config_for`) gửi nguyên lịch sử này cho LLM -> nhiều provider (đã gặp thật với
-    DeepSeek) từ chối cứng: "assistant message with 'tool_calls' must be followed by
-    tool messages" (400), hội thoại kẹt vĩnh viễn từ đó về sau. Bắt lỗi NGAY TẠI ĐÂY,
-    trả về `ToolMessage` báo lỗi thay vì để lộ exception — giữ checkpoint hợp lệ (mọi
-    `tool_calls` luôn có `ToolMessage` theo sau), model tự đọc lỗi và có thể thử cách
-    khác/báo người dùng thay vì cả turn treo."""
+    """Publish `message.tool_result` lên Redis SAU khi tool thực thi xong"""
     try:
         response = await handler(request)
     except GraphBubbleUp:
         raise
     except Exception as exc:  # noqa: BLE001
+        # Trả ToolMessage lỗi thay vì ném: AIMessage(tool_calls) đã nằm trong checkpoint,
+        # thiếu ToolMessage đi sau thì turn kế tiếp bị provider từ chối (400) và hội thoại kẹt.
         tool_name = (
             request.tool.name
             if request.tool
@@ -61,18 +43,13 @@ async def emit_tool_result(
         tool_name = response.name or request.tool_call.get("name", "")
         display_name = TOOL_DISPLAY_NAMES.get(tool_name, tool_name)
 
-        # id khớp scheme FE tự sinh khi nhận `message.tool_result` trực tiếp
-        # (`fe/features/chat/store.ts`) — GHI ĐÈ (không append) nếu CÙNG tool đã gọi
-        # trước đó trong turn, đúng hành vi live (dedup theo tên tool hiển thị, không
-        # phân biệt tham số khác nhau — hạn chế đã có từ trước, không phải lỗi mới).
+        # id khớp scheme FE (`fe/features/chat/store.ts`): cùng tên hiển thị thì ghi đè step cũ.
         tool_args = (
             request.tool_call.get("args")
             if isinstance(request.tool_call, dict)
             else None
         )
-        # `record_reasoning`: mỗi giai đoạn là 1 step riêng (tên hiển thị theo `stage`) — nếu
-        # dùng chung 1 tên, dedupe theo tên (ở đây và ở `fe/features/chat/store.ts`) sẽ ghi
-        # đè lập luận ban đầu bằng lập luận sau.
+        # Mỗi `stage` của record_reasoning cần tên riêng, nếu không dedupe theo tên sẽ ghi đè lập luận đầu.
         if tool_name == REASONING_TOOL and isinstance(tool_args, dict):
             display_name = STAGE_LABELS.get(str(tool_args.get("stage")), display_name)
         step_id = f"{ctx.message_id}-tool-{display_name}"

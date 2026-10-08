@@ -1,6 +1,3 @@
-"""Aggregator: import toàn bộ model ở đây để `Base.metadata` nhận diện được
-cho Alembic autogenerate (xem `migrations/env.py`).
-"""
 from app.models.file import File  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.models.document import Document, DocumentOverride, DocumentStage  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.models.message_file import MessageFile  # noqa: F401  # pyright: ignore[reportUnusedImport]

@@ -119,6 +119,10 @@ worker restart is needed to pick up `.env` changes. Model choices for the UI are
 
 - All I/O is `async`; never call blocking code inside `async def`.
 - Comments and docstrings are Vietnamese and explain *why*, not what; match the surrounding file.
+- **No long module docstrings at the top of a file and no multi-line docstrings on functions/classes**
+  (no design history, flow narration, or incident write-ups). Default to no docstring; if one is
+  needed, a single line; for a non-obvious line, a short inline comment right at that line. Only
+  exception: `@tool` docstrings in `agent/tools/` — they are the LLM's prompt (see "Add an agent tool").
 - Pyright runs in **basic** mode (`pyproject.toml`): `pyright agent app main.py` is clean (0
   errors, verified 2026-10-03). Basic mode does not flag partially-unknown library types, so
   don't add `# pyright: ignore` or `cast` just to silence those; fix real errors instead. Some

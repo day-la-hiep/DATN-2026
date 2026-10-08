@@ -1,10 +1,4 @@
-"""Điều khiển pipeline `document_ingest`: kiểm tra điều kiện, chạy một bước, dừng, cổng duyệt (approve) và áp lại override.
-
-Vòng đời: not_started -> running -> pending_review -> (approve) approved. Bước chỉ chạy khi mọi bước phụ thuộc đã
-`approved`. Chạy lại một bước làm các bước hạ nguồn thành `stale`. `run_stage` chạy đồng bộ trong thread hiện tại; `start_stage` (API)
-chỉ ghi `running` rồi đẩy yêu cầu vào RabbitMQ — ingest worker (`app/workers/document_ingest_worker.py`, tiến trình riêng) mới chạy bước,
-Dừng đi qua Redis (Pub/Sub + cờ key). Dữ liệu tài liệu
-(CRUD, cài đặt, mục lục, chunk) do `DocumentService` lo. Client do `app/api/deps.py` tạo, truyền cho từng bước qua `StageContext`."""
+"""Điều khiển pipeline `document_ingest`"""
 
 import asyncio
 import importlib
@@ -51,8 +45,7 @@ def _module(stage_id: str) -> ModuleType:
 
 
 class DocumentIngestPipelineService:
-    """Điều khiển pipeline tài liệu: kiểm tra điều kiện, chạy bước (đồng bộ hoặc ở thread nền cho API), dừng, duyệt, áp lại override.
-    Instance do `app/api/deps.py` tạo (một cho cả process)."""
+    """Điều khiển pipeline tài liệu"""
 
     def __init__(
         self,
@@ -106,8 +99,7 @@ class DocumentIngestPipelineService:
     def check_runnable(
         self, document_id: str, stage_id: str, *, force: bool = False
     ) -> None:
-        """Ném lỗi nếu chưa chạy được: bước không tồn tại, tài liệu đang xử lý bước khác, bước trước chưa duyệt (`force` bỏ qua), cài đặt
-        hỏng. Gọi trước khi đưa sang thread nền để lỗi trả về ngay ở API."""
+        """Ném lỗi nếu chưa chạy được"""
         if stage_id not in STAGE_BY_ID:
             raise NotFoundError(stage_id)
         status = self._repo.status(document_id)["stages"]

@@ -1,13 +1,4 @@
-"""Repository tài liệu (pipeline `document_ingest`) — stateless: mọi method nhận `document_id` thẳng (không có object
-đã "mở" sẵn 1 tài liệu). Overrides của người duyệt tách riêng ở `DocumentOverrideRepository` (field `.overrides`).
-
-- Bản ghi (bảng Postgres, `app/models/document.py`): tài liệu + cài đặt (`documents`), trạng thái từng bước
-  (`document_stages`). Đọc-sửa-ghi trong transaction (khoá dòng `FOR UPDATE`) vì Core và các thread xử lý cùng ghi.
-- File (MinIO, `document/<document_id>/`, qua `files_for(document_id)` — một `FileStoreService` đã scope, dựng lại mỗi
-  lần gọi, không cache gì): PDF, `pages.jsonl`, mục lục, chunk, ảnh trang, nhật ký.
-
-Code ĐỒNG BỘ (session `PostgresClient.sync_session_factory`) vì pipeline chạy trong thread nền; caller async bọc
-`asyncio.to_thread`. Instance do `app/api/deps.py` tạo (một cho cả process), inject vào service."""
+"""Repository tài liệu"""
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -73,8 +64,7 @@ def _stage_dict(row: DocumentStage) -> dict[str, Any]:
 
 
 class DocumentRepository:
-    """Repository tài liệu — mọi method nhận `document_id` thẳng; không giữ state riêng cho từng tài liệu (an toàn
-    dùng chung 1 instance cho cả process, xem `app/api/deps.py`)."""
+    """Repository tài liệu"""
 
     def __init__(self, files: FileStoreService, session_factory: SessionFactory) -> None:
         self.files, self._sessions = files, session_factory
@@ -121,8 +111,7 @@ class DocumentRepository:
             }
 
     def get_detail(self, document_id: str) -> dict[str, Any]:
-        """`meta()` + trạng thái mọi bước trong 1 lần đọc (1 session, 2 query) — dùng cho "lấy chi tiết tài liệu"
-        thay vì gọi `meta()` rồi `status()` riêng. Trả `{}` nếu tài liệu không tồn tại."""
+        """`meta()` + trạng thái mọi bước trong 1 lần đọc"""
         with self._sessions() as s:
             b = s.get(Document, document_id)
             if b is None:
@@ -152,8 +141,7 @@ class DocumentRepository:
                 setattr(b, k, v)
 
     def get_profile(self, document_id: str) -> Profile | None:
-        """Cài đặt xử lý của tài liệu (JSON trong `documents.profile`, đọc qua Pydantic). `None` nếu tài liệu không tồn tại
-        hoặc chưa có cài đặt; dữ liệu sai cấu trúc để Pydantic báo lỗi (`ValidationError`)."""
+        """Cài đặt xử lý của tài liệu"""
         with self._sessions() as s:
             b = s.get(Document, document_id)
             if b is None or b.profile is None:
@@ -172,10 +160,7 @@ class DocumentRepository:
         document_id: str | None = None,
         source_file_name: str = "",
     ) -> str:
-        """Tạo record tài liệu (+ một dòng `not_started` cho mỗi bước) và ghi `files` (tên trong thư mục tài liệu -> đường dẫn
-        local) lên MinIO như MỘT thao tác: lỗi ở đâu thì rollback DB và xoá các file đã ghi. `source.pdf` (nếu có) được ghi
-        thêm một dòng `files` làm `source_file`, tên hiển thị là `source_file_name`. Trả về id do DB sinh
-        (`document_id` chỉ dùng cho dữ liệu test cố định)."""
+        """Tạo record tài liệu"""
         uploaded: list[str] = []
         fs: FileStoreService | None = None
         try:
@@ -206,8 +191,7 @@ class DocumentRepository:
         return row.id
 
     def delete(self, document_id: str) -> None:
-        """Xoá bản ghi (bước + override xoá theo) và mọi file của tài liệu. Bản sao PDF tạm và điểm Qdrant do
-        `DocumentService.delete_document` xoá."""
+        """Xoá bản ghi"""
         with self._tx() as s:
             b = s.get(Document, document_id)
             file_ids = [i for i in (b.source_file_id, b.ingested_file_id) if i] if b else []
