@@ -1,8 +1,4 @@
-"""ClinicalFact / PreConsultationReport — dữ kiện lâm sàng trích từ hội thoại và báo cáo tiền tư vấn
-(`app/dto/base/clinical.py`, `consultation.py`).
-
-Tin nhắn nguồn của fact dùng bảng nối (không chép vào JSON) để bác sĩ truy ngược đúng tin gốc và để fact bị thay thế
-vẫn còn liên kết. Báo cáo tiền tư vấn tạm chỉ giữ phần tóm tắt, mỗi phiên tư vấn một báo cáo."""
+"""ClinicalFact / PreConsultationReport"""
 from datetime import UTC, datetime
 from sqlalchemy import DateTime, ForeignKey, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column

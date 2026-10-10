@@ -1,5 +1,4 @@
-"""DTO Output cho pipeline tài liệu — nguồn: entity nghiệp vụ `app/dto/base/document.py` (`Document`, `DocumentStage`,
-`DocumentChunk`, `DocumentFigure`), dựng bởi `app/services/document_service.py`. Wire dùng snake_case như tên field Python."""
+"""DTO Output cho pipeline tài liệu"""
 from typing import Any
 
 from pydantic import BaseModel
@@ -43,9 +42,7 @@ class DocumentOutput(BaseModel):
 
 
 class TocEntryOutput(BaseModel):
-    """Một mục mục lục — nguồn: `pipeline/document_ingest/mapping.py::build_toc`/`hierarchy.py` (`toc.json["entries"]`).
-    `page_printed`/`page` là tên wire (khớp `DocumentChunk.page_printed_*`, `DocumentFigure.page`); `toc.json` vẫn lưu
-    `printed_page`/`pdf_page` — service đổi tên khi đọc (`DocumentService.get_toc`) để không phải sửa dữ liệu đã có."""
+    """Một mục mục lục"""
 
     id: str
     level: int

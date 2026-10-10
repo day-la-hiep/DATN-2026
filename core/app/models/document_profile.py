@@ -1,6 +1,4 @@
-"""Cấu hình của một tài liệu (cột `documents.profile`), dùng bởi pipeline `document_ingest`: cách đọc PDF, dùng AI hay không,
-cách chia đoạn. Schema Pydantic (không phải bảng ORM) nên KHÔNG import vào `app/models/__init__.py` (nơi đó chỉ để `Base.metadata`
-nhận bảng cho Alembic)."""
+"""Cấu hình của một tài liệu"""
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -36,9 +34,16 @@ class ChunkingConfig(_Model):
     breadcrumb: bool = True  # thêm đường dẫn mục lục vào `context_text` (dùng khi embed)
 
 
+class IndexingConfig(_Model):
+    # Ngôn ngữ chính của sách, quyết định cách xử lý chữ cho tìm từ khoá (BM25): vi = tách từ ghép tiếng Việt, en = stem tiếng Anh
+    # (bỏ bước tách từ chậm), mixed = cả hai.
+    text_language: Literal["vi", "en", "mixed"] = "mixed"
+
+
 class Profile(_Model):
     document_id: str
     language: str = "en"
     extraction: ExtractionConfig = ExtractionConfig()
     llm: LLMConfig = LLMConfig()
     chunking: ChunkingConfig = ChunkingConfig()
+    indexing: IndexingConfig = IndexingConfig()

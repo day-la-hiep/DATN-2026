@@ -1,6 +1,4 @@
-"""Qdrant dùng chung: class `QdrantVectorClient` = kết nối (async cho Core/Agent, đồng bộ cho pipeline chạy ở thread nền) + capability generic
-(đảm bảo/xoá collection, upsert, search, retrieve, scroll, lọc theo payload). Tên collection và payload cụ thể của từng loại dữ liệu
-nằm ở service (`KnowledgeBaseService`, `DocumentService`). Instance do `app/api/deps.py` tạo và đóng."""
+"""Qdrant dùng chung"""
 import threading
 from typing import Any
 
@@ -11,10 +9,13 @@ from qdrant_client.models import (
     Filter,
     FilterSelector,
     MatchValue,
+    Modifier,
     PayloadSchemaType,
     PointStruct,
     Record,
     ScoredPoint,
+    SparseVector,
+    SparseVectorParams,
     VectorParams,
 )
 
@@ -61,47 +62,77 @@ class QdrantVectorClient:
             self._sync = None
 
     # ---------------------------------------------------------------- async (Core / Agent)
-    async def ensure_collection(self, name: str, dim: int) -> None:
-        """Tạo collection cosine nếu chưa có (idempotent)."""
-        if not await self.client.collection_exists(name):
-            await self.client.create_collection(name, vectors_config=VectorParams(size=dim, distance=Distance.COSINE))
-
-    async def delete_collection(self, name: str) -> None:
-        """Xoá collection (no-op khi chưa tồn tại)."""
-        if await self.client.collection_exists(name):
-            await self.client.delete_collection(name)
-
-    async def upsert_points(self, name: str, points: list[PointStruct]) -> None:
-        await self.client.upsert(name, points=points)
-
     async def search(self, name: str, vector: list[float], *, limit: int, query_filter: Filter | None = None,
                      score_threshold: float | None = None) -> list[ScoredPoint]:
         result = await self.client.query_points(name, query=vector, query_filter=query_filter, limit=limit,
                                                 score_threshold=score_threshold)
         return result.points
 
-    async def existing_ids(self, name: str, ids: list[str]) -> set[str]:
-        """Trong `ids`, những id đã có trong collection (không tải payload/vector)."""
-        if not ids:
-            return set()
-        records = await self.client.retrieve(name, ids=ids, with_payload=False, with_vectors=False)
-        return {str(r.id) for r in records}
+    async def search_sparse(self, name: str, vector: SparseVector, *, using: str, limit: int,
+                            query_filter: Filter | None = None) -> list[ScoredPoint]:
+        """Tìm theo sparse vector đã đặt tên (BM25); chỉ trả point có điểm > 0, tức có ít nhất một từ trùng."""
+        if not vector.indices:
+            return []
+        result = await self.client.query_points(name, query=vector, using=using, query_filter=query_filter, limit=limit)
+        return result.points
 
-    async def scroll(self, name: str, query_filter: Filter, *, limit: int, with_payload: bool | list[str] = True) -> list[Record]:
-        """Lấy point theo bộ lọc payload thuần (không cần vector)."""
-        records, _ = await self.client.scroll(name, scroll_filter=query_filter, limit=limit, with_payload=with_payload)
-        return records
+    async def has_sparse_vector(self, name: str, vector_name: str) -> bool:
+        """Collection có sparse vector tên này không"""
+        if not await self.client.collection_exists(name):
+            return False
+        sparse = (await self.client.get_collection(name)).config.params.sparse_vectors
+        return bool(sparse) and vector_name in sparse
+
+    async def collection_exists(self, name: str) -> bool:
+        return await self.client.collection_exists(name)
+
+    async def dense_size(self, name: str) -> int | None:
+        """Số chiều vector dense của collection; None khi collection chưa có hoặc dùng nhiều vector đặt tên."""
+        if not await self.client.collection_exists(name):
+            return None
+        vectors = (await self.client.get_collection(name)).config.params.vectors
+        return getattr(vectors, "size", None)
+
+    async def count(self, name: str) -> int:
+        """Số point của collection; 0 khi collection chưa có."""
+        if not await self.client.collection_exists(name):
+            return 0
+        return int((await self.client.count(name, exact=True)).count)
+
+    async def scroll_all(self, name: str, *, with_payload: bool | list[str] = True, batch: int = 256) -> list[Record]:
+        """Đọc toàn bộ point (không cần vector), phân trang. Chỉ dùng cho thống kê / kiểm tra bằng tay trên kho cỡ vài nghìn chunk."""
+        if not await self.client.collection_exists(name):
+            return []
+        records: list[Record] = []
+        offset = None
+        while True:
+            page, offset = await self.client.scroll(name, limit=batch, offset=offset, with_payload=with_payload)
+            records += page
+            if offset is None:
+                return records
 
     # ---------------------------------------------------------------- đồng bộ (pipeline ở thread nền)
-    def ensure_collection_sync(self, name: str, dim: int, *, keyword_index_fields: tuple[str, ...] = ()) -> None:
-        """Tạo collection nếu chưa có; có rồi thì kiểm tra số chiều khớp. Tạo chỉ mục keyword cho các trường lọc/xoá nhiều."""
+    def ensure_collection_sync(self, name: str, dim: int, *, keyword_index_fields: tuple[str, ...] = (),
+                               sparse_names: tuple[str, ...] = ()) -> None:
+        """Tạo collection nếu chưa có"""
         client = self.sync_client
         if not client.collection_exists(name):
-            client.create_collection(name, vectors_config=VectorParams(size=dim, distance=Distance.COSINE))
+            client.create_collection(
+                name,
+                vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+                sparse_vectors_config={n: SparseVectorParams(modifier=Modifier.IDF) for n in sparse_names} or None,
+            )
         else:
-            size = client.get_collection(name).config.params.vectors.size  # type: ignore[union-attr]
+            params = client.get_collection(name).config.params
+            size = params.vectors.size  # type: ignore[union-attr]
             if size != dim:
                 raise RuntimeError(f"Collection {name} có vector {size} chiều, khác embedding hiện tại ({dim} chiều).")
+            missing = [n for n in sparse_names if n not in (params.sparse_vectors or {})]
+            if missing:
+                raise RuntimeError(
+                    f"Collection {name} thiếu sparse vector {', '.join(missing)} và Qdrant không thêm được vào collection đã tạo — "
+                    "đặt QDRANT_DOCUMENT_COLLECTION sang tên mới rồi chạy lại bước Lưu vào kho tri thức."
+                )
         for field in keyword_index_fields:
             try:
                 client.create_payload_index(name, field_name=field, field_schema=PayloadSchemaType.KEYWORD)

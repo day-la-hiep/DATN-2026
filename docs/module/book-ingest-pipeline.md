@@ -62,9 +62,11 @@ Chữ ngoài mọi mục (bìa, lời nói đầu) không thành chunk nhưng đ
 `boundary`, mục `suspect` vào hàng đợi xem lại.
 
 ### `index`
-Embed `context_text` (đường dẫn mục lục + nội dung) bằng embedding local, nạp vào Qdrant
-`derma_document_chunks` (payload có `document_id`, part/section/topic, trang, vị trí PDF nguồn). Chạy lại
+Embed `context_text` (đường dẫn mục lục + nội dung) bằng embedding qua OpenRouter, nạp vào Qdrant
+`derma_document_chunks_v4` (dense + sparse `bm25` cho tìm từ khoá; payload có `document_id`, part/section/topic, trang, vị trí PDF nguồn). Chạy lại
 xoá toàn bộ point cũ của tài liệu trước.
+
+Tiền xử lý cho tìm từ khoá (`app/infra/bm25/`): làm sạch chữ OCR (`text_clean`), tách từ ghép tiếng Việt bằng underthesea, bỏ stopword (giữ phủ định và đơn vị liều), stem tiếng Anh bằng Snowball (nltk). Mỗi tài liệu chọn `text_language` (vi / en / mixed) trong cài đặt; giá trị này được ghi vào payload `bm25_mode` để câu hỏi được mã hoá đúng cách cho từng nhóm. Có thêm token bỏ dấu (`~vay`) trọng số thấp để câu hỏi không dấu vẫn khớp. Đổi ngôn ngữ hoặc tokenizer thì phải làm lại bước Lưu vào kho.
 
 ## 3. Trạng thái và duyệt
 
@@ -112,7 +114,7 @@ Lỗi người dùng sửa được (`StageError`, `InvalidError`) hiển thị 
 |---|---|
 | **Postgres** | `documents` (metadata, `profile` JSON, `source_file_id`, `pdf_pages`), `document_stages` (state, options, progress, summary, error, thời điểm), `document_overrides`, `files` (dòng cho `source.pdf`) |
 | **MinIO** `MINIO_DOCUMENTS_BUCKET` | `document/<id>/`: `source.pdf`, `pages.jsonl`, `toc.auto.json`, `toc.json`, `chunks.jsonl`, `index.json`, `review/`, `logs/`, `page_img/`, `docling_parts/` (checkpoint OCR), `figures/` |
-| **Qdrant** | `derma_document_chunks`, một point/chunk |
+| **Qdrant** | `derma_document_chunks_v4`, một point/chunk |
 
 **Upload**: file stream qua Core vào thư mục tạm, kiểm tra header `%PDF` và ≤ 500 MB, rồi
 `DocumentRepository.create` tạo record + một dòng `not_started` cho mỗi bước + ghi file MinIO trong một luồng;
@@ -136,7 +138,7 @@ cd core && python -m unittest pipeline.document_ingest.tests.test_document_pipel
 - Chạy nền bằng thread trong Core (không có hàng đợi job riêng); Core restart thì bước đang chạy phải chạy lại.
 - Upload đi qua Core, chưa có presigned upload lên MinIO.
 - DB và MinIO không cùng transaction thật; chưa có job dọn object mồ côi khi rollback lỗi.
-- Khu admin chỉ dùng app token, chưa phân quyền người duyệt.
+- Khu admin chưa phân quyền người duyệt.
 - Agent chat **chưa có tool tra** collection `derma_document_chunks` — kho tri thức từ sách chưa được dùng khi tư vấn.
 - [`core/pipeline/document_ingest/README.md`](../../core/pipeline/document_ingest/README.md) còn nhắc route cũ
   `/admin/toc` và `status.json`; trạng thái bước hiện nằm ở bảng `document_stages`.

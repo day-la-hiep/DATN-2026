@@ -1,0 +1,511 @@
+{
+  "files": [
+    {
+      "id": "4f6d3faa-010b-4570-ab1e-9ef4b340c755",
+      "file_name": "Fitzpatrick's Color Atlas and Synopsis of Clinical Dermatology, 8th Edition.pdf",
+      "storage_key": "document/fitzpatrick-s-color-atlas-and-synopsis-of-clinic/source.pdf",
+      "content_type": "application/pdf",
+      "size": 104463735,
+      "created_at": "2026-10-02T14:00:50.888226+00:00"
+    },
+    {
+      "id": "68f21285-0550-4a26-8cda-436e3e69c813",
+      "file_name": "pages.jsonl",
+      "storage_key": "document/fitzpatrick-s-color-atlas-and-synopsis-of-clinic/pages.jsonl",
+      "content_type": "application/x-ndjson",
+      "size": null,
+      "created_at": "2026-10-03T00:04:07+00:00"
+    },
+    {
+      "id": "b57735a3-1abc-4191-9836-a233dfe735d5",
+      "file_name": "Huong-dan-chan-doan-dieu-tri-Da-lieu.pdf",
+      "storage_key": "document/742d810f-a1c1-4096-9029-0297d51745e1/source.pdf",
+      "content_type": "application/pdf",
+      "size": 2551345,
+      "created_at": "2026-10-07T12:16:17.868146+00:00"
+    },
+    {
+      "id": "8c900f2a-da2f-44ee-abcf-5bb5dd7932a3",
+      "file_name": "pages.jsonl",
+      "storage_key": "document/742d810f-a1c1-4096-9029-0297d51745e1/pages.jsonl",
+      "content_type": "application/x-ndjson",
+      "size": 680205,
+      "created_at": "2026-10-07T12:16:22.105141+00:00"
+    },
+    {
+      "id": "fb4b5b06-3eec-4fbd-bc4d-33ee29786726",
+      "file_name": "Andrews_Diseases_of_the_Skin_-_Clinical_Dermatology_2015.pdf",
+      "storage_key": "document/1e28b586-396c-46ef-a72c-c513f4fd8b4b/source.pdf",
+      "content_type": "application/pdf",
+      "size": 79156601,
+      "created_at": "2026-10-08T14:31:52.294416+00:00"
+    },
+    {
+      "id": "f4c1fa26-276f-496e-b235-52897da8cf95",
+      "file_name": "pages.jsonl",
+      "storage_key": "document/1e28b586-396c-46ef-a72c-c513f4fd8b4b/pages.jsonl",
+      "content_type": "application/x-ndjson",
+      "size": 5631900,
+      "created_at": "2026-10-09T00:01:03.370098+00:00"
+    }
+  ],
+  "documents": [
+    {
+      "id": "fitzpatrick-s-color-atlas-and-synopsis-of-clinic",
+      "title": "Fitzpatrick's Color Atlas and Synopsis of Clinical Dermatology, 8th Edition",
+      "type": "book",
+      "source_file_id": "4f6d3faa-010b-4570-ab1e-9ef4b340c755",
+      "ingested_file_id": "68f21285-0550-4a26-8cda-436e3e69c813",
+      "pdf_pages": 300,
+      "uploaded_by_id": null,
+      "profile": {
+        "llm": {
+          "model": "",
+          "enabled": true
+        },
+        "title": "Fitzpatrick's Color Atlas and Synopsis of Clinical Dermatology, 8th Edition",
+        "book_id": "fitzpatrick-s-color-atlas-and-synopsis-of-clinic",
+        "chunking": {
+          "breadcrumb": true,
+          "max_tokens": 400,
+          "min_tokens": 60,
+          "boundary_level": 3
+        },
+        "language": "en",
+        "extraction": {
+          "engine": "docling",
+          "layout": false,
+          "noise_pages": [],
+          "page_offset": 0,
+          "docling_tables": true,
+          "docling_force_ocr": true,
+          "docling_chunk_pages": 20,
+          "strip_running_headers": true
+        }
+      },
+      "created_at": "2026-10-02T14:00:50.888226+00:00",
+      "updated_at": "2026-10-02T14:00:50.888230+00:00"
+    },
+    {
+      "id": "742d810f-a1c1-4096-9029-0297d51745e1",
+      "title": "Huong-dan-chan-doan-dieu-tri-Da-lieu",
+      "type": "book",
+      "source_file_id": "b57735a3-1abc-4191-9836-a233dfe735d5",
+      "ingested_file_id": "8c900f2a-da2f-44ee-abcf-5bb5dd7932a3",
+      "pdf_pages": 330,
+      "uploaded_by_id": null,
+      "profile": {
+        "llm": {
+          "model": "",
+          "enabled": true
+        },
+        "chunking": {
+          "breadcrumb": true,
+          "max_tokens": 400,
+          "min_tokens": 60,
+          "boundary_level": 3
+        },
+        "language": "en",
+        "extraction": {
+          "engine": "pdftotext",
+          "layout": false,
+          "noise_pages": [],
+          "page_offset": 0,
+          "docling_tables": true,
+          "docling_force_ocr": true,
+          "docling_chunk_pages": 20,
+          "strip_running_headers": true
+        },
+        "document_id": "742d810f-a1c1-4096-9029-0297d51745e1"
+      },
+      "created_at": "2026-10-07T12:16:17.829098+00:00",
+      "updated_at": "2026-10-07T12:16:22.105864+00:00"
+    },
+    {
+      "id": "1e28b586-396c-46ef-a72c-c513f4fd8b4b",
+      "title": "Andrews Disease Of The Skin",
+      "type": "book",
+      "source_file_id": "fb4b5b06-3eec-4fbd-bc4d-33ee29786726",
+      "ingested_file_id": "f4c1fa26-276f-496e-b235-52897da8cf95",
+      "pdf_pages": 1083,
+      "uploaded_by_id": null,
+      "profile": {
+        "llm": {
+          "model": "",
+          "enabled": true
+        },
+        "chunking": {
+          "breadcrumb": true,
+          "max_tokens": 400,
+          "min_tokens": 60,
+          "boundary_level": 3
+        },
+        "language": "en",
+        "extraction": {
+          "engine": "docling",
+          "layout": false,
+          "noise_pages": [],
+          "page_offset": 0,
+          "docling_tables": true,
+          "docling_force_ocr": true,
+          "docling_chunk_pages": 20,
+          "strip_running_headers": true
+        },
+        "document_id": "1e28b586-396c-46ef-a72c-c513f4fd8b4b"
+      },
+      "created_at": "2026-10-08T14:31:52.126586+00:00",
+      "updated_at": "2026-10-09T00:01:03.376488+00:00"
+    }
+  ],
+  "document_stages": [
+    {
+      "id": "5a7b6ace-4c83-4b90-b96f-31361664861d",
+      "document_id": "fitzpatrick-s-color-atlas-and-synopsis-of-clinic",
+      "stage_id": "chunks",
+      "state": "approved",
+      "options": {},
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "chunks": 370,
+        "offset": 41,
+        "tokens": {
+          "max": 400,
+          "min": 18,
+          "median": 324
+        },
+        "too_long": 0,
+        "warnings": [
+          "397 mục của mục lục nằm ngoài các trang đã đọc nên chưa có đoạn nội dung.",
+          "99 dòng chữ nằm trước mục đầu tiên của mục lục (bìa, lời nói đầu…) nên không thuộc đoạn nào."
+        ],
+        "too_short": 7,
+        "suspect_chunks": 0,
+        "boundary_chunks": 40,
+        "toc_entries_used": 163,
+        "outside_toc_lines": 99,
+        "toc_entries_total": 560
+      },
+      "error": null,
+      "started_at": "2026-10-03T00:18:00+00:00",
+      "finished_at": "2026-10-03T00:18:01+00:00",
+      "approved_at": "2026-10-03T00:18:17+00:00"
+    },
+    {
+      "id": "c07b8c18-1a18-448a-9c94-c2bbdda40d9e",
+      "document_id": "fitzpatrick-s-color-atlas-and-synopsis-of-clinic",
+      "stage_id": "index",
+      "state": "approved",
+      "options": {},
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "points": 370,
+        "dimension": 384,
+        "collection": "derma_book_chunks",
+        "embedding_model": "paraphrase-multilingual-MiniLM-L12-v2"
+      },
+      "error": null,
+      "started_at": "2026-10-03T00:18:20+00:00",
+      "finished_at": "2026-10-03T00:18:38+00:00",
+      "approved_at": "2026-10-03T00:19:03+00:00"
+    },
+    {
+      "id": "6416c94a-b5b2-48be-9638-16bc426f65b1",
+      "document_id": "fitzpatrick-s-color-atlas-and-synopsis-of-clinic",
+      "stage_id": "toc",
+      "state": "approved",
+      "options": {
+        "pages": "8-35"
+      },
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "llm": {
+          "calls": 0,
+          "failures": 0,
+          "cache_hits": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "parts": 4,
+        "offset": 41,
+        "topics": 539,
+        "entries": 560,
+        "suspect": 0,
+        "anchored": 140,
+        "sections": 17,
+        "warnings": [
+          "18 mục có số trang không tăng dần theo thứ tự mục lục (thường do đọc sai chữ số) — vui lòng kiểm tra các mục được tô vàng."
+        ],
+        "toc_pages": "8-35",
+        "pages_source": "user"
+      },
+      "error": null,
+      "started_at": "2026-10-02T14:01:27+00:00",
+      "finished_at": "2026-10-02T14:09:01+00:00",
+      "approved_at": "2026-10-03T00:17:58+00:00"
+    },
+    {
+      "id": "949ffc2e-2a35-4132-b786-600db0f90619",
+      "document_id": "fitzpatrick-s-color-atlas-and-synopsis-of-clinic",
+      "stage_id": "ingest",
+      "state": "approved",
+      "options": {},
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "pages": 300,
+        "engine": "docling",
+        "page_range": [
+          1,
+          300
+        ],
+        "pages_empty": 2,
+        "pages_skipped": 0,
+        "pages_high_noise": 9
+      },
+      "error": null,
+      "started_at": "2026-10-02T23:45:17+00:00",
+      "finished_at": "2026-10-03T00:04:07+00:00",
+      "approved_at": "2026-10-03T00:16:26+00:00"
+    },
+    {
+      "id": "1a7a5398-564b-4a86-b6fe-286d51dead8d",
+      "document_id": "742d810f-a1c1-4096-9029-0297d51745e1",
+      "stage_id": "ingest",
+      "state": "approved",
+      "options": {},
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "pages": 330,
+        "engine": "pdftotext",
+        "page_range": [
+          1,
+          330
+        ],
+        "pages_empty": 0,
+        "pages_skipped": 0,
+        "pages_high_noise": 0
+      },
+      "error": null,
+      "started_at": "2026-10-07T12:16:21+00:00",
+      "finished_at": "2026-10-07T12:16:22+00:00",
+      "approved_at": "2026-10-07T12:17:42+00:00"
+    },
+    {
+      "id": "7a233e75-1ea9-4e62-9e31-839f822da4bd",
+      "document_id": "742d810f-a1c1-4096-9029-0297d51745e1",
+      "stage_id": "toc",
+      "state": "approved",
+      "options": {
+        "pages": "4-6"
+      },
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "llm": {
+          "calls": 1,
+          "failures": 0,
+          "cache_hits": 0,
+          "input_tokens": 2287,
+          "output_tokens": 2623
+        },
+        "parts": 0,
+        "offset": 1,
+        "topics": 65,
+        "entries": 76,
+        "suspect": 0,
+        "anchored": 73,
+        "sections": 11,
+        "toc_pages": "4-6",
+        "pages_source": "user"
+      },
+      "error": null,
+      "started_at": "2026-10-07T12:17:59+00:00",
+      "finished_at": "2026-10-07T12:19:33+00:00",
+      "approved_at": "2026-10-07T23:18:34+00:00"
+    },
+    {
+      "id": "c8d6a787-11d4-4505-8339-fa5186027846",
+      "document_id": "742d810f-a1c1-4096-9029-0297d51745e1",
+      "stage_id": "index",
+      "state": "pending_review",
+      "options": {},
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "points": 378,
+        "dimension": 4096,
+        "collection": "derma_document_chunks_v4",
+        "embedding_model": "qwen/qwen3-embedding-8b"
+      },
+      "error": null,
+      "started_at": "2026-10-08T22:46:01+00:00",
+      "finished_at": "2026-10-08T22:47:32+00:00",
+      "approved_at": null
+    },
+    {
+      "id": "68e22d2f-ed0a-4a8c-8519-aedb334b809d",
+      "document_id": "1e28b586-396c-46ef-a72c-c513f4fd8b4b",
+      "stage_id": "ingest",
+      "state": "approved",
+      "options": {},
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "pages": 1083,
+        "engine": "docling",
+        "figures": 1706,
+        "page_range": [
+          1,
+          1083
+        ],
+        "pages_empty": 5,
+        "pages_skipped": 0,
+        "pages_high_noise": 116
+      },
+      "error": null,
+      "started_at": "2026-10-08T22:46:11+00:00",
+      "finished_at": "2026-10-09T00:05:00+00:00",
+      "approved_at": "2026-10-09T00:06:59+00:00"
+    },
+    {
+      "id": "96cdc631-1fb4-4b77-9630-8fb49166518e",
+      "document_id": "1e28b586-396c-46ef-a72c-c513f4fd8b4b",
+      "stage_id": "toc",
+      "state": "not_started",
+      "options": null,
+      "progress": null,
+      "summary": null,
+      "error": null,
+      "started_at": null,
+      "finished_at": null,
+      "approved_at": null
+    },
+    {
+      "id": "a2636386-fe79-4b1e-b157-e7c77d159470",
+      "document_id": "1e28b586-396c-46ef-a72c-c513f4fd8b4b",
+      "stage_id": "chunks",
+      "state": "not_started",
+      "options": null,
+      "progress": null,
+      "summary": null,
+      "error": null,
+      "started_at": null,
+      "finished_at": null,
+      "approved_at": null
+    },
+    {
+      "id": "c58d79c8-594b-403a-9bc9-e38c3ed40d19",
+      "document_id": "1e28b586-396c-46ef-a72c-c513f4fd8b4b",
+      "stage_id": "index",
+      "state": "not_started",
+      "options": null,
+      "progress": null,
+      "summary": null,
+      "error": null,
+      "started_at": null,
+      "finished_at": null,
+      "approved_at": null
+    },
+    {
+      "id": "fbef3a1c-b6f3-4cb3-9da8-bca87e3cfb81",
+      "document_id": "742d810f-a1c1-4096-9029-0297d51745e1",
+      "stage_id": "chunks",
+      "state": "approved",
+      "options": {},
+      "progress": {
+        "done": 1,
+        "total": 1,
+        "message": "xong"
+      },
+      "summary": {
+        "chunks": 378,
+        "offset": 1,
+        "tokens": {
+          "max": 400,
+          "min": 17,
+          "median": 391
+        },
+        "too_long": 0,
+        "warnings": [
+          "120 dòng chữ nằm trước mục đầu tiên của mục lục (bìa, lời nói đầu…) nên không thuộc đoạn nào."
+        ],
+        "too_short": 11,
+        "suspect_chunks": 0,
+        "boundary_chunks": 6,
+        "toc_entries_used": 76,
+        "outside_toc_lines": 120,
+        "toc_entries_total": 76
+      },
+      "error": null,
+      "started_at": "2026-10-08T22:45:49+00:00",
+      "finished_at": "2026-10-08T22:45:50+00:00",
+      "approved_at": "2026-10-08T22:45:59+00:00"
+    }
+  ],
+  "document_overrides": [
+    {
+      "document_stage_id": "6416c94a-b5b2-48be-9638-16bc426f65b1",
+      "data": {
+        "t0044": {
+          "title": "ICHTHYOSES"
+        },
+        "t0052": {
+          "title": "Syndromic Ichthyoses"
+        },
+        "t0081": {
+          "title": "BENIGN NEOPLASMS AND HYPERPLASIAS"
+        },
+        "_added": [],
+        "_deleted": [
+          "t0453",
+          "t0562",
+          "t0563",
+          "t0564",
+          "t0565",
+          "t0566",
+          "t0567",
+          "t0568",
+          "t0569",
+          "t0570",
+          "t0571",
+          "t0572",
+          "t0573",
+          "t0574",
+          "t0575",
+          "t0576",
+          "t0577",
+          "t0578"
+        ]
+      },
+      "updated_at": "2026-10-03T00:17:54.487634+00:00"
+    }
+  ]
+}

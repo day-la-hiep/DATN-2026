@@ -35,7 +35,7 @@ Derma Hospital gồm **2 module nghiệp vụ** dùng chung một Core (FastAPI)
 | **PostgreSQL** | Nguồn sự thật: user, hồ sơ bệnh nhân, hội thoại, tin nhắn, file, tài liệu + trạng thái bước | migration Alembic `core/migrations/` |
 | **Redis** | Pub/Sub event realtime của chat; key turn đang chạy / turn chờ đẩy | `app/infra/redis_client.py` |
 | **RabbitMQ** | `agent_request_queue` (Core → Worker), `agent_response_queue` (Worker → Core) | `app/infra/rabbitmq_client.py` |
-| **Qdrant** | `derma_kb_chunks` (guideline), collection phenotype, `derma_document_chunks` (chunk sách) | `app/infra/qdrant_client.py` |
+| **Qdrant** | `derma_document_chunks_v4` (chunk sách do pipeline nạp, agent tìm bằng `hybrid_retrieval` (hoặc `semantic_search` / `keyword_search`)) | `app/infra/qdrant_client.py` |
 | **Neo4j** | PrimeKG lọc da liễu (`:Entity`) + ontology DermO (`:DermoTerm`) | nạp từ `core/data_ingest/` |
 | **MinIO** | ảnh đính kèm tin nhắn; mọi file của tài liệu dưới `document/<id>/` | `app/infra/minio_client.py` |
 
@@ -84,7 +84,7 @@ Guideline/KG phải được nạp trước thì agent mới tra cứu được 
 
 ## 6. Hạn chế chung (đồ án)
 
-- Chưa có auth đa người dùng: chat truyền `user_id` từ client, khu admin chỉ dùng app token.
+- Chưa có auth đa người dùng: chat truyền `user_id` từ client, khu admin chưa phân quyền.
 - Checkpointer và long-term memory của agent đang in-memory → mất khi restart Worker, chỉ chạy được 1 Worker.
 - DB và MinIO không cùng transaction thật; chưa có job dọn object mồ côi.
 - Schema tư vấn bác sĩ / video call đã có nhưng chưa có API và màn hình.

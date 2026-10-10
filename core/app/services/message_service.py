@@ -1,7 +1,4 @@
-"""Business logic cho Message — gửi tin nhắn (mở turn mới), trả lời câu hỏi
-(`tool_ask`), liệt kê tin nhắn. Xem `docs/api-doc.md` mục 2, `docs/async-api-doc.md`
-mục 4–6.
-"""
+"""Business logic cho Message"""
 
 from fastapi import UploadFile
 
@@ -55,8 +52,6 @@ class MessageService:
         self._redis = redis
 
     async def upload_attachment(self, upload: UploadFile) -> FileDto:
-        """`POST /uploads`: lưu file lên MinIO + ghi một dòng `files`. FE gửi lại `storage_key` trong
-        `SendMessageInput.attached_files`; Core tra dòng `files` theo khoá đó khi tạo tin nhắn."""
         stored = await self._file_store.save_upload(upload)
         row = await self._files.create(
             File(file_name=stored["name"], storage_key=stored["id"], content_type=stored["type"], size=stored["size"])
@@ -114,14 +109,6 @@ class MessageService:
     async def _apply_model_choice(
         self, conversation_id: str, model_id: str | None
     ) -> None:
-        """`SendMessageInput.model_id` (dropdown chọn model ở ô nhập chat, FE
-        `features/chat/constants.ts::MODEL_OPTIONS`) — cập nhật LUÔN `Conversation.model`
-        thay vì chỉ áp dụng 1 turn: model chọn theo TỪNG conversation (không phải riêng
-        từng message), Worker resolve model MỚI NHẤT từ DB mỗi turn
-        (`agent/worker.py::_conversation_for`) nên chỉ cần ghi đè cột này là turn kế
-        tiếp (kể cả turn NGAY sau đây) tự dùng đúng model. id rỗng hoặc không nằm trong
-        `AGENT_MODEL_CHOICES` (FE gửi id cũ/lỗi) -> bỏ qua thay vì lỗi cả lần gửi tin,
-        giữ nguyên model hiện tại của hội thoại."""
         if not model_id or model_id not in settings.AGENT_MODEL_CHOICES:
             return
         conversation = await self._conversations.get(conversation_id)
@@ -146,19 +133,7 @@ class MessageService:
         corr_id: str | None = None,
         model_id: str | None = None,
     ) -> tuple[Message, Message]:
-        """Mở 1 turn mới — persist đủ 2 row NGAY, chưa đẩy Worker:
-
-          1. user message (`status="done"`, mục 5 ghi chú cuối).
-          2. assistant message của turn (`status="queued"`, `content=""`) — FE nhận `id`
-             này ngay trong response `POST` để gắn vào bubble + lắng nghe SSE, không phải
-             chờ event `message.started`.
-
-        `TurnRequest` được lưu vào Redis `agent:pending_turn:*` thay vì publish thẳng —
-        handler SSE (`GET .../stream`) `GETDEL` + publish sau khi `subscribe` xong, để
-        Worker chỉ bắt đầu chạy khi client chắc chắn đang nhận event (`docs/async-api-doc.md`
-        mục 1). Dùng cho `POST /conversations` (mục 1.2) và nhánh "không có turn đang chạy"
-        của `send_message`.
-        """
+        """Mở 1 turn mới"""
         await self._apply_model_choice(conversation_id, model_id)
 
         user_message = await self._create_user_message(conversation_id, content, attached_files or [])
@@ -193,8 +168,6 @@ class MessageService:
     async def send_message(
         self, conversation_id: str, body: SendMessageInput
     ) -> SendMessageResult:
-        """`POST /conversations/{id}/messages` (mục 2.1) — luôn mở turn mới. Đã bỏ Steer: còn turn
-        đang chạy hoặc đang chờ trả lời `ask_user` (Redis `AGENT_ACTIVE_TURN_KEY`) thì từ chối."""
         active_turn_id = await self._redis.get(
             AGENT_ACTIVE_TURN_KEY.format(conversation_id=conversation_id)
         )
@@ -217,9 +190,6 @@ class MessageService:
     async def answer_question(
         self, conversation_id: str, question_id: str, body: MessageAnswerDto
     ) -> MessageOutput:
-        """`POST /conversations/{id}/questions/{question_id}/answer` (mục 2.2) — hoãn
-        "resume request" vào Redis `agent:pending_turn:*` (giống turn mới), KHÔNG tạo
-        `messages` row mới (mục 4). Worker resume khi client mở lại SSE."""
         message = await self._messages.find_pending_by_question_id(
             conversation_id, question_id
         )
@@ -252,13 +222,7 @@ class MessageService:
 
 
 async def flush_pending_turn(conversation_id: str, redis: RedisClient, rabbitmq: RabbitMQClient) -> None:
-    """Đẩy `TurnRequest` đang chờ (nếu có) của `conversation_id` vào `agent_request_queue`.
-
-    Gọi từ handler SSE NGAY SAU khi `pubsub.subscribe()` hoàn tất — lúc này client chắc
-    chắn nhận được mọi event Worker phát ra. `GETDEL` đảm bảo dù client mở nhiều SSE
-    connection cùng lúc thì chỉ 1 lần publish. Chỉ đụng Redis + RabbitMQ (không cần DB
-    session) nên an toàn gọi trong generator của `StreamingResponse`.
-    """
+    """Đẩy `TurnRequest` đang chờ"""
     key = AGENT_PENDING_TURN_KEY.format(conversation_id=conversation_id)
     payload = await redis.get_del(key)
     if not payload:
@@ -275,10 +239,7 @@ async def flush_pending_turn(conversation_id: str, redis: RedisClient, rabbitmq:
 
 
 def _turn_attachments(files: list[File]) -> list[TurnAttachment] | None:
-    """Chỉ forward attachment ẢNH cho Worker — `classify_skin_image`
-    (`agent/tools/skin_image_classifier.py`) là consumer DUY NHẤT hiện tại của
-    `TurnRequest.attached_files`, các loại file khác (nếu FE cho phép sau này) không có ý
-    nghĩa với Agent nên không cần gửi qua RabbitMQ."""
+    """Chỉ forward attachment ẢNH cho Worker"""
     images = [f for f in files if (f.content_type or "").startswith("image/")]
     if not images:
         return None

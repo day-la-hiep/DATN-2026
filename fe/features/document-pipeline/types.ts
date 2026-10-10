@@ -1,7 +1,4 @@
-/**
- * Kiểu dữ liệu của pipeline tài liệu — khớp DTO `core/app/dto/request/document.py` + `core/app/dto/response/document.py`.
- * Wire dùng snake_case (đúng tên field Python, field cùng nghĩa theo `core/app/dto/base/`).
- */
+// Khớp DTO `core/app/dto/{request,response}/document.py`; wire dùng snake_case.
 export type StageState =
   | "not_started"
   | "running"
@@ -75,6 +72,7 @@ export interface Settings {
   min_tokens: number;
   boundary_level: number;
   breadcrumb: boolean;
+  text_language: "vi" | "en" | "mixed";
 }
 
 export interface TocEntry {

@@ -1,10 +1,3 @@
-"""Ingest — PDF -> chữ theo trang (`pages.jsonl`), không LLM.
-
-Mỗi dòng của `pages.jsonl`: {page, page_printed, header, text, noise, noise_reason, noise_score}. `text` là các dòng nối
-bằng "\\n"; chỉ số dòng này là toạ độ "neo" của mục lục (mapping.py) và của chunk.
-
-Hai engine (profile.extraction.engine): `pdftotext` (lớp text có sẵn, nhanh) và `docling` (OCR ảnh trang, theo cụm trang
-có checkpoint). Running header lặp và số trang in ở chân trang được tách khỏi `text`."""
 import re
 import subprocess
 from collections import Counter
@@ -103,8 +96,7 @@ def _run_docling(ctx: StageContext) -> dict:
 
 
 def _figure_rows(document_id: str, files: Any, by_page: dict[int, list[dict]], first: int, last: int) -> list[dict[str, Any]]:
-    """Danh sách ảnh theo thứ tự trang -> `figures.json`, khớp field của `DocumentFigure` (dto/base).
-    Khoá dùng tên Python gốc vì đây là file trong MinIO, không phải API response."""
+    """Danh sách ảnh theo thứ tự trang -> `figures.json`, khớp field của `DocumentFigure`"""
     out: list[dict[str, Any]] = []
     for n in range(first, last + 1):
         for blk in by_page.get(n, []):

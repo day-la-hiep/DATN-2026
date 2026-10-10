@@ -1,11 +1,4 @@
-/**
- * Adapter: DTO trên wire của Core Backend (camelCase — mọi response DTO kế thừa
- * `CamelModel`, xem `core/app/dto/common.py`/`core/app/dto/message.py`/
- * `core/app/dto/conversation.py`) <-> model nội bộ của store Frontend.
- *
- * Store + component giữ nguyên `ChatMessage` phẳng; chỉ tầng service này biết cấu trúc
- * `metadata` đa hình của backend.
- */
+// DTO wire của Core (camelCase) <-> model của store; chỉ tầng này biết `metadata` đa hình của backend.
 import {
   MAX_ATTACHMENTS,
 } from "@/features/chat/constants";
@@ -134,8 +127,8 @@ export function toConversation(a: ApiConversation): Conversation {
 }
 
 export function toChatMessage(a: ApiChatMessage): ChatMessage {
-  // UI chưa có giao diện riêng cho tin bác sĩ (luồng tư vấn làm sau) — tạm hiển thị như tin trả lời
-  const role: ChatRole = a.sender === "patient" ? "user" : "assistant";
+  const role: ChatRole =
+    a.sender === "patient" ? "user" : a.sender === "doctor" ? "doctor" : "assistant";
   const meta = a.metadata ?? undefined;
 
   const reasoning: ReasoningStep[] | undefined = meta?.reasoning

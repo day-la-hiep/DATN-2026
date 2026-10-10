@@ -1,343 +1,193 @@
-# Kiến trúc Agent — Turn / Step / Reasoning
+# Kiến trúc Agent
 
-Xem [`kien-truc-he-thong.md`](../../docs/kien-truc-he-thong.md) cho bức tranh toàn hệ thống, và
-[`../docs/async-api-doc.md`](../docs/async-api-doc.md) cho hợp đồng SSE đầy đủ với Frontend
-(bảng event, luồng Steer, luồng trả lời câu hỏi — mục 3/4/5 ở đó khớp trực tiếp với tài liệu
-này).
+Agent gồm **hai graph** nối nhau: **chat graph** (lọc intent, trả lời luôn khi được) và **graph tiền chẩn đoán** (lập luận có cấu
+trúc, tra cứu, hỏi lại người dùng, kiểm soát bằng chứng). Graph tiền chẩn đoán chạy bằng **`create_agent` của LangChain**
+(`langchain.agents`, nền LangGraph): vòng lặp "gọi LLM ⇄ gọi tool", thực thi tool, checkpoint và human-in-the-loop do thư viện lo; code
+của mình chỉ cắm thêm **tool**, **middleware** và **system prompt**. Chat graph là một `StateGraph` nhỏ (2 node). Không có khái niệm
+Step / Pre-step / Reasoning riêng.
 
-## 0. Quy ước gốc (tóm tắt)
+Xem thêm: [`docs/module/chat.md`](../../docs/module/chat.md) (luồng chat từ FE tới agent),
+[`docs/overview/system-overview.md`](../../docs/overview/system-overview.md) (toàn hệ thống),
+[`kien-truc-memory.md`](kien-truc-memory.md) (memory), skill `experiment-agent-flow` (thử prompt / tool).
 
-- Mỗi lượt trả response là **1 turn**.
-- 1 turn gồm nhiều **step**.
-- Trước mỗi step có **1 pre-step** để xác định:
-  - Có cần append thêm message mới không?
-  - Turn có thể kết thúc chưa — nếu chưa thì mới bắt đầu step mới.
-- **1 step gồm nhiều reasoning.** 1 reasoning là **1 hành động duy nhất**: HOẶC gọi LLM, HOẶC
-  gọi/thực thi 1 tool — **KHÔNG BAO GIỜ gộp "gọi LLM" và "gọi tool" vào chung 1 reasoning**.
-  Đây là điểm hay bị hiểu nhầm nhất, nhấn mạnh lại ở mục ⭐ ngay dưới.
-- **Hỏi người dùng = 1 reasoning kiểu gọi tool** (`ask_user`) — không phải 1 nhánh riêng của
-  pre-step, không phải 1 message do user gửi — xem mục 3.
+## 1. Khái niệm
 
-### ⭐ Cấu trúc lồng nhau — điểm quan trọng nhất của tài liệu này
-
-**1 Turn chứa nhiều Step. 1 Step chứa nhiều Reasoning.** Reasoning là đơn vị nhỏ nhất và
-**cũng là đơn vị lặp** — nhưng mỗi Reasoning chỉ làm **đúng 1 việc**:
-
-```
-╔═══════════════════════════════════════════════════════════════╗
-║ TURN  — 1 lượt xử lý 1 tin nhắn user                            ║
-║                                                                   ║
-║   ┌───────────────────────────────────────────────────────┐    ║
-║   │ pre-step  (còn tiếp tục không? cần append message?)      │    ║
-║   └──────────────────────┬────────────────────────────────┘    ║
-║                           ▼                                       ║
-║   ┌───────────────────────────────────────────────────────┐    ║
-║   │ STEP #1  — chuỗi Reasoning xen kẽ gọi LLM / gọi tool       │    ║
-║   │                                                             │    ║
-║   │   Reasoning 1 (gọi LLM)   → LLM yêu cầu tool A               │    ║
-║   │   Reasoning 2 (gọi tool)  → thực thi tool A, có kết quả      │    ║
-║   │   Reasoning 3 (gọi LLM)   → LLM yêu cầu tool B (kèm kết quả  │    ║
-║   │                              tool A)                          │    ║
-║   │   Reasoning 4 (gọi tool)  → thực thi tool B, có kết quả      │    ║
-║   │   Reasoning 5 (gọi LLM)   → KHÔNG yêu cầu tool nào nữa       │    ║
-║   │        ▼ (Reasoning "gọi LLM" không có tool -> Step kết thúc) │    ║
-║   └───────────────────────────────────────────────────────┘    ║
-║                           ▼ quay lại pre-step (mục 5)               ║
-║   ┌───────────────────────────────────────────────────────┐    ║
-║   │ STEP #2  — có thể chỉ 1 Reasoning (gọi LLM, không tool)    │    ║
-║   │            rồi kết thúc luôn, hoặc lặp tiếp như Step #1     │    ║
-║   └───────────────────────────────────────────────────────┘    ║
-║                           ▼                                       ║
-║                          ...  (lặp tới khi pre-step báo dừng)      ║
-╚═══════════════════════════════════════════════════════════════╝
-```
-
-- **Turn**: 1 cái — trọn vòng đời xử lý 1 tin nhắn user, từ lúc nhận tới lúc trả lời xong.
-- **Step**: **nhiều** cái trong 1 turn, ranh giới do **pre-step** quyết định (chạy trước mỗi
-  Step). Bên trong 1 Step **không** có thêm quyết định "dừng hay tiếp" nào từ pre-step nữa —
-  Step tự chạy tới khi 1 Reasoning "gọi LLM" trả lời mà không yêu cầu tool nào.
-- **Reasoning**: **nhiều** cái trong 1 Step, xen kẽ 2 loại — **"gọi LLM"** (có thể yêu cầu 1
-  tool) và **"gọi tool"** (thực thi đúng tool mà Reasoning "gọi LLM" ngay trước vừa yêu cầu).
-  2 loại này LUÔN LÀ 2 Reasoning tách biệt, không bao giờ gộp làm 1. Sau 1 Reasoning "gọi
-  tool", luôn có 1 Reasoning "gọi LLM" tiếp theo (đưa kết quả tool vào). Step chỉ kết thúc ở
-  đúng 1 thời điểm: 1 Reasoning "gọi LLM" trả lời mà **không** yêu cầu tool nào.
-
-Nói ngắn gọn: **Turn > Step > Reasoning**, quan hệ 1-nhiều ở cả 2 tầng; và trong tầng
-Reasoning, **gọi LLM** và **gọi tool** luôn là 2 Reasoning riêng, nối tiếp nhau, không gộp.
-Ranh giới **Step ↔ Reasoning** do nội dung Reasoning quyết định (còn tool thì Step còn tiếp),
-khác với ranh giới **Turn ↔ Step** do **pre-step** quyết định.
-
-Phần dưới đây cụ thể hoá quy ước trên thành: định nghĩa rõ ràng, sơ đồ luồng, ánh xạ sang
-SSE event đã có với Frontend, state shape, cách tổ chức node LangGraph, và khoảng cách với
-code hiện tại trong `core/app/agent/`.
-
-## 1. Thuật ngữ
-
-| Thuật ngữ | Định nghĩa | Vòng đời |
+| Khái niệm | Là gì | Nằm ở đâu |
 |---|---|---|
-| **Turn** | Toàn bộ quá trình xử lý **1 tin nhắn** của user, từ lúc nhận request tới khi kết thúc (trả lời xong). Có thể **tạm dừng (pause)** giữa chừng khi cần hỏi user, rồi **resume** đúng chỗ đã dừng — tạm dừng không phải kết thúc turn. | Bắt đầu bằng `message.started`, kết thúc bằng `message.done`. |
-| **Pre-step** | Bước quyết định *trước khi* chạy 1 Step mới — không gọi LLM/tool cho nghiệp vụ (chỉ đọc DB kiểm tra Steer đang chờ), quyết định `continue`/`answer`. **Chỉ chạy giữa 2 Step, không chạy giữa 2 Reasoning trong cùng 1 Step.** | Chạy trước mỗi Step, kể cả Step đầu tiên (và trước Step chạy lại sau khi resume). |
-| **Step** | 1 chuỗi **nhiều Reasoning xen kẽ gọi LLM / gọi tool** bên trong turn, ranh giới do pre-step mở đầu và do "1 Reasoning gọi LLM không yêu cầu tool" kết thúc (mục 0). Là đơn vị nội bộ của graph — Frontend không thấy ranh giới Step, chỉ thấy chuỗi Reasoning nối tiếp nhau. | Bắt đầu khi pre-step quyết định `continue`; kết thúc khi 1 Reasoning "gọi LLM" không còn tool call → quay lại pre-step. |
-| **Reasoning** | Đơn vị nhỏ nhất và cũng là đơn vị lặp — **đúng 1 hành động**: HOẶC **gọi LLM** (`stepType="default"`, có thể yêu cầu 1 tool), HOẶC **gọi tool** (`stepType="tool_call"`/`"tool_ask"`, thực thi đúng tool mà Reasoning "gọi LLM" trước đó vừa yêu cầu). | Map trực tiếp sang event `reasoning.step_started` → `reasoning.step_delta*` → `reasoning.step_completed`. |
-
-> Lưu ý đặt tên dễ nhầm: event SSE hiện có tên `reasoning.step_*` (xem
-> `async-api-doc.md` mục 2) tương ứng với khái niệm **Reasoning** ở đây (đúng 1-1: 1 Reasoning
-> = 1 chuỗi `step_started → step_delta* → step_completed`), **KHÔNG** phải khái niệm **Step**
-> của tài liệu này. 1 **Step** nội bộ phát ra **nhiều** event `reasoning.step_*` (nhiều
-> `stepId` khác nhau) — đúng bằng số Reasoning bên trong nó (cả "gọi LLM" lẫn "gọi tool").
-
-## 2. Sơ đồ luồng 1 turn
+| **Turn** | Một lần agent xử lý **một tin nhắn** của người dùng: từ lúc worker nhận request tới khi trả lời xong hoặc tạm dừng để hỏi lại. Chạy bằng một lần `agent_graph.astream(...)`. | `agent/turn.py` |
+| **Chat graph** | Graph ngoài cùng của một turn: node `triage` (lọc intent) rồi, nếu cần, node `pre_diagnosis` gọi graph tiền chẩn đoán. Giữ checkpointer và `store` cho cả hai. | `agent/graph/chat_graph.py` |
+| **Lọc intent (triage)** | Node đầu của chat graph: tin xã giao / hỏi về trợ lý / ngoài phạm vi da liễu được trả lời luôn, còn lại chuyển sang graph tiền chẩn đoán. | `agent/graph/triage.py` |
+| **Graph tiền chẩn đoán** | `create_agent` + tool + middleware: vòng lặp ReAct (model trả lời → có `tool_calls` thì thực thi tool rồi gọi model tiếp → lặp tới khi model trả lời không còn tool). | `agent/graph/pre_diagnosis_graph.py` |
+| **Tool** | Hàm `@tool` agent được gọi. Đăng ký trong `ALL_TOOLS`. | `agent/tools/` |
+| **Middleware** | Hook quanh lần gọi model / tool (chọn model, chèn memory, ép lập luận, phát event). | `agent/middleware/` |
+| **Context** | `AgentContext` — dữ liệu riêng của một turn (`user_id`, `conversation_id`, `message_id`, ảnh đính kèm, model, danh sách bước đã ghi). | `agent/context/agent_context.py` |
+| **Thread** | `thread_id` của checkpointer = `conversation_id`: mọi turn của một hội thoại nối tiếp trong cùng một lịch sử `messages`. | `agent/graph/chat_graph.py::config_for` |
 
 ```
-Turn bắt đầu (message.started)
-        │
-        ▼
-┌────────────────────┐
-│      Pre-step        │◀────────────────────────────────────────┐
-│ (append message?      │                                          │
-│  turn kết thúc chưa?)  │                                         │
-└──────────┬─────────────┘                                        │
-           │ quyết định                                             │
-           ▼                                                        │
-   ┌───────┴───────┐                                                │
-   │ tiếp tục       │ kết thúc turn                                  │
-   ▼                ▼                                                │
-┌──────────────┐  message.delta*                                     │
-│  STEP         │  message.done                                       │
-│                │                                                     │
-│  Reasoning:     │                                                     │
-│  gọi LLM ──────┼─ yêu cầu tool? ── có ──▶ Reasoning: gọi tool ──┐      │
-│      ▲          │                                                │      │
-│      └──────────┼────────────────────────────────────────────────┘      │
-│                 │  (kết quả tool nạp vào lần "gọi LLM" tiếp theo)         │
-│                 │                                                          │
-│      không có tool nào nữa ──▶ Step kết thúc ─────────────────────────────┘
-│  (mỗi Reasoning: reasoning.step_started → _delta* → _completed)            │
-│  (Reasoning "gọi tool" = ask_user: PAUSE tại đây, xem mục 3) ──────────────┘ chờ answer, resume đúng Reasoning này
-└──────────────┘
+chat graph:   START ──▶ triage ──answer──▶ END                (trả lời luôn)
+                           │
+                           └─diagnose / lỗi / có ảnh──▶ pre_diagnosis ──▶ END
+                                                          │
+graph tiền chẩn đoán (create_agent):  model ⇄ tools ... (record_reasoning, hybrid_retrieval + semantic_search / keyword_search / knowledge_graph_search chuyên biệt, ask_user...)
 ```
 
-- Turn chỉ kết thúc thật sự ở **1 điểm**: trả lời xong (`message.delta*` → `message.done`).
-  Reasoning "gọi tool" `ask_user` **không** kết thúc turn — chỉ tạm dừng (mục 3), SSE
-  connection đóng lại nhưng turn (và Step, và Reasoning đang dở) vẫn "còn sống", chờ resume.
-- Turn KHÔNG có giới hạn số Step/Reasoning cứng trong thiết kế — nhưng implementation nên có
-  1 `MAX_STEPS` an toàn (tránh loop vô hạn khi LLM không hội tụ) tương tự
-  `AGENT_MAX_REASONING_STEPS` đã có trong `app/config/settings.py` (đặt tên theo Reasoning vì đó
-  mới là đơn vị lặp thật sự — xem mục 7 để đối chiếu tên biến).
+Một turn **không có số bước cố định**: model quyết định gọi tool nào, mấy lần; turn kết thúc khi model
+trả lời mà không gọi tool nữa.
 
-## 3. "Hỏi người dùng" = 1 Reasoning kiểu "gọi tool" (`ask_user`)
-
-Khi Agent cần hỏi thêm thông tin, đây **không** phải 1 nhánh quyết định riêng của pre-step, và
-câu trả lời của user **không** phải 1 tin nhắn mới trong `messages` — coi như **1 lệnh gọi
-tool bình thường** (`ask_user`) mà 1 Reasoning "gọi LLM" có thể yêu cầu, rồi Reasoning "gọi
-tool" kế tiếp xử lý nó — chỉ khác tool khác ở chỗ: tool khác thực thi xong ngay trong
-Reasoning "gọi tool" đó (có thể `await` khá lâu — gọi API ngoài, tra cứu... — nhưng KHÔNG cần
-input từ bên ngoài graph), còn `ask_user` cần **input thật từ con người** nên Reasoning "gọi
-tool" đó phải tạm dừng graph, đợi answer rồi mới hoàn tất.
-
-`ask_user` **không phải trường hợp đặc biệt hard-code riêng** — nó là tool ĐẦU TIÊN dùng 1 cơ
-chế chờ TỔNG QUÁT (`ToolSpec.requires_wait=True`, xem `app/agent/tools/base.py`) áp dụng cho
-mọi tool cần tạm dừng graph chờ kết quả từ bên ngoài, kể cả tool không phải hỏi người dùng (vd
-chờ 1 job async/callback bên ngoài chạy lâu). Thêm tool mới (chờ hay không chờ) chỉ cần đăng ký
-1 `ToolSpec` trong `app/agent/tools/` — xem mục 5 và mục 7.
-
-- **Publish**: Reasoning "gọi LLM" yêu cầu tool `ask_user` → publish `reasoning.step_started`/
-  `_completed` bình thường (`stepType="default"`, đây vẫn chỉ là 1 lần gọi LLM). Reasoning
-  "gọi tool" kế tiếp (xử lý lệnh gọi `ask_user` đó) publish `reasoning.step_started`/
-  `_completed` với `stepType="tool_ask"` và `choice` (câu hỏi + options) — đúng shape đã có
-  sẵn trong `fe/features/chat/types.ts` (`ReasoningStepType.tool_ask`, `ReasoningMetadata.choice`).
-  Xem `async-api-doc.md` mục 2 (bảng event) và mục 3.
-- **Pause/Resume**: dùng cơ chế **human-in-the-loop** có sẵn của LangGraph —
-  `langgraph.types.interrupt()` ngay trong node chờ chung `tool_wait` (mục 5) khi gặp bất kỳ
-  tool nào có `requires_wait=True` (`ask_user` hoặc tool khác cần đợi khá lâu/chờ callback bên
-  ngoài — xem `app/agent/tools/base.py`), cần 1 **checkpointer** (lưu state graph tại điểm
-  dừng) để có thể resume sau bằng `graph.invoke(Command(resume=<answer>), config)`. Dev có thể
-  dùng `InMemorySaver` (đã có sẵn trong `langgraph-checkpoint`, cài kèm khi `uv add langgraph`);
-  production cần checkpointer bền vững hơn tiến trình đơn (Postgres hoặc Redis — riêng Redis
-  cần cài thêm gói checkpointer tương ứng, `langgraph-checkpoint-redis` **chưa có** trong deps
-  hiện tại).
-- **Trả lời KHÔNG qua `POST .../messages`**: `ask_user` có endpoint riêng
-  (`POST /conversations/{id}/questions/{questionId}/answer`, xem `api-doc.md` mục 2.2) — Core
-  nhận answer, publish "resume request" vào `agent_request_queue` (kèm đủ thông tin để tìm
-  đúng checkpoint: `conversation_id` + `questionId`/`corr_id`), Agent Worker
-  `Command(resume=answer)` để graph chạy tiếp **đúng Reasoning "gọi tool" đã tạm dừng** (kết
-  quả tool `ask_user` chính là answer) — không phải Reasoning mới, không phải Step mới, không
-  phải turn mới. Tool `requires_wait=True` khác `ask_user` có thể cần 1 kênh resume riêng
-  (không nhất thiết qua endpoint này) — đây là phần tool đó tự định nghĩa, `tool_wait` chỉ lo
-  phần chung (`interrupt()`/`Command(resume=...)`).
-- **Tool khác (`requires_wait=False`)**: Reasoning "gọi tool" thực thi trong đúng 1 lần chạy
-  node `reasoning` (có thể `await` khá lâu — gọi API ngoài, tra cứu...), publish tương tự
-  (`stepType="tool_call"`), không pause; kết quả tool được đưa vào Reasoning "gọi LLM" kế tiếp
-  (vẫn trong cùng Step).
-
-## 4. State shape
-
-```python
-class ReasoningResult(BaseModel):
-    """1 Reasoning — map trực tiếp sang reasoning.step_started/_delta/_completed.
-    LUÔN LÀ 1 TRONG 2 LOẠI: "gọi LLM" (step_type="default") HOẶC "gọi tool"
-    (step_type="tool_call"/"tool_ask") — không bao giờ cả 2 trong 1 ReasoningResult."""
-    step_id: str
-    title: str
-    content: str
-    step_type: Literal["default", "tool_call", "tool_ask"] = "default"
-    choice: MessageChoice | None = None  # chỉ có khi tool hiển thị dạng hỏi-chọn (vd ask_user)
-    step_continues: bool  # false CHỈ khi đây là Reasoning "gọi LLM" không yêu cầu tool nào
-
-class StepResult(BaseModel):
-    """1 Step đã đóng = danh sách Reasoning liên tiếp (xen kẽ gọi LLM / gọi tool)."""
-    reasoning: list[ReasoningResult]
-
-class PendingTool(BaseModel):
-    """Trạng thái chờ TỔNG QUÁT cho MỌI tool `requires_wait=True` — không hard-code
-    riêng cho `ask_user`. `payload` gửi nguyên vẹn cho `interrupt()`; node `tool_wait`
-    tra `tool_name` trong registry (`app/agent/tools.TOOLS_BY_NAME`) để biết cách xử
-    lý resume."""
-    tool_call_id: str
-    tool_name: str
-    payload: dict
-
-class TurnState(TypedDict):
-    conversation_id: str
-    messages: Annotated[list[AnyMessage], add_messages]   # context tích luỹ qua các Reasoning
-    steps: list[StepResult]                                 # các Step đã hoàn tất
-    current_step: list[ReasoningResult]                     # Reasoning của Step đang chạy dở
-    step_count: int                                          # đếm theo Reasoning, không phải Step
-    outcome: Literal["continue", "answer"] | None            # kết quả pre_step gần nhất
-    final_answer: str | None
-    pending_tool: PendingTool | None    # tool requires_wait=True đang chờ interrupt() resume
-```
-
-- `current_step` tích luỹ dần qua từng Reasoning (cả 2 loại); khi 1 Reasoning "gọi LLM"
-  không yêu cầu tool (`step_continues=False`), `current_step` được đóng lại thành 1
-  `StepResult` mới trong `steps`, rồi quay lại `pre_step`.
-- `outcome` chỉ 2 giá trị — driver cho conditional edge trong graph (mục 5). "Tạm dừng chờ
-  hỏi" **không** nằm trong `outcome`: đó là hiệu ứng của `interrupt()` trong node `tool_wait`
-  (mục 3), LangGraph tự quản lý qua checkpointer.
-- `pending_tool` generic hoá `pending_question`/`pending_tool_call_id` của bản trước (từng
-  hard-code riêng cho `ask_user`) — bất kỳ tool `requires_wait=True` nào cũng dùng chung field
-  này, `tool_name` cho biết tra `ToolSpec` nào để xử lý resume.
-
-## 5. Tổ chức node LangGraph (thực tế trong `agent/graph/chat_graph.py`)
-
-Graph có **4 node**: `pre_step`, `reasoning`, `tool_wait`, `finalize`. `reasoning` tự lặp và tự
-phân biệt 2 loại Reasoning bằng nội dung message cuối cùng — **không cần 2 node riêng cho "gọi
-LLM" và "gọi tool"**, quyết định bằng: message cuối là `AIMessage` có `tool_calls` chưa thực
-thi → làm Reasoning "gọi tool"; ngược lại → làm Reasoning "gọi LLM". Tool nào `requires_wait`
-cần **node phụ `tool_wait`** — lý do ở dưới. `reasoning` tra tool theo tên trong registry
-(`app/agent/tools.TOOLS_BY_NAME`) — KHÔNG hard-code tên tool cụ thể nào; thêm tool mới chỉ cần
-đăng ký 1 `ToolSpec` (`app/agent/tools/`, xem mục 7), không cần sửa node.
+## 2. Luồng một turn
 
 ```
-START → pre_step ──(outcome=continue)──→ reasoning ──┐
-           ▲                                  │        │ còn việc (vừa "gọi LLM" ra tool_call,
-           │                                  │◀───────┘  hoặc vừa "gọi tool" [requires_wait=
-           │                                  │           False] xong) → lặp lại reasoning
-           │                                  │           (VẪN trong cùng Step)
-           │                                  │
-           │                                  │ tool_call là tool `requires_wait=True`
-           │                                  ▼
-           │                             tool_wait ──interrupt()──▶ (chờ resume) ──▶ reasoning
-           │            "gọi LLM" không yêu cầu tool nào nữa → Step kết thúc
-           └──────────────────────────────────┘
-           │
-           └──(outcome=answer)────→ finalize → END
+FE ──POST /messages──▶ Core ──publish──▶ RabbitMQ agent_request_queue
+                         │                         │
+                         │                         ▼
+                         │                  Agent Worker (agent/worker.py)
+                         │                  khoá theo conversation_id
+                         │                         │
+                         │                         ▼
+                         │                  handle_turn / handle_resume (agent/turn.py)
+                         │                  agent_graph.astream(updates + custom)
+                         │                         │
+                         │      ┌──────────────────┼───────────────────────┐
+                         │      ▼                  ▼                       ▼
+                         │  token LLM        middleware phát          tool ask_user
+                         │  message.delta    message.tool_result      interrupt() → tạm dừng
+                         │      │            message.thinking                │
+                         │      └────────────▶ Redis Pub/Sub ◀───────────────┘
+                         │                         │
+        SSE ◀──forward───┘◀────────────────────────┘
+                                                   │ xong / hỏi lại / lỗi
+                                                   ▼
+                                    finish_turn (agent/publisher.py)
+                                    event cuối + [DONE] + AgentResponseMessage
+                                                   │
+                                                   ▼
+                          RabbitMQ agent_response_queue ──▶ Core ghi Postgres
+                                                  (app/workers/agent_response_consumer.py)
 ```
 
-- **`pre_step`**: KHÔNG gọi LLM/tool nghiệp vụ. Có thể:
-  - Rule thuần (vd: `step_count >= MAX_STEPS` → `outcome=answer` bắt buộc), và/hoặc
-  - Đọc `MessageRepository.list_pending_steers` — nếu có Steer đang chờ, append vào
-    `messages` trước khi sang `reasoning`.
-- **`reasoning`**: nhận biết đang cần làm Reasoning loại nào bằng cách nhìn message cuối
-  cùng trong `messages` (hàm `_pending_tool_call()`):
-  - Message cuối là `AIMessage` có `tool_calls` (chưa có `ToolMessage` tương ứng) → làm
-    Reasoning **"gọi tool"** (`_run_tool()`): tra `ToolSpec` theo tên trong
-    `TOOLS_BY_NAME` (`app/agent/tools/`) — KHÔNG hard-code tên tool nào. Tool
-    `requires_wait=True` (`ask_user`, hoặc tool khác cần chờ lâu/callback ngoài): gọi
-    `spec.build_wait_request()` build payload, lưu vào `pending_tool` (generic, không riêng
-    `ask_user`) rồi **route sang `tool_wait`** (KHÔNG tự `interrupt()` ngay trong `reasoning`
-    — xem lý do bên dưới); tool `requires_wait=False` gọi `await spec.run()` (có thể chạy
-    lâu), publish `stepType="tool_call"`, lặp lại `reasoning`.
-  - Ngược lại → làm Reasoning **"gọi LLM"** (`_run_llm()`): gọi
-    `get_llm_with_tools(ALL_TOOLS)` (toàn bộ tool trong registry), publish
-    `stepType="default"`. Có `tool_calls` → lặp lại `reasoning` (Reasoning kế tiếp sẽ là
-    "gọi tool"); không có → Step đóng, quay lại `pre_step`.
-  - Cả 2 nhánh đều publish `reasoning.step_started/_delta/_completed` cho Reasoning vừa chạy.
-- **`tool_wait`**: node chờ TỔNG QUÁT cho mọi tool `requires_wait=True` — **chỉ** làm 1 việc
-  — `interrupt(pending_tool.payload)` — rồi tra `ToolSpec.on_resume()` (theo
-  `pending_tool.tool_name`) để build `ToolMessage` từ answer + (nếu có) cập nhật
-  `choice.answered`, quay lại `reasoning`. Vì sao tách riêng khỏi `reasoning` thay vì gọi
-  `interrupt()` ngay trong `_run_tool()`: LangGraph **re-run lại từ đầu node** khi resume —
-  nếu `interrupt()` nằm giữa `_run_tool()` (sau đoạn build payload), resume sẽ chạy lại đoạn
-  build đó lần nữa (vô hại nhưng thừa); tách thành node riêng có `interrupt()` là **câu lệnh
-  đầu tiên** đảm bảo resume không làm lại việc gì thừa. Đây vẫn tính là **cùng 1 Reasoning
-  "gọi tool"** về mặt khái niệm (chỉ 1 `ReasoningResult` được tạo, trong `_run_tool()`) —
-  `tool_wait` chỉ là chi tiết cài đặt để pause/resume an toàn, không tạo Reasoning mới.
-- **`finalize`**: build câu trả lời cuối từ `messages`/`steps`, set `final_answer`, đây là nơi
-  publish `message.delta*` + `message.done`.
+- Worker **không ghi Postgres**; Core là nơi duy nhất upsert bảng `messages`.
+- Core chặn tin mới khi hội thoại còn turn đang chạy (khoá Redis `AGENT_ACTIVE_TURN_KEY`); worker có thêm
+  một `asyncio.Lock` theo `conversation_id` làm lớp bảo vệ cuối, vì `create_agent` không hỗ trợ hai lần
+  `ainvoke()` đồng thời trên cùng `thread_id`.
 
-## 6. Điều kiện dừng / tạm dừng turn
-
-1. **Trả lời xong** (`outcome=answer`): đủ thông tin, Reasoning "gọi LLM" chốt câu trả lời
-   (không yêu cầu tool) → `finalize` → turn **kết thúc thật sự**.
-2. **Chạm giới hạn an toàn** (`step_count >= MAX_STEPS`): `pre_step` ép `outcome=answer` dù
-   model chưa tự chốt, dùng nội dung Reasoning gần nhất làm câu trả lời tạm (tương tự
-   `finalize()` hiện tại trong `agent/graph/chat_graph.py`) → turn **kết thúc thật sự**.
-3. **Tạm dừng chờ** (Reasoning "gọi tool" gặp tool `requires_wait=True`, mục 3): turn **chưa
-   kết thúc** — `interrupt()` (node `tool_wait`), chờ resume tương ứng tool đó — với
-   `ask_user` là `POST .../questions/{questionId}/answer` (`api-doc.md` mục 2.2) — để
-   `Command(resume=...)` chạy tiếp đúng Reasoning đã dừng.
-
-Lưu ý: **không có** khái niệm "Step chạm giới hạn rồi tự dừng" tách riêng — 1 Step tự nhiên
-kết thúc khi Reasoning "gọi LLM" không yêu cầu tool (mục 0); `MAX_STEPS` ở đây là giới hạn an
-toàn cấp **Reasoning** (tổng số Reasoning toàn turn — cả "gọi LLM" lẫn "gọi tool" — không
-phải số Step), phòng khi LLM cứ gọi tool liên tục không dừng trong 1 Step duy nhất.
-
-## 7. Trạng thái implement (`core/app/agent/`)
-
-✅ **Đã implement đúng theo tài liệu này**: `state.py` (`TurnState`/`StepResult`/
-`ReasoningResult`/`PendingTool`, field `step_continues` — **không** phải `has_tool_call` như 1
-bản draft trước, tên cũ dễ khiến hiểu nhầm là 1 Reasoning gộp cả gọi-LLM-và-gọi-tool),
-`graph.py` — 4 node `pre_step`/`reasoning`/`tool_wait`/`finalize` (mục 5), node `reasoning` tự
-phân biệt 2 loại Reasoning bằng hàm `_pending_tool_call()` (nhìn message cuối cùng), tách 2 hàm
-nội bộ `_run_llm()`/`_run_tool()` — mỗi hàm tạo **đúng 1** `ReasoningResult`, `interrupt()`
-(trong `tool_wait`, TỔNG QUÁT cho mọi tool `requires_wait=True`) + `InMemorySaver`. `worker.py`
-publish đủ event catalog cho từng Reasoning (dù là gọi LLM hay gọi tool) + xử lý cả turn mới
-lẫn resume.
-
-**Tool nghiệp vụ — `app/agent/tools/` (package, không còn là 1 file `tools.py`)**: điểm mở
-rộng duy nhất khi thêm tool mới, tách theo hợp đồng `ToolSpec` (mục 3/4):
+## 3. Thành phần trong `core/agent/`
 
 | File | Vai trò |
 |---|---|
-| `base.py` | Hợp đồng `ToolSpec`/`ToolWaitRequest`/`ToolResumeResult` — `graph.py` chỉ import từ đây, không biết tool cụ thể nào. |
-| `ask_user.py` | Tool đầu tiên, ví dụ mẫu cho tool `requires_wait=True` (build câu hỏi, xử lý resume thành `AnsweredChoiceDto`). |
-| `__init__.py` | Registry: `TOOL_SPECS` (danh sách đăng ký), `TOOLS_BY_NAME` (tra theo tên, dùng trong `graph.py`), `ALL_TOOLS` (bind vào LLM, `agent/llm.py`). |
+| `worker.py` | Tiến trình riêng: consume `agent_request_queue`, khoá theo hội thoại, gọi `handle_turn` hoặc `handle_resume`. |
+| `turn.py` | Dựng `AgentContext`, chạy `astream`, forward token, kết thúc turn (xong / hỏi lại / lỗi). |
+| `graph/chat_graph.py` | Chat graph: `build_chat_graph()`, `agent_graph`, `config_for()`. Node `pre_diagnosis` gọi graph tiền chẩn đoán, chuyển tiếp token qua kênh `custom` và truyền lại việc xoá tin nhắn (`RemoveMessage`) của middleware vào state của chat graph. |
+| `graph/triage.py` | Node `triage`: một lần gọi LLM ngắn (`prompt/triage.py`) quyết định `answer` / `diagnose`. |
+| `graph/pre_diagnosis_graph.py` | `ALL_TOOLS`, `default_middleware()`, `build_pre_diagnosis_graph()` gọi `create_agent(model, tools, system_prompt, middleware, context_schema)`. |
+| `graph/common.py` | Hằng số dùng chung của middleware: `TOOL_DISPLAY_NAMES`, giới hạn thử lại, schema critic. |
+| `middleware/model.py` | Middleware quanh lần gọi model. |
+| `middleware/tool.py` | Middleware quanh lần gọi tool (`emit_tool_result`). |
+| `tools/` | Mỗi file một (nhóm) tool; `ask_user.py` là tool hỏi lại người dùng. |
+| `prompt/orchestrator.py` | `SYSTEM_PROMPT`: nguyên tắc bằng chứng, khung quyết định, cách chọn tool, ngân sách tool. |
+| `llm.py` | `get_model()` — khởi tạo model theo `provider:model` (OpenRouter, DeepSeek, Gemini...). |
+| `agent/publisher.py` | `emit` / `finish_turn`: event cuối + sentinel `[DONE]` + `AgentResponseMessage` lên RabbitMQ. |
+| `app/workers/agent_response_consumer.py` | Chạy **trong Core**: nhận `AgentResponseMessage` và ghi `messages`. |
+| `dto/schemas.py` | `TurnRequest` (Core → worker), `AgentResponseMessage` (worker → Core). |
 
-Thêm 1 tool nghiệp vụ thật (không cần chờ, chỉ chạy lâu): viết module con định nghĩa `ToolSpec`
-với `run()` (`async def run(tool_call) -> str`, cứ `await` bình thường dù chạy lâu), thêm vào
-`TOOL_SPECS` — không sửa `graph.py`/`state.py`. Thêm 1 tool cần chờ callback ngoài (không phải
-hỏi người dùng): tương tự nhưng `requires_wait=True` + `build_wait_request()`/`on_resume()` —
-tự quyết định payload `interrupt()` và cách map answer về `ToolMessage` (không bắt buộc phải có
-`choice`/`questionId` kiểu `ask_user` — đó là chi tiết riêng của `ask_user`, không phải phần
-chung của `PendingTool`).
+## 3b. Chat graph và lọc intent
 
-Giới hạn đã biết (ghi trong code, không giấu): giả định LLM chỉ gọi **tối đa 1 tool mỗi lần
-"gọi LLM"** (ép qua system prompt) — chưa xử lý model gọi nhiều tool song song trong cùng 1
-response. Tool `requires_wait=True` khác `ask_user` vẫn cần tự thêm kênh resume riêng (endpoint
-API hoặc cơ chế khác) nếu không đi qua `POST .../questions/{questionId}/answer` — `tool_wait`
-chỉ lo phần chung (`interrupt()`), không tự phát sinh endpoint mới.
+`chat_graph.py` là `StateGraph` hai node, state `ChatState` (`messages` + `route`):
 
-Sai khác nhỏ khác so với mô tả gốc (mục 3/6), ghi nhận để không nhầm khi đọc code:
+- **`triage`** (`graph/triage.py`): một lần gọi LLM ngắn (`prompt/triage.py`, structured output `{route, reply}`) nhìn tin mới nhất + 6 tin
+  gần nhất. `route="answer"` (chào hỏi, cảm ơn, tạm biệt, hỏi về trợ lý, ngoài phạm vi da liễu) thì thêm `reply` vào `messages` và kết thúc
+  turn. `diagnose`, **lỗi LLM, reply rỗng, tin có ảnh** (`[Ảnh đính kèm]`, luật cứng không gọi LLM) thì sang `pre_diagnosis` — mặc định luôn
+  về phía an toàn. Model: `AGENT_TRIAGE_MODEL` (rỗng = model của hội thoại); tắt hẳn: `AGENT_TRIAGE_ENABLED=false` (khi đó chat graph không có
+  node `triage`).
+- **`pre_diagnosis`**: chạy graph tiền chẩn đoán trên `messages`. Ba điều nó phải làm vì graph con nằm trong một node: (1) truyền tiếp
+  `config` để `interrupt()` của `ask_user` và checkpoint namespace hoạt động; (2) đọc stream của graph con và chuyển token model chính qua
+  kênh `custom` (gọi `ainvoke` trong node thì token không đi tiếp ra ngoài); (3) trả về cả các `RemoveMessage` — middleware của graph con xoá
+  tin `AIMessage` có `tool_calls` mồ côi, mà reducer `add_messages` của chat graph không tự xoá tin vắng mặt.
 
-| Hạng mục | Mô tả gốc | Thực tế trong code |
+Khi resume sau `ask_user`, `Command(resume=...)` đi vào chat graph và tiếp tục đúng node `pre_diagnosis`; `triage` không chạy lại.
+
+## 4. Middleware
+
+Middleware của **graph tiền chẩn đoán**, thứ tự trong `default_middleware()` (`pre_diagnosis_graph.py`):
+
+| Middleware | Loại | Làm gì |
 |---|---|---|
-| Checkpointer | Gợi ý Postgres/Redis cho production | `InMemorySaver` cố định — cần tự đổi khi deploy nhiều Agent Worker instance |
-| `message_id` (turn) | "Agent Worker sinh" | **Core sinh** lúc publish turn (`MessageService`), Agent Worker chỉ tái dùng — cần thiết để Core set được Redis "active turn" key trước khi Agent Worker chạy |
+| `select_model` | `wrap_model_call` | Đổi model theo `AgentContext.model` (model chọn theo từng hội thoại, `AGENT_MODEL_CHOICES`). **Phải đứng đầu** để các middleware sau thấy đúng model. |
+| `inject_long_term_memory` | `wrap_model_call` | Tìm memory dài hạn liên quan tin nhắn gần nhất rồi chèn vào system message (`tools/memory.py`). |
+| `force_reasoning` | `wrap_model_call` | Ngay sau một đợt kết quả tool, ép model gọi `record_reasoning` trước khi đi tiếp. |
+| `enforce_initial_reasoning` | `after_model` | Lưới an toàn: model chưa lập luận mà đã trả lời / gọi tool thì bắt làm lại (tối đa `MAX_REASONING_RETRIES`, hết lượt thì cho qua). |
+| `evidence_rules` | `wrap_model_call` | Lượt đã tra cứu (`hybrid_retrieval`, `semantic_search`, `keyword_search`, `knowledge_graph_search`, web) mà **không có bằng chứng** (không có đoạn sách `source="book"`, không có trang web; quan hệ đồ thị và kết quả ảnh không tính) thì thêm quy tắc cứng vào system prompt trước mỗi lần gọi model: không nêu tên bệnh / xếp hạng / độ tin cậy / lời khuyên điều trị, chỉ nói rõ chưa tra cứu được, nhắc lại lời người dùng, hỏi thêm hoặc khuyên khám. |
+| `evidence_answer_check` | `after_model` | Lưới an toàn: câu trả lời cuối vẫn nhắc tên giả thuyết đã nêu khi không có bằng chứng thì bắt viết lại (tối đa 2 lần; bản nháp có thể đã stream ra, giới hạn đã biết). |
+| `emit_tool_result` | `wrap_tool_call` | Sau mỗi tool: ghi một bước `type="tool"` vào `AgentContext.reasoning_steps` và phát `message.tool_result`. |
 
-✅ Đã khớp mô tả gốc (không còn là "sai khác"): persist khi pause/done relay qua
-`agent_response_queue` để Core ghi DB (`agent/handler/response_consumer.py`) — xem
-`async-api-doc.md` đầu file.
+Đang **tắt** (có code, comment trong `default_middleware()`): `emit_reasoning_step` (phát `message.thinking`),
+`critic_review` (chấm bản nháp cuối, tối đa `MAX_CRITIC_RETRIES` lần) và `SummarizationMiddleware` (tóm tắt
+lịch sử dài).
 
-Việc còn lại: tool nghiệp vụ thật (ngoài `ask_user`), `sources`, Celery hoá worker — xem
-`async-api-doc.md` mục 7.
+`evidence_reasoning_check` (`wrap_tool_call`, đứng sau `emit_tool_result`) từ chối `record_reasoning` khi (1) có dữ kiện nguồn `"user"` không truy được về lời người dùng (kể cả câu trả lời `ask_user`; đối chiếu theo từ khoá, ngưỡng 50%) hoặc (2) có giả thuyết ở stage `after_evidence` / `final` trong khi không có bằng chứng. Schema của `record_reasoning` cũng bắt: stage `initial` không hiển thị độ tin cậy (chưa có bằng chứng), độ tin cậy "vừa"/"cao" cần ít nhất một dữ kiện từ tool/web ủng hộ, và `hypotheses` được phép rỗng ở `after_evidence` / `final`.
+
+`record_reasoning` là tool ép lập luận có cấu trúc theo 3 giai đoạn (`initial` → `after_evidence` → `final`).
+Trạng thái được **suy ra từ `messages`** của turn nên tự đúng khi resume sau `ask_user`, không có state riêng.
+
+## 5. Hỏi lại người dùng (`ask_user`)
+
+`ask_user` là một tool bình thường, chỉ khác là trong thân hàm gọi `langgraph.types.interrupt(...)`:
+
+1. Model gọi `ask_user(question, options)` → `interrupt()` tạm dừng graph, LangGraph lưu checkpoint.
+2. `astream` trả `__interrupt__`; `turn.py::_finish_with_question` dựng `MessageChoice`
+   (`question_id = interrupt.id`), phát `message.question` và gửi `AgentResponseMessage(status="question")`.
+   Turn **chưa kết thúc** — chỉ tạm dừng, khoá "active turn" của hội thoại vẫn còn.
+3. Người dùng trả lời qua `POST /conversations/{id}/questions/{questionId}/answer` (không tạo tin nhắn mới).
+   Core gửi một "resume request" vào `agent_request_queue`.
+4. Worker chạy `handle_resume` → `astream(Command(resume=answer))`: `interrupt()` trả về đúng câu trả lời
+   và turn chạy tiếp từ chỗ dừng, cùng `message_id`.
+
+Checkpointer là `InMemorySaver` nên **chỉ dùng được khi chạy một worker** (xem mục 8).
+
+## 6. Event realtime và dữ liệu lưu
+
+Core forward nguyên văn các event này qua SSE (`/conversations/{id}/stream`):
+
+| Event | Phát bởi | Ý nghĩa |
+|---|---|---|
+| `message.started` | `turn.py` | Bắt đầu turn. |
+| `message.delta` | `turn.py` | Token của model chính: node `pre_diagnosis` đọc stream của graph con (chỉ node `model`) rồi chuyển tiếp qua kênh `custom`. Câu trả lời của `triage` không có token stream nên phát **một** delta chứa cả câu. |
+| `message.tool_result` | `emit_tool_result` | Một tool vừa chạy xong (tên hiển thị, tham số, kết quả). |
+| `message.thinking` | `emit_reasoning_step` (đang tắt) | Dòng tóm tắt lập luận / "Đang thực hiện: ...". |
+| `message.question` | `turn.py` | Turn tạm dừng chờ trả lời `ask_user`, kèm `choice`. |
+| `message.done` | `turn.py` | Turn xong (cả khi lỗi, nội dung là câu báo lỗi). |
+| `[DONE]` | `publisher.py` | Sentinel đóng stream. |
+
+**Bước (`Step`)** — những gì người dùng thấy trong khối "suy luận" — được middleware ghi vào
+`AgentContext.reasoning_steps` trong lúc chạy, mỗi phần tử khớp `Step` (`app/dto/common/chat.py`) với
+`type` là `default`, `tool` hoặc `thinking`. Bước của `ask_user` cũng là `tool` (có thêm `choice`).
+Cuối turn danh sách này đi theo `AgentResponseMessage.reasoning`, Core lưu vào `messages.metadata`
+(`reasoning`, `choice`) để tải lại hội thoại vẫn thấy được (SSE không replay).
+
+## 7. Kết thúc turn
+
+| Kết cục | Xảy ra khi | Phát gì |
+|---|---|---|
+| **Xong** | Model trả lời không còn `tool_calls`, hoặc triage trả lời luôn | `message.done`, `status="done"`, xoá khoá active turn |
+| **Tạm dừng hỏi lại** | Tool `ask_user` gọi `interrupt()` | `message.question`, `status="question"`, giữ khoá active turn |
+| **Lỗi** | LLM / tool ném lỗi giữa chừng (rate-limit, mạng...) | `message.done` với `_ERROR_TEXT`, `status="done"`; các bước đã tích luỹ vẫn được lưu |
+
+Lỗi được coi là turn "done" kèm câu báo lỗi (thay vì thêm một trạng thái mới) để turn không treo vĩnh viễn
+và người dùng hỏi lại được ngay.
+
+## 8. Giới hạn đã biết
+
+- **`InMemorySaver` / `InMemoryStore`**: checkpoint và long-term memory mất khi worker khởi động lại và
+  không chia sẻ giữa nhiều worker. Chạy nhiều worker cần checkpointer / store bền (Postgres hoặc Redis).
+- **Ngân sách tool nằm trong prompt**, không được code ép (khoảng 10 lần gọi tool / lượt, tối đa 3 vòng
+  hỏi lại). Model không tuân thủ thì không có chặn cứng nào ngoài giới hạn đệ quy mặc định của LangGraph.
+- Kết quả của agent chỉ là **gợi ý hỗ trợ, không phải chẩn đoán y khoa**; điều này nằm trong `SYSTEM_PROMPT`.
+
+## 9. Thêm tool / middleware mới
+
+- **Tool**: viết hàm `@tool` trong `agent/tools/`, thêm vào `ALL_TOOLS` (`pre_diagnosis_graph.py`) và thêm nhãn tiếng
+  Việt vào `TOOL_DISPLAY_NAMES` (`graph/common.py`, thiếu thì hiển thị tên hàm). Nếu cần dùng `user_id`,
+  ảnh... thì nhận `runtime: ToolRuntime` để đọc `AgentContext`. Cần hỏi người dùng giữa chừng: gọi
+  `interrupt()` như `ask_user`. Cập nhật mục hướng dẫn chọn tool trong `SYSTEM_PROMPT`.
+- **Middleware**: viết bằng `@wrap_model_call` / `@wrap_tool_call` / `@after_model`, thêm vào
+  `default_middleware()`. Thứ tự là thứ tự áp dụng; `select_model` luôn đứng đầu.
+- Thử nghiệm prompt / tool / middleware mà không cần API, RabbitMQ hay Postgres: skill `experiment-agent-flow`.

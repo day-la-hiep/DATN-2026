@@ -1,26 +1,29 @@
-"""Xử lý 1 turn của agent: dựng `AgentContext`, chạy `agent_graph.astream()`, forward token
-thật lên Redis và kết thúc turn (xong / hỏi lại qua `ask_user` / lỗi).
+"""Xử lý 1 turn của agent"""
 
-`thread_id` (checkpointer) = `conversation_id` — 1 hội thoại = 1 thread, mọi turn nối tiếp qua
-`messages` (`agent/graph/chat_graph.py::config_for`). `message.thinking`/`message.tool_result`
-được middleware phát trực tiếp trong lúc graph chạy (`agent/middleware/`), KHÔNG phải từ vòng
-lặp `astream()` ở đây — vòng lặp này chỉ forward token (`message.delta`) và tóm kết quả cuối.
-"""
-
-from typing import Any, cast
+import json
+import logging
+from typing import Any, Literal, cast
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langgraph.types import Command, Interrupt
 
-from agent.dto.schemas import TurnRequest
-from agent.graph.chat_graph import agent_graph, config_for
-from agent.state.context import AgentContext
-from agent.handler.publisher import emit, finish_turn
-from app.config.settings import settings
-from app.config.constants import AGENT_EVENTS_CHANNEL
-from app.api.deps import get_postgres_client
+from agent.dto.schemas import AgentResponseMessage, TurnRequest
+from agent.graph.chat_graph import chat_graph, config_for
+from agent.context.agent_context import AgentContext
+from agent.context.builder import build_context
+from app.api.deps import get_rabbitmq_client, get_redis_client
+from app.config.constants import (
+    AGENT_EVENTS_CHANNEL,
+    AGENT_RESPONSE_QUEUE,
+    STREAM_DONE_SENTINEL,
+)
 from app.dto.common import ChoiceOption, MessageChoice
-from app.repositories.conversation_repository import ConversationRepository
+
+logger = logging.getLogger(__name__)
+
+# Node của chat graph có thể tạo câu trả lời cuối của turn: bước lọc intent trả lời luôn (`triage`) hoặc graph tiền chẩn đoán
+# (`pre_diagnosis`; update của nó gồm mọi tin mới trong vòng lặp nên câu trả lời là AIMessage cuối cùng).
+_ANSWER_NODES = ("triage", "pre_diagnosis")
 
 _ERROR_TEXT = (
     "Xin lỗi, hệ thống gặp sự cố khi xử lý câu hỏi này (có thể do quá tải "
@@ -28,51 +31,21 @@ _ERROR_TEXT = (
 )
 
 
-async def _conversation_for(conversation_id: str) -> tuple[str, str]:
-    """`(user_id, model)` — `model` đã resolve từ id ngắn (`Conversation.model`) sang
-    chuỗi "provider:model" thật qua `AGENT_MODEL_CHOICES` (`app/config/settings.py`). Id
-    rỗng/không còn trong `AGENT_MODEL_CHOICES` (model bị gỡ khỏi danh sách sau khi
-    conversation đã chọn) -> trả rỗng, `AgentContext.model` rỗng -> middleware
-    `select_model` tự fallback `settings.AGENT_MODEL`."""
-    async with get_postgres_client().session_factory() as db:
-        repo = ConversationRepository(db)
-        conversation = await repo.get(conversation_id)
-        if conversation is None:
-            return "", ""
-        user_id = await repo.owner_user_id(conversation) or ""
-    model = settings.AGENT_MODEL_CHOICES.get(conversation.model, "")
-    return user_id, model
-
-
-async def _build_context(req: TurnRequest) -> AgentContext:
-    user_id, model = await _conversation_for(req.conversation_id)
-    return AgentContext(
-        user_id=user_id,
-        conversation_id=req.conversation_id,
-        message_id=req.message_id,
-        image_keys=[
-            a.storage_key
-            for a in (req.attached_files or [])
-            if a.content_type.startswith("image/")
-        ],
-        model=model,
-    )
-
-
 def _human_message_content(req: TurnRequest) -> str:
-    """Nối thêm object key MinIO của ảnh đính kèm (nếu có) vào cuối nội dung tin nhắn —
-    agent đọc thấy `object_key` này trong `messages` rồi tự copy làm tham số khi gọi
-    `classify_skin_image` (`agent/tools/skin_image_classifier.py`, hướng dẫn ở
-    `SYSTEM_PROMPT`). Không có cơ chế multimodal content riêng ở tầng `create_agent`
-    hiện tại nên forward bằng text là cách đơn giản nhất, nhất quán với cách LLM
-    orchestrate mọi tool khác (đọc context -> tự chọn tham số gọi tool)."""
+    """Nối thêm object key MinIO của ảnh đính kèm"""
     content = req.content or ""
-    images = [a for a in (req.attached_files or []) if a.content_type.startswith("image/")]
+    images = [
+        a
+        for a in (req.attached_files or [])
+        if a.content_type.startswith("image/")
+    ]
     if not images:
         return content
 
     # nhãn `object_key` giữ nguyên: là tên tham số của tool `classify_skin_image` mà prompt hướng dẫn LLM chép lại
-    lines = [f'- name="{a.file_name}" object_key="{a.storage_key}"' for a in images]
+    lines = [
+        f'- name="{a.file_name}" object_key="{a.storage_key}"' for a in images
+    ]
     return content + "\n\n[Ảnh đính kèm]\n" + "\n".join(lines)
 
 
@@ -83,39 +56,53 @@ async def _stream_graph(
     context: AgentContext,
     req: TurnRequest,
 ) -> tuple[AIMessage | None, Interrupt | None]:
-    """Chạy graph, forward token; trả `(AIMessage cuối, Interrupt nếu tạm dừng)`."""
+    """Chạy chat graph, forward token; trả `(AIMessage cuối, Interrupt nếu tạm dừng)`."""
     interrupt: Interrupt | None = None
     final_message: AIMessage | None = None
+    streamed = False
 
-    async for mode, chunk in agent_graph.astream(  # pyright: ignore[reportUnknownMemberType]
+    async for mode, chunk in chat_graph.astream(  # pyright: ignore[reportUnknownMemberType]
         input_,
         config=config_for(req.conversation_id),
         context=context,
-        stream_mode=["messages", "updates"],
+        stream_mode=["updates", "custom"],
     ):
-        if mode == "messages":
-            msg, meta = cast("tuple[Any, dict[str, Any]]", chunk)
-            assert isinstance(msg, BaseMessage)
-            # `langgraph_node == "model"` lọc đúng token của LLM chính — bỏ qua các lần
-            # gọi model nội bộ khác (vd `SummarizationMiddleware` tự gọi LLM tóm tắt khi
-            # vượt ngưỡng), không lẫn vào stream trả lời user.
-            if meta.get("langgraph_node") == "model" and msg.text:
+        if mode == "custom":
+            # token model chính do node `pre_diagnosis` của chat graph chuyển tiếp (`agent/graph/chat_graph.py::_pre_diagnosis_node`)
+            payload = cast("dict[str, Any]", chunk)
+            if payload.get("type") == "token" and payload.get("text"):
+                streamed = True
                 await emit(
                     channel,
-                    {"type": "message.delta", "delta": msg.text, **base},
+                    {"type": "message.delta", "delta": payload["text"], **base},
                 )
             continue
 
-        # mode == "updates": state diff sau mỗi node — dùng để phát hiện interrupt (tool
-        # `ask_user`) và tóm `AIMessage` cuối cùng (LangGraph đã gộp sẵn khi node "model"
-        # hoàn tất, không cần tự cộng dồn từng chunk).
+        # mode == "updates": state diff sau mỗi node của chat graph — dùng để phát hiện interrupt (tool `ask_user`) và tóm `AIMessage`
+        # cuối cùng (LangGraph đã gộp sẵn, không cần tự cộng dồn từng chunk). Token không đi qua đây mà qua mode "custom" ở trên.
         update = cast(dict[str, Any], chunk)
         if "__interrupt__" in update:
             interrupt = cast(tuple[Interrupt, ...], update["__interrupt__"])[0]
             break
-        model_update = update.get("model")
-        if model_update:
-            final_message = cast(AIMessage, model_update["messages"][-1])
+        for node in _ANSWER_NODES:
+            node_update = update.get(node)
+            if node_update and node_update.get("messages"):
+                last = node_update["messages"][-1]
+                if isinstance(last, AIMessage):
+                    final_message = last
+
+    # Câu trả lời của triage không đi qua token streaming (nằm trong tham số tool của lần phân loại) — phát một lần để FE hiển thị
+    # như các câu trả lời khác.
+    if (
+        interrupt is None
+        and final_message is not None
+        and not streamed
+        and final_message.text
+    ):
+        await emit(
+            channel,
+            {"type": "message.delta", "delta": final_message.text, **base},
+        )
 
     return final_message, interrupt
 
@@ -127,10 +114,7 @@ async def _finish_with_question(
     interrupt: Interrupt,
     context: AgentContext,
 ) -> None:
-    """Turn tạm dừng ở tool `ask_user` — payload `interrupt.value` là `{"question": ...,
-    "options": [...]}` do tool tự truyền, `interrupt.id` (LangGraph tự sinh, ổn định cho
-    ĐÚNG lần dừng này) dùng làm `question_id` cho FE (`POST
-    .../questions/{question_id}/answer`, `docs/api-doc.md` mục 2.2)."""
+    """Turn tạm dừng ở tool `ask_user`"""
     raw: Any = interrupt.value
     payload: dict[str, Any] = (
         cast("dict[str, Any]", raw) if isinstance(raw, dict) else {}
@@ -157,7 +141,7 @@ async def _finish_with_question(
 
 async def _drive(req: TurnRequest, input_: object) -> None:
     channel = AGENT_EVENTS_CHANNEL.format(conversation_id=req.conversation_id)
-    context = await _build_context(req)
+    context = await build_context(req)
     base: dict[str, Any] = {
         "conversation_id": req.conversation_id,
         "message_id": req.message_id,
@@ -172,13 +156,9 @@ async def _drive(req: TurnRequest, input_: object) -> None:
             input_, channel, base, context, req
         )
     except Exception as exc:  # noqa: BLE001
-        # LLM/tool lỗi giữa chừng (vd 429 rate-limit OpenRouter, network...) — KHÔNG được
-        # để lộ ra ngoài rồi bị `on_message` nuốt im lặng: turn sẽ treo vĩnh viễn — FE chờ
-        # SSE không bao giờ tới, `assistant` message kẹt `status="queued"` trong Postgres.
-        # Coi như turn "done" với nội dung báo lỗi thay vì thêm 1 trạng thái mới
-        # (`status="error"` phải sửa cả DTO/FE/DB enum) — người dùng vẫn thấy phản hồi,
-        # có thể hỏi lại ngay. Suy luận đã tích luỹ TRƯỚC KHI lỗi vẫn có giá trị xem lại.
-        print(f"[Agent Worker] lỗi khi chạy turn {req.message_id}: {exc}")
+        # Không để lỗi lọt ra ngoài (turn sẽ treo, message kẹt "queued"); coi như "done" với nội dung báo lỗi
+        # vì thêm status "error" phải sửa cả DTO/FE/DB enum.
+        logger.exception("lỗi khi chạy turn %s: %s", req.message_id, exc)
         await finish_turn(
             channel,
             req,
@@ -214,3 +194,35 @@ async def handle_turn(req: TurnRequest) -> None:
 async def handle_resume(req: TurnRequest) -> None:
     """Tiếp tục turn đang dừng ở `ask_user` với câu trả lời của người dùng."""
     await _drive(req, Command(resume=req.answer))
+
+
+async def emit(channel: str, payload: dict[str, Any]) -> None:
+    await get_redis_client().publish(channel, json.dumps(payload))
+
+
+async def finish_turn(
+    channel: str,
+    req: TurnRequest,
+    event: dict[str, Any],
+    *,
+    content: str,
+    status: Literal["done", "question"],
+    choice: dict[str, Any] | None = None,
+    reasoning: list[dict[str, Any]] | None = None,
+) -> None:
+    """Kết thúc/tạm dừng turn"""
+    await emit(channel, event)
+    await get_redis_client().publish(channel, STREAM_DONE_SENTINEL)
+    await get_rabbitmq_client().publish(
+        AGENT_RESPONSE_QUEUE,
+        AgentResponseMessage(
+            conversation_id=req.conversation_id,
+            message_id=req.message_id,
+            content=content,
+            status=status,
+            choice=choice,
+            reasoning=reasoning or None,
+        )
+        .model_dump_json()
+        .encode("utf-8"),
+    )

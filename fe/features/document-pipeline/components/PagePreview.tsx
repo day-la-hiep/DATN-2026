@@ -11,10 +11,7 @@ import { errorMessage, documentApi } from "../api";
 
 type View = "image" | "text";
 
-/**
- * Đối chiếu bằng mắt: ảnh trang PDF hoặc chữ đã đọc, kèm điều hướng. `caption` nói vì sao đang xem trang này
- * (vd "Rosacea · trang in 8 → PDF 49 · đã neo dòng 0"); `highlightLine` tô dòng neo ở chế độ chữ.
- */
+/** Ảnh trang PDF hoặc chữ đã đọc; `caption` nói vì sao đang xem trang này, `highlightLine` tô dòng neo. */
 export function PagePreview({
   documentId,
   page,

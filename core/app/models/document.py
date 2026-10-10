@@ -1,11 +1,4 @@
-"""Tài liệu của pipeline `document_ingest` (hiện chỉ sách giáo khoa dạng PDF): bản ghi tài liệu,
-trạng thái từng bước, override của người duyệt. Lớp entity nghiệp vụ tương ứng là
-`app/dto/base/document.py::Document`/`DocumentStage`/`DocumentStageOverride` — các class ở đây CHỈ
-là schema lưu trữ SQLAlchemy (xem `derma-core-conventions`).
-
-File lớn (PDF, `pages.jsonl`, mục lục, chunk, ảnh trang, nhật ký) vẫn nằm trong MinIO dưới
-`document/<document_id>/`; bảng chỉ giữ dữ liệu nhỏ hay bị sửa đồng thời (Core + thread xử lý) và cần
-truy vấn. JSON dùng JSONB trên Postgres, JSON thường ở SQLite (test)."""
+"""Tài liệu của pipeline `document_ingest`"""
 
 from datetime import UTC, datetime
 from typing import Any
@@ -43,8 +36,7 @@ class Document(Base):
 
 
 class DocumentStage(Base):
-    """Trạng thái một bước của một tài liệu (`Document.stages`). Vòng đời: not_started -> running -> pending_review -> approved (failed/cancelled/stale).
-    Có khoá `id` riêng để `DocumentOverride` trỏ tới bước mà không phải lặp `document_id`."""
+    """Trạng thái một bước của một tài liệu"""
 
     __tablename__ = "document_stages"
     __table_args__ = (UniqueConstraint("document_id", "stage_id"),)
@@ -63,8 +55,7 @@ class DocumentStage(Base):
 
 
 class DocumentOverride(Base):
-    """Chỉnh sửa tay của người duyệt lên kết quả một bước (`DocumentStage.overrides`) — tách khỏi kết quả máy để chạy lại
-    bước không mất công sửa. Thuộc về bước qua `document_stage_id`, tài liệu suy ra từ bước đó."""
+    """Chỉnh sửa tay của người duyệt lên kết quả một bước"""
 
     __tablename__ = "document_overrides"
 

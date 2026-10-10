@@ -1,7 +1,4 @@
-"""MedicalRecord / PatientImage — bệnh án của hồ sơ bệnh nhân và ảnh bệnh gắn vào bệnh án (`app/dto/base/medical_record.py`).
-
-Ảnh trỏ FK tới `files` thay vì chép file: bác sĩ có thể chọn lại ảnh bệnh nhân đã gửi trong chat (cùng dòng `files` với
-`message_files`) mà không tạo bản sao trong MinIO."""
+"""MedicalRecord / PatientImage"""
 from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, false, text

@@ -44,7 +44,7 @@ documents 1─n document_stages 1─1 document_overrides ;  documents ─n─1 f
 
 ### `users` — tài khoản
 
-Field chung của mọi loại tài khoản. Vai trò bác sĩ / quản trị là bảng con 1-1 (`doctors`, `admins`), bệnh nhân là `patient_profiles`. Chưa có API đăng ký / đăng nhập.
+Field chung của mọi loại tài khoản. Vai trò bác sĩ / quản trị là bảng con 1-1 (`doctors`, `admins`), bệnh nhân là `patient_profiles`. Đăng ký / đăng nhập qua `/auth/*` (JWT).
 
 | Field | Kiểu | Null | Ý nghĩa |
 |---|---|---|---|

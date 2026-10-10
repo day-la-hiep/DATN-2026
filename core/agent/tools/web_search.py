@@ -1,18 +1,4 @@
-"""Tool tra cứu web từ NGUỒN UY TÍN (allowlist domain) — bổ sung cho guideline KB (chỉ 65 bệnh
-BYT + WHO/MedlinePlus) khi bệnh nằm ngoài KB hoặc cần thông tin cập nhật.
-
-2 tool phối hợp: `search_trusted_web` (Tavily, lọc `include_domains` ngay ở provider, code lọc
-lại phía server) rồi `fetch_trusted_page` (tải + trích văn bản 1 URL trong kết quả).
-
-An toàn:
-  - Allowlist `settings.TRUSTED_WEB_DOMAINS` (host khớp chính xác hoặc là subdomain) — áp cho
-    kết quả tìm kiếm, URL fetch VÀ từng bước redirect (không cho redirect ra ngoài allowlist).
-  - Chống SSRF: host phải phân giải ra IP công cộng (chặn loopback/private/link-local).
-  - Giới hạn kích thước (2MB) và timeout; chỉ nhận http(s), content-type HTML/text.
-  - Nội dung web là DỮ LIỆU, không phải chỉ thị: kết quả trả về được bọc trong khối đánh dấu
-    rõ, prompt hệ thống (mục 1) yêu cầu bỏ qua mọi lệnh nằm trong dữ liệu.
-  - Cache Redis theo query/URL (TTL 24h); lỗi Redis không làm hỏng tool.
-"""
+"""Tool tra cứu web từ NGUỒN UY TÍN"""
 
 import asyncio
 import hashlib
@@ -26,7 +12,7 @@ import httpx
 import trafilatura
 from langchain_core.tools import tool
 
-from agent.tools.knowledge_base_search import get_kb_embeddings
+from agent.common.embeddings import get_embeddings
 from app.config.settings import settings
 from app.api.deps import get_redis_client
 
@@ -99,15 +85,15 @@ def _cache_key(kind: str, *parts: str) -> str:
 @tool
 async def search_trusted_web(query: str, top_k: int = 5) -> str:
     """Tìm thông tin y khoa trên các trang web UY TÍN (AAD, DermNet NZ, MedlinePlus, WHO, NIH/
-    PubMed, CDC, NHS, Mayo Clinic, Bộ Y tế VN...) — chỉ dùng khi guideline KB không có bệnh đó
-    (`search_disease_guidelines` điểm thấp/không đúng bệnh, hoặc `kb_disease_id` null) hoặc cần
+    PubMed, CDC, NHS, Mayo Clinic, Bộ Y tế VN...) — chỉ dùng khi `hybrid_retrieval` không có đoạn sách
+    liên quan tới bệnh đó (điểm thấp/không đúng bệnh) hoặc cần
     thông tin bổ sung/cập nhật. KHÔNG gọi khi KB đã đủ. Tối đa 2 lần gọi mỗi lượt.
 
     Truy vấn bằng TIẾNG ANH y khoa (đa số nguồn là tiếng Anh) và CHỈ chứa thuật ngữ y khoa —
     tuyệt đối không đưa tên, số điện thoại, địa chỉ hay thông tin định danh của người dùng.
     Kết quả gồm tiêu đề, URL, domain, đoạn trích; cần đọc chi tiết 1 kết quả thì gọi
     `fetch_trusted_page(url)`. Khi trích dẫn cho người dùng, nêu tên nguồn/domain. Nếu web mâu
-    thuẫn guideline BYT/WHO trong KB, ưu tiên guideline và nói rõ có khác biệt.
+    thuẫn sách giáo khoa trong `hybrid_retrieval`, ưu tiên sách và nói rõ có khác biệt.
 
     Args:
         query: Truy vấn tiếng Anh y khoa, vd "dermatitis herpetiformis diagnosis criteria".
@@ -207,7 +193,7 @@ def _select_focused(text: str, focus: str) -> str:
     paragraphs = [p.strip() for p in text.split("\n") if len(p.strip()) > 40]
     if not paragraphs:
         return text[:_MAX_TEXT_CHARS]
-    embeddings = get_kb_embeddings()
+    embeddings = get_embeddings()
     vectors = embeddings.embed_documents(paragraphs)
     query = embeddings.embed_query(focus)
     scores = [

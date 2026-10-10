@@ -1,8 +1,4 @@
-"""Health check endpoints — dùng cho liveness/readiness probe và debug thủ công.
-
-Đồng thời làm ví dụ quy ước DTO: response được validate/serialize qua Pydantic
-model trong `app/dto/response/health.py` thay vì trả dict tay.
-"""
+"""Health check endpoints"""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -36,13 +32,6 @@ async def readiness(
     redis: Annotated[RedisClient, Depends(get_redis_client)],
     rabbitmq: Annotated[RabbitMQClient, Depends(get_rabbitmq_client)],
 ) -> JSONResponse:
-    """Readiness: kiểm tra kết nối tới Postgres, Redis, RabbitMQ.
-
-    Trả JSONResponse thủ công (không dùng response_model) vì cần tự set status
-    code 200/503 theo kết quả check — DTO vẫn được dùng để validate nội dung
-    trước khi serialize. `responses=` ở decorator chỉ để khai báo schema cho
-    OpenAPI (Swagger UI, `docs/openapi.yaml`), không ảnh hưởng hành vi thật.
-    """
     database = "ok"
     try:
         await postgres.ping()

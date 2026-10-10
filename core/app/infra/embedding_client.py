@@ -1,5 +1,5 @@
-"""Embedding LOCAL dùng chung: class `EmbeddingClient` (sentence-transformers qua `agent/embeddings.py`, 384 chiều). Nạp mô hình rất nặng nên
-lười (lần `embed` đầu tiên). Chạy ĐỒNG BỘ. Instance do `app/api/deps.py` tạo; test thay bằng đối tượng có cùng phương thức `embed`."""
+"""Embedding dùng chung (OpenRouter)"""
+
 from typing import Any
 
 
@@ -10,13 +10,17 @@ class EmbeddingClient:
     @property
     def model(self) -> Any:
         if self._model is None:
-            from agent.embeddings import LocalEmbeddings
+            from agent.common.embeddings import OpenRouterEmbeddings
 
-            self._model = LocalEmbeddings()
+            self._model = OpenRouterEmbeddings()
         return self._model
 
     def embed(self, texts: list[str]) -> tuple[list[list[float]], int, str]:
         """Trả (vector từng văn bản, số chiều, tên model)."""
-        from agent.embeddings import EMBEDDING_DIM, EMBEDDING_MODEL_NAME
+        from agent.common.embeddings import EMBEDDING_DIM, EMBEDDING_MODEL_NAME
 
-        return self.model.embed_documents(texts), EMBEDDING_DIM, EMBEDDING_MODEL_NAME
+        return (
+            self.model.embed_documents(texts),
+            EMBEDDING_DIM,
+            EMBEDDING_MODEL_NAME,
+        )

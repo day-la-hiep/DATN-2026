@@ -4,6 +4,8 @@ Bước được chạy trong backend ở thread nền (không còn CLI/subproce
     python -m unittest pipeline.document_ingest.tests.test_api -v"""
 
 import io
+import json
+import threading
 import time
 import unittest
 from unittest.mock import patch
@@ -27,9 +29,45 @@ def _pdf(pages: int = 3) -> bytes:
     return buf.getvalue()
 
 
+class FakeBroker:
+    """Thay RabbitMQ + Redis và cả ingest worker: `publish` chạy `execute` ở thread nền, Dừng set Event của lần chạy đó."""
+
+    def __init__(self, svc) -> None:  # noqa: ANN001
+        self.svc, self.events, self.keys = svc, {}, {}
+
+    async def publish(self, queue: str, body: bytes) -> None:
+        m = json.loads(body)
+        key = (m["document_id"], m["stage_id"])
+        self.events[key] = cancel = threading.Event()
+
+        def work() -> None:
+            try:
+                self.svc.execute(*key, m["options"], cancel=cancel)
+            except Exception:  # noqa: BLE001
+                pass
+
+        threading.Thread(target=work, daemon=True).start()
+
+    async def set_value(self, key: str, value: str, *, ex_seconds: int | None = None) -> None:
+        self.keys[key] = value
+
+    async def delete(self, key: str) -> None:
+        self.keys.pop(key, None)
+
+    async def redis_publish(self, channel: str, message: str) -> int:
+        m = json.loads(message)
+        self.events[(m["document_id"], m["stage_id"])].set()
+        return 1
+
+
 class ApiTest(Base):
     def setUp(self) -> None:
         super().setUp()
+        broker = FakeBroker(self.runner)
+        self.runner._rabbitmq = broker  # type: ignore[assignment]
+        self.runner._redis = type(  # type: ignore[assignment]
+            "R", (), {"set_value": broker.set_value, "delete": broker.delete, "publish": broker.redis_publish}
+        )()
         app = FastAPI()
         register_exception_handlers(app)
         app.include_router(router, prefix="/api/v1")
@@ -290,10 +328,11 @@ class ApiTest(Base):
             409,
         )  # không còn chạy
 
-    def test_stage_left_running_without_a_thread_is_marked_failed(self) -> None:
+    def test_orphaned_running_stage_is_failed_when_worker_starts(self) -> None:
         self.repo.update_stage(
             self.document_id, "toc", state="running"
-        )  # vd Core vừa khởi động lại: không thread nào chạy bước này
+        )  # vd worker bị tắt giữa chừng
+        self.assertEqual(self.vectors.fail_orphaned_runs(), 1)
         st = self.wait_state("toc", {"failed"}, timeout=2)
         self.assertIn("dừng bất thường", st["error"])
 

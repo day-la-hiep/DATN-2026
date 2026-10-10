@@ -1,6 +1,4 @@
-"""Docling dùng chung: class `DoclingClient` = converter (layout + OCR, cache theo cấu hình) + capability chuyển PDF thành các khối chữ theo
-thứ tự đọc. Dùng khi lớp text ẩn của PDF hỏng: Docling OCR lại từ ảnh trang. Import Docling/torch rất chậm nên nằm trong hàm. Chạy ĐỒNG BỘ.
-Instance do `app/api/deps.py` tạo."""
+"""Docling dùng chung"""
 import io
 from pathlib import Path
 from typing import Any
@@ -49,8 +47,7 @@ class DoclingClient:
 
     def convert_pages(self, pdf: Path, first: int, last: int, *, ocr: bool = True, force_ocr: bool = True,
                           tables: bool = True) -> list[dict[str, Any]]:
-        """Chuyển trang [first, last] (đánh số từ 1). Mỗi khối: {page, label, text}; bảng/mục lục là Markdown.
-        Ảnh (label "figure") thêm `bbox` và `image_png` (bytes PNG) — bước ingest ghi bytes ra MinIO trước khi lưu part."""
+        """Chuyển trang [first, last]"""
         doc = self.converter(ocr, force_ocr, tables).convert(str(pdf), page_range=(first, last)).document
         blocks: list[dict[str, Any]] = []
         for item, _lvl in doc.iterate_items():

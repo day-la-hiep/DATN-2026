@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.deps import get_consultation_service
+from app.api.deps import get_consultation_service, get_current_user, require_role
 from app.dto.common import ApiResponse
 from app.dto.consultation import (
     ConsultationSessionOutput,
@@ -11,6 +11,7 @@ from app.dto.consultation import (
     RequestConsultationInput,
 )
 from app.dto.response.message import MessageOutput
+from app.models.user import User
 from app.services.consultation_service import ConsultationService
 
 router = APIRouter(tags=["doctor"])
@@ -18,6 +19,8 @@ router = APIRouter(tags=["doctor"])
 ConsultationServiceDep = Annotated[
     ConsultationService, Depends(get_consultation_service)
 ]
+DoctorDep = Annotated[User, Depends(require_role("doctor"))]
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
 @router.get(
@@ -27,10 +30,11 @@ ConsultationServiceDep = Annotated[
 )
 async def list_consultations(
     service: ConsultationServiceDep,
+    doctor: DoctorDep,
     status: Annotated[str | None, Query()] = None,
 ) -> ApiResponse[list[ConsultationSessionOutput]]:
     """Lấy danh sách các phiên tư vấn cho bác sĩ theo dõi."""
-    sessions = await service.list_sessions(status)
+    sessions = await service.list_sessions(status, doctor.id)
     return ApiResponse(data=sessions)
 
 
@@ -42,9 +46,10 @@ async def list_consultations(
 async def get_consultation(
     session_id: str,
     service: ConsultationServiceDep,
+    doctor: DoctorDep,
 ) -> ApiResponse[ConsultationSessionOutput]:
     """Lấy chi tiết một phiên tư vấn (kèm dữ kiện lâm sàng và báo cáo AI kết luận)."""
-    session = await service.get_session(session_id)
+    session = await service.get_session(session_id, doctor.id)
     if not session:
         raise HTTPException(
             status_code=404,
@@ -61,10 +66,11 @@ async def get_consultation(
 async def accept_consultation(
     session_id: str,
     service: ConsultationServiceDep,
+    doctor: DoctorDep,
 ) -> ApiResponse[ConsultationSessionOutput]:
     """Bác sĩ tiếp quản ca tư vấn (chuyển status sang active)."""
     try:
-        session = await service.accept_session(session_id)
+        session = await service.accept_session(session_id, doctor.id)
         return ApiResponse(data=session)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -78,10 +84,11 @@ async def accept_consultation(
 async def resolve_consultation(
     session_id: str,
     service: ConsultationServiceDep,
+    doctor: DoctorDep,
 ) -> ApiResponse[ConsultationSessionOutput]:
     """Bác sĩ đóng phiên tư vấn (chuyển status sang resolved)."""
     try:
-        session = await service.resolve_session(session_id)
+        session = await service.resolve_session(session_id, doctor.id)
         return ApiResponse(data=session)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -96,10 +103,11 @@ async def request_consultation(
     conversation_id: str,
     body: RequestConsultationInput,
     service: ConsultationServiceDep,
+    current_user: CurrentUserDep,
 ) -> ApiResponse[ConsultationSessionOutput]:
     """Bệnh nhân yêu cầu kết nối Bác sĩ -> Tự động kích hoạt LLM sinh báo cáo tiền tư vấn AI."""
     session = await service.request_consultation(
-        conversation_id, body.reason or "Bệnh nhân yêu cầu bác sĩ tư vấn"
+        conversation_id, current_user.id, body.reason or "Bệnh nhân yêu cầu bác sĩ tư vấn"
     )
     return ApiResponse(data=session)
 
@@ -113,10 +121,11 @@ async def reply_consultation(
     session_id: str,
     body: DoctorReplyInput,
     service: ConsultationServiceDep,
+    doctor: DoctorDep,
 ) -> ApiResponse[MessageOutput]:
     """Bác sĩ gửi tin nhắn phản hồi tới bệnh nhân trong phiên tư vấn."""
     try:
-        msg = await service.send_doctor_reply(session_id, body.content)
+        msg = await service.send_doctor_reply(session_id, body.content, doctor.id)
         return ApiResponse(data=msg)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

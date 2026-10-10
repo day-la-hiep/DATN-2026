@@ -28,14 +28,7 @@ export interface ImageThumbnailProps {
   onRemove?: () => void;
 }
 
-/**
- * Thumbnail xem trước ảnh khi upload và trong tin nhắn.
- * Khi nhấp vào sẽ mở Modal Lightbox độ phân giải cao, hỗ trợ:
- * - Zoom phóng to tối đa 500% (nút bấm, cuộn chuột wheel, nhấp đúp 2x)
- * - Kéo rê (pan/drag) ảnh khi đã phóng to để soi rõ chi tiết bệnh lý/da
- * - Xoay ảnh 90° (hữu ích cho ảnh chụp từ điện thoại)
- * - Đặt lại kích thước, mở ảnh gốc tab mới, phím tắt tiện lợi
- */
+/** Thumbnail ảnh đính kèm; nhấp vào mở lightbox (zoom, kéo, xoay). */
 export function ImageThumbnail({
   url,
   name,

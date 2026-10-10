@@ -3,9 +3,11 @@
 # ----- RabbitMQ queues -----
 AGENT_REQUEST_QUEUE = "agent_request_queue"  # Backend -> Agent (yêu cầu 1 turn)
 AGENT_RESPONSE_QUEUE = "agent_response_queue"  # Agent -> Backend (kết quả để persist DB)
+DOCUMENT_INGEST_QUEUE = "document_ingest_queue"  # Backend -> Ingest worker (chạy 1 bước pipeline tài liệu)
 
 # ----- Redis Pub/Sub -----
 AGENT_EVENTS_CHANNEL = "agent:events:{conversation_id}"  # Agent -> SSE client (stream realtime)
+DOCUMENT_INGEST_CANCEL_CHANNEL = "document:ingest:cancel"  # Backend -> Ingest worker (bấm Dừng bước đang chạy)
 STREAM_DONE_SENTINEL = "[DONE]"  # đánh dấu kết thúc 1 stream SSE
 
 # ----- Redis key (không phải Pub/Sub) -----
@@ -19,6 +21,9 @@ AGENT_ACTIVE_TURN_KEY = "agent:active_turn:{conversation_id}"
 # `GETDEL` key này ngay sau khi `subscribe` xong rồi mới publish cho Worker.
 # Xem docs/async-api-doc.md mục 1 + 6.
 AGENT_PENDING_TURN_KEY = "agent:pending_turn:{conversation_id}"
+
+# Cờ "đã bấm Dừng" cho bước chưa kịp được worker nhận (Pub/Sub không replay). Worker xoá khi nhận message.
+DOCUMENT_CANCEL_KEY = "document:ingest:cancel:{document_id}:{stage_id}"
 
 # ----- Database -----
 # Naming convention cho constraint (index/fk/uq/ck/pk) — giúp Alembic autogenerate đặt tên nhất quán,

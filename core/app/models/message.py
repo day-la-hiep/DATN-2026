@@ -1,8 +1,3 @@
-"""Message — tin nhắn user/assistant (`docs/db-diagram.md` mục 1–2).
-
-`extra` map sang cột DB tên `metadata` — KHÔNG đặt attribute Python là `metadata`
-(trùng tên reserved `Base.metadata` của SQLAlchemy, xem `docs/db-diagram.md` mục 2).
-"""
 from datetime import UTC, datetime
 from typing import Any
 

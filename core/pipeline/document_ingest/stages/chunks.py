@@ -1,15 +1,4 @@
-"""Chunk theo khung mục lục (bước 3) -> `chunks.jsonl`, không LLM, chạy lại rẻ.
-
-Khung part/section/mục lấy từ `toc.json` (đã có trang PDF + dòng neo). Mỗi mục là một vùng
-`[điểm bắt đầu của nó -> điểm bắt đầu của mục kế tiếp)`; trong vùng thì cắt TỰ DO theo đoạn/câu tới `max_tokens`.
-
-- Chunk không vượt ranh giới mục có cấp <= `chunking.boundary_level` (mặc định 3 = mọi mục trong mục lục).
-- Mỗi chunk thừa hưởng metadata của mục chứa nó: `part`, `section`, `topic`, `subtopic`, `toc_path`, `pages_hint` (khoảng trang
-  theo mục lục), `boundary` (mục chưa neo được dòng: ranh giới chỉ chính xác tới cấp trang), cùng trang PDF/trang in.
-- Chữ nằm ngoài mọi mục (trước mục đầu tiên: bìa, lời nói đầu...) và các trang mục lục không thành chunk; số lượng được báo
-  trong summary để người duyệt biết, không bỏ im lặng.
-
-Chunk quá dài/ngắn, `boundary` và mục `suspect` vào hàng đợi xem lại (`review/chunks.json`)."""
+"""Chunk theo khung mục lục"""
 import re
 from bisect import bisect_right
 from typing import Any
@@ -53,8 +42,7 @@ def split_unit(text: str, max_tokens: int) -> list[str]:
 
 
 def toc_nodes(doc: dict[str, Any], max_page: int) -> list[dict[str, Any]]:
-    """Cây mục lục -> các nút có điểm bắt đầu (trang PDF, dòng; dòng -1 = đầu trang khi chưa neo được).
-    Mục nằm ngoài các trang đang có bị bỏ; điểm bắt đầu không bao giờ lùi so với mục trước."""
+    """Cây mục lục -> các nút có điểm bắt đầu"""
     nodes: list[dict[str, Any]] = []
     prev = (0, -1)
     for e in doc["entries"]:
@@ -85,8 +73,7 @@ def _common_prefix(paths: list[list[str]]) -> list[str]:
 
 
 def _items(nodes: list[dict], units: list[tuple[int, int, str]], boundary_level: int) -> tuple[list[list[dict]], int]:
-    """Chia chữ cho mục chứa nó rồi gom thành các vùng (mỗi vùng = một đơn vị không bị chunk vượt qua).
-    Trả (vùng -> danh sách item {node, page, text, heading}, số dòng chữ nằm ngoài mọi mục)."""
+    """Chia chữ cho mục chứa nó rồi gom thành các vùng"""
     by_id = {n["id"]: n for n in nodes}
     starts = [(n["page"], n["line"]) for n in nodes]
     own = {(n["page"], n["line"]) for n in nodes if n["anchored"]}  # dòng tiêu đề đã neo: chính tiêu đề, không phải thân
@@ -143,8 +130,6 @@ def _pack(region: list[dict], cfg: ChunkingConfig) -> list[list[dict]]:
 
 def build_chunks(nodes: list[dict], units: list[tuple[int, int, str]], cfg: ChunkingConfig, *, document_id: str, document_title: str,
                  printed_offset: int, figures: list[dict] | None = None) -> tuple[list[dict], int]:
-    """`nodes`: từ `toc_nodes`. `units`: (trang, dòng, chữ) thân sách theo thứ tự đọc. `figures`: từ `figures.json`.
-    Trả (chunks, số dòng ngoài mục)."""
     by_id = {n["id"]: n for n in nodes}
     regions, outside = _items(nodes, units, cfg.boundary_level)
     chunks: list[dict] = []

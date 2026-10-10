@@ -27,7 +27,7 @@ Các file sau **phải có** trước khi build, kiểm tra kỹ vì có file kh
 |---|---|---|
 | `core/data-ingest/01_normalize/output/kg/primekg/derma_nodes.csv`, `derma_edges.csv` | Có (sau khi sửa `.gitignore`) | ~3MB, nạp Neo4j |
 | `core/data-ingest/01_normalize/output/kg/dermo/dermo_kg.json` | Có | Nạp Neo4j |
-| `core/data-ingest/01_normalize/output/diseases/*.json` | Có | Nguồn để chunk + nạp Qdrant (87 bệnh -> 435 chunk) |
+| `core/data-ingest/01_normalize/output/diseases/*.json` | Có | Dữ liệu 87 bệnh đã chuẩn hoá; hiện chưa có script nạp nào đọc (guideline KB cũ đã bỏ) |
 | `model/model_output/AdaptiveCNN_SkinDisease_v5_best.pth` | **Chưa** (44MB) | Nếu thiếu, `docker build` core lỗi ở bước `COPY`. Commit hoặc copy tay lên server |
 | `fe/pnpm-workspace.yaml` | Có | Bắt buộc, thiếu thì `pnpm install` lỗi |
 | `.env`, `core/.env` | **Không** (ignore) | Tạo ở bước 2.2 và 2.3 |
@@ -59,10 +59,9 @@ cp core/.env.example core/.env
 |---|---|
 | `OPENROUTER_API_KEY` | Key từ https://openrouter.ai/keys |
 | `AGENT_MODEL` | Mặc định `openai:google/gemma-4-26b-a4b-it` (bản **trả phí**, cần credit OpenRouter; bản `:free` bị chặn khi dùng tool-calling) |
-| `APP_ACCESS_TOKEN` | Mã truy cập gửi cho người test. Để trống = tắt xác thực |
 
 Không cần sửa `DATABASE_URL`, `NEO4J_URL`, `MINIO_*`, … — compose tự ghi đè.
-Không cần `GOOGLE_API_KEY` (embedding chạy local).
+Không cần `GOOGLE_API_KEY` (embedding và reranker gọi qua OpenRouter, dùng chung `OPENROUTER_API_KEY`).
 
 ## 3. Khởi chạy
 
@@ -85,13 +84,13 @@ Cả 9 container phải `Up`; `postgres`, `redis`, `rabbitmq`, `neo4j`, `minio` 
 ./reset-and-gen-data.sh
 ```
 
-Script chạy trong container `derma-core-api`, nạp 3 nguồn:
+Script chạy trong container `derma-core-api`, nạp đồ thị tri thức vào Neo4j:
 
 | Nguồn | Đích | Dùng bởi |
 |---|---|---|
-| Guideline BYT/WHO/MedlinePlus (435 chunk) | Qdrant | `search_disease_guidelines`, `get_disease_guideline_profile` |
-| PrimeKG (36k node, 474k cạnh) | Neo4j | `query_dermatology_kg`, `ground_medical_entities` |
-| DermO (3.4k thuật ngữ) | Neo4j | `lookup_dermo_term`, `ground_medical_entities` |
+| PrimeKG (36k node, 474k cạnh) | Neo4j | `hybrid_retrieval` (nhánh KG), `knowledge_graph_search`, gợi ý câu hỏi của `record_reasoning` |
+| DermO (3.4k thuật ngữ) | Neo4j | `hybrid_retrieval` (nhánh KG), `knowledge_graph_search` |
+| Chunk sách (pipeline `document_ingest`) | Qdrant `derma_document_chunks_v4` | `hybrid_retrieval` (semantic + BM25), `semantic_search`, `keyword_search` — **không** nạp bằng script này mà qua giao diện admin `/admin/documents` |
 
 - Chạy lại nhiều lần không sao (idempotent).
 - `./reset-and-gen-data.sh --reset` — **xoá sạch** rồi nạp lại từ đầu (dùng khi đổi dữ liệu/model embedding).
@@ -105,21 +104,19 @@ Nếu thiếu bước này agent vẫn chạy nhưng các tool tra cứu trả v
 # 1. FE proxy tới backend được không (kỳ vọng {"status":"ok"})
 curl -s http://localhost:3000/api/v1/health
 
-# 2. Tạo hội thoại (kỳ vọng HTTP 201). Nếu đã bật APP_ACCESS_TOKEN thì thêm header:
+# 2. Tạo hội thoại (kỳ vọng HTTP 201):
 curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/v1/conversations \
-  -H "Authorization: Bearer <APP_ACCESS_TOKEN>" -H "Content-Type: application/json" \
+  -H "Content-Type: application/json" \
   -d '{"userId":"user-1","initMessage":"","title":"test"}'
 
 # 3. Dữ liệu đã nạp
 docker compose -f docker-compose.prod.yml exec -T derma-core-api python -c "
 import asyncio
-from app.infra.qdrant_client import client
-from app.config.settings import settings
-async def m(): print('Qdrant KB points:', (await client.count(settings.QDRANT_KB_COLLECTION)).count)
-asyncio.run(m())"          # kỳ vọng 435
+from app.api.deps import get_knowledge_base_service
+print('Chunk sách trong Qdrant:', asyncio.run(get_knowledge_base_service().count_document_chunks()))"   # 0 tới khi index sách đầu tiên ở /admin/documents
 ```
 
-Rồi mở `http://<host>:3000`, nhập mã `APP_ACCESS_TOKEN` ở màn hình đầu tiên, gửi thử một tin nhắn.
+Rồi mở `http://<host>:3000`, đăng ký/đăng nhập, gửi thử một tin nhắn.
 
 ## 6. Xử lý sự cố
 
@@ -129,7 +126,6 @@ Rồi mở `http://<host>:3000`, nhập mã `APP_ACCESS_TOKEN` ở màn hình đ
 | Đổi mật khẩu Neo4j/Postgres mà không có tác dụng | Chỉ áp dụng khi tạo volume lần đầu | Xoá volume của service đó (`docker compose -f docker-compose.prod.yml down`, `docker volume rm derma-hospital-prod_<tên>_data`) rồi `up`, nạp lại data. **Mất dữ liệu** |
 | FE gọi API lỗi `ECONNREFUSED 127.0.0.1:3050` (500 ở `/api/v1/...`) | `BACKEND_URL` được **bake lúc `next build`** (build arg), env runtime không có tác dụng | Đổi `args.BACKEND_URL` của `derma-fe` rồi `up -d --build derma-fe` |
 | `POST /conversations` → 500 `fk_conversations_user_id_users` | Thiếu user `user-1` (FE hard-code) | Core tự tạo user này khi khởi động; chỉ cần build lại/khởi động lại `derma-core-api` bản mới |
-| API trả `401 Thiếu hoặc sai access token` | Đã bật `APP_ACCESS_TOKEN` | Gửi header `Authorization: Bearer <token>`; FE sẽ hiện màn hình nhập mã |
 | Chat trả "hệ thống gặp sự cố…" | LLM lỗi (hết credit OpenRouter, rate limit, sai key) | Xem `docker compose -f docker-compose.prod.yml logs agent-worker` |
 | Tool tra cứu trả rỗng | Chưa nạp data | Chạy `./reset-and-gen-data.sh` |
 | `docker build` core lỗi `COPY model/...: not found` | Thiếu checkpoint CNN | Xem mục 2.1 |
@@ -160,6 +156,6 @@ Dữ liệu nằm trong các named volume (`postgres_data`, `qdrant_data`, `neo4
 ## 8. Lưu ý bảo mật
 
 - Chỉ `derma-fe:3000` publish ra host. Đặt tunnel/reverse-proxy phía trước và dùng HTTPS.
-- `APP_ACCESS_TOKEN` chỉ là token chung dùng chung, phù hợp demo/test, **không phải** hệ thống
-  đăng nhập. FE vẫn hard-code user `user-1` nên mọi người dùng chung một tài khoản và chung memory.
+- Các route chat/tài liệu/upload/bác sĩ chưa kiểm tra JWT phía server (chỉ `/auth/*` cấp token), nên đừng mở ra Internet
+  mà không có lớp bảo vệ phía trước. Chat vẫn nhận `user_id` từ client chứ chưa lấy từ token.
 - Không commit `.env` và `core/.env` (đã được ignore).

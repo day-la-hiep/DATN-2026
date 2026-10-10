@@ -37,14 +37,7 @@ class ConversationService:
     async def create_conversation(
         self, body: CreateConversationInput
     ) -> ConversationOutput:
-        """Tạo hội thoại + lưu `content` (nếu có) + publish turn đầu tiên — quyết định
-        thiết kế ở `docs/api-doc.md` mục 1.2 (FE chỉ cần 1 request).
-
-        Chỉ mở turn khi `content` thực sự có nội dung: FE (`store.ts`) luôn tạo
-        conversation với `content=""` rồi gọi `POST .../messages` riêng cho tin đầu
-        tiên (tránh trùng lặp) — mở turn với content rỗng vừa vô nghĩa vừa khiến LLM
-        (Gemini) từ chối request, để lại Redis "active_turn" key treo vĩnh viễn vì turn
-        không bao giờ hoàn tất."""
+        """Tạo hội thoại + lưu `content`"""
         # API chưa cho chọn hồ sơ -> dùng hồ sơ mặc định (tạo sớm nhất) của tài khoản
         profile = await self._patient_profiles.first_for_user(body.user_id)
         if profile is None:

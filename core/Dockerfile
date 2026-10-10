@@ -40,12 +40,6 @@ ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     SKIN_CNN_CHECKPOINT_PATH=/model/model_output/AdaptiveCNN_SkinDisease_v5_best.pth
 
-# Bake model embedding local (sentence-transformers, app/agent/embeddings.py) vào
-# image lúc build — tránh tải ~470MB từ HuggingFace Hub lúc container khởi động lần
-# đầu (chậm/lỗi nếu mạng prod hạn chế). Cần GOOGLE_API_KEY/OPENROUTER_API_KEY KHÔNG bắt
-# buộc ở bước này (chỉ load embedding model, không gọi LLM).
-RUN /app/.venv/bin/python -c "from agent.embeddings import _get_model; _get_model()"
-
 EXPOSE 3050
 
 # Mặc định: áp migration DB (Alembic) rồi chạy Core API — Agent Worker override command trong compose.

@@ -1,7 +1,4 @@
-"""RabbitMQ client dùng chung (aio-pika): 1 connection/channel cho cả app + capability generic (declare/publish/consume theo queue).
-
-Vòng đời: gọi connect() lúc app startup (FastAPI lifespan), close() lúc shutdown.
-"""
+"""RabbitMQ client dùng chung"""
 
 from __future__ import annotations
 

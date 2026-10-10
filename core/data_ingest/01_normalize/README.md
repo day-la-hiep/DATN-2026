@@ -23,12 +23,10 @@ Không đánh số nên `run.py` không tự chạy. Chạy từ `core/` (trong 
 
 | Script | Đọc | Ghi vào |
 |---|---|---|
-| `load_knowledge_base.py` | `output/diseases/*.json` | **Qdrant** `derma_kb_chunks`: chia mỗi bệnh tối đa 5 chunk (overview, symptoms, differential, advice, risk) -> embed local -> upsert **thẳng**, không tạo file JSON. Idempotent, chạy lại thì bỏ qua chunk đã có. |
 | `load_primekg.py` | `output/kg/primekg/*.csv` | **Neo4j** `:Entity` + label theo loại, cạnh theo `relation` |
 | `load_dermo.py` | `output/kg/dermo/dermo_kg.json` | **Neo4j** `:DermoTerm`, cạnh `IS_A` và quan hệ OBO |
 
-Cả 3 nhận `--reset` (xóa dữ liệu cũ trước khi nạp). `load_knowledge_base.py` còn có `--dry-run`
-(chỉ chunk + báo cáo, không cần Qdrant) và `--dump-chunks FILE` (ghi thêm chunk ra JSON để debug).
+Cả 2 nhận `--reset` (xóa dữ liệu cũ trước khi nạp).
 
 `manifest.json` để đối chiếu bộ data đang deploy (phát hiện file bị sửa tay).
 Thư mục này được commit và đưa vào Docker image cùng `scripts/` của nó (các nguồn khác bị loại — xem `core/Dockerfile.dockerignore`).

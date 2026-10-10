@@ -13,8 +13,7 @@ def _validate_model_id(model: str) -> str:
 
 
 class CreateConversationInput(BaseModel):
-    """Body cho `POST /conversations` — tạo hội thoại kèm tin nhắn đầu tiên (`docs/api-doc.md` mục 1.2).
-    `content` cùng nghĩa `Message.content` (base) của tin nhắn đầu tiên."""
+    """Body cho `POST /conversations`"""
 
     user_id: str
     content: str
@@ -29,8 +28,7 @@ class CreateConversationInput(BaseModel):
 
 
 class UpdateConversationModelInput(BaseModel):
-    """Body cho `PATCH /conversations/{id}/model` — đổi model dùng cho các turn KẾ TIẾP
-    của hội thoại (turn đang chạy dở không bị ảnh hưởng)."""
+    """Body cho `PATCH /conversations/{id}/model`"""
 
     model: str
 

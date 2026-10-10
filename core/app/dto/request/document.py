@@ -24,6 +24,7 @@ class DocumentSettings(BaseModel):
     min_tokens: int = Field(ge=0, le=1000)
     boundary_level: int = Field(ge=0, le=3)
     breadcrumb: bool = True
+    text_language: Literal["vi", "en", "mixed"] = "mixed"
 
 
 class TocItem(BaseModel):

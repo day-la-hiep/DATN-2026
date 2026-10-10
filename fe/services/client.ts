@@ -1,6 +1,6 @@
 import axios from "axios";
 
-/** JWT phiên đăng nhập, được lưu sau khi API login/register thành công. */
+/** JWT phiên đăng nhập, lưu sau khi login/register thành công; interceptor gắn vào mọi request. */
 export const ACCESS_TOKEN_STORAGE_KEY = "derma-auth-access-token";
 export const REFRESH_TOKEN_STORAGE_KEY = "derma-auth-refresh-token";
 export const AUTH_USER_STORAGE_KEY = "derma-auth-user";
@@ -48,6 +48,11 @@ export function getAuthenticatedUser(): AuthenticatedUser | null {
   } catch {
     return null;
   }
+}
+
+/** Id tài khoản đang đăng nhập (rỗng khi chưa có phiên) — thay cho id cứng trước đây. */
+export function getCurrentUserId(): string {
+  return getAuthenticatedUser()?.id ?? "";
 }
 
 export function setAuthSession(

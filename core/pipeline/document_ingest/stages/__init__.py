@@ -1,5 +1,4 @@
-"""Các bước của pipeline. Mỗi module có `run(ctx) -> dict` (summary hiển thị cho người duyệt) và, nếu bước có
-override của người duyệt, `reapply(ctx) -> dict` (áp lại override lên kết quả máy, KHÔNG gọi LLM)."""
+"""Các bước của pipeline"""
 import threading
 import time
 from collections.abc import Callable
@@ -26,7 +25,8 @@ class ChunkIndex(Protocol):
     def ensure_collection(self, dim: int) -> None: ...
     def delete_chunks(self, document_id: str) -> None: ...
     def count_chunks(self, document_id: str) -> int: ...
-    def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any]) -> None: ...
+    def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any],
+                      language: str = "mixed") -> None: ...
 
 
 class StageCancelled(Exception):
@@ -39,9 +39,7 @@ class StageError(RuntimeError):
 
 @dataclass
 class StageContext:
-    """Mọi thứ một bước cần, scope sẵn theo `document_id` — KHÔNG phải repository object, chỉ là dữ liệu + vài
-    callable đã bind `document_id`/`stage_id` (do `DocumentIngestPipelineService.make_ctx` dựng từ
-    `DocumentRepository` stateless). Stage code không gọi gì của `app.repositories` ngoài qua các field này."""
+    """Mọi thứ một bước cần, scope sẵn theo `document_id`"""
 
     document_id: str
     files: "FileStoreService"  # đã scope về document/<document_id>/ (DocumentRepository.files_for)

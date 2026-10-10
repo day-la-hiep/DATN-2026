@@ -37,6 +37,7 @@ make migrate        # alembic upgrade head
 make init-db        # bucket MinIO + dữ liệu mẫu (user-1, bác sĩ, admin) — chạy sau migrate
 make backend        # Core FastAPI :3050
 make worker         # Agent Worker (tiến trình riêng, consume RabbitMQ)
+make ingest-worker  # Ingest Worker: chạy các bước pipeline tài liệu (bắt buộc chạy thì bấm "Chạy" ở /admin/documents mới có tác dụng)
 make frontend       # Next.js :3000
 ```
 
@@ -68,11 +69,11 @@ Các bước theo thứ tự, mỗi bước phải được người duyệt **a
 | `ingest` | PDF → chữ theo trang (`pages.jsonl`) | không |
 | `toc` | AI đọc trang mục lục → cây mục; người duyệt sửa qua override | có |
 | `chunks` | cắt đoạn theo khung mục lục (`chunks.jsonl`) | không |
-| `index` | embedding local + nạp Qdrant | không |
+| `index` | embedding (OpenRouter) + nạp Qdrant | không |
 
 - Trạng thái: `not_started → running → pending_review → approved`; `failed`/`cancelled`; `stale`
   khi bước phía trước chạy lại. Thứ tự và phụ thuộc: `app/models/document_stage.py::STAGES`.
-- Chạy nền bằng thread trong Core; FE poll `GET /admin/documents/{id}` để xem tiến độ.
+- Core chỉ ghi `running` rồi publish `document_ingest_queue`; **Ingest Worker** (`app/workers/document_ingest_worker.py`) chạy bước. Dừng qua Redis; FE poll `GET /admin/documents/{id}` để xem tiến độ.
 - Sửa tay của người duyệt lưu trong `document_overrides` (không ghi đè kết quả máy).
 
 ### 3.3 Lưu trữ tài liệu
@@ -101,7 +102,10 @@ Chi tiết nằm trong các skill; ở đây chỉ các điểm hay nhầm:
   Stage `toc` và `toc.json` là dữ liệu mục lục, tên đó đúng — đừng đổi.
 - Lỗi người dùng sửa được → `StageError` / `InvalidError` (hiển thị nguyên văn trên UI).
 - Tên và comment: Python dùng snake_case; docstring và comment **tiếng Việt**, giải thích **vì sao**,
-  không mô tả **cái gì** đã rõ trong code. Không viết docstring nhiều đoạn.
+  không mô tả **cái gì** đã rõ trong code.
+- **Không** viết docstring/comment dài ở đầu file (module docstring) hay khi định nghĩa hàm/class để kể
+  lại thiết kế, lịch sử, hay luồng chạy. Mặc định: không docstring; hàm cần giải thích thì tối đa 1 dòng
+  (hoặc 1 comment ngắn tại đúng dòng khó hiểu). Ngoại lệ: docstring của `@tool` agent (đó là prompt cho LLM).
 
 ## 5. Skill quy ước (`.claude/skills/`)
 
@@ -134,7 +138,7 @@ Quy tắc dùng chung:
 
 ## 7. Hạn chế đã biết (đồ án)
 
-- Không có auth đa người dùng cho khu admin (chỉ dùng app token).
+- Không có auth đa người dùng cho khu admin (API chưa kiểm tra JWT phía server).
 - Upload PDF đi qua Core; chưa có presigned upload trực tiếp lên MinIO.
 - Không có job dọn object MinIO mồ côi khi rollback thất bại.
 - Chưa có tài liệu hướng dẫn triển khai cho pipeline; `DEPLOY.md` chỉ mô tả chat.

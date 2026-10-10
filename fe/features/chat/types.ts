@@ -38,12 +38,7 @@ export interface ReasoningStep {
   choice?: MessageChoice;
 }
 
-/**
- * Tệp đính kèm. `id` khi mới chọn file (chưa upload) là id tạm sinh phía client
- * (`name-size-lastModified`); sau khi `POST /uploads` xong, `id` được THAY bằng object
- * key MinIO thật (backend dùng `id` này để đọc lại file cho Agent, xem
- * `core/app/infra/file_storage.py`) và `url` được gắn thêm để preview.
- */
+/** `id` là id tạm phía client, sau `POST /uploads` được thay bằng object key MinIO thật. */
 export interface FileAttachment {
   id: string;
   name: string;
@@ -192,11 +187,7 @@ export type FlatStreamEvent =
       input?: unknown;
       content: string;
     }
-  /** 1 bước suy luận của LLM — phát SAU MỖI lần LLM được gọi trong vòng lặp ReAct (kể cả
-   * khi model chỉ quyết định gọi tool, không có "thinking" riêng — nội dung khi đó là 1
-   * dòng tổng hợp từ tên tool, xem `core/app/agent/graph.py::_emit_reasoning_step`). Gửi
-   * NGUYÊN 1 khối nội dung mỗi lần (không stream theo token như `message.delta`) — mỗi
-   * event là 1 bước MỚI, không update bước cũ. */
+  /** Một bước suy luận mỗi lần LLM được gọi; gửi nguyên khối, mỗi event là bước mới. */
   | {
       type: "message.thinking";
       messageId: string;

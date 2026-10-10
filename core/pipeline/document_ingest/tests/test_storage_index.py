@@ -93,6 +93,26 @@ class IndexTest(Base):
             (len(chunks), "fake-embed"),
         )
 
+    def test_points_carry_bm25_sparse_vector_that_finds_chunks_by_keyword(self) -> None:
+        from app.infra.bm25 import SPARSE_NAME, encode_query, tokenize
+
+        self.runner.run_stage("tbook", "index", {}, force=True)
+        chunks = self.files.read_jsonl("chunks.jsonl")
+        # từ chỉ xuất hiện ở đúng một chunk -> BM25 phải đưa chunk đó lên đầu
+        target = chunks[0]
+        others = {t for c in chunks[1:] for t in tokenize(c["context_text"])}
+        unique = next(t for t in tokenize(target["context_text"]) if t not in others)
+        hits = self.qdrant.sync_client.query_points(
+            self.vectors.collection, query=encode_query(unique), using=SPARSE_NAME, limit=3
+        ).points
+        self.assertTrue(hits)
+        self.assertEqual((hits[0].payload or {}).get("chunk_id"), target["chunk_id"])
+        # từ không có trong kho -> không có kết quả
+        none = self.qdrant.sync_client.query_points(
+            self.vectors.collection, query=encode_query("zzzkhongtontai"), using=SPARSE_NAME, limit=3
+        ).points
+        self.assertEqual(none, [])
+
     def test_reindex_replaces_stale_points_of_the_same_document_only(self) -> None:
         self.runner.run_stage("tbook", "index", {}, force=True)
         self.repo.create("Other", {}, default_profile("obook"), {}, document_id="obook")

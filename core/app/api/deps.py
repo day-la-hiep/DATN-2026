@@ -1,13 +1,4 @@
-"""Quản lý vòng đời các instance + provider DI (FastAPI `Depends`).
-
-- **Infra client** (`app/infra/*`: Postgres, Redis, RabbitMQ, Qdrant, MinIO, Docling, Embedding): MỖI client một instance cho cả process,
-  tạo lười ở lần dùng đầu tiên và đóng trong `close_clients()` (gọi ở shutdown của `main.py::lifespan` / worker).
-- **Service dùng chung** xây trên client (KnowledgeBaseService, FileStoreService, pipeline sách): cũng một instance mỗi process.
-- **Theo request** (cây: service -> repository -> db): `get_db` (1 AsyncSession/request, commit/rollback) -> `get_*_repository` (dựng trên session đó)
-  -> `get_*_service` (dựng trên repository + client dùng chung). FastAPI cache dependency trong 1 request nên mỗi repository chỉ có 1 instance (`docs/quy-uoc.md` mục 4).
-
-Các hàm `get_*` là hàm thường nên cũng gọi được ngoài FastAPI (agent worker, script ingest); trong route thì dùng `Depends(get_*)`. Test thay
-instance bằng `set_instance(...)` / `reset_instances()` hoặc `app.dependency_overrides`."""
+"""Quản lý vòng đời các instance + provider DI"""
 
 import threading
 from collections.abc import AsyncGenerator, Callable
@@ -25,6 +16,7 @@ from app.services.auth_service import AuthService
 from app.infra.docling_client import DoclingClient
 from app.infra.embedding_client import EmbeddingClient
 from app.infra.minio_client import MinioClient
+from app.infra.neo4j_client import Neo4jClient
 from app.infra.postgres_client import PostgresClient
 from app.infra.qdrant_client import QdrantVectorClient
 from app.infra.rabbitmq_client import RabbitMQClient
@@ -38,6 +30,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.services.document_service import DocumentService
 from app.services.conversation_service import ConversationService
 from app.services.knowledge_base_service import KnowledgeBaseService
+from app.services.knowledge_graph_service import KnowledgeGraphService
 from app.services.message_service import MessageService
 from app.services.document_ingest_pipeline_service import DocumentIngestPipelineService
 
@@ -98,6 +91,10 @@ def get_qdrant_client() -> QdrantVectorClient:
     return _singleton("qdrant_client", QdrantVectorClient.from_settings)
 
 
+def get_neo4j_client() -> Neo4jClient:
+    return _singleton("neo4j_client", Neo4jClient.from_settings)
+
+
 def get_minio_client() -> MinioClient:
     return _singleton("minio_client", MinioClient.from_settings)
 
@@ -115,6 +112,13 @@ def get_knowledge_base_service() -> KnowledgeBaseService:
     return _singleton(
         "knowledge_base_service",
         lambda: KnowledgeBaseService(get_qdrant_client()),
+    )
+
+
+def get_knowledge_graph_service() -> KnowledgeGraphService:
+    return _singleton(
+        "knowledge_graph_service",
+        lambda: KnowledgeGraphService(get_neo4j_client()),
     )
 
 
@@ -151,18 +155,14 @@ def get_document_ingest_pipeline_service() -> DocumentIngestPipelineService:
             get_document_repository(),
             docling=get_docling_client(),
             embedding=get_embedding_client(),
+            rabbitmq=get_rabbitmq_client(),
+            redis=get_redis_client(),
         ),
     )
 
 
 # ---------------------------------------------------------------- theo request
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI dependency: yield 1 AsyncSession request-scoped.
-
-    Tự `commit()` khi route xử lý xong không lỗi (Unit of Work — 1 request = 1
-    transaction), tự `rollback()` khi route raise exception. Repository chỉ
-    `flush()` (không tự `commit()`) — xem `docs/quy-uoc.md` mục 4.
-    """
     async with get_postgres_client().session_factory() as session:
         try:
             yield session

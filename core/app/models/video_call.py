@@ -1,6 +1,3 @@
-"""VideoCall — cuộc gọi video thuộc một phiên tư vấn (`app/dto/base/consultation.py::VideoCall`, `ConsultationSession.video_calls`).
-Tách bảng (không chỉ nằm trong `messages.metadata`) vì cuộc gọi có vòng đời pending -> ongoing -> ended được cập nhật sau
-khi tin nhắn đã tạo. Tin `message_type="video_call"` trỏ tới đây qua `messages.video_call_id`."""
 from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, text

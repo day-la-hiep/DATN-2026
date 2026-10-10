@@ -3,7 +3,7 @@
 03_build_chunks.py
 ==================
 Tạo các vector chunks từ dữ liệu bệnh lý ĐHYD TP.HCM (dhyd_diseases.json)
-theo đúng định dạng và logic chuẩn của `load_knowledge_base.py`.
+theo cùng định dạng chunk của guideline KB cũ (loader `load_knowledge_base.py` đã bỏ; script này chưa có nơi nạp).
 
 Mỗi bệnh lý được chia thành tối đa 5 loại chunk:
   1. overview     : Tên + tên tiếng Anh + tóm tắt + phân loại + diễn tiến

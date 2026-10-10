@@ -56,23 +56,20 @@ class Settings(BaseSettings):
     # Khớp `QDRANT__SERVICE__API_KEY` của service qdrant trong docker-compose.yml. Rỗng = không
     # gửi api-key (Qdrant không bật auth).
     QDRANT_API_KEY: str = ""
-    # Long-term memory: hạ tầng cũ (app/kien-truc-memory.md), hiện KHÔNG được dùng nữa —
-    # agent/tools/memory.py đã chuyển sang langgraph.store.InMemoryStore. Giữ setting này
-    # để không phá vỡ .env hiện có, chưa xoá client (app/infra/qdrant_client.py).
-    QDRANT_COLLECTION: str = "agent_memories"
-    # Knowledge base guideline (BYT 75/2015, WHO, MedlinePlus) — 435 chunk ingest từ
-    # data-ingest/01_normalize/output/diseases/ qua data-ingest/01_normalize/scripts/load_knowledge_base.py,
-    # dùng bởi agent/tools/knowledge_base_search.py.
-    QDRANT_KB_COLLECTION: str = "derma_kb_chunks"
-    # Phenotype PrimeKG (tên embed) — `describe_morphology` chuẩn hoá mô tả tự do sang nút
-    # phenotype, ingest qua data-ingest/01_normalize/scripts/load_phenotypes.py.
-    QDRANT_PHENOTYPE_COLLECTION: str = "derma_phenotypes"
     # Chunk tài liệu (pipeline/document_ingest, bước "Lưu vào kho tri thức"): mỗi point = 1 chunk đã gắn phần/chương/mục/trang,
-    # payload có `document_id` để xoá/lọc theo tài liệu. Cùng embedding local như KB guideline (384 chiều, cosine).
-    QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks"
+    # payload có `document_id` để xoá/lọc theo tài liệu. Embedding gọi OpenRouter (`agent/common/embeddings.py`, cosine).
+    QDRANT_DOCUMENT_COLLECTION: str = "derma_document_chunks_v4"  # v4: Qwen3-Embedding-8B (4096 chiều); v2/v3 khác số chiều nên không dùng lại được
+    # Collection sách cũ (trước khi đổi Book -> Document, payload `book_id`/`book_title`) vẫn được agent ĐỌC cùng collection mới để
+    # không mất dữ liệu đã nạp; pipeline không ghi vào đây. Rỗng = bỏ qua.
+    QDRANT_LEGACY_BOOK_COLLECTION: str = "derma_book_chunks"
+    # Embedding + reranker Qwen3 gọi qua OpenRouter (cùng OPENROUTER_API_KEY với LLM). Đổi EMBEDDING_MODEL / EMBEDDING_DIM thì phải đổi
+    # QDRANT_DOCUMENT_COLLECTION và index lại sách. Reranker lỗi thì tool tự bỏ bước rerank và dùng thứ tự RRF.
+    EMBEDDING_MODEL: str = "qwen/qwen3-embedding-8b"
+    EMBEDDING_DIM: int = 4096
+    RERANKER_MODEL: str = "qwen/qwen3-reranker-8b"
 
     # ----- Neo4j (knowledge graph da liễu — PrimeKG, xem
-    # app/agent/knowledge_graph.py + data/PrimeKG/load_to_neo4j.py) -----
+    # app/infra/neo4j_client.py + data_ingest/01_normalize/scripts/load_primekg.py, load_dermo.py) -----
     NEO4J_URL: str = "bolt://localhost:7687"
     NEO4J_USER: str = "neo4j"
     NEO4J_PASSWORD: str = "derma12345"
@@ -111,6 +108,9 @@ class Settings(BaseSettings):
     #   dù chat thường (không tool) vẫn gọi được bình thường. Agent này LUÔN cần
     #   tool-calling để hoạt động nên phải dùng bản trả phí. (`nvidia/nemotron-3-
     #   super-120b-a12b:free` cũng đã verify hoạt động ổn định nếu muốn phương án free.)
+    # Mức log toàn hệ thống (Core + Worker): DEBUG/INFO/WARNING/ERROR — xem `app/config/log.py`.
+    LOG_LEVEL: str = "INFO"
+
     AGENT_MODEL: str = "openai:google/gemma-4-26b-a4b-it"
     AGENT_TEMPERATURE: float = 0.3
     # id ngắn hiển thị FE (dropdown chọn model/conversation, `app/dto/request/conversation.py`) ->
@@ -131,6 +131,12 @@ class Settings(BaseSettings):
     # supersteps của LangGraph — vượt ngưỡng đó raise `GraphRecursionError`, đã được
     # `worker.py::_drive` bắt graceful (coi turn là "done" kèm thông báo lỗi) thay vì
     # treo turn.)
+
+    # Bước lọc intent trước vòng lập luận chính (`agent/graph/triage.py`, node đầu của chat graph): chào hỏi / cảm ơn / hỏi về trợ lý / ngoài phạm vi
+    # da liễu thì trả lời luôn, còn lại mới sang lập luận tiền chẩn đoán. `AGENT_TRIAGE_MODEL` dạng "provider:model", rỗng thì dùng
+    # model của hội thoại — đặt model nhỏ, rẻ hơn ở đây cũng được vì việc phân loại đơn giản.
+    AGENT_TRIAGE_ENABLED: bool = True
+    AGENT_TRIAGE_MODEL: str = ""
 
     # Chỉ áp dụng khi AGENT_MODEL dùng provider "google_genai" (Gemini "thinking" —
     # xem `agent/llm.py`); OpenRouter/model khác không hỗ trợ tham số này.
@@ -161,12 +167,6 @@ class Settings(BaseSettings):
     LANGSMITH_TRACING: bool = False
     LANGSMITH_PROJECT: str = "derma-hospital"
 
-    # ----- Shared-token auth (bảo vệ demo/test share cho người ngoài, KHÔNG phải hệ
-    # thống user auth thật — không user/password/JWT, chỉ 1 token tĩnh dùng chung) -----
-    # Rỗng = tắt hoàn toàn (mặc định dev, không phá luồng hiện có). Set giá trị trong
-    # .env để bật — mọi request tới API (trừ /health) phải kèm header
-    # `Authorization: Bearer <token>` (xem app/config/auth.py).
-    APP_ACCESS_TOKEN: str = ""
 
     # ----- User JWT Authentication (Access Token & Refresh Token) -----
     JWT_SECRET_KEY: str = "derma-secret-key-change-in-production-datn-2026"
@@ -225,11 +225,7 @@ def _mask(value: str) -> str:
 
 
 def log_startup_infra() -> None:
-    """Log các endpoint infra (Postgres/Redis/RabbitMQ/Qdrant/Neo4j/MinIO) mà process
-    này SẼ dùng, kèm nguồn giá trị (`.env` nếu tìm thấy file, ngược lại fallback default
-    trong `Settings` — vốn khớp `docker-compose.yml`). Gọi 1 lần lúc khởi động ở cả
-    `core/main.py` (Core) và `agent/worker.py` (Agent Worker) — 2 process riêng biệt,
-    mỗi process cần tự xác nhận đang trỏ đúng infra nào (dev local vs. .env override)."""
+    """Log các endpoint infra"""
     source = (
         f".env ({_DOTENV_PATH})"
         if _DOTENV_PATH
@@ -240,7 +236,7 @@ def log_startup_infra() -> None:
         f"[Infra] PostgreSQL -> {_mask(settings.DATABASE_URL)}",
         f"[Infra] Redis      -> {settings.REDIS_HOST}:{settings.REDIS_PORT}/db{settings.REDIS_DB}",
         f"[Infra] RabbitMQ   -> {_mask(settings.RABBITMQ_URL)}",
-        f"[Infra] Qdrant     -> {settings.QDRANT_URL} (collections: {settings.QDRANT_COLLECTION}, {settings.QDRANT_KB_COLLECTION})",
+        f"[Infra] Qdrant     -> {settings.QDRANT_URL} (chunk sách: {settings.QDRANT_DOCUMENT_COLLECTION})",
         f"[Infra] Neo4j      -> {settings.NEO4J_URL} (user={settings.NEO4J_USER})",
         f"[Infra] MinIO      -> {settings.MINIO_ENDPOINT} (bucket={settings.MINIO_BUCKET}, secure={settings.MINIO_SECURE})",
         f"[Infra] LangSmith  -> "
@@ -250,8 +246,9 @@ def log_startup_infra() -> None:
             else "TẮT (set LANGSMITH_TRACING=true + LANGSMITH_API_KEY trong .env để bật)"
         ),
     ]
-    # `print` thay vì `logging` — uvicorn/asyncio worker không có handler nào cấu hình
-    # sẵn cho root logger nên `logger.info` sẽ im lặng, trong khi `print` luôn ra
-    # console (đồng nhất với các log "[Agent Worker] ..." hiện có trong `worker.py`).
+    # Logger riêng (import trong hàm để tránh vòng import với `app/config/log.py`).
+    import logging
+
+    logger = logging.getLogger("infra")
     for line in lines:
-        print(line)
+        logger.info(line.removeprefix("[Infra] "))

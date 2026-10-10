@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from agent.llm import get_model
+from agent.common.llm import get_model
 from app.common.constant import MessageSender, MessageType
 from app.dto.consultation import (
     ClinicalFactOutput,
@@ -16,12 +16,14 @@ from app.dto.consultation import (
     PreConsultationReportOutput,
 )
 from app.dto.response.message import MessageOutput
+from app.exception.errors import ForbiddenError, NotFoundError
 from app.models.clinical import (
     ClinicalFact,
     PreConsultationReport,
 )
 from app.models.consultation_session import ConsultationSession
 from app.models.message import Message
+from app.models.patient_profile import PatientProfile
 from app.repositories.consultation_repository import ConsultationRepository
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
@@ -68,13 +70,9 @@ class ConsultationService:
         conv_title: str = "Hội thoại tư vấn",
         report: PreConsultationReport | None = None,
         facts: list[ClinicalFactOutput] | None = None,
+        patient: PatientProfileDto | None = None,
     ) -> ConsultationSessionOutput:
-        patient_dto = PatientProfileDto(
-            id="p-default",
-            full_name="Nguyễn Văn A",
-            dob="1998-05-12",
-            gender="male",
-        )
+        patient_dto = patient or PatientProfileDto(id="", full_name="Bệnh nhân", dob="", gender="male")
 
         report_dto = None
         if report:
@@ -99,10 +97,26 @@ class ConsultationService:
             clinical_facts=facts or [],
         )
 
+    async def _patient_dto(self, patient_profile_id: str | None) -> PatientProfileDto | None:
+        profile = await self._db.get(PatientProfile, patient_profile_id) if patient_profile_id else None
+        if profile is None:
+            return None
+        return PatientProfileDto(
+            id=profile.id, full_name=profile.full_name, dob=profile.dob.isoformat(), gender=profile.gender
+        )
+
+    async def _owned_session(self, session_id: str, doctor_id: str) -> ConsultationSession:
+        session = await self._repo.get_session(session_id)
+        if session is None:
+            raise NotFoundError(f"Không tìm thấy phiên tư vấn id={session_id}")
+        if session.doctor_id not in (None, doctor_id):
+            raise ForbiddenError("Ca tư vấn này đang do bác sĩ khác phụ trách.")
+        return session
+
     async def list_sessions(
-        self, status: str | None = None
+        self, status: str | None = None, doctor_id: str | None = None
     ) -> list[ConsultationSessionOutput]:
-        sessions = await self._repo.list_sessions(status)
+        sessions = await self._repo.list_sessions(status, doctor_id)
         results: list[ConsultationSessionOutput] = []
         for s in sessions:
             conv = await self._conv_repo.get(s.conversation_id)
@@ -122,15 +136,14 @@ class ConsultationService:
                     )
                     for f, tpl in raw_facts
                 ]
-            results.append(self._to_output(s, title, report, facts_dto))
+            patient = await self._patient_dto(conv.patient_profile_id if conv else None)
+            results.append(self._to_output(s, title, report, facts_dto, patient))
         return results
 
     async def get_session(
-        self, session_id: str
+        self, session_id: str, doctor_id: str
     ) -> ConsultationSessionOutput | None:
-        session = await self._repo.get_session(session_id)
-        if not session:
-            return None
+        session = await self._owned_session(session_id, doctor_id)
         conv = await self._conv_repo.get(session.conversation_id)
         title = conv.title if conv else "Hội thoại da liễu"
         report = await self._repo.get_report(session.id)
@@ -148,41 +161,46 @@ class ConsultationService:
                 )
                 for f, tpl in raw_facts
             ]
-        return self._to_output(session, title, report, facts_dto)
+        patient = await self._patient_dto(conv.patient_profile_id if conv else None)
+        return self._to_output(session, title, report, facts_dto, patient)
 
     async def accept_session(
-        self, session_id: str, doctor_id: str = "doc-default"
+        self, session_id: str, doctor_id: str
     ) -> ConsultationSessionOutput:
-        session = await self._repo.get_session(session_id)
-        if not session:
-            raise ValueError(f"Không tìm thấy phiên tư vấn id={session_id}")
+        session = await self._owned_session(session_id, doctor_id)
         session = await self._repo.accept_session(session, doctor_id)
         conv = await self._conv_repo.get(session.conversation_id)
         report = await self._repo.get_report(session.id)
-        return self._to_output(session, conv.title if conv else "Hội thoại", report)
+        patient = await self._patient_dto(conv.patient_profile_id if conv else None)
+        return self._to_output(session, conv.title if conv else "Hội thoại", report, patient=patient)
 
     async def resolve_session(
-        self, session_id: str
+        self, session_id: str, doctor_id: str
     ) -> ConsultationSessionOutput:
-        session = await self._repo.get_session(session_id)
-        if not session:
-            raise ValueError(f"Không tìm thấy phiên tư vấn id={session_id}")
+        session = await self._owned_session(session_id, doctor_id)
         session = await self._repo.resolve_session(session)
         conv = await self._conv_repo.get(session.conversation_id)
         report = await self._repo.get_report(session.id)
-        return self._to_output(session, conv.title if conv else "Hội thoại", report)
+        patient = await self._patient_dto(conv.patient_profile_id if conv else None)
+        return self._to_output(session, conv.title if conv else "Hội thoại", report, patient=patient)
 
     async def request_consultation(
-        self, conversation_id: str, reason: str = "Bệnh nhân yêu cầu bác sĩ tư vấn"
+        self, conversation_id: str, user_id: str, reason: str = "Bệnh nhân yêu cầu bác sĩ tư vấn"
     ) -> ConsultationSessionOutput:
         """Kích hoạt tạo phiên tư vấn & gọi LLM sinh báo cáo tiền tư vấn AI."""
+        conv = await self._conv_repo.get(conversation_id)
+        if conv is None:
+            raise NotFoundError("Không tìm thấy hội thoại.")
+        if await self._conv_repo.owner_user_id(conv) != user_id:
+            raise ForbiddenError("Bạn chỉ có thể yêu cầu bác sĩ cho hội thoại của chính mình.")
+        patient = await self._patient_dto(conv.patient_profile_id)
+
         # 1. Kiểm tra nếu đã có phiên đang mở thì trả về luôn
         existing = await self._repo.get_open_session_by_conversation(conversation_id)
-        conv = await self._conv_repo.get(conversation_id)
-        conv_title = conv.title if conv else "Hội thoại da liễu"
+        conv_title = conv.title
         if existing:
             rep = await self._repo.get_report(existing.id)
-            return self._to_output(existing, conv_title, rep)
+            return self._to_output(existing, conv_title, rep, patient=patient)
 
         # 2. Tạo session mới
         session_id = f"cs-{uuid.uuid4()}"
@@ -205,7 +223,7 @@ class ConsultationService:
         facts_to_save: list[ClinicalFact] = []
         facts_dto: list[ClinicalFactOutput] = []
         summary_text = ""
-        patient_profile_id = conv.patient_profile_id if conv else "p-default"
+        patient_profile_id = conv.patient_profile_id
 
         try:
             llm = get_model()
@@ -281,15 +299,13 @@ class ConsultationService:
         if facts_to_save:
             await self._repo.add_clinical_facts(facts_to_save)
 
-        return self._to_output(session, conv_title, report, facts_dto)
+        return self._to_output(session, conv_title, report, facts_dto, patient)
 
     async def send_doctor_reply(
-        self, session_id: str, content: str, doctor_id: str = "doc-default"
+        self, session_id: str, content: str, doctor_id: str
     ) -> MessageOutput:
         """Bác sĩ phản hồi bệnh nhân trong phiên tư vấn."""
-        session = await self._repo.get_session(session_id)
-        if not session:
-            raise ValueError(f"Không tìm thấy phiên tư vấn id={session_id}")
+        session = await self._owned_session(session_id, doctor_id)
 
         # Tự động tiếp nhận ca nếu chưa active
         if session.status == "pending":

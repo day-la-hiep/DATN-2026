@@ -1,6 +1,4 @@
-"""PostgreSQL dùng chung: class `PostgresClient` = SQLAlchemy async engine + session factory + `ping`, kèm engine ĐỒNG BỘ (psycopg) cho code
-chạy trong thread nền (pipeline sách). Vòng đời session theo request
-(commit/rollback) nằm ở `app/api/deps.py::get_db`; instance do deps tạo và `dispose()` lúc tắt."""
+"""PostgreSQL dùng chung"""
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 

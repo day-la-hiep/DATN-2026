@@ -1,17 +1,10 @@
-"""Nghiệp vụ tài liệu (pipeline `document_ingest`): dữ liệu tài liệu cho API admin (danh sách, chi tiết + trạng thái bước, tạo/xoá, ảnh
-trang, mục lục, chunk), cài đặt (`documents.profile`), các bước đang chạy trong process, và lưu chunk vào Qdrant (bước "Lưu vào kho tri thức"): mỗi chunk của `chunks.jsonl` -> một point
-(vector = embedding của `context_text`, payload = metadata mục lục + trang + vị trí PDF nguồn trong MinIO).
-
-Collection `settings.QDRANT_DOCUMENT_COLLECTION`, cosine, cùng embedding local như KB guideline. Xây trên capability Qdrant generic (đồng bộ) của
-`QdrantVectorClient` vì pipeline chạy ở thread nền riêng. Nạp lại một tài liệu luôn xoá các point cũ của tài liệu đó trước (lọc theo `document_id`) nên
-chunk bị xoá/đổi sau khi chỉnh mục lục không còn sót lại. Embedding do pipeline tính, service này chỉ lưu/xoá/đếm."""
+"""Nghiệp vụ tài liệu"""
 import asyncio
 import contextlib
 import json
 import shutil
 import subprocess
 import tempfile
-import threading
 import uuid
 from collections.abc import Generator
 from pathlib import Path
@@ -35,6 +28,7 @@ from app.dto.response.document import (
     StageOutput,
 )
 from app.exception.errors import ConflictError, InvalidError, NotFoundError
+from app.infra.bm25 import SPARSE_NAME, encode_document
 from app.infra.qdrant_client import QdrantVectorClient, eq_filter
 from app.models.document_profile import Profile
 from app.models.document_stage import STAGE_BY_ID, STAGES
@@ -68,14 +62,10 @@ def temp_root() -> Path:
 
 class DocumentService:
     def __init__(self, repository: DocumentRepository, qdrant: QdrantVectorClient, collection: str) -> None:
-        """`repository` = repository tài liệu (`files` của nó dùng cho dữ liệu tài liệu + cache LLM, tạo bucket nếu chưa có); `collection` chứa chunk đã lưu vào kho
-        tri thức."""
+        """`repository` = repository tài liệu"""
         self._repo, self.files = repository, repository.files
         self._qdrant, self.collection = qdrant, collection
         self.files.ensure_bucket()
-        # (document_id, stage_id) -> cờ dừng của lần chạy đang diễn ra trong process này (instance dùng chung cả process, xem deps.py)
-        self._runs: dict[tuple[str, str], threading.Event] = {}
-        self._runs_lock = threading.Lock()
 
     # ---- tiện ích trên repository ----
     @staticmethod
@@ -101,10 +91,7 @@ class DocumentService:
 
     @staticmethod
     def local_pdf(repo: DocumentRepository, document_id: str) -> Path:
-        """Bản sao tạm của `source.pdf` trên đĩa, dùng lại khi cùng kích thước (một bước pipeline có thể gọi lại
-        nhiều lần trong cùng một lần chạy — vd Docling OCR theo cụm trang). Chỉ dùng cho `StageContext.pdf`
-        (`DocumentIngestPipelineService.make_ctx`); request admin lẻ (ảnh trang, đếm số trang) dùng
-        `temp_pdf_copy()` ở dưới, không giữ lại giữa các request. Bị xoá cùng tài liệu."""
+        """Bản sao tạm của `source.pdf` trên đĩa, dùng lại khi cùng kích thước"""
         try:
             return repo.files_for(document_id).local_copy("source.pdf", temp_root() / document_id / "source.pdf")
         except FileNotFoundError as exc:
@@ -113,49 +100,34 @@ class DocumentService:
     @staticmethod
     @contextlib.contextmanager
     def temp_pdf_copy(repo: DocumentRepository, document_id: str) -> Generator[Path]:
-        """Bản sao `source.pdf` dùng cho một lần gọi rồi xoá ngay — cho endpoint admin lẻ (ảnh trang, đếm số
-        trang), không giữ cache giữa các request như `local_pdf()`."""
+        """Bản sao `source.pdf` dùng cho một lần gọi rồi xoá ngay"""
         with tempfile.TemporaryDirectory(prefix="toc_pdf_") as tmp:
             try:
                 yield repo.files_for(document_id).local_copy("source.pdf", Path(tmp) / "source.pdf")
             except FileNotFoundError as exc:
                 raise FileNotFoundError("Không tìm thấy file PDF của tài liệu.") from exc
 
-    # ---- bước đang chạy trong process ----
-    def track_run(self, document_id: str, stage_id: str) -> threading.Event:
-        cancel = threading.Event()
-        with self._runs_lock:
-            self._runs[(document_id, stage_id)] = cancel
-        return cancel
-
-    def untrack_run(self, document_id: str, stage_id: str) -> None:
-        with self._runs_lock:
-            self._runs.pop((document_id, stage_id), None)
-
-    def run_cancel_event(self, document_id: str, stage_id: str) -> threading.Event | None:
-        with self._runs_lock:
-            return self._runs.get((document_id, stage_id))
-
     # ---- tài liệu ----
     def ensure_idle(self, document_id: str, action: str) -> None:
-        self.reconcile(document_id)
         running = [sid for sid, s in self._repo.status(document_id)["stages"].items() if s.get("state") == "running"]
         if running:
             raise ConflictError(f"Tài liệu đang được xử lý — hãy chờ xong hoặc dừng trước khi {action}.")
 
-    def reconcile(self, document_id: str) -> None:
-        """Bước ghi `running` nhưng không có thread nào đang chạy nó (Core vừa khởi động lại, thread chết) -> failed."""
-        for sid, st in self._repo.status(document_id)["stages"].items():
-            with self._runs_lock:
-                active = (document_id, sid) in self._runs
-            if st.get("state") == "running" and not active:
-                self._repo.update_stage(
-                    document_id,
-                    sid,
-                    state="failed",
-                    finished_at=now_iso(),
-                    error="Tiến trình xử lý đã dừng bất thường (xem nhật ký).",
-                )
+    def fail_orphaned_runs(self) -> int:
+        """Bước ghi `running` nhưng không còn tiến trình nào chạy nó -> failed"""
+        n = 0
+        for did in self._repo.list_ids():
+            for sid, st in self._repo.status(did)["stages"].items():
+                if st.get("state") == "running":
+                    self._repo.update_stage(
+                        did,
+                        sid,
+                        state="failed",
+                        finished_at=now_iso(),
+                        error="Tiến trình xử lý đã dừng bất thường (xem nhật ký).",
+                    )
+                    n += 1
+        return n
 
     def _document(self, document_id: str, detail: dict[str, Any]) -> Document:
         """`Document` nghiệp vụ của tài liệu — dựng từ `detail` (`DocumentRepository.get_detail`, gồm cả 2 dòng `files`)."""
@@ -223,7 +195,6 @@ class DocumentService:
     def list_documents(self) -> list[DocumentSummary]:
         out = []
         for did in self._repo.list_ids():
-            self.reconcile(did)
             detail = self._repo.get_detail(did)
             out.append(
                 DocumentSummary(
@@ -250,7 +221,6 @@ class DocumentService:
         return n
 
     def get_document(self, document_id: str) -> DocumentOutput:
-        self.reconcile(document_id)
         detail = self._repo.get_detail(document_id)
         if not detail:
             raise NotFoundError(document_id)
@@ -554,6 +524,7 @@ class DocumentService:
             min_tokens=p.chunking.min_tokens,
             boundary_level=p.chunking.boundary_level,
             breadcrumb=p.chunking.breadcrumb,
+            text_language=p.indexing.text_language,
         )
 
     def update_settings(self, document_id: str, body: DocumentSettings) -> DocumentSettings:
@@ -575,6 +546,7 @@ class DocumentService:
             body.boundary_level,
             body.breadcrumb,
         )
+        p.indexing.text_language = body.text_language
         self.save_profile(self._repo, document_id, p)
         self._repo.update_meta(document_id, title=title)
         return self.get_settings(document_id)
@@ -602,7 +574,7 @@ class DocumentService:
         return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
 
     def ensure_collection(self, dim: int) -> None:
-        self._qdrant.ensure_collection_sync(self.collection, dim, keyword_index_fields=("document_id",))
+        self._qdrant.ensure_collection_sync(self.collection, dim, keyword_index_fields=("document_id", "bm25_mode"), sparse_names=(SPARSE_NAME,))
 
     def delete_chunks(self, document_id: str) -> None:
         """Xoá mọi point của tài liệu (no-op khi collection chưa có)."""
@@ -611,10 +583,13 @@ class DocumentService:
     def count_chunks(self, document_id: str) -> int:
         return self._qdrant.count_sync(self.collection, eq_filter("document_id", document_id))
 
-    def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any]) -> None:
+    def upsert_chunks(self, document_id: str, chunks: list[dict[str, Any]], vectors: list[list[float]], extra: dict[str, Any],
+                      language: str = "mixed") -> None:
         points = [
-            PointStruct(id=self.point_id(c["chunk_id"]), vector=v,
-                        payload={**{k: c.get(k) for k in _PAYLOAD_KEYS}, "document_id": document_id, **extra})
+            # vector không tên = dense (semantic); "bm25" = sparse để Qdrant chấm điểm từ khoá, cùng văn bản với embedding
+            PointStruct(id=self.point_id(c["chunk_id"]), vector={"": v, SPARSE_NAME: encode_document(str(c.get("context_text") or c.get("text") or ""), language)},
+                        # bm25_mode: câu hỏi phải được mã hoá cùng cách với đoạn nó tìm, nên mỗi point ghi lại ngôn ngữ đã dùng
+                        payload={**{k: c.get(k) for k in _PAYLOAD_KEYS}, "document_id": document_id, "bm25_mode": language, **extra})
             for c, v in zip(chunks, vectors, strict=True)
         ]
         self._qdrant.upsert_points_sync(self.collection, points)

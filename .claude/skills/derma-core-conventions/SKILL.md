@@ -47,19 +47,22 @@ hardcode them. The Core↔Worker contract is `agent/dto/schemas.py` (`TurnReques
 | `app/infra/` | per-service clients: redis, rabbitmq, qdrant, minio, llm, docling, embedding | resource-specific business logic |
 | `app/config/` | `settings.py` (only place for env vars, `AGENT_MODEL_CHOICES`), `constants.py`, `ids.py`, `auth.py` (renamed from `app/core/` — older docs/skills may still say `app/core/config.py`, that path no longer exists) | |
 | `app/exception/` | `exception_handler.py` registered in `main.py`, `errors.py` | |
-| `agent/graph/chat_graph.py` | `ALL_TOOLS`, `build_agent_graph()`, `config_for()` (thread_id = conversation_id) | be imported by middleware |
+| `agent/graph/chat_graph.py` | **chat graph** (outermost): `build_chat_graph()`, `agent_graph`, `config_for()` (thread_id = conversation_id); nodes `triage` → `pre_diagnosis` | be imported by middleware |
+| `agent/graph/triage.py` | `triage` node: intent filter, answers small talk / out-of-scope directly | |
+| `agent/graph/pre_diagnosis_graph.py` | **pre-diagnosis graph** (`create_agent`): `ALL_TOOLS`, `default_middleware()`, `build_pre_diagnosis_graph()` | be imported by middleware |
 | `agent/graph/common.py` | **leaf module**: `emit`, `TOOL_DISPLAY_NAMES`, `CriticState`, constants | import graph/middleware |
-| `agent/middleware/` | `@wrap_model_call` / `@wrap_tool_call` / `@after_model` hooks | import `chat_graph` |
+| `agent/middleware/` | `@wrap_model_call` / `@wrap_tool_call` / `@after_model` hooks (pre-diagnosis graph only) | import `chat_graph` / `pre_diagnosis_graph` |
 | `agent/tools/` | one `@tool` per file (or small family) | import FastAPI |
-| `agent/state/context.py` | `AgentContext` dataclass — per-turn data tools read via `runtime.context` | |
+| `agent/context/` | `agent_context.py` = `AgentContext` dataclass (per-turn data tools read via `runtime.context`); `builder.py` = `build_context(req)` that fills it from the DB/request | run the graph |
 | `agent/worker.py` | process entry only: consume queue, per-conversation lock, `main` | hold turn logic |
 | `agent/turn.py` | one turn (agent logic): build `AgentContext`, stream graph, finish (done / `ask_user` question / error) | |
-| `agent/handler/` | **backend communication only** (no agent logic): `publisher.py` = `emit` + `finish_turn` (SSE event → `[DONE]` → `agent_response_queue`); `response_consumer.py` = Core-side consumer that persists the assistant row | import graph/tools/middleware |
-| `agent/prompt/` | `orchestrator.py` (SYSTEM_PROMPT), `critic.py` | |
+| `agent/publisher.py` | worker → backend only (no agent logic): `emit` + `finish_turn` (SSE event → `[DONE]` → `agent_response_queue`) | import graph/tools/middleware |
+| `app/workers/agent_response_consumer.py` | Core-side consumer of `agent_response_queue` that persists the assistant row (runs in Core, not the agent worker) | import from `agent/` beyond `agent/dto/schemas.py` |
+| `agent/prompt/` | `orchestrator.py` (SYSTEM_PROMPT of the pre-diagnosis graph), `triage.py` (short intent-filter prompt), `critic.py` | |
 | `agent/dto/schemas.py` | RabbitMQ message contract | |
 
-Dependency direction is one-way: `chat_graph → middleware/tools → common/state`. That's why shared
-helpers sit in `common.py`: a middleware importing `chat_graph` (which imports the middleware to
+Dependency direction is one-way: `chat_graph → pre_diagnosis_graph → middleware/tools → common/state`.
+That's why shared helpers sit in `common.py`: a middleware importing `pre_diagnosis_graph` (which imports the middleware to
 assemble the agent) raised `ImportError ... partially initialized module`. If something is needed by
 both sides, move it down into `common.py`, don't import upward.
 
@@ -86,8 +89,8 @@ repositories, services, API DTOs, agent tools). Don't cascade edits speculativel
 
 **Add an endpoint** — DTOs in `app/dto/<resource>.py` (`XxxInput`/`XxxOutput`) → repository method →
 service method → route in `app/api/` with `response_model=ApiResponse[...]` and a `Depends(get_xxx_service)`
-provider in `deps.py`; include the router in `main.py` under `settings.API_V1_PREFIX` (protected
-routers take `dependencies=[Depends(require_app_token)]`). Update `docs/openapi.yaml`/`api-doc.md`.
+provider in `deps.py`; include the router in `main.py` under `settings.API_V1_PREFIX` (add `dependencies=[Depends(get_current_user)]`
+if the routes need a logged-in user). Update `docs/openapi.yaml`/`api-doc.md`.
 
 **Add a model** — file in `app/models/`, subclass `Base`, import it in `app/models/__init__.py`
 (the aggregator — otherwise `Base.metadata` doesn't see it and Alembic autogenerate misses it).
@@ -97,17 +100,17 @@ a model run `uv run alembic revision --autogenerate -m "..."`, read the generate
 
 **Add an agent tool** — new file in `agent/tools/`, `@tool` with a Vietnamese docstring that tells
 the LLM *when* to call it and what each arg means (the docstring is the prompt). Need turn data →
-`runtime: ToolRuntime[AgentContext, Any]`. Then: append to `ALL_TOOLS` in `chat_graph.py`, add a
+`runtime: ToolRuntime[AgentContext, Any]`. Then: append to `ALL_TOOLS` in `pre_diagnosis_graph.py`, add a
 friendly label to `TOOL_DISPLAY_NAMES` in `common.py` (else FE shows the raw function name), and
 mention it in `agent/prompt/orchestrator.py` if the model must be steered to use it.
 
-**Add middleware** — function in `agent/middleware/`, register it in the `middleware` list in
-`build_agent_graph()`; order matters (`select_model` first so later hooks see the chosen model).
+**Add middleware** — function in `agent/middleware/`, register it in `default_middleware()` in
+`pre_diagnosis_graph.py`; order matters (`select_model` first so later hooks see the chosen model).
 Anything pushed to the user goes through `emit(conversation_id, payload)`; keep event shape stable —
 the FE depends on `type/tool/content/conversationId/messageId`.
 
 **Add per-turn state** — add a field to `AgentContext`, set it where the worker builds it
-(`agent/turn.py::_build_context`), read it in tools/middleware via `runtime.context`.
+(`agent/context/builder.py::build_context`), read it in tools/middleware via `runtime.context`.
 
 **Add a setting** — declare in `Settings` (`app/config/settings.py`), mirror it in `.env.example`; a
 worker restart is needed to pick up `.env` changes. Model choices for the UI are
@@ -117,6 +120,10 @@ worker restart is needed to pick up `.env` changes. Model choices for the UI are
 
 - All I/O is `async`; never call blocking code inside `async def`.
 - Comments and docstrings are Vietnamese and explain *why*, not what; match the surrounding file.
+- **No long module docstrings at the top of a file and no multi-line docstrings on functions/classes**
+  (no design history, flow narration, or incident write-ups). Default to no docstring; if one is
+  needed, a single line; for a non-obvious line, a short inline comment right at that line. Only
+  exception: `@tool` docstrings in `agent/tools/` — they are the LLM's prompt (see "Add an agent tool").
 - Pyright runs in **basic** mode (`pyproject.toml`): `pyright agent app main.py` is clean (0
   errors, verified 2026-10-03). Basic mode does not flag partially-unknown library types, so
   don't add `# pyright: ignore` or `cast` just to silence those; fix real errors instead. Some
@@ -126,8 +133,7 @@ worker restart is needed to pick up `.env` changes. Model choices for the UI are
 
 ## Known loose ends (verify before relying on them)
 
-The stale `app/agent/response_consumer.py` leftover from the refactor is gone (confirmed
-2026-10-03) — the live consumer is `agent/handler/response_consumer.py`, imported by `main.py`.
+The live consumer is `app/workers/agent_response_consumer.py`, imported by `main.py`.
 `README.md` (root + `core/`) and `core/docs/quy-uoc.md`/`async-api-doc.md` still mention the old
 `app/agent/...` paths and `python -m app.agent.worker` — that layout no longer exists (it's
 `agent/...` and `python -m agent.worker`); don't follow those docs for paths.

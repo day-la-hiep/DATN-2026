@@ -12,7 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { getInitials } from "@/features/user";
-import { api, clearAuthSession, getAuthenticatedUser, REFRESH_TOKEN_STORAGE_KEY, type AuthenticatedUser } from "@/services/client";
+import { logout } from "@/features/auth/logout";
+import { getAuthenticatedUser, type AuthenticatedUser } from "@/services/client";
 import { SettingsDialog } from "@/features/settings/components/SettingsDialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -65,17 +66,7 @@ function SidebarInner({
     setCurrentUser(getAuthenticatedUser());
   }, []);
 
-  async function handleLogout() {
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
-    if (refreshToken) {
-      try {
-        await api.post("/auth/logout", { refresh_token: refreshToken });
-      } catch {
-        // Xóa session cục bộ dù API logout không liên lạc được.
-      }
-    }
-    clearAuthSession();
-  }
+  const handleLogout = logout;
 
   const displayName = currentUser?.full_name || currentUser?.username || "Tài khoản";
   const displayRole = currentUser?.role === "doctor"

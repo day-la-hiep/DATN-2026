@@ -1,25 +1,12 @@
-"""Tool `record_reasoning` — ép agent lập luận CÓ CẤU TRÚC, quan sát được qua step.
-
-Thay `make_plan` (chuỗi tự do, không ai kiểm tra). Model hiện dùng trả `content=''` mỗi khi gọi
-tool, nên lập luận chỉ hiển thị được nếu là THAM SỐ của 1 tool call; tool này validate tham số
-theo schema, render thành đoạn văn tiếng Việt (nội dung step `tool_call` mà FE hiển thị, xem
-`middleware/tool.py::emit_tool_result`) và không tra cứu gì.
-
-Cơ chế ép nằm ở `middleware/model.py` (`force_reasoning`, `enforce_initial_reasoning`): trạng thái
-lập luận được SUY RA từ chính `messages` của turn (các lần gọi `record_reasoning` + `ToolMessage`),
-không lưu state riêng — nên tự đúng qua checkpoint/resume (`ask_user`).
-
-3 giai đoạn (`stage`):
-  - initial        : trước khi gọi tool tra cứu đầu tiên — dữ kiện đã biết + giả thuyết ban đầu.
-  - after_evidence : ngay sau 1 đợt kết quả tool — cập nhật giả thuyết theo bằng chứng mới.
-  - final          : đủ căn cứ để trả lời/hỏi — kết luận xếp hạng, cờ đỏ đã kiểm tra.
-"""
+import logging
 from typing import Any, Literal
 
 from langchain.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.messages import AnyMessage
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field, ValidationError, field_validator
+
+logger = logging.getLogger(__name__)
 
 TOOL_NAME = "record_reasoning"
 INVALID_PREFIX = "Không hợp lệ:"
@@ -96,24 +83,19 @@ class ReasoningInput(BaseModel):
         min_length=1, description="Dữ kiện đã biết, mỗi dữ kiện kèm nguồn"
     )
     hypotheses: list[Hypothesis] = Field(
-        min_length=1, max_length=4, description="1-4 giả thuyết xếp theo mức phù hợp giảm dần"
+        max_length=4,
+        description="1-4 giả thuyết xếp theo mức phù hợp giảm dần. Chỉ được để RỖNG ở stage after_evidence / final khi chưa "
+        "tra cứu được bằng chứng nào (sách / web) — khi đó không có giả thuyết nào đủ căn cứ để nêu",
     )
     red_flags: RedFlags = Field(default_factory=RedFlags)
     next_action: Literal["call_tool", "ask_user", "answer"]
     next_action_reason: str = Field(description="1-2 câu: vì sao chọn bước tiếp theo này")
-    known_phenotype_ids: list[str] = Field(
-        default_factory=list,
-        description="(Tuỳ chọn) `primekg_id` phenotype đã biết/đã hỏi — dùng khi "
-        'next_action="ask_user" để gợi ý câu hỏi phân biệt không lặp lại',
-    )
 
     _coerce_flags = field_validator("red_flags", mode="before")(_first_red_flags)
-    _coerce_known = field_validator("known_phenotype_ids", mode="before")(_as_list)
 
 
 def validate_reasoning(args: dict[str, Any]) -> tuple[ReasoningInput | None, list[str]]:
-    """Kiểm tra schema + ràng buộc ngữ nghĩa. Trả `(input, [])` nếu hợp lệ, ngược lại
-    `(None, [lỗi...])`."""
+    """Kiểm tra schema + ràng buộc ngữ nghĩa"""
     try:
         data = ReasoningInput.model_validate(args)
     except ValidationError as exc:
@@ -121,6 +103,8 @@ def validate_reasoning(args: dict[str, Any]) -> tuple[ReasoningInput | None, lis
 
     problems: list[str] = []
     n = len(data.observations)
+    if data.stage == "initial" and not data.hypotheses:
+        problems.append('stage "initial" cần ít nhất 1 giả thuyết ban đầu (chỉ để cân nhắc tra cứu gì, chưa phải kết luận).')
     for i, h in enumerate(data.hypotheses, 1):
         bad = [x for x in [*h.supports, *h.contradicts] if not 1 <= x <= n]
         if bad:
@@ -128,6 +112,15 @@ def validate_reasoning(args: dict[str, Any]) -> tuple[ReasoningInput | None, lis
                 f"Giả thuyết {i} ({h.disease}) tham chiếu dữ kiện không tồn tại: {bad} "
                 f"(chỉ có 1..{n})."
             )
+        # độ tin cậy "vừa"/"cao" cần ít nhất 1 dữ kiện từ tool/web ủng hộ: lời người dùng một mình chỉ cho biết triệu chứng, không
+        # cho biết đó là bệnh gì; kiến thức nền của model không phải bằng chứng (SYSTEM_PROMPT mục 1)
+        if data.stage != "initial" and h.confidence != "thấp":
+            sources = [data.observations[x - 1].source for x in h.supports if 1 <= x <= n]
+            if not any(src.startswith(("tool:", "web:")) for src in sources):
+                problems.append(
+                    f"Giả thuyết {i} ({h.disease}) có độ tin cậy \"{h.confidence}\" nhưng không có dữ kiện nào từ tool/web ủng "
+                    'hộ — chỉ được để "thấp", hoặc bỏ giả thuyết này nếu chưa tra cứu được bằng chứng.'
+                )
         if not (h.supports or h.contradicts or h.missing):
             problems.append(
                 f"Giả thuyết {i} ({h.disease}) không có dữ kiện ủng hộ/mâu thuẫn hay điều còn "
@@ -155,9 +148,12 @@ def render_reasoning(data: ReasoningInput) -> str:
     """Đoạn văn hiển thị ở step (Markdown nhẹ, tiếng Việt) — người dùng đọc được, không lộ JSON."""
     lines = [f"**{STAGE_LABELS[data.stage]}**", "", "Dữ kiện đã có:"]
     lines += [f"[{i}] {o.fact} (nguồn: {o.source})" for i, o in enumerate(data.observations, 1)]
-    lines += ["", "Các giả thuyết:"]
+    lines += ["", "Các giả thuyết (chỉ để cân nhắc, chưa có bằng chứng):" if data.stage == "initial" else "Các giả thuyết:"]
+    if not data.hypotheses:
+        lines.append("Chưa có giả thuyết nào đủ căn cứ để nêu (chưa tra cứu được bằng chứng).")
     for i, h in enumerate(data.hypotheses, 1):
-        lines.append(f"{i}. {h.disease} — độ tin cậy {h.confidence}")
+        # trước khi tra cứu, độ tin cậy do model tự ước chưa có căn cứ nên không hiển thị như một kết quả
+        lines.append(f"{i}. {h.disease}" + ("" if data.stage == "initial" else f" — độ tin cậy {h.confidence}"))
         lines.append(f"   Ủng hộ: {_refs(h.supports)} · Mâu thuẫn: {_refs(h.contradicts)}")
         if h.missing:
             lines.append(f"   Còn thiếu: {'; '.join(h.missing)}")
@@ -204,15 +200,15 @@ async def record_reasoning(**kwargs: Any) -> str:
     text = render_reasoning(data)
     if data.next_action == "ask_user" and len(data.hypotheses) >= 2:
         try:
-            # Import trễ: `differential` kéo Neo4j/Qdrant/embedding — không cần khi chỉ phân tích.
-            from agent.tools.differential import suggest_discriminating_questions
+            # Import trễ: kéo Neo4j — không cần khi chỉ phân tích.
+            from app.api.deps import get_knowledge_graph_service
 
-            result = await suggest_discriminating_questions(
-                [h.disease for h in data.hypotheses], data.known_phenotype_ids
+            result = await get_knowledge_graph_service().discriminating_questions(
+                [h.disease for h in data.hypotheses]
             )
             text += _render_questions(result)
         except Exception as exc:  # noqa: BLE001 — gợi ý là phần thêm, không làm hỏng lập luận
-            print(f"[record_reasoning] gợi ý câu hỏi lỗi: {exc}")
+            logger.warning("gợi ý câu hỏi lỗi: %s", exc)
     return text
 
 
@@ -230,9 +226,7 @@ def _is_system_marker(message: AnyMessage) -> bool:
 
 
 def turn_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
-    """Các message SAU tin nhắn thật gần nhất của người dùng (bỏ qua tin nhắn nội bộ do
-    middleware chèn). `ask_user` resume vẫn nằm trong cùng turn: đáp án đi vào state dưới
-    dạng `ToolMessage`, không phải `HumanMessage` mới."""
+    """Các message SAU tin nhắn thật gần nhất của người dùng"""
     for i in range(len(messages) - 1, -1, -1):
         m = messages[i]
         if isinstance(m, HumanMessage) and not _is_system_marker(m):
