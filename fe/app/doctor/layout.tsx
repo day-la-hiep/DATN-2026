@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DoctorShell } from "@/features/doctor/components/DoctorShell";
 
 export const metadata: Metadata = {
   title: "Báo cáo tư vấn bác sĩ | Derma AI",
@@ -10,5 +11,5 @@ export default function DoctorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <DoctorShell>{children}</DoctorShell>;
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HintIcon } from "@/components/ui/hint";
 import { Input } from "@/components/ui/input";
 import { STEP_INFO } from "../constants";
 import type { Stage } from "../types";
@@ -17,13 +18,13 @@ interface Field {
 const FIELDS: Partial<Record<Stage["stage_id"], Field>> = {
   ingest: {
     key: "pages",
-    label: "Khoảng trang cần đọc (không bắt buộc)",
+    label: "Khoảng trang",
     placeholder: "vd 1-300",
     hint: "Chỉ áp dụng khi nhận dạng chữ từ ảnh. Để trống = đọc cả sách. Trang đã đọc ở lần trước không phải đọc lại.",
   },
   toc: {
     key: "pages",
-    label: "Trang mục lục (không bắt buộc)",
+    label: "Trang mục lục",
     placeholder: "vd 8-22",
     hint: "Nếu biết mục lục nằm ở trang nào của file PDF thì nhập vào (vd 8-22). Để trống, AI sẽ tự tìm trong các trang đầu và cuối sách.",
   },
@@ -57,11 +58,14 @@ export function RunDialog({
           <DialogTitle>
             {stage.state === "not_started" ? "Bắt đầu" : "Làm lại"}: {info.label}
           </DialogTitle>
-          <DialogDescription className="leading-relaxed">{info.desc}</DialogDescription>
+          <DialogDescription className="sr-only">{info.desc}</DialogDescription>
         </DialogHeader>
         {field && (
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-foreground">{field.label}</span>
+            <span className="flex items-center gap-1 text-xs font-medium text-foreground">
+              {field.label}
+              <HintIcon content={`${field.hint} ${info.desc}`} />
+            </span>
             <Input
               value={value}
               onChange={(e) => setValue(e.target.value)}
@@ -69,7 +73,6 @@ export function RunDialog({
               className="h-9 rounded-xl font-mono text-sm"
               autoFocus
             />
-            <span className="block text-[11px] leading-relaxed text-muted-foreground">{field.hint}</span>
           </label>
         )}
         <DialogFooter>

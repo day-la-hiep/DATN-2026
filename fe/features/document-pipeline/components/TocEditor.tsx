@@ -176,10 +176,10 @@ function OffsetCard({
   const total = doc.entries.filter((e) => !e.out_of_range && e.page != null).length;
   return (
     <SectionCard
-      title="Đối chiếu số trang"
-      description="Số trang in trong sách thường khác số trang của file PDF (do bìa, lời nói đầu…). Hệ thống tự tính độ chênh lệch bằng cách đối chiếu tên mục với nội dung sách; nếu sai, bạn có thể nhập tay. Mục “đã định vị” là mục đã tìm thấy đúng dòng tiêu đề trong sách."
+      title="Số trang"
+      description="Số trang in trong sách thường khác số trang của file PDF (do bìa, lời nói đầu…). Hệ thống tự tính độ chênh bằng cách đối chiếu tên mục với nội dung sách; nếu sai, bạn có thể nhập tay. Mục “đã định vị” là mục đã tìm thấy đúng dòng tiêu đề trong sách."
       action={
-        <Button variant="outline" size="sm" disabled={pending} onClick={onRefresh} title="Tính lại (vd sau khi đã đọc xong nội dung sách)">
+        <Button variant="outline" size="sm" disabled={pending} onClick={onRefresh} title="Tính lại độ chênh số trang, vd sau khi đã đọc xong nội dung sách">
           <RefreshCw className={cn(pending && "animate-spin")} /> Tính lại
         </Button>
       }

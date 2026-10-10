@@ -21,7 +21,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 | **Người dùng** | người đã đăng ký và đăng nhập; quản lý tài khoản của mình, đăng xuất | đã có đăng ký / đăng nhập / đăng xuất / làm mới token (JWT, `/auth/*`). Các route nghiệp vụ chưa kiểm tra token và chưa phân quyền phía server (chat vẫn nhận `user_id` từ client) |
 | **Bệnh nhân** | dùng hệ thống để tiền chẩn đoán và trao đổi về bệnh da liễu: chat với chatbot (gửi ảnh, mô tả triệu chứng), tra cứu bệnh và ca bệnh từ KB, đặt lịch khám, quản lý hồ sơ bệnh án / lịch sử khám / ảnh, trao đổi với bác sĩ qua chat hoặc video call (bác sĩ chưa tiếp nhận thì tiếp tục hỏi chatbot). Cuộc trò chuyện được tổng hợp thành clinical fact và báo cáo cho bác sĩ | bảng `patient_profiles` (một user có nhiều hồ sơ). Phần chat với chatbot đã chạy |
 | **Bác sĩ** | xem báo cáo tổng hợp, clinical fact, nguồn lập luận từ KB, lịch sử và hồ sơ bệnh nhân; cập nhật hồ sơ sau khám; lưu ca bệnh và ảnh đã xác nhận (làm dữ liệu tham khảo, huấn luyện CNN); chat / video call với bệnh nhân và truy xuất tin nhắn nguồn làm bằng chứng; trực quan hoá Knowledge Graph; tải giáo trình / guideline lên để bổ sung KB | bảng `doctors` có, seed 1 bác sĩ. **Chưa có màn hình nào cho bác sĩ** |
-| *(Admin — có trong code, không có trong yêu cầu)* | hiện là người dùng màn `/admin/documents` để nạp sách | bảng `admins`. Theo yêu cầu thì việc tải tài liệu là của **bác sĩ**, cần thống nhất lại vai trò |
+| *(Admin — có trong code, không có trong yêu cầu)* | hiện là người dùng màn `/doctor/documents` để nạp sách | bảng `admins`. Theo yêu cầu thì việc tải tài liệu là của **bác sĩ**, cần thống nhất lại vai trò |
 
 ## 2. Tổng quan theo module
 
@@ -122,7 +122,7 @@ Trạng thái được đối chiếu với code ngày **2026-10-05** (nhánh `f
 
 | Mã | Chức năng | Trạng thái | Hiện trạng / việc cần làm |
 |---|---|---|---|
-| M9.1 | Tải lên giáo trình PDF, số hoá theo mục lục, nạp Qdrant | ✅ | `/admin/documents`, 4 bước `ingest → toc → chunks → index`, có người duyệt |
+| M9.1 | Tải lên giáo trình PDF, số hoá theo mục lục, nạp Qdrant | ✅ | `/doctor/documents`, 4 bước `ingest → toc → chunks → index`, có người duyệt |
 | M9.2 | Tải lên guideline / tài liệu y khoa dạng khác | 🟡 | guideline hiện nạp bằng script (`data_ingest/`); pipeline chỉ nhận `type="book"` |
 | M9.3 | Chatbot tra cứu tài liệu đã nạp | 🔲 | chưa có tool đọc collection `derma_document_chunks` |
 | M9.4 | Phối hợp chatbot để làm giàu KB (gợi ý / bổ sung tri thức) | ⏸ | chưa chốt luồng — đề xuất ở [docs/pending/kb-enrichment.md](../pending/kb-enrichment.md) |

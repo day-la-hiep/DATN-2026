@@ -6,18 +6,14 @@ import { AuthScreen } from "@/features/auth/components/AuthScreen";
 import { AUTH_STATE_EVENT, getAccessToken, getAuthenticatedUser } from "@/services/client";
 
 // Khu vực của từng vai trò; vào sai khu thì chuyển về trang chủ của vai trò đó.
-const ROLE_HOME: Record<string, string> = { patient: "/chats", doctor: "/doctor", admin: "/admin" };
+const ROLE_HOME: Record<string, string> = { patient: "/chats", doctor: "/doctor", admin: "/doctor" };
 
 function homeForPath(role: string, pathname: string): string | null {
   const home = ROLE_HOME[role] ?? "/chats";
-  const area = pathname.startsWith("/doctor")
-    ? "doctor"
-    : pathname.startsWith("/admin")
-      ? "admin"
-      : pathname.startsWith("/chats")
-        ? "patient"
-        : null;
-  return area !== null && area !== role ? home : null;
+  // khu /doctor gồm cả tư vấn và số hoá tài liệu nên admin cũng được vào
+  const area = pathname.startsWith("/doctor") ? "doctor" : pathname.startsWith("/chats") ? "patient" : null;
+  const allowed = area === "doctor" ? role === "doctor" || role === "admin" : area === role;
+  return area !== null && !allowed ? home : null;
 }
 
 export function AccessGate({ children }: { children: React.ReactNode }) {

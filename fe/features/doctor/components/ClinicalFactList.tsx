@@ -1,51 +1,46 @@
-import { CircleDot } from "lucide-react";
+import { Hint } from "@/components/ui/hint";
 import { cn } from "@/lib/utils";
-import type { ClinicalFact } from "../types";
 import { FACT_TYPE_CONFIG } from "../constants";
+import type { ClinicalFact } from "../types";
 
-interface ClinicalFactListProps {
-  facts: ClinicalFact[];
-}
-
-export function ClinicalFactList({ facts }: ClinicalFactListProps) {
+export function ClinicalFactList({ facts }: { facts: ClinicalFact[] }) {
   if (!facts || facts.length === 0) return null;
 
   return (
-    <div className="px-4 pb-3">
-      <div className="flex items-center gap-2 mb-2.5">
-        <CircleDot className="size-3 text-brand" />
-        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-          Dữ kiện lâm sàng trích xuất ({facts.length})
-        </p>
-      </div>
-      <div className="space-y-2">
+    <section className="space-y-2 px-4 pb-4">
+      <h4 className="font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
+        Dữ kiện <span className="text-brand">{facts.length}</span>
+      </h4>
+      <ul className="space-y-1.5">
         {facts.map((fact) => {
           const cfg = FACT_TYPE_CONFIG[fact.factType] ?? FACT_TYPE_CONFIG.other;
           const Icon = cfg.icon;
           return (
-            <div
-              key={fact.id}
-              className={cn(
-                "rounded-lg border p-2.5 transition-all hover:shadow-xs",
-                cfg.colorClass
-              )}
-            >
-              <div className="flex items-center gap-1.5 mb-1">
-                <Icon className="size-3" />
-                <span className="text-[10px] font-semibold uppercase tracking-wide">
-                  {cfg.label}
-                </span>
-              </div>
-              <p className="text-xs font-medium leading-snug">
-                {fact.templateLabel}
-              </p>
-              <p className="text-[11px] leading-relaxed mt-0.5 opacity-85">
-                {fact.detail}
-              </p>
-            </div>
+            <li key={fact.id}>
+              <Hint
+                side="left"
+                content={
+                  <div className="space-y-1">
+                    <p className="font-medium">{cfg.label}: {fact.templateLabel}</p>
+                    <p>{fact.detail}</p>
+                    <p className="text-muted-foreground">{cfg.hint}</p>
+                  </div>
+                }
+              >
+                <div className="flex items-start gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/60">
+                  <span className={cn("mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border", cfg.colorClass)}>
+                    <Icon className="size-3" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-medium text-foreground">{fact.templateLabel}</span>
+                    <span className="line-clamp-1 block text-[11px] text-muted-foreground">{fact.detail}</span>
+                  </span>
+                </div>
+              </Hint>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }

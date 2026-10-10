@@ -107,7 +107,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
         hint={errorMessage(documentQuery.error)}
         action={
           <Button variant="outline" asChild>
-            <Link href="/admin/documents">Về danh sách</Link>
+            <Link href="/doctor/documents">Về danh sách</Link>
           </Button>
         }
       />
@@ -130,8 +130,7 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
         <span className="font-medium text-foreground">{selected.title}</span> · trang in {selected.page_printed ?? "—"}
         {selected.page != null && selected.page === page && (
           <>
-            {" "}→ trang {selected.page} trong file ·{" "}
-            {selected.anchored ? "đã định vị tiêu đề mục" : "chưa tìm thấy dòng tiêu đề (chỉ biết số trang)"}
+            {" "}→ trang {selected.page} trong file · {selected.anchored ? "đã định vị" : "chưa định vị"}
           </>
         )}
       </>
@@ -152,8 +151,8 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        <Link href="/admin/documents" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-3.5" /> Tất cả sách
+        <Link href="/doctor/documents" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-3.5" /> Sách
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -189,11 +188,6 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
             onNext={nextStep ? () => pick(nextStep) : undefined}
           />
 
-          {step === "ingest" && (
-            <p className="rounded-2xl border border-border bg-card p-4 text-xs leading-relaxed text-muted-foreground">
-              Bạn <span className="text-foreground">không cần chờ</span> bước này xong mới làm bước Mục lục — mục lục chỉ cần đọc vài chục trang đầu sách. Tuy nhiên, hệ thống cần đọc nội dung cả cuốn để đối chiếu số trang, định vị từng mục và chia đoạn. Dùng khung bên phải để kiểm tra từng trang.
-            </p>
-          )}
           {step === "ingest" && hasResult && <FigureBrowser documentId={documentId} onPreview={(p) => setPreviewPage(p)} />}
           {step === "toc" &&
             (hasResult && toc.data ? (
@@ -202,28 +196,22 @@ export default function TocDocumentPage({ params }: { params: Promise<{ document
               !["running"].includes(stage.state) && (
                 <EmptyState
                   title="Chưa đọc mục lục"
-                  hint="Nhấn “Bắt đầu”. Nếu biết mục lục nằm ở trang nào của file PDF (vd 8-22), hãy nhập để AI khỏi phải tìm."
+                  hint="Nhấn Bắt đầu để AI đọc mục lục."
                 />
               )
             ))}
           {step === "index" && !hasResult && stage.state !== "running" && (
             <EmptyState
               title="Chưa lưu vào kho tri thức"
-              hint="Làm bước này sau khi đã xác nhận bước Chia đoạn. Nội dung được lưu để trợ lý AI tra cứu; file PDF, hình ảnh trang và kết quả xử lý của sách được lưu trên máy chủ lưu trữ chung."
+              hint="Làm sau khi đã xác nhận Chia đoạn."
             />
-          )}
-          {step === "index" && hasResult && (
-            <p className="rounded-2xl border border-border bg-card p-4 text-xs leading-relaxed text-muted-foreground">
-              Các đoạn nội dung đã được lưu vào kho tri thức, kèm phần, chương, mục, số trang và vị trí file PDF gốc.
-              Nếu sau này bạn sửa mục lục hoặc chia đoạn lại, hãy làm lại bước này để kho tri thức luôn khớp với nội dung mới nhất.
-            </p>
           )}
           {step === "chunks" &&
             (hasResult ? (
               <ChunkBrowser documentId={documentId} toc={toc.data} previewPage={page} onPreview={(p) => setPreviewPage(p)} />
             ) : (
               stage.state !== "running" && (
-                <EmptyState title="Chưa có đoạn nội dung" hint="Làm bước này sau khi đã xác nhận Đọc nội dung và Mục lục. Nếu sau đó chỉnh sửa mục lục, chỉ cần làm lại bước Chia đoạn." />
+                <EmptyState title="Chưa có đoạn nội dung" hint="Làm sau khi đã xác nhận Đọc nội dung và Mục lục." />
               )
             ))}
         </div>

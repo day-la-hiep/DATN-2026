@@ -5,6 +5,7 @@ import { Menu, ShieldCheck, Sparkles, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Hint } from "@/components/ui/hint";
 import { doctorApi } from "@/features/doctor/api";
 import { useChatStore } from "../store";
 
@@ -58,35 +59,38 @@ export function ChatHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
             {streaming ? (
               <span className="flex items-center gap-1.5 text-brand font-medium">
                 <Sparkles className="size-3 animate-spin text-brand" />
-                <span>Đang xử lý phân tích...</span>
+                <span>Đang phân tích</span>
               </span>
             ) : (
               <span className="flex items-center gap-1.5 font-sans">
                 <span className="size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse-subtle" />
-                <span>Trực tuyến // Sẵn sàng</span>
+                <span>Sẵn sàng</span>
               </span>
             )}
           </div>
         </div>
 
         {activeId && (
+          <Hint content="Gửi hồ sơ hội thoại và yêu cầu bác sĩ chuyên khoa tiếp quản.">
           <Button
             variant="outline"
             size="sm"
             onClick={handleRequestDoctor}
             disabled={requestingDoctor}
             className="shrink-0 gap-1.5 rounded-full border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 text-xs font-medium"
-            title="Gửi hồ sơ hội thoại và yêu cầu bác sĩ chuyên khoa tiếp quản"
           >
             <Stethoscope className="size-3.5 text-sky-600 dark:text-sky-400" />
-            <span>{requestingDoctor ? "Đang kết nối..." : "Gặp Bác sĩ"}</span>
+            <span>{requestingDoctor ? "Đang gửi" : "Gặp bác sĩ"}</span>
           </Button>
+          </Hint>
         )}
 
-        <Badge variant="outline" className="shrink-0 gap-1.5 rounded-full border border-brand/20 bg-brand/5 px-3 py-1 font-mono text-xs font-medium text-brand">
-          <ShieldCheck className="size-3.5 text-brand" />
-          <span>Derma Clinical AI</span>
-        </Badge>
+        <Hint content="Trợ lý AI da liễu. Kết quả chỉ mang tính tham khảo, không phải chẩn đoán y khoa.">
+          <Badge variant="outline" className="shrink-0 gap-1.5 rounded-full border border-brand/20 bg-brand/5 px-3 py-1 font-mono text-xs font-medium text-brand">
+            <ShieldCheck className="size-3.5 text-brand" />
+            <span>Derma AI</span>
+          </Badge>
+        </Hint>
       </div>
     </header>
   );

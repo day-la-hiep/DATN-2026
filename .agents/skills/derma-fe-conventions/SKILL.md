@@ -19,7 +19,7 @@ structure) — trust this skill and the code over it.
 |---|---|---|
 | `app/` | Next.js App Router routes only (`page.tsx` = thin, imports a feature component) | hold business logic or API calls |
 | `app/providers.tsx` | app-wide providers: `ThemeProvider`, `TooltipProvider`, `AccessGate`, `Toaster` | |
-| `app/access-gate.tsx` | shared-token gate (demo auth, not real login — see Gotchas) | |
+| `app/access-gate.tsx` | login gate: shows `features/auth` `AuthScreen` until a JWT is stored (see Gotchas) | |
 | `components/ui/` | shadcn primitives (`components.json`: style `new-york`, baseColor `neutral`) — generated/edited via shadcn conventions | hold feature-specific logic |
 | `features/<name>/` | one folder per feature: `types.ts`, `api.ts` (axios calls + `unwrap`), `hooks.ts` (TanStack Query) or `store.ts` (Zustand), `constants.ts`, `components/` | import another feature's internals directly (go through its exported hooks/store) |
 | `services/` | cross-feature infra: `client.ts` (axios singleton + auth interceptor), `endpoints.ts` (chat REST paths), `chat.sse.ts` (SSE client, implements `ChatService`), `apiAdapters.ts` (wire ↔ domain mapping), `index.ts` (mock/real `ChatService` factory), `mock/` | be feature-specific business logic |
@@ -98,12 +98,30 @@ against the mock first).
 call `useRefreshDocument(documentId)` in `onSuccess`, `toast.error(errorMessage(e))` in `onError`), use
 the hook from a component in `components/`.
 
+## Đặt tên label & nút (tối giản)
+
+Giao diện chỉ giữ **tên gọi ngắn**; hướng dẫn đầy đủ đặt vào hover (`components/ui/hint.tsx` → `<Hint content=...>`).
+
+- **Nút / tab / chip lọc**: 1–2 từ, động từ hoặc danh từ chính ("Nhận ca", "Đóng ca", "Gửi", "Chờ"). Không lặp danh từ
+  đã rõ theo ngữ cảnh ("Nhận ca tư vấn" → "Nhận ca" khi đang ở màn ca tư vấn).
+- **Tiêu đề mục**: ≤ 3 từ ("Ca tư vấn", "Báo cáo", "Dữ kiện"). Không kèm dòng phụ giải thích cố định bên dưới.
+- **Trạng thái**: chấm màu + 1 từ ("Chờ", "Đang", "Xong"); nghĩa đầy đủ nằm trong hint.
+- **Placeholder**: ≤ 4 từ. Phím tắt, ràng buộc, hậu quả của hành động → hint của nút, không viết thành đoạn chữ nhỏ phía dưới.
+- **Hint** là câu đầy đủ, nói *việc này làm gì / hậu quả*, tối đa 2 câu. Nút chỉ có icon bắt buộc có `aria-label`
+  (cùng nội dung ngắn) và `Hint`.
+- Mọi thứ chỉ có trong hint thì phải là thông tin phụ; thông tin quyết định (tên bệnh nhân, trạng thái, hành động
+  chính) luôn hiển thị. Cảnh báo "không phải chẩn đoán y khoa" của kết quả AI giữ nhãn ngắn ("gợi ý") hiển thị sẵn,
+  câu đầy đủ trong hint.
+- Cấu hình nhãn dùng chung đặt trong `constants.ts` của feature với cặp `label` (ngắn) + `hint` (đầy đủ);
+  xem `features/doctor/constants.ts`.
+
 ## Code style
 
 - Path alias `@/*`, never deep relative imports (`../../../`) across feature boundaries.
 - Comments are Vietnamese, explain *why* (a backend contract detail, a UI/race-condition
   reason), not what — match the surrounding file; see `services/chat.sse.ts` and
-  `features/document-pipeline/api.ts` for the density expected.
+  `features/document-pipeline/api.ts` for the density expected. No long block comments at the top
+  of a file or above a function/component (no JSDoc essays); one short line at most.
 - `pnpm lint` (ESLint) should be clean of errors (pre-existing `no-unused-vars` warnings in
   `services/mock/mockChatService.ts` for intentionally-unused mock params are known-acceptable).
 - Error messages shown to users go through a `errorMessage(e)`-style helper that prefers the
@@ -115,10 +133,7 @@ the hook from a component in `components/`.
 - `NEXT_PUBLIC_USE_MOCK=true` makes the whole chat UI work from `localStorage` with zero backend
   calls — great for isolated UI work, but don't trust it to validate an integration change (see
   `/run-fe`).
-- Auth is a **shared demo token**, not real auth: `app/access-gate.tsx` just stores whatever the
-  user types in `localStorage` and lets the first real API call 401 if it's wrong (interceptor in
-  `services/client.ts` clears it and reloads). `userId` is hard-coded `"user-1"` throughout
-  (`chat.sse.ts`, `store.ts`) — there's no multi-user frontend yet.
+- Auth is JWT login/register (`features/auth`, backend `/auth/*`): `app/access-gate.tsx` shows `AuthScreen` until `services/client.ts` has a token, which it attaches as `Authorization: Bearer` (interceptor clears it on 401). The server only issues tokens; chat/document routes do not require one yet. Conversations use the logged-in account's id (`getCurrentUserId()` in `services/client.ts`) as `user_id`; logout reloads the page so the chat store never leaks one account's data to the next.
 - `services/chat.sse.ts` uses raw `fetch` + manual SSE frame parsing (`\n\n`-delimited `data:`
   lines), not `EventSource` — because it needs to send a custom `Authorization` header, which
   `EventSource` can't do.

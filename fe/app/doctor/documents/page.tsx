@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Hint, HintIcon } from "@/components/ui/hint";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatBytes } from "@/lib/utils";
@@ -44,16 +45,14 @@ function DocumentCard({ document, onDelete }: { document: DocumentSummary; onDel
   const done = STEP_ORDER.filter((s) => document.states[s] === "approved").length;
   return (
     <div className="group relative flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 transition-colors hover:border-brand/40">
-      <Link href={`/admin/documents/${encodeURIComponent(document.id)}`} className="absolute inset-0 rounded-2xl" aria-label={`Mở ${document.title}`} />
+      <Link href={`/doctor/documents/${encodeURIComponent(document.id)}`} className="absolute inset-0 rounded-2xl" aria-label={`Mở ${document.title}`} />
       <div className="flex items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
           <BookOpen className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold tracking-tight text-foreground">{document.title}</h2>
-          <p className="truncate font-mono text-[11px] text-muted-foreground">
-            {document.id}
-          </p>
+
         </div>
         <Button variant="ghost" size="icon-xs" className="relative z-10 text-muted-foreground hover:text-destructive" onClick={onDelete} aria-label="Xóa sách">
           <Trash2 />
@@ -71,9 +70,11 @@ function DocumentCard({ document, onDelete }: { document: DocumentSummary; onDel
         </div>
         <div className="flex items-center justify-between gap-2">
           <StateBadge state={state} />
-          <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-            {done}/{STEP_ORDER.length} bước hoàn tất
-          </span>
+          <Hint content={`${done}/${STEP_ORDER.length} bước đã xác nhận`}>
+            <span className="relative z-10 font-mono text-[11px] text-muted-foreground tabular-nums">
+              {done}/{STEP_ORDER.length}
+            </span>
+          </Hint>
         </div>
       </div>
     </div>
@@ -94,7 +95,7 @@ function CreateDocumentDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       qc.invalidateQueries({ queryKey: qk.documents });
       toast.success(`Đã tạo sách “${b.title}”.`);
       onOpenChange(false);
-      router.push(`/admin/documents/${encodeURIComponent(b.id)}`);
+      router.push(`/doctor/documents/${encodeURIComponent(b.id)}`);
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
@@ -104,7 +105,7 @@ function CreateDocumentDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Thêm sách mới</DialogTitle>
-          <DialogDescription className="leading-relaxed">Tải lên file PDF của sách. Hệ thống sẽ đọc nội dung, đọc mục lục rồi chia sách thành các đoạn có ghi rõ nguồn. Bạn xác nhận kết quả sau từng bước.</DialogDescription>
+          <DialogDescription>Tải lên file PDF của sách.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <button
@@ -118,7 +119,7 @@ function CreateDocumentDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 {file.name} <span className="font-normal text-muted-foreground">· {formatBytes(file.size)}</span>
               </span>
             ) : (
-              <span className="text-sm text-muted-foreground">Chọn file PDF của sách</span>
+              <span className="text-sm text-muted-foreground">Chọn file PDF</span>
             )}
           </button>
           <input
@@ -137,15 +138,15 @@ function CreateDocumentDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-9 rounded-xl text-sm" />
           </label>
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-foreground">Cách đọc PDF</span>
+            <span className="flex items-center gap-1 text-xs font-medium text-foreground">
+              Cách đọc
+              <HintIcon content="Văn bản có sẵn: nhanh. Nhận dạng từ ảnh: chậm, dùng khi PDF là bản scan hoặc chữ bị vỡ, sai dấu. Có thể đổi lại trong Cài đặt." />
+            </span>
             <select value={engine} onChange={(e) => setEngine(e.target.value)} className={selectBox}>
-              <option value="pdftotext">Văn bản có sẵn (nhanh)</option>
-              <option value="docling">Nhận dạng chữ từ ảnh (chậm)</option>
+              <option value="pdftotext">Văn bản có sẵn</option>
+              <option value="docling">Nhận dạng từ ảnh</option>
             </select>
           </label>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            Chọn “nhận dạng chữ từ ảnh” khi PDF là bản scan hoặc chữ bị vỡ, sai dấu. Có thể đổi lại trong Cài đặt.
-          </p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={create.isPending}>
@@ -189,10 +190,13 @@ export default function TocDocumentsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="font-serif text-2xl font-bold tracking-tight text-foreground">Số hóa sách giáo khoa</h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Biến sách giáo khoa dạng PDF thành các đoạn nội dung có ghi rõ nguồn (phần, chương, bài, số trang), làm nền tri thức cho trợ lý AI. Cấu trúc sách được lấy từ chính mục lục của sách, và bạn kiểm tra, xác nhận từng bước.
-          </p>
+          <h1 className="flex items-center gap-2 font-serif text-2xl font-bold tracking-tight text-foreground">
+            Sách giáo khoa
+            <HintIcon
+              side="right"
+              content="Biến sách PDF thành các đoạn nội dung có ghi rõ nguồn (phần, chương, bài, số trang), làm nền tri thức cho trợ lý AI. Cấu trúc lấy từ mục lục của sách; bạn kiểm tra và xác nhận từng bước."
+            />
+          </h1>
         </div>
         {actions}
       </div>
@@ -212,7 +216,7 @@ export default function TocDocumentsPage() {
           ))}
         </div>
       ) : (
-        <EmptyState title="Chưa có sách nào" hint="Thêm sách bằng file PDF để bắt đầu." action={actions} />
+        <EmptyState title="Chưa có sách nào" hint="Thêm file PDF để bắt đầu." action={actions} />
       )}
 
       <CreateDocumentDialog key={`c-${creating}`} open={creating} onOpenChange={setCreating} />

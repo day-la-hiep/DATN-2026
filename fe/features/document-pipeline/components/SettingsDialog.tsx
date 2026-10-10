@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { HintIcon } from "@/components/ui/hint";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { errorMessage, documentApi } from "../api";
@@ -19,9 +20,11 @@ const selectBox =
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-medium text-foreground">{label}</span>
+      <span className="flex items-center gap-1 text-xs font-medium text-foreground">
+        {label}
+        {hint && <HintIcon content={hint} />}
+      </span>
       {children}
-      {hint && <span className="block text-[11px] leading-relaxed text-muted-foreground">{hint}</span>}
     </label>
   );
 }
@@ -30,8 +33,10 @@ function Toggle({ label, hint, checked, onChange }: { label: string; hint?: stri
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="space-y-0.5">
-        <p className="text-xs font-medium text-foreground">{label}</p>
-        {hint && <p className="text-[11px] leading-relaxed text-muted-foreground">{hint}</p>}
+        <p className="flex items-center gap-1 text-xs font-medium text-foreground">
+          {label}
+          {hint && <HintIcon content={hint} />}
+        </p>
       </div>
       <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
     </div>
@@ -63,15 +68,15 @@ function Form({ documentId, initial, onClose }: { documentId: string; initial: S
         </Field>
         <div className="space-y-3 rounded-xl border border-border p-3">
           <p className="text-xs font-semibold text-foreground">Đọc nội dung</p>
-          <Field label="Cách đọc PDF" hint="Chọn “nhận dạng chữ từ ảnh” cho sách scan hoặc khi chữ trong PDF bị vỡ, sai dấu (chậm hơn). Nếu PDF có sẵn văn bản tốt, dùng văn bản có sẵn (nhanh).">
+          <Field label="Cách đọc" hint="Văn bản có sẵn: nhanh, dùng khi PDF có chữ tốt. Nhận dạng từ ảnh: chậm hơn. Chọn “nhận dạng từ ảnh” cho sách scan hoặc khi chữ trong PDF bị vỡ, sai dấu (chậm hơn). ">
             <select value={s.engine} onChange={(e) => set("engine", e.target.value as Settings["engine"])} className={selectBox}>
-              <option value="pdftotext">Văn bản có sẵn trong PDF (nhanh)</option>
-              <option value="docling">Nhận dạng chữ từ ảnh trang (chậm)</option>
+              <option value="pdftotext">Văn bản có sẵn</option>
+              <option value="docling">Nhận dạng từ ảnh</option>
             </select>
           </Field>
           {s.engine === "docling" && (
             <>
-              <Toggle label="Luôn đọc lại từ ảnh" hint="Bỏ qua văn bản ẩn sẵn có trong PDF (thường bị lỗi ở sách scan)." checked={s.docling_force_ocr} onChange={(v) => set("docling_force_ocr", v)} />
+              <Toggle label="Luôn đọc từ ảnh" hint="Bỏ qua văn bản ẩn sẵn có trong PDF (thường bị lỗi ở sách scan)." checked={s.docling_force_ocr} onChange={(v) => set("docling_force_ocr", v)} />
               <Toggle label="Nhận biết bảng" hint="Giữ đúng cột/hàng của bảng, kể cả mục lục dạng bảng; chậm hơn." checked={s.docling_tables} onChange={(v) => set("docling_tables", v)} />
             </>
           )}
@@ -80,39 +85,39 @@ function Form({ documentId, initial, onClose }: { documentId: string; initial: S
           </Field>
         </div>
         <div className="space-y-3 rounded-xl border border-border p-3">
-          <p className="text-xs font-semibold text-foreground">Đọc mục lục bằng AI</p>
-          <Toggle label="Dùng AI đọc mục lục" hint="Nếu tắt, hệ thống không thể tự đọc mục lục." checked={s.llm_enabled} onChange={(v) => set("llm_enabled", v)} />
-          <Field label="Mô hình AI (nâng cao)" hint="Để trống để dùng mô hình mặc định của hệ thống.">
+          <p className="text-xs font-semibold text-foreground">Mục lục</p>
+          <Toggle label="Dùng AI" hint="Nếu tắt, hệ thống không thể tự đọc mục lục." checked={s.llm_enabled} onChange={(v) => set("llm_enabled", v)} />
+          <Field label="Mô hình AI" hint="Để trống để dùng mô hình mặc định của hệ thống.">
             <Input value={s.llm_model} onChange={(e) => set("llm_model", e.target.value)} className="h-9 rounded-xl font-mono text-sm" placeholder="vd deepseek-v4-flash" />
           </Field>
         </div>
         <div className="space-y-3 rounded-xl border border-border p-3">
           <p className="text-xs font-semibold text-foreground">Chia đoạn</p>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Độ dài tối đa mỗi đoạn" hint="Đơn vị ước lượng; 400 tương đương khoảng 300 từ.">
+            <Field label="Đoạn dài nhất" hint="Đơn vị ước lượng; 400 tương đương khoảng 300 từ.">
               <Input value={String(s.max_tokens)} onChange={(e) => num("max_tokens", e.target.value)} inputMode="numeric" className="h-9 rounded-xl font-mono text-sm" />
             </Field>
-            <Field label="Độ dài tối thiểu mỗi đoạn" hint="Đoạn ngắn hơn sẽ được đánh dấu “cần xem”.">
+            <Field label="Đoạn ngắn nhất" hint="Đoạn ngắn hơn sẽ được đánh dấu “cần xem”.">
               <Input value={String(s.min_tokens)} onChange={(e) => num("min_tokens", e.target.value)} inputMode="numeric" className="h-9 rounded-xl font-mono text-sm" />
             </Field>
           </div>
-          <Field label="Không gộp đoạn qua ranh giới" hint="Một đoạn không bao giờ chứa nội dung của hai mục khác nhau ở cấp này trở lên.">
+          <Field label="Ranh giới đoạn" hint="Một đoạn không bao giờ chứa nội dung của hai mục khác nhau ở cấp được chọn. “Mọi mục” là khuyến nghị.">
             <select value={s.boundary_level} onChange={(e) => set("boundary_level", parseInt(e.target.value, 10))} className={selectBox}>
-              <option value={3}>Mọi mục trong mục lục (khuyến nghị)</option>
-              <option value={2}>Phần, chương và bài/bệnh (không tách mục nhỏ)</option>
-              <option value={1}>Chỉ phần và chương (gộp các bài/bệnh trong cùng chương)</option>
-              <option value={0}>Chỉ phần</option>
+              <option value={3}>Mọi mục</option>
+              <option value={2}>Đến bài/bệnh</option>
+              <option value={1}>Đến chương</option>
+              <option value={0}>Phần</option>
             </select>
           </Field>
-          <Toggle label="Ghi kèm đường dẫn mục lục vào đoạn" hint="Vd “Phần I › Chương 1 › Mụn trứng cá”, giúp trợ lý AI hiểu ngữ cảnh của đoạn." checked={s.breadcrumb} onChange={(v) => set("breadcrumb", v)} />
+          <Toggle label="Kèm đường dẫn mục" hint="Vd “Phần I › Chương 1 › Mụn trứng cá”, giúp trợ lý AI hiểu ngữ cảnh của đoạn." checked={s.breadcrumb} onChange={(v) => set("breadcrumb", v)} />
         </div>
         <div className="space-y-3 rounded-xl border border-border p-3">
-          <p className="text-xs font-semibold text-foreground">Tìm kiếm từ khoá</p>
-          <Field label="Ngôn ngữ của sách" hint="Quyết định cách xử lý chữ khi lưu vào kho tri thức: tiếng Việt tách từ ghép (vảy nến), tiếng Anh gộp số ít/số nhiều (treatments → treatment). Chọn “tiếng Anh” cho sách thuần Anh để lưu nhanh hơn. Đổi xong cần làm lại bước Lưu vào kho.">
+          <p className="text-xs font-semibold text-foreground">Tìm kiếm</p>
+          <Field label="Ngôn ngữ" hint="“Việt xen Anh” là khuyến nghị. Quyết định cách xử lý chữ khi lưu vào kho tri thức: tiếng Việt tách từ ghép (vảy nến), tiếng Anh gộp số ít/số nhiều (treatments → treatment). Chọn “tiếng Anh” cho sách thuần Anh để lưu nhanh hơn. Đổi xong cần làm lại bước Lưu vào kho.">
             <select value={s.text_language} onChange={(e) => set("text_language", e.target.value as Settings["text_language"])} className={selectBox}>
-              <option value="mixed">Việt có xen thuật ngữ Anh (khuyến nghị)</option>
-              <option value="vi">Tiếng Việt</option>
-              <option value="en">Tiếng Anh</option>
+              <option value="mixed">Việt xen Anh</option>
+              <option value="vi">Việt</option>
+              <option value="en">Anh</option>
             </select>
           </Field>
         </div>
@@ -140,9 +145,7 @@ export function SettingsDialog({ documentId, open, onOpenChange }: { documentId:
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Cài đặt sách</DialogTitle>
-          <DialogDescription className="leading-relaxed">
-            Thay đổi cài đặt không tự làm lại các bước đã xong. Hãy làm lại bước liên quan để áp dụng (đổi cách chia đoạn chỉ cần làm lại bước Chia đoạn).
-          </DialogDescription>
+          <DialogDescription>Cần làm lại bước liên quan để áp dụng.</DialogDescription>
         </DialogHeader>
         {q.isLoading || !q.data ? (
           <p className="py-8 text-center text-xs text-muted-foreground">{q.isError ? errorMessage(q.error) : "Đang tải..."}</p>

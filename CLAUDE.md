@@ -22,7 +22,7 @@ Hướng dẫn cho Claude khi làm việc trong repo này.
 Cấu trúc thư mục:
 
 ```
-fe/        Next.js App Router: /chats (chat), /admin/documents (pipeline admin)
+fe/        Next.js App Router: /chats (chat), /doctor/documents (pipeline admin)
 core/      FastAPI (app/), agent LangGraph (agent/), pipeline (pipeline/document_ingest/),
            migrations Alembic (migrations/), dữ liệu nạp (data_ingest/)
 docs/      tài liệu kiến trúc + hướng dẫn chung
@@ -37,7 +37,7 @@ make migrate        # alembic upgrade head
 make init-db        # bucket MinIO + dữ liệu mẫu (user-1, bác sĩ, admin) — chạy sau migrate
 make backend        # Core FastAPI :3050
 make worker         # Agent Worker (tiến trình riêng, consume RabbitMQ)
-make ingest-worker  # Ingest Worker: chạy các bước pipeline tài liệu (bắt buộc chạy thì bấm "Chạy" ở /admin/documents mới có tác dụng)
+make ingest-worker  # Ingest Worker: chạy các bước pipeline tài liệu (bắt buộc chạy thì bấm "Chạy" ở /doctor/documents mới có tác dụng)
 make frontend       # Next.js :3000
 ```
 
@@ -126,6 +126,10 @@ Quy tắc dùng chung:
 - `derma-pipeline-conventions` tham chiếu `derma-core-conventions` cho quy ước chung của `core/`
   (comment tiếng Việt, pyright basic, async I/O). Khi có mâu thuẫn, skill chuyên biệt hơn được ưu tiên.
 - Nếu đổi quy ước (tên module, route, cấu trúc thư mục), cập nhật skill tương ứng cùng lúc với code.
+- **`.claude/skills/` là nguồn duy nhất; `.agents/skills/` là bản sao cho agent khác.** Mỗi khi thêm/sửa/xoá file
+  trong `.claude/skills/`, cập nhật `.agents/skills/` ngay trong cùng thay đổi:
+  `rsync -a --exclude __pycache__ .claude/skills/ .agents/skills/` (thêm `--delete` khi xoá skill/file),
+  rồi `diff -rq .claude/skills .agents/skills` phải không báo khác biệt. Không sửa tay trong `.agents/skills/`.
 
 ## 6. Việc hay làm trong đồ án
 

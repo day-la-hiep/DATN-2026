@@ -3,11 +3,12 @@ import type { StageState, StepId } from "./types";
 
 export const STEP_ORDER: StepId[] = ["ingest", "toc", "chunks", "index"];
 
-export const STEP_INFO: Record<StepId, { label: string; icon: LucideIcon; desc: string; review: string }> = {
+export const STEP_INFO: Record<StepId, { label: string; icon: LucideIcon; desc: string; review: string; note?: string }> = {
   ingest: {
     label: "Đọc nội dung",
     icon: FileText,
     desc: "Chuyển file PDF thành văn bản theo từng trang để hệ thống làm việc được với nội dung sách. Sách scan hoặc có chữ bị lỗi sẽ được nhận dạng từ ảnh trang (mất nhiều thời gian hơn). Có thể dừng và tiếp tục sau.",
+    note: "Không cần chờ bước này xong mới làm bước Mục lục (mục lục chỉ cần đọc vài chục trang đầu sách), nhưng hệ thống cần đọc cả cuốn để đối chiếu số trang, định vị mục và chia đoạn.",
     review: "Mở vài trang ở khung bên phải để kiểm tra văn bản có được đọc đúng không. Trang không cần dùng (vd phần chỉ mục cuối sách) có thể loại trong Cài đặt.",
   },
   toc: {
@@ -26,6 +27,7 @@ export const STEP_INFO: Record<StepId, { label: string; icon: LucideIcon; desc: 
     label: "Kho tri thức",
     icon: Database,
     desc: "Lưu các đoạn nội dung vào kho tri thức của trợ lý AI để có thể tra cứu theo ý nghĩa. Mỗi đoạn được lưu kèm phần, chương, mục, số trang và vị trí file PDF gốc. Làm lại bước này sẽ thay thế toàn bộ đoạn cũ của sách.",
+    note: "Nếu sau này sửa mục lục hoặc chia đoạn lại, hãy làm lại bước này để kho tri thức khớp nội dung mới nhất.",
     review: "Kiểm tra số đoạn đã lưu khớp với số đoạn ở bước Chia đoạn. Sau khi xác nhận, nội dung sách sẵn sàng cho trợ lý AI sử dụng.",
   },
 };

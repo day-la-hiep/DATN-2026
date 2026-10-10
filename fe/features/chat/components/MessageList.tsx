@@ -60,9 +60,6 @@ export function MessageList({
                 Clinical Intelligence
               </span>
             </div>
-            <span className="font-mono text-xs text-muted-foreground">
-              v2.4 Pro
-            </span>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -70,7 +67,7 @@ export function MessageList({
               Hỏi đáp cùng <span className="gradient-text">Trợ lý Da liễu AI</span>
             </h1>
             <p className="max-w-xl text-sm sm:text-base text-muted-foreground leading-relaxed pt-2">
-              Hệ thống tra cứu, hỗ trợ phân loại tổn thương và định hướng chăm sóc da dựa trên y văn chuyên môn. Đặt câu hỏi trực tiếp hoặc tham khảo các trường hợp thường gặp:
+              Tra cứu và định hướng chăm sóc da theo y văn chuyên môn. Đặt câu hỏi hoặc chọn một gợi ý:
             </p>
           </div>
 
@@ -100,11 +97,8 @@ export function MessageList({
           <div className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-brand" />
-              <span>Chẩn đoán và dữ liệu tham khảo theo phác đồ da liễu</span>
+              <span>Tham khảo, không phải chẩn đoán y khoa</span>
             </div>
-            <span className="font-mono text-[10px] text-muted-foreground/70">
-              Dual-Font: Calistoga + Inter
-            </span>
           </div>
         </div>
       </div>

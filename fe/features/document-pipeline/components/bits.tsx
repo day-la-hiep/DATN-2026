@@ -1,5 +1,6 @@
 "use client";
 
+import { HintIcon } from "@/components/ui/hint";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,8 +177,12 @@ export function SectionCard({
       {(title || action) && (
         <header className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            {title && <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>}
-            {description && <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{description}</p>}
+            {title && (
+              <h2 className="flex items-center gap-1 text-sm font-semibold tracking-tight text-foreground">
+                {title}
+                {description && <HintIcon content={description} />}
+              </h2>
+            )}
           </div>
           {action}
         </header>
