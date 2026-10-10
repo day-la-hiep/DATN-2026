@@ -41,8 +41,7 @@ python3 $D chat "Bệnh chàm là gì?" --model deepseek-v4-flash
 Exit codes: 0 = `message.done`, 2 = error/timeout, 3 = agent paused with `message.question`
 (copy `questionId` and an option `id` from that event into `answer` to resume — verified).
 
-The driver reads `APP_ACCESS_TOKEN` from env or `./.env` and sends it as a Bearer header
-(API returns 401 without it when the token is set).
+The driver calls the API without an Authorization header (conversation routes do not check a token).
 
 ## Typecheck
 

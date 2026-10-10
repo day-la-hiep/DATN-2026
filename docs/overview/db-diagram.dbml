@@ -25,7 +25,7 @@ Table users {
   gender varchar(16) [not null, note: 'male | female']
   password_hash varchar(255) [null, note: 'null: tài khoản mẫu chưa đặt mật khẩu']
   created_at timestamptz [not null]
-  Note: 'Tài khoản. Đã có cột mật khẩu nhưng chưa có API đăng ký / đăng nhập.'
+  Note: 'Tài khoản. Có cột mật khẩu; đăng ký / đăng nhập qua `/auth/*` (JWT).'
 }
 
 Table patient_profiles {

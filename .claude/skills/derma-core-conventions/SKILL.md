@@ -89,8 +89,8 @@ repositories, services, API DTOs, agent tools). Don't cascade edits speculativel
 
 **Add an endpoint** — DTOs in `app/dto/<resource>.py` (`XxxInput`/`XxxOutput`) → repository method →
 service method → route in `app/api/` with `response_model=ApiResponse[...]` and a `Depends(get_xxx_service)`
-provider in `deps.py`; include the router in `main.py` under `settings.API_V1_PREFIX` (protected
-routers take `dependencies=[Depends(require_app_token)]`). Update `docs/openapi.yaml`/`api-doc.md`.
+provider in `deps.py`; include the router in `main.py` under `settings.API_V1_PREFIX` (add `dependencies=[Depends(get_current_user)]`
+if the routes need a logged-in user). Update `docs/openapi.yaml`/`api-doc.md`.
 
 **Add a model** — file in `app/models/`, subclass `Base`, import it in `app/models/__init__.py`
 (the aggregator — otherwise `Base.metadata` doesn't see it and Alembic autogenerate misses it).

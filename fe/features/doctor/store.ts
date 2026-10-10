@@ -7,6 +7,7 @@ import type {
   ConsultationStatus,
   DoctorViewMessage,
 } from "./types";
+import { getCurrentUserId } from "@/services/client";
 import { doctorApi, errorMessage } from "./api";
 
 interface DoctorConsultationState {
@@ -96,7 +97,7 @@ export const useDoctorStore = create<DoctorConsultationState>((set, get) => ({
             ? {
                 ...sess,
                 status: "active" as ConsultationStatus,
-                doctorId: "doc-current",
+                doctorId: getCurrentUserId(),
                 startedAt: new Date().toISOString(),
               }
             : sess
@@ -156,7 +157,7 @@ export const useDoctorStore = create<DoctorConsultationState>((set, get) => ({
             ? {
                 ...sess,
                 status: "active" as ConsultationStatus,
-                doctorId: "doc-current",
+                doctorId: getCurrentUserId(),
                 startedAt: sess.startedAt ?? new Date().toISOString(),
               }
             : sess

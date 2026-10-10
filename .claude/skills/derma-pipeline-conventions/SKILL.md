@@ -126,7 +126,7 @@ mapping (`_stage_output()`) → `app/dto/request|response/document.py` if the AP
 **Add an admin-pipeline API field/endpoint** — DTO in `app/dto/request/document.py` (input) or
 `app/dto/response/document.py` (output) → method on
 `DocumentService`/`DocumentIngestPipelineService`/`DocumentRepository` (whichever owns that data)
-→ route in `app/api/document_api.py` (all routes already sit behind `require_app_token`).
+→ route in `app/api/document_api.py`.
 Mirror in FE's `features/document-pipeline/api.ts` + `hooks.ts` (see `derma-fe-conventions`).
 
 ## Storage layout (MinIO `document/<document_id>/`)

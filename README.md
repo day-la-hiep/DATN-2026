@@ -90,7 +90,6 @@ Tool `classify_skin_image` cần checkpoint CNN tại `SKIN_CNN_CHECKPOINT_PATH`
 | `DATABASE_URL`, `REDIS_*`, `RABBITMQ_URL`, `QDRANT_URL`, `NEO4J_*`, `MINIO_*` | kết nối hạ tầng, mặc định khớp `docker-compose.yml` |
 | `AGENT_MODEL`, `AGENT_TEMPERATURE`, `OPENROUTER_API_KEY` | model mặc định của agent |
 | `TAVILY_API_KEY` | tool tra web nguồn uy tín |
-| `APP_ACCESS_TOKEN` | token dùng chung cho app (rỗng = tắt); FE nhập ở màn access gate |
 | `NEXT_PUBLIC_USE_MOCK`, `NEXT_PUBLIC_API_URL` | FE dùng mock hay Core thật, URL Core |
 
 `.env` không được commit.
@@ -137,7 +136,7 @@ Chi tiết trong các skill ở `.claude/skills/`; dưới đây là các điể
 
 ## 6. Hạn chế đã biết
 
-- Chưa có auth đa người dùng: chat truyền `user_id` từ client, admin chỉ dùng app token.
+- Chưa có auth đa người dùng: chat truyền `user_id` từ client, khu admin chưa phân quyền.
 - Checkpointer và long-term memory của agent đang in-memory → mất khi restart Worker, chỉ chạy được 1 Worker.
 - Mỗi hội thoại một turn một lúc (không có Steer); đang chờ trả lời câu hỏi thì không gửi được tin mới.
 - Upload PDF đi qua Core; DB và MinIO không cùng transaction thật; chưa có job dọn object mồ côi.

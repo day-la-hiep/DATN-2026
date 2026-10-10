@@ -138,7 +138,7 @@ Quy tắc dùng chung:
 
 ## 7. Hạn chế đã biết (đồ án)
 
-- Không có auth đa người dùng cho khu admin (chỉ dùng app token).
+- Không có auth đa người dùng cho khu admin (API chưa kiểm tra JWT phía server).
 - Upload PDF đi qua Core; chưa có presigned upload trực tiếp lên MinIO.
 - Không có job dọn object MinIO mồ côi khi rollback thất bại.
 - Chưa có tài liệu hướng dẫn triển khai cho pipeline; `DEPLOY.md` chỉ mô tả chat.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, ShieldCheck, Sparkles, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,15 @@ export function ChatHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const streaming = useChatStore((s) =>
     activeId ? s.hasActiveStream(activeId) : false
   );
+  const syncDoctorMessages = useChatStore((s) => s.syncDoctorMessages);
   const conversation = conversations.find((c) => c.id === activeId);
+
+  // tin bác sĩ không đi qua SSE của agent nên poll nhẹ khi đang xem hội thoại
+  useEffect(() => {
+    if (!activeId || streaming) return;
+    const timer = setInterval(() => void syncDoctorMessages(activeId), 5000);
+    return () => clearInterval(timer);
+  }, [activeId, streaming, syncDoctorMessages]);
   const [requestingDoctor, setRequestingDoctor] = useState(false);
 
   const handleRequestDoctor = async () => {

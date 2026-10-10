@@ -84,7 +84,7 @@ Guideline/KG phải được nạp trước thì agent mới tra cứu được 
 
 ## 6. Hạn chế chung (đồ án)
 
-- Chưa có auth đa người dùng: chat truyền `user_id` từ client, khu admin chỉ dùng app token.
+- Chưa có auth đa người dùng: chat truyền `user_id` từ client, khu admin chưa phân quyền.
 - Checkpointer và long-term memory của agent đang in-memory → mất khi restart Worker, chỉ chạy được 1 Worker.
 - DB và MinIO không cùng transaction thật; chưa có job dọn object mồ côi.
 - Schema tư vấn bác sĩ / video call đã có nhưng chưa có API và màn hình.

@@ -127,8 +127,8 @@ export function toConversation(a: ApiConversation): Conversation {
 }
 
 export function toChatMessage(a: ApiChatMessage): ChatMessage {
-  // UI chưa có giao diện riêng cho tin bác sĩ (luồng tư vấn làm sau) — tạm hiển thị như tin trả lời
-  const role: ChatRole = a.sender === "patient" ? "user" : "assistant";
+  const role: ChatRole =
+    a.sender === "patient" ? "user" : a.sender === "doctor" ? "doctor" : "assistant";
   const meta = a.metadata ?? undefined;
 
   const reasoning: ReasoningStep[] | undefined = meta?.reasoning

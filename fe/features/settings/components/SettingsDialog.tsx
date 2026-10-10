@@ -24,7 +24,7 @@ import {
   WandSparkles,
   type LucideIcon,
 } from "lucide-react";
-import { CURRENT_USER } from "@/features/user";
+import { getAuthenticatedUser } from "@/services/client";
 import { useChatStore } from "@/features/chat/store";
 import { useComposerStore } from "@/features/chat/composerStore";
 import { BRAND_OPTIONS, useBrandStore } from "../store";
@@ -219,8 +219,9 @@ function SettingsContent({ onClose }: { onClose: () => void }) {
   const setDraft = useComposerStore((s) => s.setDraft);
 
   const [section, setSection] = useState<SectionId>("general");
-  const [name, setName] = useState(CURRENT_USER.name);
-  const [email] = useState(CURRENT_USER.email);
+  const [account] = useState(getAuthenticatedUser);
+  const [name, setName] = useState(account?.full_name ?? "");
+  const username = account?.username ?? "";
   const [language, setLanguage] = useState("Tiếng Việt");
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifyPush, setNotifyPush] = useState(false);
@@ -299,9 +300,9 @@ function SettingsContent({ onClose }: { onClose: () => void }) {
                 className="font-medium"
               />
             </Field>
-            <Field label="Địa chỉ Email">
+            <Field label="Tên đăng nhập">
               <Input
-                value={email}
+                value={username}
                 readOnly
                 className="text-muted-foreground font-mono"
               />

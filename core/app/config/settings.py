@@ -167,12 +167,6 @@ class Settings(BaseSettings):
     LANGSMITH_TRACING: bool = False
     LANGSMITH_PROJECT: str = "derma-hospital"
 
-    # ----- Shared-token auth (bảo vệ demo/test share cho người ngoài, KHÔNG phải hệ
-    # thống user auth thật — không user/password/JWT, chỉ 1 token tĩnh dùng chung) -----
-    # Rỗng = tắt hoàn toàn (mặc định dev, không phá luồng hiện có). Set giá trị trong
-    # .env để bật — mọi request tới API (trừ /health) phải kèm header
-    # `Authorization: Bearer <token>` (xem app/config/auth.py).
-    APP_ACCESS_TOKEN: str = ""
 
     # ----- User JWT Authentication (Access Token & Refresh Token) -----
     JWT_SECRET_KEY: str = "derma-secret-key-change-in-production-datn-2026"

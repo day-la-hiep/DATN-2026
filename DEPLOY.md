@@ -59,7 +59,6 @@ cp core/.env.example core/.env
 |---|---|
 | `OPENROUTER_API_KEY` | Key từ https://openrouter.ai/keys |
 | `AGENT_MODEL` | Mặc định `openai:google/gemma-4-26b-a4b-it` (bản **trả phí**, cần credit OpenRouter; bản `:free` bị chặn khi dùng tool-calling) |
-| `APP_ACCESS_TOKEN` | Mã truy cập gửi cho người test. Để trống = tắt xác thực |
 
 Không cần sửa `DATABASE_URL`, `NEO4J_URL`, `MINIO_*`, … — compose tự ghi đè.
 Không cần `GOOGLE_API_KEY` (embedding và reranker gọi qua OpenRouter, dùng chung `OPENROUTER_API_KEY`).
@@ -105,9 +104,9 @@ Nếu thiếu bước này agent vẫn chạy nhưng các tool tra cứu trả v
 # 1. FE proxy tới backend được không (kỳ vọng {"status":"ok"})
 curl -s http://localhost:3000/api/v1/health
 
-# 2. Tạo hội thoại (kỳ vọng HTTP 201). Nếu đã bật APP_ACCESS_TOKEN thì thêm header:
+# 2. Tạo hội thoại (kỳ vọng HTTP 201):
 curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/v1/conversations \
-  -H "Authorization: Bearer <APP_ACCESS_TOKEN>" -H "Content-Type: application/json" \
+  -H "Content-Type: application/json" \
   -d '{"userId":"user-1","initMessage":"","title":"test"}'
 
 # 3. Dữ liệu đã nạp
@@ -117,7 +116,7 @@ from app.api.deps import get_knowledge_base_service
 print('Chunk sách trong Qdrant:', asyncio.run(get_knowledge_base_service().count_document_chunks()))"   # 0 tới khi index sách đầu tiên ở /admin/documents
 ```
 
-Rồi mở `http://<host>:3000`, nhập mã `APP_ACCESS_TOKEN` ở màn hình đầu tiên, gửi thử một tin nhắn.
+Rồi mở `http://<host>:3000`, đăng ký/đăng nhập, gửi thử một tin nhắn.
 
 ## 6. Xử lý sự cố
 
@@ -127,7 +126,6 @@ Rồi mở `http://<host>:3000`, nhập mã `APP_ACCESS_TOKEN` ở màn hình đ
 | Đổi mật khẩu Neo4j/Postgres mà không có tác dụng | Chỉ áp dụng khi tạo volume lần đầu | Xoá volume của service đó (`docker compose -f docker-compose.prod.yml down`, `docker volume rm derma-hospital-prod_<tên>_data`) rồi `up`, nạp lại data. **Mất dữ liệu** |
 | FE gọi API lỗi `ECONNREFUSED 127.0.0.1:3050` (500 ở `/api/v1/...`) | `BACKEND_URL` được **bake lúc `next build`** (build arg), env runtime không có tác dụng | Đổi `args.BACKEND_URL` của `derma-fe` rồi `up -d --build derma-fe` |
 | `POST /conversations` → 500 `fk_conversations_user_id_users` | Thiếu user `user-1` (FE hard-code) | Core tự tạo user này khi khởi động; chỉ cần build lại/khởi động lại `derma-core-api` bản mới |
-| API trả `401 Thiếu hoặc sai access token` | Đã bật `APP_ACCESS_TOKEN` | Gửi header `Authorization: Bearer <token>`; FE sẽ hiện màn hình nhập mã |
 | Chat trả "hệ thống gặp sự cố…" | LLM lỗi (hết credit OpenRouter, rate limit, sai key) | Xem `docker compose -f docker-compose.prod.yml logs agent-worker` |
 | Tool tra cứu trả rỗng | Chưa nạp data | Chạy `./reset-and-gen-data.sh` |
 | `docker build` core lỗi `COPY model/...: not found` | Thiếu checkpoint CNN | Xem mục 2.1 |
@@ -158,6 +156,6 @@ Dữ liệu nằm trong các named volume (`postgres_data`, `qdrant_data`, `neo4
 ## 8. Lưu ý bảo mật
 
 - Chỉ `derma-fe:3000` publish ra host. Đặt tunnel/reverse-proxy phía trước và dùng HTTPS.
-- `APP_ACCESS_TOKEN` chỉ là token chung dùng chung, phù hợp demo/test, **không phải** hệ thống
-  đăng nhập. FE vẫn hard-code user `user-1` nên mọi người dùng chung một tài khoản và chung memory.
+- Các route chat/tài liệu/upload/bác sĩ chưa kiểm tra JWT phía server (chỉ `/auth/*` cấp token), nên đừng mở ra Internet
+  mà không có lớp bảo vệ phía trước. Chat vẫn nhận `user_id` từ client chứ chưa lấy từ token.
 - Không commit `.env` và `core/.env` (đã được ignore).

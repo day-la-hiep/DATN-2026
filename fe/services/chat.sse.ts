@@ -1,4 +1,4 @@
-import { api, clearAccessToken, getAccessToken } from "./client";
+import { api, clearAccessToken, getAccessToken, getCurrentUserId } from "./client";
 import { endpoints } from "./endpoints";
 import {
   toChatMessage,
@@ -38,12 +38,10 @@ const impl = {
   },
 
   async getConversations() {
-    // Backend yêu cầu query param `user_id` bắt buộc (chưa có auth thật — xem
-    // `core/docs/api-doc.md` mục 0/1.1); FE cũng hard-code "user-1" ở mọi chỗ khác
-    // (`createConversation` bên dưới, `store.ts`), giữ nhất quán.
+    // Backend vẫn nhận `user_id` qua query (chưa đọc từ JWT), nên lấy id từ phiên đăng nhập.
     const { data } = await api.get<{ data: ApiConversation[] }>(
       endpoints.conversations,
-      { params: { user_id: "user-1" } }
+      { params: { user_id: getCurrentUserId() } }
     );
     return data.data.map(toConversation);
   },
@@ -58,9 +56,9 @@ const impl = {
   async createConversation(input?: Partial<CreateConversationInput> | string) {
     const payload: CreateConversationInput =
       typeof input === "string"
-        ? { userId: "user-1", content: "", title: input }
+        ? { userId: getCurrentUserId(), content: "", title: input }
         : {
-            userId: input?.userId ?? "user-1",
+            userId: input?.userId ?? getCurrentUserId(),
             content: input?.content ?? "",
             title: input?.title ?? "",
           };

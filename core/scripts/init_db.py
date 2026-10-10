@@ -1,6 +1,7 @@
 """Khởi tạo dữ liệu cho môi trường mới"""
+import json
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # chạy được từ `core/` mà không cần cài package
@@ -14,6 +15,8 @@ from app.api.deps import get_document_file_store, get_file_store_service, get_po
 from app.config.security import hash_password  # noqa: E402
 from app.models.admin import Admin  # noqa: E402
 from app.models.doctor import Doctor  # noqa: E402
+from app.models.document import Document, DocumentOverride, DocumentStage  # noqa: E402
+from app.models.file import File  # noqa: E402
 from app.models.patient_profile import PatientProfile  # noqa: E402
 from app.models.user import User  # noqa: E402
 
@@ -28,7 +31,44 @@ USERS = [
 ]
 DOCTORS = [{"user_id": "doctor-1", "description": "Bác sĩ chuyên khoa Da liễu (dữ liệu mẫu)."}]
 ADMINS = [{"user_id": "admin-1"}]
+DOCUMENTS_SEED = Path(__file__).with_name("seed_documents.json")  # sinh bằng `export_documents_seed.py`
 PROFILE_OWNERS = ["user-1"]  # tài khoản bệnh nhân cần hồ sơ "chính mình" để tạo hội thoại
+
+
+def _restore_documents(s: Session) -> list[str]:
+    """Khôi phục record tài liệu RAG đã có; chỉ DB — file MinIO và point Qdrant nằm ngoài Postgres nên không bị reset theo."""
+    if not DOCUMENTS_SEED.exists():
+        return []
+    data = json.loads(DOCUMENTS_SEED.read_text(encoding="utf-8"))
+
+    def _dt(row: dict) -> dict:
+        return {k: datetime.fromisoformat(v) if k.endswith("_at") and isinstance(v, str) else v for k, v in row.items()}
+
+    created: list[str] = []
+    for d in data["documents"]:
+        if s.get(Document, d["id"]) is not None:
+            continue
+        for f in data["files"]:
+            if f["id"] in (d["source_file_id"], d["ingested_file_id"]) and s.get(File, f["id"]) is None:
+                s.add(File(**_dt(f)))
+        s.flush()  # files phải có trước khi documents trỏ FK tới
+        row = _dt(d)
+        if row["uploaded_by_id"] and s.get(Doctor, row["uploaded_by_id"]) is None:
+            row["uploaded_by_id"] = None
+        s.add(Document(**row))
+        s.flush()
+        stage_ids = set()
+        for st in data["document_stages"]:
+            if st["document_id"] == d["id"]:
+                s.add(DocumentStage(**_dt(st)))
+                stage_ids.add(st["id"])
+        s.flush()
+        for o in data["document_overrides"]:
+            if o["document_stage_id"] in stage_ids:
+                s.add(DocumentOverride(**_dt(o)))
+        created.append(f"document {d['id']}")
+    s.commit()
+    return created
 
 
 def _check_migrated() -> None:
@@ -74,7 +114,7 @@ def main() -> None:
     for store in (get_file_store_service(), get_document_file_store()):
         store.ensure_bucket()
     with get_postgres_client().sync_session_factory() as s:
-        created = _seed(s)
+        created = _seed(s) + _restore_documents(s)
     print("Đã tạo: " + ", ".join(created) if created else "Dữ liệu mẫu đã có sẵn, không tạo thêm.")
 
 

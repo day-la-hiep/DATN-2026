@@ -4,7 +4,7 @@
  * Tuân thủ quy ước derma-fe-conventions:
  * - Dùng axios instance từ `@/services/client` (đã có gắn sẵn Authorization token).
  * - unwrap response bọc qua `{ data: T }` của FastAPI.
- * - Hỗ trợ fallback linh hoạt sang Mock Data khi offline hoặc khi backend endpoint chưa triển khai.
+ * - Chỉ dùng Mock Data khi NEXT_PUBLIC_USE_MOCK=true; lỗi thật (401/403/mạng) được ném ra để UI báo.
  */
 import axios from "axios";
 import { api } from "@/services/client";
@@ -91,13 +91,8 @@ export const doctorApi = {
   /** Lấy danh sách phiên tư vấn */
   async listSessions(): Promise<ConsultationSession[]> {
     if (USE_MOCK) return MOCK_SESSIONS;
-    try {
-      const raw = await unwrap<any[]>(api.get("/doctor/consultations"));
-      return Array.isArray(raw) ? raw.map(adaptSession) : [];
-    } catch {
-      // Fallback về mock data để màn hình bác sĩ luôn demo được trơn tru khi backend chưa mount endpoint
-      return MOCK_SESSIONS;
-    }
+    const raw = await unwrap<any[]>(api.get("/doctor/consultations"));
+    return Array.isArray(raw) ? raw.map(adaptSession) : [];
   },
 
   /** Lấy chi tiết một phiên tư vấn (kèm dữ kiện lâm sàng và báo cáo AI) */
@@ -105,14 +100,10 @@ export const doctorApi = {
     if (USE_MOCK) {
       return MOCK_SESSIONS.find((s) => s.id === sessionId) ?? null;
     }
-    try {
-      const raw = await unwrap<any>(
-        api.get(`/doctor/consultations/${encodeURIComponent(sessionId)}`)
-      );
-      return raw ? adaptSession(raw) : null;
-    } catch {
-      return MOCK_SESSIONS.find((s) => s.id === sessionId) ?? null;
-    }
+    const raw = await unwrap<any>(
+      api.get(`/doctor/consultations/${encodeURIComponent(sessionId)}`)
+    );
+    return raw ? adaptSession(raw) : null;
   },
 
   /** Lấy lịch sử tin nhắn của cuộc hội thoại */
@@ -120,64 +111,39 @@ export const doctorApi = {
     if (USE_MOCK) {
       return MOCK_MESSAGES[conversationId] ?? [];
     }
-    try {
-      const raw = await unwrap<
-        Array<{
-          id: string;
-          conversation_id?: string;
-          conversationId?: string;
-          role: "user" | "assistant" | "doctor";
-          content: string;
-          created_at?: string;
-          createdAt?: string;
-          metadata?: {
-            attachments?: Array<{ id: string; name: string; url?: string }>;
-            sender?: string;
-          };
-        }>
-      >(
-        api.get(`/conversations/${encodeURIComponent(conversationId)}/messages`)
-      );
-      return raw.map((m) => {
-        let sender: "patient" | "ai" | "doctor" = "ai";
-        if (m.role === "user") {
-          sender = "patient";
-        } else if (m.role === "doctor" || m.metadata?.sender === "doctor") {
-          sender = "doctor";
-        }
-        return {
-          id: m.id,
-          conversationId: m.conversationId ?? m.conversation_id ?? conversationId,
-          sender,
-          messageType: "text",
-          content: m.content,
-          createdAt: m.createdAt ?? m.created_at ?? new Date().toISOString(),
-          attachments: m.metadata?.attachments,
-        };
-      });
-    } catch {
-      return MOCK_MESSAGES[conversationId] ?? [];
-    }
+    const raw = await unwrap<
+      Array<{
+        id: string;
+        conversation_id?: string;
+        sender: "patient" | "ai" | "doctor";
+        content: string;
+        created_at?: string;
+        metadata?: {
+          attached_files?: Array<{ id: string; name: string; url?: string }> | null;
+        } | null;
+      }>
+    >(api.get(`/conversations/${encodeURIComponent(conversationId)}/messages`));
+    return raw.map((m) => ({
+      id: m.id,
+      conversationId: m.conversation_id ?? conversationId,
+      sender: m.sender,
+      messageType: "text",
+      content: m.content,
+      createdAt: m.created_at ?? new Date().toISOString(),
+      attachments: m.metadata?.attached_files ?? undefined,
+    }));
   },
 
   /** Bác sĩ nhận tiếp quản ca tư vấn */
   async acceptSession(sessionId: string): Promise<void> {
     if (USE_MOCK) return;
-    try {
-      await api.post(`/doctor/consultations/${encodeURIComponent(sessionId)}/accept`);
-    } catch {
-      // Cho phép optimistic UI tiếp tục
-    }
+    await api.post(`/doctor/consultations/${encodeURIComponent(sessionId)}/accept`);
   },
 
   /** Bác sĩ hoàn thành & đóng phiên tư vấn */
   async resolveSession(sessionId: string): Promise<void> {
     if (USE_MOCK) return;
-    try {
-      await api.post(`/doctor/consultations/${encodeURIComponent(sessionId)}/resolve`);
-    } catch {
-      // Cho phép optimistic UI tiếp tục
-    }
+    await api.post(`/doctor/consultations/${encodeURIComponent(sessionId)}/resolve`);
   },
 
   /** Bác sĩ gửi tin nhắn phản hồi tới bệnh nhân */
@@ -197,31 +163,24 @@ export const doctorApi = {
 
     if (USE_MOCK) return fallbackMessage;
 
-    try {
-      const res = await unwrap<{
-        id: string;
-        conversation_id?: string;
-        conversationId?: string;
-        role: string;
-        content: string;
-        created_at?: string;
-        createdAt?: string;
-      }>(
-        api.post(`/doctor/consultations/${encodeURIComponent(sessionId)}/reply`, {
-          content,
-        })
-      );
-      return {
-        id: res.id,
-        conversationId: res.conversationId ?? res.conversation_id ?? conversationId,
-        sender: "doctor",
-        messageType: "text",
-        content: res.content,
-        createdAt: res.createdAt ?? res.created_at ?? new Date().toISOString(),
-      };
-    } catch {
-      return fallbackMessage;
-    }
+    const res = await unwrap<{
+      id: string;
+      conversation_id?: string;
+      content: string;
+      created_at?: string;
+    }>(
+      api.post(`/doctor/consultations/${encodeURIComponent(sessionId)}/reply`, {
+        content,
+      })
+    );
+    return {
+      id: res.id,
+      conversationId: res.conversation_id ?? conversationId,
+      sender: "doctor",
+      messageType: "text",
+      content: res.content,
+      createdAt: res.created_at ?? new Date().toISOString(),
+    };
   },
 
   /** Bệnh nhân gửi yêu cầu bác sĩ tư vấn & AI tự động bóc tách dữ kiện sinh báo cáo */

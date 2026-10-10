@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { chatService } from "@/services";
+import { getCurrentUserId } from "@/services/client";
 import { MODEL_OPTIONS } from "./constants";
 import type {
   ChatMessage,
@@ -54,6 +55,8 @@ interface ChatState {
   startNewChat: () => void;
   selectConversation: (id: string) => Promise<void>;
   setModel: (modelId: string) => void;
+  /** Kéo tin bác sĩ mới về (bác sĩ trả lời ngoài luồng SSE của agent) */
+  syncDoctorMessages: (conversationId: string) => Promise<void>;
   /** Lấy input state hiện tại của hội thoại */
   getInputState: (convId?: string | null) => ConversationInputState;
   /** Cập nhật input state cho hội thoại */
@@ -510,6 +513,26 @@ export const useChatStore = create<ChatState>((set, get) => {
       set({ selectedModelId: modelId });
     },
 
+    async syncDoctorMessages(conversationId) {
+      try {
+        const remote = await chatService.getMessages(conversationId);
+        set((s) => {
+          const local = s.messagesByConversation[conversationId] ?? [];
+          const known = new Set(local.map((m) => m.id));
+          const fresh = remote.filter((m) => m.role === "doctor" && !known.has(m.id));
+          if (fresh.length === 0) return s;
+          return {
+            messagesByConversation: {
+              ...s.messagesByConversation,
+              [conversationId]: [...local, ...fresh],
+            },
+          };
+        });
+      } catch {
+        // poll nền, lỗi mạng tạm thời thì lần sau thử lại
+      }
+    },
+
     sendMessage(content, options) {
       const trimmed = content.trim();
       if (!trimmed) return;
@@ -521,7 +544,7 @@ export const useChatStore = create<ChatState>((set, get) => {
         void (async () => {
           try {
             const conversation = await chatService.createConversation({
-              userId: "user-1",
+              userId: getCurrentUserId(),
               // Không seed content ở đây — sendMessage bên dưới sẽ gửi tin
               // đầu tiên (tránh trùng lặp user message ở turn đầu).
               content: "",

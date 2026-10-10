@@ -138,7 +138,7 @@ cd core && python -m unittest pipeline.document_ingest.tests.test_document_pipel
 - Chạy nền bằng thread trong Core (không có hàng đợi job riêng); Core restart thì bước đang chạy phải chạy lại.
 - Upload đi qua Core, chưa có presigned upload lên MinIO.
 - DB và MinIO không cùng transaction thật; chưa có job dọn object mồ côi khi rollback lỗi.
-- Khu admin chỉ dùng app token, chưa phân quyền người duyệt.
+- Khu admin chưa phân quyền người duyệt.
 - Agent chat **chưa có tool tra** collection `derma_document_chunks` — kho tri thức từ sách chưa được dùng khi tư vấn.
 - [`core/pipeline/document_ingest/README.md`](../../core/pipeline/document_ingest/README.md) còn nhắc route cũ
   `/admin/toc` và `status.json`; trạng thái bước hiện nằm ở bảng `document_stages`.

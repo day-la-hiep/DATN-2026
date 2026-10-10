@@ -3,10 +3,16 @@
 from collections.abc import AsyncIterator
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import get_conversation_service, get_message_service, get_rabbitmq_client, get_redis_client
+from app.api.deps import (
+    get_conversation_service,
+    get_current_user,
+    get_message_service,
+    get_rabbitmq_client,
+    get_redis_client,
+)
 from app.config.settings import settings
 from app.config.constants import AGENT_EVENTS_CHANNEL, STREAM_DONE_SENTINEL
 from app.dto.common import ApiResponse
@@ -15,6 +21,7 @@ from app.dto.request.message import MessageAnswerDto, SendMessageInput
 from app.dto.response.conversation import ConversationOutput, ModelOption
 from app.dto.response.message import MessageOutput, SendMessageResult
 from app.infra.rabbitmq_client import RabbitMQClient
+from app.models.user import User
 from app.infra.redis_client import RedisClient
 from app.services.conversation_service import (
     ConversationNotFoundError,
@@ -35,6 +42,7 @@ ConversationServiceDep = Annotated[
     ConversationService, Depends(get_conversation_service)
 ]
 MessageServiceDep = Annotated[MessageService, Depends(get_message_service)]
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
 @router.get(
@@ -59,10 +67,10 @@ async def list_model_options() -> ApiResponse[list[ModelOption]]:
 )
 async def list_conversations(
     service: ConversationServiceDep,
-    user_id: Annotated[str, Query()],
+    current_user: CurrentUserDep,
 ) -> ApiResponse[list[ConversationOutput]]:
-    """`docs/api-doc.md` mục 1.1. Auth chưa có — `userId` truyền tay (mục 0)."""
-    conversations = await service.list_conversations(user_id)
+    """`docs/api-doc.md` mục 1.1 — luôn theo tài khoản trong JWT, không nhận `user_id` từ client."""
+    conversations = await service.list_conversations(current_user.id)
     return ApiResponse(data=conversations)
 
 
@@ -73,11 +81,14 @@ async def list_conversations(
     operation_id="createConversation",
 )
 async def create_conversation(
-    body: CreateConversationInput, service: ConversationServiceDep
+    body: CreateConversationInput,
+    service: ConversationServiceDep,
+    current_user: CurrentUserDep,
 ) -> ApiResponse[ConversationOutput]:
     """`docs/api-doc.md` mục 1.2 — tạo hội thoại + lưu `content` + publish turn đầu."""
     try:
-        conversation = await service.create_conversation(body)
+        # chủ hội thoại luôn là tài khoản đăng nhập, bỏ qua `user_id` client gửi
+        conversation = await service.create_conversation(body.model_copy(update={"user_id": current_user.id}))
     except PatientProfileNotFoundError as exc:
         raise HTTPException(
             status_code=400, detail="Tài khoản chưa có hồ sơ bệnh nhân."

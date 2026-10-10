@@ -1,6 +1,6 @@
 """Truy vấn DB cho `ConsultationSession`, `PreConsultationReport`, `ClinicalFact`."""
 from datetime import UTC, datetime
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.consultation_session import ConsultationSession
@@ -26,9 +26,14 @@ class ConsultationRepository:
         return result.scalar_one_or_none()
 
     async def list_sessions(
-        self, status: str | None = None
+        self, status: str | None = None, doctor_id: str | None = None
     ) -> list[ConsultationSession]:
         stmt = select(ConsultationSession).order_by(ConsultationSession.requested_at.desc())
+        if doctor_id:
+            # bác sĩ chỉ thấy ca chờ nhận và ca của chính mình, không thấy ca bác sĩ khác đang phụ trách
+            stmt = stmt.where(
+                or_(ConsultationSession.status == "pending", ConsultationSession.doctor_id == doctor_id)
+            )
         if status and status != "all":
             stmt = stmt.where(ConsultationSession.status == status)
         result = await self._db.execute(stmt)

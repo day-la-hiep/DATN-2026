@@ -4,7 +4,10 @@ import {
   User,
   Calendar,
   Filter,
+  LogOut,
 } from "lucide-react";
+import { logout } from "@/features/auth/logout";
+import { getAuthenticatedUser } from "@/services/client";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useDoctorStore } from "../store";
 import { STATUS_CONFIG, FILTER_OPTIONS } from "../constants";
@@ -98,6 +101,8 @@ export function SessionList() {
   const selectSession = useDoctorStore((s) => s.selectSession);
   const setStatusFilter = useDoctorStore((s) => s.setStatusFilter);
 
+  const account = getAuthenticatedUser();
+
   const filteredSessions = sessions.filter((s) => {
     if (statusFilter === "all") return true;
     return s.status === statusFilter;
@@ -173,6 +178,21 @@ export function SessionList() {
             />
           ))
         )}
+      </div>
+
+      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5">
+        <span className="truncate text-xs font-medium text-foreground">
+          {account?.full_name || account?.username || "Bác sĩ"}
+        </span>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => void logout()}
+          className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          <LogOut className="size-3.5" />
+          Đăng xuất
+        </Button>
       </div>
     </div>
   );
