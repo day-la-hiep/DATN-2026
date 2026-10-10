@@ -171,8 +171,7 @@ export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
             <span className="gradient-text">Chăm sóc từ hôm nay.</span>
           </h1>
           <p className="mt-5 max-w-md text-sm leading-7 text-background/70 sm:text-base">
-            Tạo không gian riêng để theo dõi sức khỏe làn da và kết nối với
-            thông tin chăm sóc đáng tin cậy.
+            Theo dõi sức khỏe làn da của bạn.
           </p>
         </div>
 
@@ -240,9 +239,6 @@ export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                 <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                   Khu vực tài khoản
                 </p>
-                <p className="mt-1 text-xs font-medium text-foreground">
-                  Riêng tư và bảo mật
-                </p>
               </div>
             </div>
 
@@ -262,11 +258,6 @@ export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                   </>
                 )}
               </h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {isRegister
-                  ? "Bắt đầu hành trình chăm sóc làn da với hồ sơ cá nhân."
-                  : "Đăng nhập để tiếp tục hành trình chăm sóc làn da."}
-              </p>
             </div>
 
             <div

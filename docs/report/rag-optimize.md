@@ -35,7 +35,7 @@ Tool mặc định của agent là `hybrid_retrieval`; ba tool chuyên biệt `s
   - bỏ stopword, nhưng **giữ từ phủ định và đơn vị/liều** vì mang nghĩa lâm sàng; nguồn stopword hardcode `builtin`, có sẵn đường mở rộng sang corpus nltk (`stopwords.py`);
   - thêm token bỏ dấu `~vay` (trọng số thấp 0.3 ở câu hỏi) để câu hỏi gõ không dấu vẫn khớp;
   - thuật ngữ như `il-17`, `5-fu` giữ nguyên cụm và thêm các phần con.
-- **Chọn ngôn ngữ theo tài liệu**: `Profile.indexing.text_language` ∈ {`vi`, `en`, `mixed`} (mặc định `mixed`), chọn trong hộp "Cài đặt sách" ở `/admin/documents`. Sách thuần Anh bỏ qua underthesea để lưu nhanh hơn. Mỗi point ghi payload `bm25_mode`, lúc tìm kiếm câu hỏi được mã hoá theo từng mode rồi lọc đúng nhóm, nên mọi tài liệu được khớp đối xứng.
+- **Chọn ngôn ngữ theo tài liệu**: `Profile.indexing.text_language` ∈ {`vi`, `en`, `mixed`} (mặc định `mixed`), chọn trong hộp "Cài đặt sách" ở `/doctor/documents`. Sách thuần Anh bỏ qua underthesea để lưu nhanh hơn. Mỗi point ghi payload `bm25_mode`, lúc tìm kiếm câu hỏi được mã hoá theo từng mode rồi lọc đúng nhóm, nên mọi tài liệu được khớp đối xứng.
 
 ### 2.4 Embedding và reranker Qwen3 qua OpenRouter
 - Embedding: `qwen/qwen3-embedding-8b` (4096 chiều), gọi `POST /embeddings`, có prefix `Instruct:` cho câu hỏi theo cách Qwen3 được huấn luyện (`agent/common/embeddings.py`).
@@ -62,7 +62,7 @@ Tool mặc định của agent là `hybrid_retrieval`; ba tool chuyên biệt `s
 
 ## 5. Việc cần làm sau khi nhận nhánh
 1. Đặt `OPENROUTER_API_KEY`; để trống `QDRANT_LEGACY_BOOK_COLLECTION` (collection cũ khác số chiều).
-2. **Index lại sách**: collection `v4` đang trống, và sparse vector cũ dùng tokenizer cũ. Chọn ngôn ngữ trong Cài đặt sách rồi chạy lại bước `index` ở `/admin/documents`.
+2. **Index lại sách**: collection `v4` đang trống, và sparse vector cũ dùng tokenizer cũ. Chọn ngôn ngữ trong Cài đặt sách rồi chạy lại bước `index` ở `/doctor/documents`.
 3. Đo thử bằng `agent/test/try_retrieval.py`: "vảy nến mảng", "treatments for psoriasis", "IL-17", "methotrexate chống chỉ định".
 
 ## 6. Hạn chế đã biết (ghi vào báo cáo đồ án)

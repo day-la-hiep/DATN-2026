@@ -5,6 +5,8 @@ import { Bot, User, Stethoscope, Info, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDoctorStore } from "../store";
 import type { DoctorViewMessage } from "../types";
+import { Hint } from "@/components/ui/hint";
+import { STATUS_CONFIG } from "../constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MarkdownMessage } from "@/features/chat/components/MarkdownMessage";
 
@@ -79,7 +81,7 @@ function ChatBubble({ message }: { message: DoctorViewMessage }) {
       {/* Bubble */}
       <div className="max-w-[85%] min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <span className="text-[11px] font-medium text-muted-foreground">
             {cfg.label}
           </span>
           <span className="text-[10px] text-muted-foreground/60 font-mono">
@@ -133,7 +135,7 @@ export function ChatViewer() {
       <div className="flex flex-1 items-center justify-center text-muted-foreground">
         <div className="text-center">
           <Bot className="size-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Chọn một phiên tư vấn để xem</p>
+          <p className="text-sm">Chọn một ca</p>
         </div>
       </div>
     );
@@ -141,25 +143,19 @@ export function ChatViewer() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="border-b border-border px-4 py-3 bg-background/50 backdrop-blur-sm flex items-center justify-between">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-foreground truncate">
-            {activeSession?.conversationTitle ?? "Cuộc hội thoại"}
+      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
+        <Hint side="bottom" content={`${activeSession?.conversationTitle ?? "Cuộc hội thoại"} · ${messages.length} tin nhắn giữa AI, bệnh nhân và bác sĩ`}>
+          <h3 className="min-w-0 truncate font-serif text-lg font-bold tracking-tight text-foreground">
+            {activeSession?.patient?.fullName ?? activeSession?.conversationTitle ?? "Hội thoại"}
           </h3>
-          <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-brand/60" />
-            Lịch sử hội thoại AI – Bệnh nhân
-            <span className="text-muted-foreground/50">•</span>
-            <span className="font-mono">{messages.length} tin nhắn</span>
-          </p>
-        </div>
-
-        {activeSession?.status === "active" && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Bác sĩ đang tiếp quản
-          </div>
+        </Hint>
+        {activeSession && (
+          <Hint side="bottom" content={STATUS_CONFIG[activeSession.status].hint}>
+            <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <span className={cn("size-2 rounded-full", STATUS_CONFIG[activeSession.status].dotClass, activeSession.status === "active" && "animate-pulse")} />
+              {STATUS_CONFIG[activeSession.status].label}
+            </span>
+          </Hint>
         )}
       </div>
 
@@ -188,41 +184,36 @@ export function ChatViewer() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area (Doctor reply bar) */}
-      <div className="border-t border-border p-3 bg-background/80 backdrop-blur-sm">
+      <div className="border-t border-border p-3">
         {isResolved ? (
-          <div className="flex items-center justify-center p-3 rounded-xl bg-muted/40 text-xs text-muted-foreground">
-            Phiên tư vấn đã kết thúc — Chế độ chỉ đọc
-          </div>
+          <Hint content="Phiên tư vấn đã kết thúc, chỉ xem lại được.">
+            <p className="rounded-xl bg-muted/40 p-3 text-center text-xs text-muted-foreground">Chỉ xem</p>
+          </Hint>
         ) : (
-          <div className="space-y-1.5">
-            <div className="relative flex items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-xs transition-colors focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10">
-              <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Nhập phản hồi tư vấn cho bệnh nhân (Enter để gửi)..."
-                rows={2}
-                className="flex-1 resize-none bg-transparent px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
-              />
+          <div className="flex items-end gap-2 rounded-2xl border border-border bg-card p-2 transition-colors focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Phản hồi bệnh nhân..."
+              aria-label="Phản hồi bệnh nhân"
+              rows={2}
+              className="flex-1 resize-none bg-transparent px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+            <Hint content="Gửi (Enter). Xuống dòng: Shift + Enter. Gửi tin sẽ tự nhận ca và thay AI trả lời bệnh nhân.">
               <button
                 type="button"
                 onClick={handleSend}
                 disabled={!inputText.trim()}
+                aria-label="Gửi"
                 className={cn(
-                  "flex size-8 shrink-0 items-center justify-center rounded-xl transition-all",
-                  inputText.trim()
-                    ? "bg-brand text-brand-foreground hover:opacity-90 shadow-xs"
-                    : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                  "flex size-9 shrink-0 items-center justify-center rounded-xl transition-all active:scale-95",
+                  inputText.trim() ? "bg-brand text-brand-foreground shadow-sm hover:brightness-110" : "cursor-not-allowed bg-muted text-muted-foreground opacity-50"
                 )}
-                title="Gửi phản hồi"
               >
                 <CornerDownLeft className="size-4" />
               </button>
-            </div>
-            <p className="text-[10px] text-muted-foreground px-2">
-              💡 Bác sĩ gửi tin nhắn sẽ tự động tiếp quản ca tư vấn trực tiếp từ AI.
-            </p>
+            </Hint>
           </div>
         )}
       </div>

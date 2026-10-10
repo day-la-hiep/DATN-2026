@@ -38,7 +38,7 @@ Tổng quan kiến trúc: [docs/module/overview.md](docs/module/overview.md).
 
 ```
 fe/                      Next.js
-  app/                   route: /chats, /admin/documents
+  app/                   route: /chats, /doctor/documents
   features/chat/         store Zustand, types, components chat
   features/document-pipeline/  api, hooks TanStack Query, components admin
   services/              HTTP client, SSE, adapter wire ↔ UI
@@ -72,7 +72,7 @@ make worker      # Agent Worker — bắt buộc để agent trả lời
 make frontend    # FE http://localhost:3000
 ```
 
-**Nạp dữ liệu đồ thị tri thức** (Neo4j mới tạo đang trống; chunk sách vào Qdrant qua giao diện `/admin/documents`), chạy trong `core/`:
+**Nạp dữ liệu đồ thị tri thức** (Neo4j mới tạo đang trống; chunk sách vào Qdrant qua giao diện `/doctor/documents`), chạy trong `core/`:
 
 ```bash
 uv run python data_ingest/01_normalize/scripts/load_primekg.py          # PrimeKG → Neo4j

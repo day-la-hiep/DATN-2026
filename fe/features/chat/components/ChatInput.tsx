@@ -23,6 +23,7 @@ import { ImageThumbnail } from "./ImageThumbnail";
 import { useComposerStore } from "../composerStore";
 import type { FileAttachment } from "../types";
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -457,8 +458,8 @@ export function ChatInput({
             }}
             placeholder={
               disabled
-                ? "Bắt đầu một cuộc trò chuyện mới..."
-                : "Hỏi về vấn đề da liễu của bạn... (Gõ / để chọn kỹ năng)"
+                ? "Tạo cuộc trò chuyện mới để hỏi"
+                : "Hỏi về da liễu..."
             }
             className="max-h-40 w-full resize-none bg-transparent px-2 py-1 text-sm sm:text-base text-foreground outline-hidden placeholder:text-muted-foreground/60 disabled:opacity-40 font-normal leading-relaxed"
           />
@@ -480,6 +481,7 @@ export function ChatInput({
               )}
 
               {/* Attach file button */}
+              <Hint content="Đính kèm ảnh hoặc tệp: PDF, Word, Excel, TXT, JPG, PNG.">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -489,6 +491,7 @@ export function ChatInput({
                 <Paperclip className="size-3.5 text-brand" />
                 <span className="hidden sm:inline">Đính kèm</span>
               </button>
+              </Hint>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -537,6 +540,7 @@ export function ChatInput({
             <div className="flex items-center gap-2">
               
 
+              <Hint content="Gửi (Enter). Xuống dòng: Shift + Enter. Gõ / để chọn kỹ năng.">
               <button
                 type="button"
                 onClick={handleSend}
@@ -546,6 +550,7 @@ export function ChatInput({
               >
                 <ArrowUp className="size-4.5" />
               </button>
+              </Hint>
             </div>
           </div>
         </div>
@@ -555,11 +560,11 @@ export function ChatInput({
           {streaming ? (
             <span className="flex items-center justify-center gap-2 font-medium text-brand">
               <span className="size-2 rounded-full bg-brand animate-pulse-subtle" />
-              Hệ thống đang tư vấn — bạn có thể tiếp tục nhập câu hỏi
+              Đang tư vấn · có thể nhập tiếp
             </span>
           ) : (
             <span>
-              Lưu ý: Thông tin tư vấn chỉ mang tính tham khảo, không thay thế chẩn đoán chuyên khoa của bác sĩ.
+              Chỉ mang tính tham khảo, không thay thế chẩn đoán của bác sĩ.
             </span>
           )}
         </div>

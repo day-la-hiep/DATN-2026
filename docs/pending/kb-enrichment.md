@@ -7,7 +7,7 @@ giàu KB. Chưa làm, chưa có entity trong `dto/base`. Tài liệu này ghi l�
 
 KB hiện chỉ được bổ sung theo 2 cách, đều là nạp nguyên lô:
 - Script nạp guideline / KG (`core/data_ingest/`).
-- Pipeline số hoá sách (`/admin/documents`).
+- Pipeline số hoá sách (`/doctor/documents`).
 
 Chưa có cách bổ sung **từng mẩu tri thức nhỏ** phát hiện trong lúc dùng hệ thống, ví dụ:
 - Chatbot không tìm được guideline cho một bệnh, phải dùng web.

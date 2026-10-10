@@ -98,6 +98,23 @@ against the mock first).
 call `useRefreshDocument(documentId)` in `onSuccess`, `toast.error(errorMessage(e))` in `onError`), use
 the hook from a component in `components/`.
 
+## Đặt tên label & nút (tối giản)
+
+Giao diện chỉ giữ **tên gọi ngắn**; hướng dẫn đầy đủ đặt vào hover (`components/ui/hint.tsx` → `<Hint content=...>`).
+
+- **Nút / tab / chip lọc**: 1–2 từ, động từ hoặc danh từ chính ("Nhận ca", "Đóng ca", "Gửi", "Chờ"). Không lặp danh từ
+  đã rõ theo ngữ cảnh ("Nhận ca tư vấn" → "Nhận ca" khi đang ở màn ca tư vấn).
+- **Tiêu đề mục**: ≤ 3 từ ("Ca tư vấn", "Báo cáo", "Dữ kiện"). Không kèm dòng phụ giải thích cố định bên dưới.
+- **Trạng thái**: chấm màu + 1 từ ("Chờ", "Đang", "Xong"); nghĩa đầy đủ nằm trong hint.
+- **Placeholder**: ≤ 4 từ. Phím tắt, ràng buộc, hậu quả của hành động → hint của nút, không viết thành đoạn chữ nhỏ phía dưới.
+- **Hint** là câu đầy đủ, nói *việc này làm gì / hậu quả*, tối đa 2 câu. Nút chỉ có icon bắt buộc có `aria-label`
+  (cùng nội dung ngắn) và `Hint`.
+- Mọi thứ chỉ có trong hint thì phải là thông tin phụ; thông tin quyết định (tên bệnh nhân, trạng thái, hành động
+  chính) luôn hiển thị. Cảnh báo "không phải chẩn đoán y khoa" của kết quả AI giữ nhãn ngắn ("gợi ý") hiển thị sẵn,
+  câu đầy đủ trong hint.
+- Cấu hình nhãn dùng chung đặt trong `constants.ts` của feature với cặp `label` (ngắn) + `hint` (đầy đủ);
+  xem `features/doctor/constants.ts`.
+
 ## Code style
 
 - Path alias `@/*`, never deep relative imports (`../../../`) across feature boundaries.

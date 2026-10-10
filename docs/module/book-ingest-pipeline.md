@@ -5,13 +5,13 @@ chunk trong khung đó và nạp vào Qdrant làm kho tri thức. Mỗi bước 
 bước sau mới chạy.
 
 > Tên file giữ là "book" cho quen, còn code đã đổi hết sang **Document** (`documents`, `DocumentService`,
-> `/admin/documents`). Hiện chỉ `type="book"` đi qua pipeline.
+> `/doctor/documents`). Hiện chỉ `type="book"` đi qua pipeline.
 
 ## 1. Code nằm ở đâu
 
 | Việc | File |
 |---|---|
-| FE | `fe/app/admin/documents/page.tsx` (danh sách + upload), `[documentId]/page.tsx` (chi tiết), `fe/features/document-pipeline/` (`api.ts`, `hooks.ts` TanStack Query, `components/` — `StagePanel`, `RunDialog`, `TocEditor`, `ChunkBrowser`, `FigureBrowser`, `PagePreview`, `StageLogDialog`, `SettingsDialog`) |
+| FE | `fe/app/doctor/documents/page.tsx` (danh sách + upload), `[documentId]/page.tsx` (chi tiết), `fe/features/document-pipeline/` (`api.ts`, `hooks.ts` TanStack Query, `components/` — `StagePanel`, `RunDialog`, `TocEditor`, `ChunkBrowser`, `FigureBrowser`, `PagePreview`, `StageLogDialog`, `SettingsDialog`) |
 | API | `core/app/api/document_api.py` (prefix `/api/v1/admin`) |
 | Service | `document_service.py` (CRUD, cài đặt, mục lục, chunk, ảnh trang, Qdrant), `document_ingest_pipeline_service.py` (kiểm tra, chạy nền, dừng, duyệt, áp lại) |
 | Repository | `document_repository.py` (stateless, nhận `document_id`), `document_override_repository.py` (`repo.overrides`) |

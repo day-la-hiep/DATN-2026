@@ -80,7 +80,7 @@ Quan hệ **1-1** với `users`: PK đồng thời là FK nên một user chỉ 
 
 ### `admins` — vai trò quản trị
 
-Quan hệ 1-1 với `users`, đánh dấu tài khoản quản trị (khu `/admin/documents`). Chưa có field riêng.
+Quan hệ 1-1 với `users`, đánh dấu tài khoản quản trị (khu `/doctor/documents`). Chưa có field riêng.
 
 | Field | Kiểu | Null | Ý nghĩa |
 |---|---|---|---|

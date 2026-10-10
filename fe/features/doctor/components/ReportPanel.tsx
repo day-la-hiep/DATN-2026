@@ -1,10 +1,10 @@
 "use client";
 
-import { Brain, CheckCircle2, FileText } from "lucide-react";
+import { Brain, CheckCircle2, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDoctorStore } from "../store";
 import { STATUS_ACTION_CONFIG } from "../constants";
-import { Badge } from "@/components/ui/badge";
+import { Hint } from "@/components/ui/hint";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PatientInfoCard } from "./PatientInfoCard";
@@ -26,7 +26,7 @@ export function ReportPanel() {
       <div className="flex flex-1 items-center justify-center text-muted-foreground p-6">
         <div className="text-center">
           <FileText className="size-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Chọn một ca tư vấn để xem báo cáo AI</p>
+          <p className="text-sm">Chọn một ca</p>
         </div>
       </div>
     );
@@ -45,82 +45,50 @@ export function ReportPanel() {
   const actionCfg = STATUS_ACTION_CONFIG[session.status] ?? STATUS_ACTION_CONFIG.pending;
   const ActionIcon = actionCfg.icon;
 
+  const reportTime = session.report?.createdAt ? new Date(session.report.createdAt).toLocaleString("vi-VN") : null;
+
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="border-b border-border px-4 py-3 bg-background/50 backdrop-blur-sm">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="flex items-center justify-center size-6 rounded-lg bg-brand/10">
-            <Brain className="size-3.5 text-brand" />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground">
-            Báo cáo AI kết luận
-          </h3>
-        </div>
-        <p className="text-[10px] text-muted-foreground font-mono">
-          PRE-CONSULTATION REPORT •{" "}
-          {session.report?.createdAt
-            ? new Date(session.report.createdAt).toLocaleString("vi-VN")
-            : "Chưa có"}
-        </p>
+      <div className="space-y-3 border-b border-border px-4 py-3">
+        <Hint side="left" content={reportTime ? `Báo cáo AI tạo lúc ${reportTime}` : "Chưa có báo cáo AI cho ca này"}>
+          <h3 className="w-fit font-serif text-lg font-bold tracking-tight text-foreground">Báo cáo</h3>
+        </Hint>
+        <PatientInfoCard patient={session.patient} reason={session.reason} />
       </div>
 
-      {/* Main Content Scroll Area */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Patient overview card */}
-        <div className="px-4 pt-4 pb-3">
-          <PatientInfoCard patient={session.patient} reason={session.reason} />
-        </div>
-
-        {/* Structured Clinical Facts */}
+      <div className="flex-1 space-y-1 overflow-y-auto pt-4">
         <ClinicalFactList facts={session.clinicalFacts ?? []} />
-
-        {/* AI Markdown Summary */}
         {session.report ? (
           <AiSummaryView summary={session.report.summary} />
         ) : (
           <div className="px-4 py-8 text-center text-muted-foreground">
-            <Brain className="size-8 mx-auto mb-2 opacity-30" />
-            <p className="text-xs">Chưa có báo cáo AI cho phiên này</p>
+            <Brain className="mx-auto mb-2 size-7 opacity-30" />
+            <p className="text-xs">Chưa có báo cáo</p>
           </div>
         )}
       </div>
 
-      {/* Action Footer Button */}
-      {actionCfg.action && (
-        <div className="border-t border-border p-4 bg-background/50">
-          <Button
-            disabled={actionLoading}
-            onClick={() =>
-              actionCfg.action === "accept"
-                ? acceptSession(session.id)
-                : resolveSession(session.id)
-            }
-            className={cn(
-              "w-full rounded-xl h-10 text-sm font-semibold transition-all shadow-sm",
-              actionCfg.buttonClass
-            )}
-          >
-            <ActionIcon className="size-4 mr-2" />
-            {actionLoading ? "Đang xử lý..." : actionCfg.label}
-          </Button>
-        </div>
-      )}
-
-      {session.status === "resolved" && (
-        <div className="border-t border-border p-4 bg-background/50">
-          <Badge
-            variant="outline"
-            className="w-full justify-center py-2 rounded-xl text-xs font-medium border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
-          >
-            <CheckCircle2 className="size-3.5 mr-1.5" />
-            Phiên đã hoàn tất •{" "}
-            {session.resolvedAt
-              ? new Date(session.resolvedAt).toLocaleString("vi-VN")
-              : ""}
-          </Badge>
-        </div>
-      )}
+      <div className="border-t border-border p-3">
+        {actionCfg.action ? (
+          <Hint side="top" content={actionCfg.hint}>
+            <Button
+              disabled={actionLoading}
+              onClick={() => (actionCfg.action === "accept" ? acceptSession(session.id) : resolveSession(session.id))}
+              className={cn("h-10 w-full rounded-xl text-sm font-medium transition-all active:scale-[0.98]", actionCfg.buttonClass)}
+            >
+              {actionLoading ? <Loader2 className="size-4 animate-spin" /> : <ActionIcon className="size-4" />}
+              {actionLoading ? "Đang xử lý" : actionCfg.label}
+            </Button>
+          </Hint>
+        ) : (
+          <Hint side="top" content={session.resolvedAt ? `Đã đóng lúc ${new Date(session.resolvedAt).toLocaleString("vi-VN")}` : actionCfg.hint}>
+            <p className="flex items-center justify-center gap-1.5 rounded-xl bg-muted/50 py-2.5 text-xs font-medium text-muted-foreground">
+              <CheckCircle2 className="size-3.5" />
+              {actionCfg.label}
+            </p>
+          </Hint>
+        )}
+      </div>
     </div>
   );
 }

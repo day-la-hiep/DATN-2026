@@ -1,13 +1,13 @@
 ---
 name: derma-pipeline-conventions
-description: Conventions for the Derma document-ingest pipeline (`core/pipeline/document_ingest/` — PDF document → table-of-contents-anchored chunks → Qdrant, admin UI at /admin/documents) — the 4-stage model (ingest/toc/chunks/index), the StageContext contract, the `app/dto/base/document.py` business entities (`Document`/`DocumentChunk`/`DocumentStage`/`DocumentStageOverride`), where transformation logic vs infra clients vs persistence go, and how to add or modify a stage. Use whenever the user asks to add/modify a pipeline stage, touches `pipeline/document_ingest/`, `app/services/document_*.py`, `app/repositories/document_repository.py`, asks about document/book/TOC/chunk ingestion, or asks where document-ingest code should live — even if they don't say "pipeline" or "convention".
+description: Conventions for the Derma document-ingest pipeline (`core/pipeline/document_ingest/` — PDF document → table-of-contents-anchored chunks → Qdrant, admin UI at /doctor/documents) — the 4-stage model (ingest/toc/chunks/index), the StageContext contract, the `app/dto/base/document.py` business entities (`Document`/`DocumentChunk`/`DocumentStage`/`DocumentStageOverride`), where transformation logic vs infra clients vs persistence go, and how to add or modify a stage. Use whenever the user asks to add/modify a pipeline stage, touches `pipeline/document_ingest/`, `app/services/document_*.py`, `app/repositories/document_repository.py`, asks about document/book/TOC/chunk ingestion, or asks where document-ingest code should live — even if they don't say "pipeline" or "convention".
 ---
 
 # Derma document-ingest pipeline (`pipeline/document_ingest/`) — conventions
 
 Paths are relative to `core/`. Turns an uploaded PDF (currently: textbooks, `Document.type ==
 "book"`) into table-of-contents-anchored chunks in Qdrant, reviewed stage-by-stage by a human via
-`/admin/documents` (FE: `derma-fe-conventions`'s `features/document-pipeline/`). No CLI — Core runs each stage
+`/doctor/documents` (FE: `derma-fe-conventions`'s `features/document-pipeline/`). No CLI — Core runs each stage
 in a background thread; everything lives in Postgres (`documents`, `document_stages`,
 `document_overrides`) + MinIO (`derma-documents` bucket) + Qdrant (`derma_document_chunks_v4`), never
 on local disk except a PDF scratch copy.

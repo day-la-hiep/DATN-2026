@@ -14,9 +14,9 @@ export function DoctorConsultationPage() {
   }, [init]);
 
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-background">
+    <div className="flex h-full w-full overflow-hidden bg-background">
       {/* Left Panel — Session List */}
-      <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-sidebar/70 backdrop-blur-md lg:flex xl:w-80">
+      <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-sidebar/70 backdrop-blur-md xl:flex 2xl:w-80">
         <SessionList />
       </aside>
 
@@ -26,7 +26,7 @@ export function DoctorConsultationPage() {
       </div>
 
       {/* Right Panel — AI Report */}
-      <aside className="hidden w-80 shrink-0 flex-col bg-sidebar/50 backdrop-blur-md lg:flex xl:w-96">
+      <aside className="hidden w-80 shrink-0 flex-col bg-sidebar/50 backdrop-blur-md xl:flex 2xl:w-96">
         <ReportPanel />
       </aside>
     </div>

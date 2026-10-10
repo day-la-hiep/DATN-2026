@@ -1,40 +1,20 @@
+import { Hint } from "@/components/ui/hint";
 import type { PatientProfile } from "../types";
 
-interface PatientInfoCardProps {
-  patient: PatientProfile;
-  reason: string;
-}
-
-export function PatientInfoCard({ patient, reason }: PatientInfoCardProps) {
-  const formattedDob = patient?.dob
-    ? new Date(patient.dob).toLocaleDateString("vi-VN")
-    : "Chưa cập nhật";
+export function PatientInfoCard({ patient, reason }: { patient: PatientProfile; reason: string }) {
+  const dob = patient?.dob ? new Date(patient.dob).toLocaleDateString("vi-VN") : "Chưa cập nhật";
+  const gender = patient?.gender === "female" ? "Nữ" : "Nam";
 
   return (
-    <div className="rounded-xl border border-border bg-card/80 p-3 shadow-xs">
-      <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2 font-semibold">
-        Thông tin bệnh nhân
-      </p>
-      <div className="grid grid-cols-2 gap-y-1.5 gap-x-3 text-xs">
-        <div>
-          <span className="text-muted-foreground">Họ tên:</span>{" "}
-          <span className="font-medium text-foreground">{patient?.fullName ?? "Chưa rõ"}</span>
-        </div>
-        <div>
-          <span className="text-muted-foreground">Giới:</span>{" "}
-          <span className="font-medium text-foreground">
-            {patient?.gender === "female" ? "Nữ" : "Nam"}
-          </span>
-        </div>
-        <div>
-          <span className="text-muted-foreground">Ngày sinh:</span>{" "}
-          <span className="font-medium text-foreground">{formattedDob}</span>
-        </div>
-        <div>
-          <span className="text-muted-foreground">Lý do:</span>{" "}
-          <span className="font-medium text-foreground line-clamp-1">{reason}</span>
-        </div>
-      </div>
+    <div className="space-y-1">
+      <Hint side="left" content={`Ngày sinh: ${dob}`}>
+        <p className="w-fit text-sm font-semibold text-foreground">
+          {patient?.fullName ?? "Chưa rõ"} <span className="font-normal text-muted-foreground">· {gender}</span>
+        </p>
+      </Hint>
+      <Hint side="left" content={`Lý do tư vấn: ${reason || "chưa ghi"}`}>
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{reason}</p>
+      </Hint>
     </div>
   );
 }

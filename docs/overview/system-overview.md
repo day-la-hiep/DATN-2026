@@ -28,7 +28,7 @@ Derma Hospital gồm **2 module nghiệp vụ** dùng chung một Core (FastAPI)
 
 | Thành phần | Vai trò | Vị trí code |
 |---|---|---|
-| **FE** | Next.js App Router. `/chats` (Zustand store + SSE), `/admin/documents` (TanStack Query, poll) | `fe/app/`, `fe/features/chat/`, `fe/features/document-pipeline/` |
+| **FE** | Next.js App Router. `/chats` (Zustand store + SSE), `/doctor/documents` (TanStack Query, poll) | `fe/app/`, `fe/features/chat/`, `fe/features/document-pipeline/` |
 | **Core** | REST + SSE gateway, ghi Postgres, publish turn sang Worker, consume kết quả; chạy pipeline tài liệu trong thread nền | `core/app/` (`api/`, `services/`, `repositories/`, `models/`, `dto/`, `infra/`) |
 | **Agent Worker** | Tiến trình riêng, consume `agent_request_queue`, chạy agent LangGraph, stream event lên Redis | `core/agent/` (`worker.py`, `turn.py`, `graph/`, `tools/`, `middleware/`) |
 | **Pipeline tài liệu** | Chỉ biến đổi dữ liệu (PDF → trang → mục lục → chunk → vector) | `core/pipeline/document_ingest/` |

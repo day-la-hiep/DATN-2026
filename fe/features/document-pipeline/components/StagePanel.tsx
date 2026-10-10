@@ -4,6 +4,7 @@ import { Ban, Check, ChevronDown, Play, RotateCcw, ScrollText } from "lucide-rea
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Hint, HintIcon } from "@/components/ui/hint";
 import { cn } from "@/lib/utils";
 import { KeyValueGrid, StateBadge } from "./bits";
 import { STEP_INFO } from "../constants";
@@ -102,14 +103,23 @@ export function StagePanel({
       )}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 className="text-sm font-semibold tracking-tight text-foreground">{info.label}</h2>
+        <h2 className="flex items-center gap-1 text-sm font-semibold tracking-tight text-foreground">
+          {info.label}
+          <HintIcon
+            content={
+              <div className="space-y-1">
+                <p>{info.desc}</p>
+                {info.note && <p className="text-muted-foreground">{info.note}</p>}
+              </div>
+            }
+          />
+        </h2>
         <StateBadge state={stage.state} />
         {stage.uses_llm && (
           <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">LLM</span>
         )}
         {stage.finished_at && !running && <span className="text-[11px] text-muted-foreground">{fmt(stage.finished_at)}</span>}
       </div>
-      <p className="mt-1.5 max-w-3xl text-xs leading-relaxed text-muted-foreground">{info.desc}</p>
 
       <div className="mt-3 space-y-3">
         {running && (
@@ -136,14 +146,18 @@ export function StagePanel({
           </Alert>
         )}
         {stage.state === "stale" && (
-          <p className="text-xs text-orange-600 dark:text-orange-400">
-            Bước trước đó vừa được thay đổi, nên kết quả ở đây đã cũ — hãy làm lại bước này.
-          </p>
+          <Hint content="Bước trước đó vừa được thay đổi nên kết quả ở đây đã cũ. Hãy làm lại bước này.">
+            <p className="w-fit text-xs text-orange-600 dark:text-orange-400">Kết quả đã cũ, cần làm lại</p>
+          </Hint>
         )}
-        {canApprove && <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-400">Cần bạn xác nhận: {info.review}</p>}
+        {canApprove && (
+          <Hint content={info.review}>
+            <p className="w-fit text-xs text-amber-700 dark:text-amber-400">Cần bạn kiểm tra và xác nhận</p>
+          </Hint>
+        )}
         {stage.blocked_by.length > 0 && fresh && (
           <p className="text-xs text-muted-foreground">
-            Cần xác nhận trước: {stage.blocked_by.map((b) => STEP_INFO[b].label).join(", ")}.
+            Chờ xác nhận: {stage.blocked_by.map((b) => STEP_INFO[b].label).join(", ")}.
           </p>
         )}
         {warnings.length > 0 && (
@@ -161,7 +175,7 @@ export function StagePanel({
               className="flex cursor-pointer items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
             >
               <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
-              Kết quả tóm tắt
+              Kết quả
             </button>
             {open && (
               <div className="mt-2 rounded-xl bg-muted/50 p-3">
@@ -173,34 +187,58 @@ export function StagePanel({
 
         <div className="flex flex-wrap items-center gap-2">
           {running ? (
-            <Button variant="outline" size="sm" onClick={onCancel} disabled={busy}>
-              <Ban /> Dừng
-            </Button>
+            <Hint content="Dừng bước đang chạy. Có thể chạy lại sau.">
+              <span>
+                <Button variant="outline" size="sm" onClick={onCancel} disabled={busy}>
+                  <Ban /> Dừng
+                </Button>
+              </span>
+            </Hint>
           ) : (
-            <Button
-              variant={fresh || stage.state === "failed" ? "default" : "outline"}
-              size="sm"
-              onClick={onRun}
-              disabled={busy || anotherRunning || stage.blocked_by.length > 0}
+            <Hint
+              content={
+                stage.blocked_by.length > 0
+                  ? "Cần xác nhận bước trước trước khi chạy bước này."
+                  : anotherRunning
+                    ? "Đang có bước khác chạy, chờ bước đó xong."
+                    : fresh
+                      ? "Chạy bước này lần đầu."
+                      : "Chạy lại bước này và thay thế kết quả hiện tại."
+              }
             >
-              {fresh || stage.state === "failed" || stage.state === "cancelled" ? <Play /> : <RotateCcw />}
-              {fresh ? "Bắt đầu" : "Làm lại"}
-            </Button>
+              <span>
+                <Button
+                  variant={fresh || stage.state === "failed" ? "default" : "outline"}
+                  size="sm"
+                  onClick={onRun}
+                  disabled={busy || anotherRunning || stage.blocked_by.length > 0}
+                >
+                  {fresh || stage.state === "failed" || stage.state === "cancelled" ? <Play /> : <RotateCcw />}
+                  {fresh ? "Bắt đầu" : "Làm lại"}
+                </Button>
+              </span>
+            </Hint>
           )}
           {canApprove && (
-            <Button size="sm" onClick={onApprove} disabled={busy} className="bg-emerald-600 bg-none hover:bg-emerald-700">
-              <Check /> Xác nhận bước này
-            </Button>
+            <Hint content="Xác nhận kết quả đã đúng để mở bước tiếp theo.">
+              <span>
+                <Button size="sm" onClick={onApprove} disabled={busy} className="bg-emerald-600 bg-none hover:bg-emerald-700">
+                  <Check /> Xác nhận
+                </Button>
+              </span>
+            </Hint>
           )}
           {stage.state === "approved" && onNext && (
             <Button variant="ghost" size="sm" onClick={onNext}>
-              Sang bước tiếp theo →
+              Bước tiếp →
             </Button>
           )}
           {(stage.started_at || running) && (
-            <Button variant="ghost" size="sm" onClick={onLog}>
-              <ScrollText /> Nhật ký
-            </Button>
+            <Hint content="Xem nhật ký xử lý của bước này.">
+              <Button variant="ghost" size="sm" onClick={onLog}>
+                <ScrollText /> Nhật ký
+              </Button>
+            </Hint>
           )}
         </div>
       </div>

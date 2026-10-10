@@ -22,7 +22,7 @@ Hướng dẫn cho Claude khi làm việc trong repo này.
 Cấu trúc thư mục:
 
 ```
-fe/        Next.js App Router: /chats (chat), /admin/documents (pipeline admin)
+fe/        Next.js App Router: /chats (chat), /doctor/documents (pipeline admin)
 core/      FastAPI (app/), agent LangGraph (agent/), pipeline (pipeline/document_ingest/),
            migrations Alembic (migrations/), dữ liệu nạp (data_ingest/)
 docs/      tài liệu kiến trúc + hướng dẫn chung
@@ -37,7 +37,7 @@ make migrate        # alembic upgrade head
 make init-db        # bucket MinIO + dữ liệu mẫu (user-1, bác sĩ, admin) — chạy sau migrate
 make backend        # Core FastAPI :3050
 make worker         # Agent Worker (tiến trình riêng, consume RabbitMQ)
-make ingest-worker  # Ingest Worker: chạy các bước pipeline tài liệu (bắt buộc chạy thì bấm "Chạy" ở /admin/documents mới có tác dụng)
+make ingest-worker  # Ingest Worker: chạy các bước pipeline tài liệu (bắt buộc chạy thì bấm "Chạy" ở /doctor/documents mới có tác dụng)
 make frontend       # Next.js :3000
 ```
 
