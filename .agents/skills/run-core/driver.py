@@ -8,7 +8,7 @@
   driver.py answer <conversationId> <questionId> <optionId> "<label>"
   driver.py messages <conversationId>
 
-Đọc BASE_URL (mặc định http://localhost:3050) và APP_ACCESS_TOKEN (env, hoặc `.env` ở cwd).
+Đọc BASE_URL (mặc định http://localhost:3050).
 `chat`/`send` mở SSE `GET /conversations/{id}/stream` — bước này mới đẩy turn cho worker —
 rồi in từng event; message.delta được gộp lại thành 1 dòng cuối. Thoát 0 nếu turn kết thúc
 bằng message.done + [DONE], 2 nếu lỗi/timeout, 3 nếu agent dừng hỏi lại (message.question).
@@ -18,23 +18,8 @@ import json, os, sys, time, uuid, urllib.request, urllib.error
 BASE = os.environ.get("BASE_URL", "http://localhost:3050").rstrip("/") + "/api/v1"
 
 
-def _token() -> str:
-    t = os.environ.get("APP_ACCESS_TOKEN")
-    if t is not None:
-        return t
-    try:
-        for line in open(".env"):
-            if line.startswith("APP_ACCESS_TOKEN="):
-                return line.split("=", 1)[1].strip().strip('"')
-    except OSError:
-        pass
-    return ""
-
-
 def _req(method, path, body=None, timeout=30):
     headers = {"Content-Type": "application/json"}
-    if _token():
-        headers["Authorization"] = f"Bearer {_token()}"
     data = json.dumps(body).encode() if body is not None else None
     r = urllib.request.Request(BASE + path, data=data, method=method, headers=headers)
     try:

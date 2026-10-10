@@ -1,15 +1,15 @@
 ---
 name: derma-pipeline-conventions
-description: Conventions for the Derma document-ingest pipeline (`core/pipeline/document_ingest/` — PDF document → table-of-contents-anchored chunks → Qdrant, admin UI at /admin/documents) — the 4-stage model (ingest/toc/chunks/index), the StageContext contract, the `app/dto/base/document.py` business entities (`Document`/`DocumentChunk`/`ProcessStage`/`ProcessStageOverride`), where transformation logic vs infra clients vs persistence go, and how to add or modify a stage. Use whenever the user asks to add/modify a pipeline stage, touches `pipeline/document_ingest/`, `app/services/document_*.py`, `app/repositories/document_repository.py`, asks about document/book/TOC/chunk ingestion, or asks where document-ingest code should live — even if they don't say "pipeline" or "convention".
+description: Conventions for the Derma document-ingest pipeline (`core/pipeline/document_ingest/` — PDF document → table-of-contents-anchored chunks → Qdrant, admin UI at /doctor/documents) — the 4-stage model (ingest/toc/chunks/index), the StageContext contract, the `app/dto/base/document.py` business entities (`Document`/`DocumentChunk`/`DocumentStage`/`DocumentStageOverride`), where transformation logic vs infra clients vs persistence go, and how to add or modify a stage. Use whenever the user asks to add/modify a pipeline stage, touches `pipeline/document_ingest/`, `app/services/document_*.py`, `app/repositories/document_repository.py`, asks about document/book/TOC/chunk ingestion, or asks where document-ingest code should live — even if they don't say "pipeline" or "convention".
 ---
 
 # Derma document-ingest pipeline (`pipeline/document_ingest/`) — conventions
 
 Paths are relative to `core/`. Turns an uploaded PDF (currently: textbooks, `Document.type ==
 "book"`) into table-of-contents-anchored chunks in Qdrant, reviewed stage-by-stage by a human via
-`/admin/documents` (FE: `derma-fe-conventions`'s `features/document-pipeline/`). No CLI — Core runs each stage
+`/doctor/documents` (FE: `derma-fe-conventions`'s `features/document-pipeline/`). No CLI — Core runs each stage
 in a background thread; everything lives in Postgres (`documents`, `document_stages`,
-`document_overrides`) + MinIO (`derma-documents` bucket) + Qdrant (`derma_document_chunks`), never
+`document_overrides`) + MinIO (`derma-documents` bucket) + Qdrant (`derma_document_chunks_v4`), never
 on local disk except a PDF scratch copy.
 
 Renamed from `book_ingest`/`Book*` on 2026-10-04 (see migration
@@ -28,7 +28,7 @@ PDF → ingest (text/page)  → toc (LLM reads TOC, human reviews) → mapping (
 | `ingest` | `stages/ingest.py` | `pages.jsonl` | no |
 | `toc` | `stages/toc.py` + `mapping.py` | `toc.auto.json` (machine), `toc.json` (+ overrides + offset + anchor) | reads a few dozen TOC pages |
 | `chunks` | `stages/chunks.py` | `chunks.jsonl`, `review/chunks.json` | no |
-| `index` | `stages/index.py` (+ `DocumentService`) | `index.json` + points in Qdrant | no (local embedding) |
+| `index` | `stages/index.py` (+ `DocumentService`) | `index.json` + points in Qdrant | no (embedding via OpenRouter) |
 
 Stage order/deps live in `app/models/document_stage.py` (`STAGES`, `downstream()`) — the single
 source of truth, shared by repository, runner, and API. `toc` does **not** depend on `ingest`:
@@ -47,9 +47,9 @@ and they are NOT the same class even when field sets overlap:
 
 | Layer | Classes | Lives in |
 |---|---|---|
-| Business entity (source of truth) | `Document` (holds `source_file`/`ingested_file: File` + `chunks`), `DocumentChunk`, `ProcessStage`, `ProcessStageOverride`; `File` (shared, MinIO object: `file_name`, `storage_key`, `content_type`, `size`, `created_at`) | `app/dto/base/document.py`, `app/dto/base/file.py` |
+| Business entity (source of truth) | `Document` (holds `source_file`/`ingested_file: File` + `chunks`), `DocumentChunk`, `DocumentStage`, `DocumentStageOverride`; `File` (shared, MinIO object: `file_name`, `storage_key`, `content_type`, `size`, `created_at`) | `app/dto/base/document.py`, `app/dto/base/shared.py` |
 | ORM / Postgres schema | `Document`, `DocumentStage`, `DocumentOverride` | `app/models/document.py` |
-| API wire contract (camelCase) | `DocumentOutput`, `DocumentSummary`, `StageOutput`, `ChunkListOutput` (response) / `DocumentSettings`, `TocUpdate`, `RunStageInput` (request) | `app/dto/response/document.py`, `app/dto/request/document.py` |
+| API wire contract (snake_case, same-meaning fields named as in `dto/base`) | `DocumentOutput`, `DocumentSummary`, `StageOutput`, `ChunkListOutput` (response) / `DocumentSettings`, `TocUpdate`, `RunStageInput` (request) | `app/dto/response/document.py`, `app/dto/request/document.py` |
 
 `DocumentService` builds the `dto/base` entity from the ORM row first (`_document()`,
 `_process_stages()`), then maps entity → wire DTO (`_stage_output()`) before returning from an
@@ -117,7 +117,7 @@ from the stage id.
 it via `ctx.profile.<section>.<field>` in the stage; surface it in the settings UI
 (`derma-fe-conventions`'s `features/document-pipeline/components/SettingsDialog.tsx` + `types.ts`).
 
-**Add/change a `dto/base` field** (`Document`/`DocumentChunk`/`ProcessStage`/`ProcessStageOverride`)
+**Add/change a `dto/base` field** (`Document`/`DocumentChunk`/`DocumentStage`/`DocumentStageOverride`)
 — propose it and get user approval FIRST (`derma-core-conventions`'s `dto/base` gate), then update:
 the entity in `app/dto/base/document.py` → the ORM model in `app/models/document.py` (new Alembic
 migration) → `DocumentService`'s entity builders (`_document()`/`_process_stages()`) → the wire DTO
@@ -126,7 +126,7 @@ mapping (`_stage_output()`) → `app/dto/request|response/document.py` if the AP
 **Add an admin-pipeline API field/endpoint** — DTO in `app/dto/request/document.py` (input) or
 `app/dto/response/document.py` (output) → method on
 `DocumentService`/`DocumentIngestPipelineService`/`DocumentRepository` (whichever owns that data)
-→ route in `app/api/document_api.py` (all routes already sit behind `require_app_token`).
+→ route in `app/api/document_api.py`.
 Mirror in FE's `features/document-pipeline/api.ts` + `hooks.ts` (see `derma-fe-conventions`).
 
 ## Storage layout (MinIO `document/<document_id>/`)
@@ -135,7 +135,7 @@ Mirror in FE's `features/document-pipeline/api.ts` + `hooks.ts` (see `derma-fe-c
 embedded figures — see below), `pages.jsonl`, `toc.auto.json`, `toc.json`, `chunks.jsonl`,
 `index.json`, `status.json`, `overrides/`, `review/`, `logs/`, `docling_parts/` (OCR checkpoint —
 lets a killed `ingest` resume without re-OCRing finished pages). LLM cache: `_cache/llm/`. Chunks
-are embedded locally (384-dim) and upserted into Qdrant collection `derma_document_chunks`
+are embedded via OpenRouter (qwen/qwen3-embedding-8b, 4096-dim) and upserted into Qdrant collection `derma_document_chunks_v4` (unnamed dense vector + sparse vector `bm25` encoded by `app/infra/bm25/` (tokenizer + stopwords + sparse; `text_language` per document in `Profile.indexing`, stored as payload `bm25_mode`) in `DocumentService.upsert_chunks`; Qdrant applies IDF, so the agent's keyword leg queries Qdrant directly — no in-memory index)
 (`settings.QDRANT_DOCUMENT_COLLECTION`), payload carries `document_id`, part/section/topic, page,
 `source_pdf`. Deleting a document deletes both the MinIO objects and the Qdrant points; rerunning
 `index` replaces all of a document's points.
@@ -148,15 +148,15 @@ and write to MinIO, e.g. `document/<document_id>/figures/`), not something alrea
 
 ## Concurrency & control flow
 
-`run_stage` runs synchronously in the calling thread; the API's `start_stage` spawns a daemon
-thread and returns immediately — FE polls `GET /documents/{id}` for progress (see
-`derma-fe-conventions`'s `useDocument`/`useDocuments` polling). Each run gets its own
-`threading.Event` for cancellation (`ctx.cancel`, checked via `ctx.check_cancel()`/`ctx.progress`).
-If Core restarts mid-run, `_reconcile` in `DocumentIngestPipelineService` marks orphaned `running`
-stages `failed` (no thread survives a process restart) so they can be retried; `ingest`'s
-`docling_parts/` checkpoint means that retry doesn't re-OCR already-finished pages.
-`document_stages`/`document_overrides` writes happen under a Postgres row lock (`FOR UPDATE`)
-because Core and background stage threads write concurrently.
+Chạy bước nằm ở **Ingest Worker** (`app/workers/document_ingest_worker.py`, `make ingest-worker`), tiến trình riêng như Agent
+Worker. `start_stage` (Core, async) chạy `check_runnable` + `begin` (ghi `running`) rồi publish `document_ingest_queue`
+(`{document_id, stage_id, options}`); worker consume, chạy `execute` trong thread (một bước một lần, semaphore) và tự ghi
+kết quả/log. FE vẫn poll `GET /documents/{id}`. Dừng: `cancel_stage` đặt key Redis `document:ingest:cancel:{doc}:{stage}` +
+publish channel `document:ingest:cancel`; worker set `threading.Event` (`ctx.check_cancel()`/`ctx.progress`) hoặc đọc key
+khi nhận message nếu bước còn nằm trong queue. Khởi động worker: purge queue + `DocumentService.fail_orphaned_runs()`
+đánh dấu mọi bước `running` là `failed` (Core không còn biết bước nào thật sự chạy); `docling_parts/` giúp retry không OCR
+lại. `run_stage` (đồng bộ) vẫn dùng cho test/script. `document_stages`/`document_overrides` ghi dưới Postgres row lock
+(`FOR UPDATE`) vì Core và worker ghi đồng thời.
 
 ## Testing
 
@@ -168,9 +168,9 @@ MinIO/Postgres/Qdrant service needs to be running for these tests.
 ## Code style
 
 Same as `derma-core-conventions` (Vietnamese comments explaining *why*, basic-mode pyright, async
-I/O) — this pipeline lives inside `core/` and follows the same rules. Module docstrings here tend
-to front-load the non-obvious design decision (e.g. `mapping.py`'s docstring explains the
-offset/anchor algorithm before any code) — match that when adding a module. Stage-level prose
+I/O) — this pipeline lives inside `core/` and follows the same rules, including **no long module
+docstring at the top of a file and no multi-line function docstrings** (at most one line; put a
+non-obvious algorithm decision in a short comment next to the code, or in `README.md`). Stage-level prose
 ("sách", "cuốn sách") still refers to the book being processed — that's fine to leave as-is since
 the pipeline genuinely only processes `type="book"` documents today; only identifiers (`book_id`,
 `BookService`, table/route names) were renamed to `document_*`, not the descriptive Vietnamese text.

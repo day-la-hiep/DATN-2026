@@ -126,6 +126,10 @@ Quy tắc dùng chung:
 - `derma-pipeline-conventions` tham chiếu `derma-core-conventions` cho quy ước chung của `core/`
   (comment tiếng Việt, pyright basic, async I/O). Khi có mâu thuẫn, skill chuyên biệt hơn được ưu tiên.
 - Nếu đổi quy ước (tên module, route, cấu trúc thư mục), cập nhật skill tương ứng cùng lúc với code.
+- **`.claude/skills/` là nguồn duy nhất; `.agents/skills/` là bản sao cho agent khác.** Mỗi khi thêm/sửa/xoá file
+  trong `.claude/skills/`, cập nhật `.agents/skills/` ngay trong cùng thay đổi:
+  `rsync -a --exclude __pycache__ .claude/skills/ .agents/skills/` (thêm `--delete` khi xoá skill/file),
+  rồi `diff -rq .claude/skills .agents/skills` phải không báo khác biệt. Không sửa tay trong `.agents/skills/`.
 
 ## 6. Việc hay làm trong đồ án
 

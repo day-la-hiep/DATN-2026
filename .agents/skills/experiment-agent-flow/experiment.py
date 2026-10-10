@@ -7,7 +7,7 @@ Chạy từ core/:  uv run python .claude/skills/experiment-agent-flow/experimen
   experiment.py "Bệnh chàm là gì?"
   # đổi model / thêm chỉ dẫn vào prompt / giới hạn tool / bỏ middleware
   experiment.py "..." --model deepseek-v4-flash --prompt-append "Luôn hỏi lại trước khi kết luận." \
-      --tools make_plan,ask_user,lookup_dermo_term --skip-middleware inject_long_term_memory
+      --tools record_reasoning,ask_user,hybrid_retrieval --skip-middleware inject_long_term_memory
   # nhiều câu hỏi x nhiều biến thể x lặp lại, lưu trace JSON
   experiment.py --cases examples/cases.json --variants examples/variants.json --repeat 2 --out /tmp/exp
 
@@ -29,7 +29,7 @@ from agent.graph.chat_graph import (  # noqa: E402
     ALL_TOOLS, build_agent_graph, config_for, default_middleware,
 )
 from agent.prompt.orchestrator import SYSTEM_PROMPT  # noqa: E402
-from agent.state.context import AgentContext  # noqa: E402
+from agent.context.agent_context import AgentContext  # noqa: E402
 from app.config.settings import settings  # noqa: E402
 
 TOOL_BUDGET = 8  # SYSTEM_PROMPT mục 3: tối đa ~8 lần gọi tool/lượt (kể cả make_plan)

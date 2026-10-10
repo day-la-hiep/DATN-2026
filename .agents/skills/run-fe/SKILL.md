@@ -1,6 +1,6 @@
 ---
 name: run-fe
-description: Run, start, drive, and screenshot the Derma frontend (Next.js app in `fe/`, chat UI at /chats + admin book-ingest UI at /admin/documents, talks to core on :3050). Use when asked to run the frontend, start the Next dev server, check a UI change, screenshot a page, or verify fe talks to the real backend (not mock data).
+description: Run, start, drive, and screenshot the Derma frontend (Next.js app in `fe/`, chat UI at /chats + admin book-ingest UI at /doctor/documents, talks to core on :3050). Use when asked to run the frontend, start the Next dev server, check a UI change, screenshot a page, or verify fe talks to the real backend (not mock data).
 ---
 
 # Run `fe` (Next.js)
@@ -18,7 +18,7 @@ driver is the `claude-in-chrome` MCP browser tools (`navigate` + `computer` scre
   `NEXT_PUBLIC_USE_MOCK=false` (true uses fake localStorage data instead of core — check this
   first if a page looks right but data looks canned).
 - `core` backend running and reachable on :3050 (see `.claude/skills/run-core/`) — the chat
-  page and `/admin/documents` both fetch real data from it.
+  page and `/doctor/documents` both fetch real data from it.
 
 ## Setup
 
@@ -50,7 +50,7 @@ tabs_close_mcp(tabId)                         # clean up when done
 ```
 
 Verified 2026-10-03 against the live dev server: `/chats` renders the chat UI with real
-conversation history ("Da mặt bị mụn trứng cá nên chăm sóc..."); `/admin/documents` renders the
+conversation history ("Da mặt bị mụn trứng cá nên chăm sóc..."); `/doctor/documents` renders the
 book-ingest admin UI with two real books (Fitzpatrick's Color Atlas, FritzPatrick Clinical
 Disease) and their stage progress — i.e. both pages are pulling live data from `core`, not
 `NEXT_PUBLIC_USE_MOCK` fixtures.
