@@ -86,6 +86,13 @@ class QdrantVectorClient:
     async def collection_exists(self, name: str) -> bool:
         return await self.client.collection_exists(name)
 
+    async def dense_size(self, name: str) -> int | None:
+        """Số chiều vector dense của collection; None khi collection chưa có hoặc dùng nhiều vector đặt tên."""
+        if not await self.client.collection_exists(name):
+            return None
+        vectors = (await self.client.get_collection(name)).config.params.vectors
+        return getattr(vectors, "size", None)
+
     async def count(self, name: str) -> int:
         """Số point của collection; 0 khi collection chưa có."""
         if not await self.client.collection_exists(name):

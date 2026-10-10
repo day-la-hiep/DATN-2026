@@ -33,7 +33,8 @@ class KnowledgeBaseService:
         """Semantic search trên chunk sách ở mọi collection"""
         points: list[ScoredPoint] = []
         for name in self._collections():
-            if not await self._qdrant.collection_exists(name):
+            # collection cũ (vd 384 chiều) không so được với embedding hiện tại; query vào sẽ 400 làm hỏng cả nhánh semantic
+            if await self._qdrant.dense_size(name) != len(vector):
                 continue
             found = await self._qdrant.search(name, vector, limit=limit)
             for p in found:
